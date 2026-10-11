@@ -1,0 +1,33 @@
+name: CI
+
+# Documentation-only changes skip CI; tags always run (path filters do not apply to tag pushes).
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+    paths-ignore: ["**.md", "LICENSE"]
+  pull_request:
+    paths-ignore: ["**.md", "LICENSE"]
+  # By hand.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    # GitHub-hosted Apple Silicon runner with Xcode 27.
+    runs-on: xcode-27
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: Unit tests
+        run: swift test
+      - name: Automatic regressions
+        run: bash script/test-auto-regressions.sh
+      - name: Build (release configuration)
+        run: swift build --configuration release

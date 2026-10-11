@@ -1,0 +1,26 @@
+# Allowlist: every top-level entry is ignored unless it is listed here.
+# Local notes, agent rules, reports, build output, and signing setup stay out by default.
+/*
+!/.github/
+!/.gitignore
+!/Assets/
+!/LICENSE
+!/Package.swift
+!/Package.resolved
+!/README.ja.md
+!/README.md
+!/Sources/
+!/Tests/
+!/VERSION
+!/docs/
+!/script/
+
+# Never published, even inside the allowed directories.
+.DS_Store
+__pycache__/
+*.py[cod]
+*.tmp
+*.log
+xcuserdata/
+*.xcuserstate
+/script/signing.local.sh
