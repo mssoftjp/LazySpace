@@ -16,6 +16,8 @@ final class WordingRulesTests: XCTestCase {
     static let exceptions: [(file: String, text: String, reason: String)] = [
         ("Sources/MacSupport/SpaceControl.swift", #"Space \(…)"#,
          "Diagnostic fallback: identifies a Space without a desktop number by its ID (not a numbered desktop)."),
+        ("Sources/MacSupport/Resources/Localizable.xcstrings", #"Space \(…)"#,
+         "The same diagnostic fallback, once its text is in the catalog."),
     ]
 
     static let sourceModules = ["Copy", "LayoutCore", "Operations", "Settings", "MacSupport", "LazySpaceApp", "LazySpace"]
