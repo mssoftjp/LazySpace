@@ -132,7 +132,38 @@ final class CatalogTests: XCTestCase {
         return out
     }
 
+    /// The plural categories each shipped language distinguishes for whole numbers (CLDR). A new language adds its own.
+    static let pluralCategories: [Language: Set<String>] = [.english: ["one", "other"], .japanese: ["other"]]
+
+    /// Plural forms a localization is missing, at the top level and in each substitution.
+    static func missingPluralForms(_ localization: [String: Any], language: Language) -> [String] {
+        guard let required = pluralCategories[language] else { return ["no plural categories listed for \(language.rawValue)"] }
+        var plurals: [(String, [String: Any])] = []
+        if let plural = (localization["variations"] as? [String: Any])?["plural"] as? [String: Any] { plurals.append(("plural", plural)) }
+        for (name, substitution) in localization["substitutions"] as? [String: Any] ?? [:] {
+            let plural = ((substitution as? [String: Any])?["variations"] as? [String: Any])?["plural"] as? [String: Any] ?? [:]
+            plurals.append((name, plural))
+        }
+        return plurals.flatMap { label, plural in required.subtracting(plural.keys).sorted().map { "\(label) without \($0)" } }
+    }
+
     // MARK: - Tests
+
+    func testEveryShippedLanguageListsItsPluralCategories() {
+        for language in Language.allCases { XCTAssertNotNil(Self.pluralCategories[language], language.rawValue) }
+    }
+
+    func testMissingPluralFormsAreFound() {
+        func unit(_ value: String) -> [String: Any] { ["stringUnit": ["state": "translated", "value": value]] }
+        let both: [String: Any] = ["variations": ["plural": ["one": unit("%arg Space"), "other": unit("%arg Spaces")]]]
+        var english = unit("for %#@spaces@")
+        english["substitutions"] = ["spaces": ["argNum": 1, "formatSpecifier": "lld", "variations": ["plural": ["other": unit("%arg Spaces")]]]]
+        XCTAssertEqual(Self.missingPluralForms(english, language: .english), ["spaces without one"])
+        XCTAssertEqual(Self.missingPluralForms(["variations": ["plural": ["other": unit("%lld")]]], language: .english), ["plural without one"])
+        XCTAssertEqual(Self.missingPluralForms(both, language: .english), [])
+        XCTAssertEqual(Self.missingPluralForms(["variations": ["plural": ["other": unit("%lld")]]], language: .japanese), [])
+        XCTAssertEqual(Self.missingPluralForms(unit("plain"), language: .english), [])
+    }
 
     func testEveryTextModuleHasACatalogInEnglish() throws {
         for module in Self.textModules {
@@ -151,9 +182,7 @@ final class CatalogTests: XCTestCase {
                 }
                 let forms = Self.forms(localization)
                 if forms.isEmpty { found.append("\(entry.module) \(entry.key) [\(language.rawValue)]: no value") }
-                if let plural = (localization["variations"] as? [String: Any])?["plural"] as? [String: Any], plural["other"] == nil {
-                    found.append("\(entry.module) \(entry.key) [\(language.rawValue)]: plural without other")
-                }
+                found += Self.missingPluralForms(localization, language: language).map { "\(entry.module) \(entry.key) [\(language.rawValue)]: \($0)" }
                 for (label, unit) in forms {
                     let state = unit["state"] as? String ?? "missing"
                     let value = unit["value"] as? String ?? ""
