@@ -1,9 +1,17 @@
 import Foundation
 
-/// Language of user-facing text. English is the base and Japanese its translation. Command names, settings keys, and JSON keys are never translated.
+/// A shipped display language: every catalog translates every entry into it. English is the source language.
+/// Command names, settings keys, and JSON keys are never translated.
 public enum Language: String, Codable, CaseIterable {
     case english = "en"
     case japanese = "ja"
+
+    /// Selects this language's catalog values. Cached because `L` runs often.
+    public var locale: Locale { Self.locales[self]! }
+    private static let locales = Dictionary(uniqueKeysWithValues: allCases.map { ($0, Locale(identifier: $0.rawValue)) })
+
+    /// The language's name in that language, as macOS gives it.
+    public var endonym: String { locale.localizedString(forLanguageCode: rawValue) ?? rawValue }
 }
 
 public enum Copy {
@@ -16,10 +24,10 @@ public enum Copy {
         set { lock.lock(); _language = newValue; lock.unlock() }
     }
 
-    /// Japanese if macOS's first preferred language is Japanese, otherwise English.
+    /// The first of macOS's preferred languages that LazySpace ships, matched the way macOS matches an app's localizations; otherwise English.
     public static func systemLanguage(preferred: [String] = Locale.preferredLanguages) -> Language {
-        guard let first = preferred.first else { return .english }
-        return first.hasPrefix("ja") ? .japanese : .english
+        let codes = Language.allCases.map(\.rawValue)
+        return Bundle.preferredLocalizations(from: codes, forPreferences: preferred).first.flatMap(Language.init(rawValue:)) ?? .english
     }
 
     /// Applies the `language` setting. `LAZYSPACE_LANGUAGE` overrides it. "system" stays English in tests.
@@ -84,6 +92,18 @@ extension Copy {
 
     /// Separator for sentences joined at run time: a space in English, nothing in Japanese.
     public static var sentenceSeparator: String { L(" ", "") }
+}
+
+/// The current language's text for a catalog entry: `L(.menuArrangeNow)`.
+public func L(_ resource: LocalizedStringResource) -> String {
+    L(resource, in: Copy.language)
+}
+
+/// The text in an explicit language. The locale is always set: without it, plural rules would follow macOS's language.
+public func L(_ resource: LocalizedStringResource, in language: Language) -> String {
+    var resource = resource
+    resource.locale = language.locale
+    return String(localized: resource)
 }
 
 /// Picks the current language's text from an English and Japanese pair. English is required and is the fallback.

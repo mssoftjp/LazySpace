@@ -17,10 +17,19 @@ final class CopyTests: XCTestCase {
         XCTAssertEqual(L("Arrange", "整列"), "整列")
     }
 
-    func testSystemLanguagePrefersJapaneseOnlyWhenItIsFirst() {
+    /// macOS's own matching: the first preferred language LazySpace ships, English when there is none.
+    func testSystemLanguageIsTheFirstShippedPreferredLanguage() {
         XCTAssertEqual(Copy.systemLanguage(preferred: ["ja-JP", "en-US"]), .japanese)
         XCTAssertEqual(Copy.systemLanguage(preferred: ["en-US", "ja-JP"]), .english)
+        XCTAssertEqual(Copy.systemLanguage(preferred: ["fr-FR", "ja-JP"]), .japanese)
+        XCTAssertEqual(Copy.systemLanguage(preferred: ["zh-Hans-CN"]), .english)
         XCTAssertEqual(Copy.systemLanguage(preferred: []), .english)
+    }
+
+    func testEachLanguageIsNamedInItself() {
+        XCTAssertEqual(Language.english.endonym, "English")
+        XCTAssertEqual(Language.japanese.endonym, "日本語")
+        XCTAssertEqual(Language.japanese.locale.identifier, "ja")
     }
 
     func testMacItemNamesMatchMacOSInBothLanguages() {

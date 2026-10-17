@@ -3,27 +3,30 @@ import PackageDescription
 
 let package = Package(
     name: "LazySpace",
+    // Every module's String Catalog uses English as its source language.
+    defaultLocalization: "en",
     platforms: [.macOS(.v14)],
     dependencies: [
         // Update checks and installation for the distributed app.
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.10.0"),
     ],
     targets: [
-        // User-facing strings (English base, Japanese translation).
-        .target(name: "Copy", path: "Sources/Copy"),
+        // Display languages, L, and text shared by several modules. Each module with text owns Resources/Localizable.xcstrings.
+        .target(name: "Copy", path: "Sources/Copy", resources: [.process("Resources")]),
         // Layout model and planner. No AX, Spaces, or clocks.
         .target(name: "LayoutCore", path: "Sources/LayoutCore"),
         // Operations. Touches the OS only through the WindowSystem protocol.
-        .target(name: "Operations", dependencies: ["LayoutCore", "Copy"], path: "Sources/Operations"),
+        .target(name: "Operations", dependencies: ["LayoutCore", "Copy"], path: "Sources/Operations", resources: [.process("Resources")]),
         // Reading, validating, and saving settings. ConfigFile owns file I/O.
-        .target(name: "Settings", dependencies: ["LayoutCore", "Copy"], path: "Sources/Settings"),
+        .target(name: "Settings", dependencies: ["LayoutCore", "Copy"], path: "Sources/Settings", resources: [.process("Resources")]),
         // macOS integration: AX, CGWindowList, SkyLight, input observation. The only place that writes to the OS.
-        .target(name: "MacSupport", dependencies: ["Operations", "Copy"], path: "Sources/MacSupport"),
+        .target(name: "MacSupport", dependencies: ["Operations", "Copy"], path: "Sources/MacSupport", resources: [.process("Resources")]),
         // The app (menu bar, window list, CLI) as a library, so the tests can import it.
         .target(
             name: "LazySpaceApp",
             dependencies: ["LayoutCore", "Operations", "MacSupport", "Settings", "Copy", .product(name: "Sparkle", package: "Sparkle")],
-            path: "Sources/LazySpaceApp"
+            path: "Sources/LazySpaceApp",
+            resources: [.process("Resources")]
         ),
         // The executable: main.swift only.
         .executableTarget(

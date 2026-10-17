@@ -41,6 +41,16 @@ final class WordingRulesTests: XCTestCase {
         report(found, kind: "product strings")
     }
 
+    /// Catalog values, per language: Japanese values get the Japanese rules, and every value gets the rules for any language.
+    func testCatalogValues() throws {
+        let found = try Self.catalogValues().flatMap { language, text in
+            language == "ja" && text.text.contains(where: Self.isJapanese)
+                ? Self.violations(in: text, rules: Self.japaneseRules + [Self.w8] + Self.anyLanguageRules)
+                : Self.violations(in: text, rules: Self.anyLanguageRules)
+        }
+        report(found, kind: "catalog values")
+    }
+
     func testJapaneseDocuments() throws {
         let found = try Self.japaneseDocuments.flatMap { path in
             try Self.documentLines(path).filter { $0.text.contains(where: Self.isJapanese) }
@@ -234,6 +244,34 @@ final class WordingRulesTests: XCTestCase {
             if plural, end < s.count, s[end] == "s" { end += 1 }
             return (i == 0 || !isLetter(s[i - 1])) && (end >= s.count || !isLetter(s[end]))
         }
+    }
+
+    // MARK: - Catalog values
+
+    /// Every form of every value in every catalog, with arguments replaced by the placeholder. The line is the key's line.
+    static func catalogValues() throws -> [(language: String, text: Text)] {
+        var out: [(String, Text)] = []
+        for module in CatalogTests.textModules {
+            let path = "Sources/\(module)/Resources/Localizable.xcstrings"
+            let lines = try String(contentsOf: root.appendingPathComponent(path), encoding: .utf8).components(separatedBy: "\n")
+            for entry in try CatalogTests.entries() where entry.module == module {
+                let line = (lines.firstIndex { $0.hasPrefix("    \"\(entry.key)\" :") } ?? 0) + 1
+                for (language, localization) in entry.localizations.sorted(by: { $0.key < $1.key }) {
+                    for (_, unit) in CatalogTests.forms(localization as? [String: Any] ?? [:]) {
+                        let value = withPlaceholders(unit["value"] as? String ?? "")
+                        out.append((language, Text(file: path, line: line, lines: [], text: Array(value.unicodeScalars))))
+                    }
+                }
+            }
+        }
+        return out
+    }
+
+    /// `%@`, `%1$lld`, and `%#@name@` become the placeholder; `%%` becomes `%`.
+    static func withPlaceholders(_ value: String) -> String {
+        let pattern = #"%(?:\d+\$)?(?:lld|llu|ld|lu|lf|d|u|f|@)|%#@[A-Za-z0-9_]+@"#
+        return value.replacingOccurrences(of: pattern, with: String(Character(placeholder)), options: .regularExpression)
+            .replacingOccurrences(of: "%%", with: "%")
     }
 
     // MARK: - Source strings

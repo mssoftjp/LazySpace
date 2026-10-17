@@ -49,7 +49,7 @@ enum SettingsCopy {
     static var reloadTitle: String { L("Reload", "再読み込み") }
     /// Language choices. Setting values are not translated; each language name is shown in that language.
     static var languageChoices: [(id: String, title: String)] {
-        [("system", L("System", "システムに合わせる")), ("en", "English"), ("ja", "日本語")]
+        [("system", L("System", "システムに合わせる"))] + Language.allCases.map { ($0.rawValue, $0.endonym) }
     }
 
     /// A name only for an exact match with a running app; nil for patterns and unknown identifiers.

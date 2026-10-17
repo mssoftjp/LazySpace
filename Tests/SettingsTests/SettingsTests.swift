@@ -142,6 +142,12 @@ final class ConfigTests: XCTestCase {
         XCTAssertTrue(text.contains("otherwise one Space at a time"))
     }
 
+    /// The values and the template comment come from the shipped languages; for English and Japanese they read as before.
+    func testLanguageValuesFollowTheShippedLanguages() {
+        XCTAssertEqual(Config.languageValues, ["system", "en", "ja"])
+        XCTAssertTrue(Config.template.contains(#"language = "system"            # Display language: "system" (follow macOS), "en", or "ja""# + "\n"))
+    }
+
     func testLanguageParsingAndRendering() throws {
         XCTAssertEqual(Config().language, "system")
         for value in Config.languageValues {

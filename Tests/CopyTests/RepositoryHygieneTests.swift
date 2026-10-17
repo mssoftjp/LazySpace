@@ -49,4 +49,10 @@ final class RepositoryHygieneTests: XCTestCase {
         }
         XCTAssertEqual(found, [], found.joined(separator: "\n"))
     }
+
+    /// SwiftPM generates the String Catalog symbols at build time; a committed copy would clash with them.
+    func testGeneratedCatalogSymbolsAreNotPublished() throws {
+        let generated = try Self.publishedFiles().filter { ($0 as NSString).lastPathComponent.hasPrefix("GeneratedStringSymbols_") }
+        XCTAssertEqual(generated, [])
+    }
 }

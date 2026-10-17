@@ -52,6 +52,8 @@ stage() { # name exe bundle_id ui_element
   rm -rf "$app"
   mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
   cp "$BIN/$exe" "$app/Contents/MacOS/$name"
+  # Each module's String Catalog is a resource bundle. Without them the app stops at its first text.
+  cp -R "$BIN"/LazySpace_*.bundle "$app/Contents/Resources/"
   if [[ "$name" == LazySpace ]]; then
     # Lowercase CLI name, a symlink to the same executable. It cannot live in MacOS/ on a case-insensitive file system.
     mkdir -p "$app/Contents/Resources/bin"

@@ -196,9 +196,9 @@ public struct Config: Equatable, Codable {
     public var execOnWindowSent: [String] = []
     /// Command (argv array) run after the binding mode changes, with LAZYSPACE_MODE in the environment.
     public var execOnModeChange: [String] = []
-    /// Display language: "system" (follow macOS) / "en" / "ja".
+    /// Display language: "system" (follow macOS) or the code of a shipped `Language`.
     public var language: String = "system"
-    public static let languageValues = ["system", "en", "ja"]
+    public static let languageValues = ["system"] + Language.allCases.map(\.rawValue)
 
     public init() {}
 
@@ -513,13 +513,19 @@ public struct Config: Equatable, Codable {
     /// Heading of the saved configuration file. Generated headings are English regardless of the display language.
     public static let defaultHeader = "# LazySpace configuration. Changes are reloaded automatically; run `lazyspace reload` to request a refresh."
 
+    /// `"en", or "ja"`: the shipped language codes for the template's comment.
+    static var languageCodeList: String {
+        let codes = Language.allCases.map { "\"\($0.rawValue)\"" }
+        return codes.count == 1 ? codes[0] : codes.dropLast().joined(separator: ", ") + ", or " + codes[codes.count - 1]
+    }
+
     /// The initial configuration written on first launch. Comments and values are English and do not follow the display language.
     public static let template = """
         # LazySpace configuration. Changes to this file are reloaded automatically; run `lazyspace reload` to request a refresh.
         # Reloading replaces the settings only; it does not move windows.
         # Uncommented values are the defaults. Commented lines are optional examples.
 
-        language = "system"            # Display language: "system" (follow macOS), "en", or "ja"
+        language = "system"            # Display language: "system" (follow macOS), \(languageCodeList)
         gap = 0                        # Space between windows (pt). Use [gaps] for separate horizontal and vertical gaps and outer margins
         # [gaps]                       # Example
         # inner-horizontal = 8
