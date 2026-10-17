@@ -15,6 +15,15 @@ enum SettingsCopy {
     static var accessNotAllowed: String { L("Not allowed in \(AccessPane.name())", "「\(AccessPane.name())」で許可されていません") }
     static var accessCaption: String { L("Used to read and arrange windows.", "ウインドウの読み取りと整列に使います。") }
     static var accessButton: String { L("Open System Settings…", "システム設定を開く…") }
+    static var notificationsTitle: String { L("Notifications", "通知") }
+    static var notificationBox: String { L("Notify when LazySpace needs your attention", "対処が必要なときに通知") }
+    static var notificationCaption: String {
+        L("When arranging stops until you act, or a change to the configuration file can’t be applied. Choose how notifications appear in System Settings › Notifications.",
+          "対処するまで整列が止まるときや、設定ファイルの変更を適用できないときに通知します。表示のしかたはシステム設定 › 通知で選べます。")
+    }
+    static var notificationsDenied: String { L("Notifications for LazySpace are turned off in System Settings.", "システム設定でLazySpaceの通知がオフになっています。") }
+    static var notificationsNotYet: String { L("LazySpace is not allowed to send notifications yet.", "LazySpaceはまだ通知の送信を許可されていません。") }
+    static var allowNotifications: String { L("Allow Notifications…", "通知を許可…") }
     static var accessHelp: String {
         L("Turn on LazySpace in Privacy & Security › \(AccessPane.name()). If it’s already on but this doesn’t change, an older copy of the app may still be listed: select LazySpace, click the Remove button (−), then click Open System Settings… again.",
           "プライバシーとセキュリティ › \(AccessPane.name())でLazySpaceをオンにしてください。オンなのにここが変わらない場合は、古いバージョンのアプリが登録されている可能性があります。LazySpaceを選択して削除ボタン（−）をクリックし、もう一度「システム設定を開く…」をクリックしてください。")
@@ -103,6 +112,18 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
     private let loginStatus = NSTextField.settingsText( "")
     private let loginSettingsButton = NSButton(title: "", target: nil, action: nil)
     private let languagePopup = NSPopUpButton()
+    private let notificationBox = NSButton(checkboxWithTitle: "", target: nil, action: nil)
+    private let notificationStatus = NSTextField.settingsText("")
+    private let notificationButton = NSButton(title: "", target: nil, action: nil)
+    private var notificationStatusRow: NSGridRow?
+    private var notificationButtonRow: NSGridRow?
+    /// Nil when this copy cannot send notifications (no bundle, tests); the checkbox still saves the choice.
+    var attention: AttentionNotifier? {
+        didSet {
+            attention?.onPermissionChange = { [weak self] in self?.renderNotifications() }
+            renderNotifications()
+        }
+    }
     private let shortcutGuideBox = NSButton(checkboxWithTitle: "", target: nil, action: nil)
     private let borderBox = NSButton(checkboxWithTitle: "", target: nil, action: nil)
     private let borderWidthField = NSTextField()
@@ -751,9 +772,21 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         loginStatusRow = form.addPlain(loginStatus)
         loginSettingsRow = form.addPlain(loginSettingsButton)
         form.addLabeled(L("Language", "言語"), languagePopup)
+        notificationBox.title = SettingsCopy.notificationBox
+        notificationBox.target = self; notificationBox.action = #selector(controlChanged)
+        form.addLabeled(SettingsCopy.notificationsTitle, SettingsForm.checkboxColumn(
+            notificationBox, explanation: SettingsCopy.notificationCaption, columnWidth: form.controlColumnWidth))
+        notificationStatus.font = .systemFont(ofSize: 11)
+        notificationStatus.textColor = .secondaryLabelColor
+        notificationStatus.maximumNumberOfLines = 0
+        notificationStatus.cell?.wraps = true
+        notificationButton.target = self; notificationButton.action = #selector(notificationButtonClicked)
+        notificationStatusRow = form.addPlain(notificationStatus)
+        notificationButtonRow = form.addPlain(notificationButton)
         loginStatusRow?.isHidden = true
         loginSettingsRow?.isHidden = true
         renderAccess()
+        renderNotifications()
         return SettingsPaneLayout.centered(form, width: SettingsForm.width)
     }
 
@@ -1176,6 +1209,34 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         refreshAccess()
         refreshNativeShortcuts()
         refreshAutomaticCheck()
+        // Notifications may have been allowed or turned off in System Settings meanwhile.
+        if notificationBox.state == .on { attention?.refreshPermission() }
+    }
+
+    /// One line and a button, only while the box is on and macOS does not allow LazySpace to send notifications.
+    func renderNotifications() {
+        let before = notificationStatusRow?.isHidden
+        let permission = notificationBox.state == .on ? attention?.permission : nil
+        switch permission {
+        case .denied?:
+            notificationStatus.stringValue = SettingsCopy.notificationsDenied
+            notificationButton.title = SettingsCopy.accessButton
+        case .notDetermined?:
+            notificationStatus.stringValue = SettingsCopy.notificationsNotYet
+            notificationButton.title = SettingsCopy.allowNotifications
+        case .allowed?, nil:
+            break
+        }
+        let hidden = permission == nil || permission == .allowed
+        notificationStatus.isHidden = hidden
+        notificationButton.isHidden = hidden
+        notificationStatusRow?.isHidden = hidden
+        notificationButtonRow?.isHidden = hidden
+        if before != nil, before != hidden { resizePane() }
+    }
+
+    @objc private func notificationButtonClicked() {
+        if attention?.permission == .notDetermined { attention?.requestAuthorization() } else { attention?.openSettings() }
     }
 
     func windowDidResignKey(_ notification: Notification) {
@@ -1214,6 +1275,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         languagePopup.selectItem(at: max(0, languagePopup.indexOfItem(withRepresentedObject: SettingsRules.languageID(c.language))))
         shortcutGuideBox.state = c.showShortcutGuide ? .on : .off
         borderBox.state = c.focusBorder.enabled ? .on : .off
+        notificationBox.state = c.notifications.needsAttention ? .on : .off
+        renderNotifications()
         if !uncommittedNumbers.contains(.borderWidth) { borderWidthField.stringValue = Config.number(c.focusBorder.width) }
         if let (r, g, b, a) = c.focusBorder.rgba { borderColorWell.color = NSColor(srgbRed: r, green: g, blue: b, alpha: a) }
 
@@ -1466,6 +1529,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         }
         if next.showShortcutGuide != (shortcutGuideBox.state == .on) { next.showShortcutGuide = shortcutGuideBox.state == .on; changed = true }
         if next.focusBorder.enabled != (borderBox.state == .on) { next.focusBorder.enabled = borderBox.state == .on; changed = true }
+        if next.notifications.needsAttention != (notificationBox.state == .on) { next.notifications.needsAttention = notificationBox.state == .on; changed = true }
         guard changed else { return }
         commit(next)
         updateAppearanceDetails()

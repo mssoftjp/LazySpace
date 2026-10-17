@@ -71,5 +71,6 @@ let app = NSApplication.shared
 app.setActivationPolicy(.accessory)
 let delegate = AppDelegate(showReadyAtLaunch: argv.contains("--ready"))
 delegate.makeUpdates = { SparkleUpdates.makeIfAllowed(bundle: .main) }
+delegate.makeNotifier = { MacNotifier.makeIfAvailable(bundle: .main) }
 app.delegate = delegate
 app.run()

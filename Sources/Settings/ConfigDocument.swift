@@ -130,6 +130,7 @@ public enum ConfigDocument {
             try syncNested(["focus-border", "enabled"], previous.focusBorder.enabled, next.focusBorder.enabled, fallback: false)
             try syncNested(["focus-border", "width"], previous.focusBorder.width, next.focusBorder.width, fallback: 3, number: true)
             try syncNested(["focus-border", "color"], previous.focusBorder.color, next.focusBorder.color, fallback: "#4C8DFF", string: true)
+            try syncNested(["notifications", "needs-attention"], previous.notifications.needsAttention, next.notifications.needsAttention, fallback: false)
         }
 
         private func applyGaps(from previous: Config, to next: Config) throws {

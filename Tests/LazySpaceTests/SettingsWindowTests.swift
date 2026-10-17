@@ -212,6 +212,57 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertTrue(views().contains { ($0 as? NSTextField)?.stringValue == "バージョン0.5.0（202610111200）" })
     }
 
+    /// The one notification is chosen in General and saved at once; a line and a button appear only while it is on and macOS does not allow it.
+    func testNotificationCheckboxAndPermissionLine() throws {
+        try load(Config())
+        try select(.general)
+        let box = try button("Notify when LazySpace needs your attention")
+        XCTAssertEqual(box.state, .off)
+        func visibleTexts() -> [String] {
+            views().compactMap { $0 as? NSTextField }.filter { !$0.isHiddenOrHasHiddenAncestor }.map(\.stringValue)
+        }
+        func visibleButtons() -> [String] {
+            views().compactMap { $0 as? NSButton }.filter { !$0.isHiddenOrHasHiddenAncestor }.map(\.title)
+        }
+        // The access row has a button with the same title; this is the one under the notification row.
+        func notificationButton() throws -> NSButton {
+            try XCTUnwrap(views().compactMap { $0 as? NSButton }.first { $0.action == NSSelectorFromString("notificationButtonClicked") })
+        }
+        let denied = "Notifications for LazySpace are turned off in System Settings."
+        let notYet = "LazySpace is not allowed to send notifications yet."
+
+        let fake = FakeNotifier()
+        fake.stored = .denied
+        let attention = AttentionNotifier(notifier: fake)
+        controller.attention = attention
+        attention.refreshPermission()
+        XCTAssertFalse(visibleTexts().contains(denied), "nothing while the box is off")
+
+        box.performClick(nil)
+        XCTAssertTrue(coordinator.config.notifications.needsAttention)
+        XCTAssertTrue(try String(contentsOf: coordinator.configURL).contains("needs-attention = true"))
+        XCTAssertTrue(visibleTexts().contains(denied))
+        XCTAssertEqual(try notificationButton().title, "Open System Settings…")
+        try notificationButton().performClick(nil)
+        XCTAssertEqual(fake.settingsOpened, 1)
+
+        fake.stored = .notDetermined
+        controller.windowDidBecomeKey(Notification(name: NSWindow.didBecomeKeyNotification))
+        XCTAssertTrue(visibleTexts().contains(notYet))
+        fake.answer = .allowed
+        XCTAssertEqual(try notificationButton().title, "Allow Notifications…")
+        try notificationButton().performClick(nil)
+        XCTAssertEqual(fake.requests, 1)
+        XCTAssertFalse(visibleTexts().contains(notYet))
+        XCTAssertFalse(visibleButtons().contains("Allow Notifications…"))
+
+        box.performClick(nil)
+        XCTAssertFalse(coordinator.config.notifications.needsAttention)
+        fake.stored = .denied
+        attention.refreshPermission()
+        XCTAssertFalse(visibleTexts().contains(denied), "nothing once the box is off again")
+    }
+
     /// A found update waits quietly in About; one button checks or updates, and the pane follows the updater while open.
     func testAboutShowsAnAvailableUpdateAndStartsItOnlyWhenChosen() throws {
         try load(Config())

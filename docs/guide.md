@@ -108,7 +108,7 @@ When automatic arrangement is on, you can edit tiled windows with the mouse:
 
 Choose **Settings…** from the menu bar.
 
-- **General**: access, **Open at Login**, and language.
+- **General**: access, **Open at Login**, language, and notifications.
 - **Arrangement**: keeping fixed-size windows next to arranged windows, spacing between windows, where new windows go, and an optional border around the focused window.
 - **Shortcuts**: shortcuts for the main mode. Double-click a shortcut or press Return to change it; Delete removes it, Option-Delete restores its default, and **Restore Defaults** resets the whole list. Below the list, a warning appears only when switching to the neighboring Space cannot work, and it says what to change.
 - **Apps**: apps whose windows are never tiled, or kept floating. Each row shows the app's name and its bundle identifier; the name comes from the running app or the installed app, so it is blank for an app that is not installed and for a prefix rule such as `com.microsoft.*`. The identifier is the editable part.
@@ -118,6 +118,10 @@ Choose **Settings…** from the menu bar.
 Binding modes and their entry shortcuts are edited only in the configuration file.
 
 Changes are saved as you make them. The language follows macOS unless you choose one.
+
+### Notifications
+
+LazySpace sends no notifications unless you turn them on. Check **Notify when LazySpace needs your attention** in Settings › **General** to get a macOS notification when LazySpace stops arranging windows until you do something: its access is turned off, automatic arrangement stops (for example while Stage Manager is on), or a change to the configuration file cannot be applied. Nothing else sends a notification. When you turn it on, macOS asks once whether LazySpace may send notifications. Choose how they appear (**Temporary** or **Persistent**) in System Settings › Notifications. They make no sound. Clicking a notification opens the place where you fix the problem. A configuration file that is already broken when LazySpace starts is shown in the menu and in Settings, not as a notification.
 
 ## Updates
 
@@ -228,11 +232,11 @@ The default shortcuts follow AeroSpace's where LazySpace has the same action. Di
 
 - **A window is not tiled.** Choose **Check Windows…**, or run `lazyspace list-windows`. It says why, for example a fixed-size window, a full-screen window, or an app rule.
 - **Nothing happens when I press a shortcut.** Run `lazyspace status` and look at **Latest notice**. LazySpace does not show a message when a shortcut is refused.
-- **Automatic arrangement is unavailable.** **Check Windows…** shows **Show Fix…** with the setting to change.
+- **Automatic arrangement is unavailable.** **Check Windows…** shows **Show Fix…** with the setting to change. To hear about it when it happens, turn on the notification in Settings › **General**.
 - **`⌥1`–`⌥9` go to the wrong desktop.** Turn off **Automatically rearrange Spaces based on most recent use**.
 - **Switching to the next Space does not work.** Check Settings › Shortcuts: it shows a warning with the fix when something is wrong. If it says macOS is not responding, log out of your Mac and back in.
 - **A shortcut types a character.** Choose other keys in Settings › Shortcuts.
 
 ## Privacy
 
-LazySpace uses Accessibility to read and arrange windows. It reads window titles only to match your rules and does not save them. It counts input events without recording what you type. It keeps no history of what you did: the result of the last operation stays in memory for `lazyspace status`, and only the layout of each Space is saved. LazySpace itself connects to the network only to check GitHub for updates once a day (unless you turn that off in About) and to download an update you choose to install. The check sends the app's name and version and nothing about your Mac or its windows. What the commands you configure in hooks do is up to those commands, and they run with their own permissions, not LazySpace's.
+LazySpace uses Accessibility to read and arrange windows. It reads window titles only to match your rules and does not save them. It counts input events without recording what you type. It keeps no history of what you did: the result of the last operation stays in memory for `lazyspace status`, and only the layout of each Space is saved. LazySpace itself connects to the network only to check GitHub for updates once a day (unless you turn that off in About) and to download an update you choose to install. The check sends the app's name and version and nothing about your Mac or its windows. A notification says only what stopped and what to do; it never contains window titles or the contents of your configuration file. What the commands you configure in hooks do is up to those commands, and they run with their own permissions, not LazySpace's.

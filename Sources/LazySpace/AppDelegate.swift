@@ -27,6 +27,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// Set by `main.swift`, the only place that knows Sparkle; nil in tests. Called once after launch.
     var makeUpdates: (() -> UpdateChecking?)?
     private var updates: UpdateChecking?
+    /// Set by `main.swift`, the only place that creates the notification center's notifier; nil in tests.
+    var makeNotifier: (() -> Notifying?)?
+    private var attention: AttentionNotifier?
+    /// Opens the place to fix a clicked notification's problem; tests replace it so no window opens.
+    var openForAttention: ((AttentionReason.Kind) -> Void)?
 
     init(showReadyAtLaunch: Bool, coordinator: Coordinator = .shared, receipts: MutationReceiptRegistry = MutationReceiptRegistry()) {
         self.showReadyAtLaunch = showReadyAtLaunch
@@ -36,12 +41,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         coordinator.onTerminalResult = { [receipts] result in receipts.absorb(result) }
     }
 
+    /// At launch and in tests: the notification callbacks.
+    func attachNotifier(_ notifier: Notifying) {
+        let attention = AttentionNotifier(notifier: notifier)
+        self.attention = attention
+        notifier.onActivate = { [weak self] raw in
+            guard let self, let kind = AttentionReason.Kind(rawValue: raw) else { return }
+            if let open = openForAttention { open(kind) } else { openAttention(kind) }
+        }
+        coordinator.onAttentionChange = { [weak attention] state in attention?.update(state) }
+        settings?.attention = attention
+        coordinator.requestAttentionReport()
+    }
+
+    /// The same places the status menu opens for these problems.
+    private func openAttention(_ kind: AttentionReason.Kind) {
+        switch kind {
+        case .accessibility: showSettings(pane: .general)
+        case .configuration: showSettings(pane: nil)
+        case .automaticArrangement: showReady()
+        }
+    }
+
+    /// Notifications may have been allowed in System Settings meanwhile.
+    func applicationDidBecomeActive(_ notification: Notification) {
+        if attention?.enabled == true { attention?.refreshPermission() }
+    }
+
+    /// A notification left behind would relaunch LazySpace when clicked.
+    func applicationWillTerminate(_ notification: Notification) {
+        attention?.withdraw()
+    }
+
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         guard let settings else { return .terminateNow }
         return settings.resolveLeave() ? .terminateNow : .terminateCancel
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // First, so a click that launched LazySpace reaches the notifier's delegate.
+        if let notifier = makeNotifier?() { attachNotifier(notifier) }
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem.button?.toolTip = StatusMenuCopy.statusItemToolTip
         refreshStatusItem()
@@ -64,6 +103,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             self?.focusBorder.apply(config.focusBorder)
             if !config.showShortcutGuide { self?.hideCheatsheet() }
             self?.reregisterHotkeys()
+            // The notification checkbox may have changed; report it with the problem as of this configuration.
+            if self?.attention != nil { self?.coordinator.requestAttentionReport() }
             // If Settings is open, follow the active configuration (unsaved draft changes are kept).
             if let settings = self?.settings, settings.window?.isVisible == true { settings.refresh() }
         }
@@ -475,6 +516,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if settings == nil {
             settings = SettingsWindowController()
             settings?.updates = updates
+            settings?.attention = attention
             // While recording a key, unregister global shortcuts so the pressed key does not run an action.
             settings?.onRecording = { [weak self] recording in
                 guard let self else { return }

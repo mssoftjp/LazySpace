@@ -717,6 +717,33 @@ final class PlacementTests: XCTestCase {
         XCTAssertNil(Config.parseColor("#GGGGGG"))
     }
 
+    func testNotificationsLoadRenderAndProblems() throws {
+        XCTAssertEqual(Config().notifications, Config.Notifications(needsAttention: false))
+        XCTAssertFalse(try Config.load(toml: Config.template).notifications.needsAttention)
+        let c = try Config.load(toml: """
+        [notifications]
+        needs-attention = true
+        """)
+        XCTAssertTrue(c.notifications.needsAttention)
+        XCTAssertEqual(try Config.load(toml: c.render()).notifications, c.notifications)
+        XCTAssertFalse(Config().render().contains("[notifications]"))
+        XCTAssertTrue(try Config.load(toml: "notifications.needs-attention = true").notifications.needsAttention)
+
+        XCTAssertThrowsError(try Config.load(toml: """
+        [notifications]
+        needs-attention = "yes"
+        extra = 1
+        """)) { error in
+            let problems = (error as! Config.LoadError).problems
+            XCTAssertTrue(problems.contains { $0.contains("notifications.needs-attention") }, "\(problems)")
+            XCTAssertTrue(problems.contains { $0 == "Unknown setting in notifications: extra." }, "\(problems)")
+        }
+        XCTAssertThrowsError(try Config.load(toml: "notifications = true")) { error in
+            let problems = (error as! Config.LoadError).problems
+            XCTAssertTrue(problems.contains { $0 == "notifications must be written as a [notifications] table." }, "\(problems)")
+        }
+    }
+
     /// A user key that collides with a default key (added in an update) still loads; the default is unassigned.
     func testUserKeyOverridesDefaultOnlyKey() throws {
         let c = try Config.load(toml: """

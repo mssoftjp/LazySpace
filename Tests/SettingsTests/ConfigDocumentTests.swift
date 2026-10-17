@@ -30,6 +30,17 @@ final class ConfigDocumentTests: XCTestCase {
         XCTAssertEqual(try Config.load(toml: patched).gap, 9)
     }
 
+    /// Turning the notification on inserts one line and keeps comments; turning it off edits that line.
+    func testNotificationsInsertAndEdit() throws {
+        let source = "# note\ngap = 0 # keep\n\n[keys]\nfocus-left = \"alt-h\"\n"
+        let on = try patch(source) { $0.notifications.needsAttention = true }
+        XCTAssertTrue(on.contains("# note\ngap = 0 # keep\n"), on)
+        XCTAssertTrue(try Config.load(toml: on).notifications.needsAttention, on)
+        let off = try patch(on) { $0.notifications.needsAttention = false }
+        XCTAssertFalse(try Config.load(toml: off).notifications.needsAttention, off)
+        XCTAssertEqual(off.components(separatedBy: "needs-attention").count, 2, off)
+    }
+
     /// `[gaps] inner-horizontal` wins over `gap`; only the winning line is rewritten.
     func testInnerHorizontalWinsOverGap() throws {
         let shadowed = """

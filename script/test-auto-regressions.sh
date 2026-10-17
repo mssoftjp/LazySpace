@@ -12,8 +12,9 @@ swiftc -emit-library -emit-module -module-name Settings -I "$BUILD" -L "$BUILD" 
 swiftc -emit-library -emit-module -enable-testing -module-name MacSupport -I "$BUILD" -L "$BUILD" -lLayoutCore -lOperations -lCopy Sources/MacSupport/*.swift -o "$BUILD/libMacSupport.dylib" -emit-module-path "$BUILD/MacSupport.swiftmodule"
 APP_SOURCES=()
 for source in Sources/LazySpace/*.swift; do
-    # main.swift starts the app; SparkleUpdates.swift is the only Sparkle file, so the checks use no updater.
-    [[ "$source" == "Sources/LazySpace/main.swift" || "$source" == "Sources/LazySpace/SparkleUpdates.swift" ]] || APP_SOURCES+=("$source")
+    # main.swift starts the app; SparkleUpdates.swift is the only Sparkle file and MacNotifier.swift the only UserNotifications
+    # file, so the checks use no updater and no notification center.
+    [[ "$source" == "Sources/LazySpace/main.swift" || "$source" == "Sources/LazySpace/SparkleUpdates.swift" || "$source" == "Sources/LazySpace/MacNotifier.swift" ]] || APP_SOURCES+=("$source")
 done
 swiftc -emit-library -emit-module -enable-testing -module-name LazySpace -I "$BUILD" -L "$BUILD" -lLayoutCore -lOperations -lSettings -lMacSupport -lCopy "${APP_SOURCES[@]}" -o "$BUILD/libLazySpace.dylib" -emit-module-path "$BUILD/LazySpace.swiftmodule"
 swiftc -I "$BUILD" -L "$BUILD" -lLayoutCore -lOperations -lSettings -lMacSupport -lLazySpace -lCopy -Xlinker -rpath -Xlinker "$BUILD" Tests/OperationsTests/FakeSystem.swift Tests/LazySpaceTests/CoordinatorSystem.swift Tests/LazySpaceTests/AutomaticIntegrationChecks.swift Tests/MacSupportTests/FrameWriterChecks.swift Tests/AutoRegression/main.swift -o "$BUILD/checks"

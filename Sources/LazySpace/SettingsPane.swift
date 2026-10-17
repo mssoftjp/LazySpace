@@ -70,6 +70,7 @@ enum SettingsPaneLayout {
     /// Label column shared by General and Arrangement, measured from both languages' titles and capped at a wrapping width.
     static let formLabelWidth: CGFloat = SettingsForm.labelWidth(for: [
         ("Language", "言語"),
+        ("Notifications", "通知"),
         ("Display", "表示"),
         ("Window spacing", "ウインドウの間隔"),
         ("Place new windows", "新しいウインドウの位置"),

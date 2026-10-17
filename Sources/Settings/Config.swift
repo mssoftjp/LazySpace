@@ -168,6 +168,13 @@ public struct Config: Equatable, Codable {
         public var rgba: (Double, Double, Double, Double)? { Config.parseColor(color) }
     }
     public var focusBorder = FocusBorder()
+    /// macOS notifications LazySpace may send. Off by default; how they appear is set in System Settings › Notifications.
+    public struct Notifications: Equatable, Codable {
+        /// When LazySpace stops arranging windows (or cannot apply the file) until the user acts.
+        public var needsAttention: Bool = false
+        public init(needsAttention: Bool = false) { self.needsAttention = needsAttention }
+    }
+    public var notifications = Notifications()
     /// Shows the shortcut list after a modifier is held for about 0.8 s. Shortcuts work even when off.
     public var showShortcutGuide = true
     public var preferredMinimum: CGSize = CGSize(width: 400, height: 300)
@@ -265,7 +272,7 @@ public struct Config: Equatable, Codable {
         var c = Config()
         var problems: [String] = []
         func boolProblem(_ key: String) -> String { L("\(key) must be true or false.", "\(key)はtrueかfalseで指定してください。") }
-        let known: Set<String> = ["gap", "gaps", "preferred-minimum", "unknown-floor", "quiet-interval", "per-app-timeout", "rule", "keys", "mode", "start-at-login", "exec-on-space-change", "exec-on-mode-change", "exec-on-window-sent", "new-window-placement", "focus-after-close", "accordion-padding", "focus-border", "language", "show-shortcut-guide", "place-dialogs-beside"]
+        let known: Set<String> = ["gap", "gaps", "preferred-minimum", "unknown-floor", "quiet-interval", "per-app-timeout", "rule", "keys", "mode", "start-at-login", "exec-on-space-change", "exec-on-mode-change", "exec-on-window-sent", "new-window-placement", "focus-after-close", "accordion-padding", "focus-border", "notifications", "language", "show-shortcut-guide", "place-dialogs-beside"]
         for k in table.keys where !known.contains(k) { problems.append(L("Unknown setting: \(k).", "不明な設定: \(k)。")) }
 
         func number(_ key: String, _ range: ClosedRange<Double>) -> Double? {
@@ -337,6 +344,13 @@ public struct Config: Equatable, Codable {
             if let col = t["color"] {
                 if let s = col as? String, parseColor(s) != nil { c.focusBorder.color = s }
                 else { problems.append(L("focus-border.color must be \"#RRGGBB\" or \"#RRGGBBAA\".", "focus-border.colorは \"#RRGGBB\" か \"#RRGGBBAA\" で指定してください。")) }
+            }
+        }
+        if let v = table["notifications"] {
+            guard let t = v as? [String: Any] else { problems.append(L("notifications must be written as a [notifications] table.", "notificationsは[notifications]テーブルで書いてください。")); throw LoadError(problems: problems) }
+            for k in t.keys where k != "needs-attention" { problems.append(L("Unknown setting in notifications: \(k).", "notificationsの不明な項目: \(k)。")) }
+            if let n = t["needs-attention"] {
+                if let b = n as? Bool { c.notifications.needsAttention = b } else { problems.append(boolProblem("notifications.needs-attention")) }
             }
         }
 
@@ -540,6 +554,11 @@ public struct Config: Equatable, Codable {
         # width = 3                    # pt (1–12)
         # color = "#4C8DFF"            # "#RRGGBB" or "#RRGGBBAA"
 
+        # macOS notifications (default: off). When one is turned on, macOS asks once whether LazySpace may send notifications.
+        # Choose how they appear in System Settings › Notifications.
+        # [notifications]
+        # needs-attention = true       # When arranging stops until you act, or a change to this file cannot be applied
+
         # Window rules. app is a bundle identifier (a trailing * matches a prefix). title is a regular expression for the window title (omit it to match the whole app).
         # action is ignore (exclude from tiling), float (keep its position), or space (send new windows to another Space).
         # For action = "space": space = 3 is an ordinary desktop number; follow = true also switches there.
@@ -668,6 +687,9 @@ public struct Config: Equatable, Codable {
         out += "\n"
         if focusBorder != FocusBorder() {
             out += "[focus-border]\nenabled = \(focusBorder.enabled)\nwidth = \(n(focusBorder.width))\ncolor = \(quoted(focusBorder.color))\n\n"
+        }
+        if notifications != Notifications() {
+            out += "[notifications]\nneeds-attention = \(notifications.needsAttention)\n\n"
         }
         for r in rules {
             out += "[[rule]]\napp = \(quoted(r.app))\n"

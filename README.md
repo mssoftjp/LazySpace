@@ -39,6 +39,7 @@ LazySpace needs macOS 14 or later and Apple Silicon. To build it yourself, see [
 - It never creates workspaces of its own, and it never hides windows off screen.
 - It never changes how your Mac switches Spaces. It uses the macOS shortcut **Switch to Desktop N**, a window or app that is already on the destination, or the Mission Control shortcuts for moving one Space left or right. It reads those settings and does not write them.
 - It never saves window titles, and it never records what you type.
+- It never sends a notification unless you turn notifications on in Settings › General.
 - It never connects to the network, except to check GitHub for updates (once a day, unless you turn that off, or when you ask) and to download an update you choose to install.
 
 ## Keyboard, mouse, or command line

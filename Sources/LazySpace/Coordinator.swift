@@ -76,6 +76,14 @@ extension CoordinatorWindowSystem {
     }
 }
 
+/// Why automatic arrangement is off. Stable across languages; the text comes from `Coordinator.AutoGate.reason(for:)`.
+enum AutoGateCause: Equatable {
+    case inputUnobservable
+    case configUnapplied
+    case stageManager
+    case sharedSpaces
+}
+
 extension MacWindowSystem: CoordinatorWindowSystem {
     var inputObservationAvailable: Bool { input.mode != .unavailable }
     var stageManagerOn: Bool {
@@ -597,6 +605,12 @@ final class Coordinator {
     var onChange: (() -> Void)?
     /// Called on the main thread when Accessibility permission changes.
     var onTrustChange: ((Bool) -> Void)?
+    /// Called on the main thread with the problem that stops LazySpace until the user acts, and whether to notify about it.
+    var onAttentionChange: ((AttentionState) -> Void)?
+    /// Attention review state. Only the operations queue touches these.
+    private var everTrusted: Bool
+    private var attentionCandidate: AttentionReason?
+    private var publishedAttention = AttentionState(reason: nil, notify: false)
     /// Region: time before a never-front candidate enters. Windows an app opens on its own often resize or close within seconds.
     var regionUnseenDelay: TimeInterval = 5
     /// Windows that have been in front on the current Space. Only the operations queue touches it.
@@ -684,6 +698,7 @@ final class Coordinator {
          takeInventory: @escaping () -> AppWindowInventory? = { AppWindowInventory.take() }) {
         self.system = system
         lastTrusted = system.axTrusted
+        everTrusted = lastTrusted
         self.knowledge = knowledge
         self.configURL = configURL ?? Self.defaultConfigURL
         self.store = store
@@ -956,30 +971,85 @@ final class Coordinator {
     // MARK: - Auto gate
 
     struct AutoGate: Equatable {
-        var allowed: Bool
-        var reason: String
+        /// Why automatic arrangement is off; nil when it is available.
+        var cause: AutoGateCause?
+        var allowed: Bool { cause == nil }
+        var reason: String {
+            cause.map(Self.reason(for:)) ?? L("Automatic arrangement is available. Use window rules to exclude apps.", "自動整列を利用できます。除外するアプリはルールで指定します。")
+        }
+
+        static func reason(for cause: AutoGateCause) -> String {
+            switch cause {
+            case .inputUnobservable:
+                L("Automatic arrangement is off because input cannot be observed, so windows could move while you use them. Check the \(AccessPane.name()) permission.",
+                  "入力を観測できないため、自動整列を止めています。操作中のウインドウを動かさないためです。「\(AccessPane.name())」の許可を確認してください。")
+            case .configUnapplied:
+                L("Automatic arrangement is off because the configuration file could not be applied. It turns on when the file is fixed.",
+                  "設定ファイルを適用できないため、自動整列を止めています。ファイルを直すと使えるようになります。")
+            case .stageManager:
+                L("Automatic arrangement is off while \(MacItem.stageManager) is on. Turn off \(MacItem.stageManager) to use it.",
+                  "\(MacItem.stageManager)の使用中は、自動整列を止めています。使うには\(MacItem.stageManager)をオフにしてください。")
+            case .sharedSpaces:
+                L("Automatic arrangement is off because more than one display is connected and Mission Control’s “\(MacItem.separateSpaces)” is off. Turn it on in System Settings › Desktop & Dock, then log out and back in.",
+                  "複数のディスプレイをつないでいて、Mission Controlの「\(MacItem.separateSpaces)」がオフのため、自動整列を止めています。システム設定 › デスクトップとDockでオンにしてから、ログアウトしてログインし直してください。")
+            }
+        }
     }
 
     /// Automatic arrangement is available when input can be observed, on top of Accessibility and Space observation (the manual arrangement conditions). Exclusions come from rules.
     func autoGate() -> AutoGate {
-        guard system.inputObservationAvailable else {
-            return AutoGate(allowed: false, reason: L("Automatic arrangement is off because input cannot be observed, so windows could move while you use them. Check the \(AccessPane.name()) permission.",
-                                                      "入力を観測できないため、自動整列を止めています。操作中のウインドウを動かさないためです。「\(AccessPane.name())」の許可を確認してください。"))
-        }
         lock.lock(); let unapplied = unappliedSinceLaunch; lock.unlock()
-        guard !unapplied else {
-            return AutoGate(allowed: false, reason: L("Automatic arrangement is off because the configuration file could not be applied. It turns on when the file is fixed.",
-                                                      "設定ファイルを適用できないため、自動整列を止めています。ファイルを直すと使えるようになります。"))
-        }
-        if system.stageManagerOn {
-            return AutoGate(allowed: false, reason: L("Automatic arrangement is off while \(MacItem.stageManager) is on. Turn off \(MacItem.stageManager) to use it.",
-                                                      "\(MacItem.stageManager)の使用中は、自動整列を止めています。使うには\(MacItem.stageManager)をオフにしてください。"))
-        }
-        if system.displaysShareOneSpace {
-            return AutoGate(allowed: false, reason: L("Automatic arrangement is off because more than one display is connected and Mission Control’s “\(MacItem.separateSpaces)” is off. Turn it on in System Settings › Desktop & Dock, then log out and back in.",
-                                                      "複数のディスプレイをつないでいて、Mission Controlの「\(MacItem.separateSpaces)」がオフのため、自動整列を止めています。システム設定 › デスクトップとDockでオンにしてから、ログアウトしてログインし直してください。"))
-        }
-        return AutoGate(allowed: true, reason: L("Automatic arrangement is available. Use window rules to exclude apps.", "自動整列を利用できます。除外するアプリはルールで指定します。"))
+        return AutoGate(cause: gateCause(unapplied: unapplied))
+    }
+
+    private func gateCause(unapplied: Bool) -> AutoGateCause? {
+        guard system.inputObservationAvailable else { return .inputUnobservable }
+        guard !unapplied else { return .configUnapplied }
+        if system.stageManagerOn { return .stageManager }
+        if system.displaysShareOneSpace { return .sharedSpaces }
+        return nil
+    }
+
+    // MARK: - Attention
+
+    /// The problem that stops LazySpace until the user acts, as seen now, and the checkbox, from one configuration. Operations queue.
+    /// Lost access counts only after it was seen granted in this run: without it at launch, Settings opens instead.
+    private func seenAttention() -> (reason: AttentionReason?, notify: Bool) {
+        // One snapshot: a reload sets the configuration and its error together under the lock.
+        lock.lock()
+        let notify = config.notifications.needsAttention
+        let broken = configError != nil
+        let unapplied = unappliedSinceLaunch
+        lock.unlock()
+        let trusted = system.axTrusted
+        if trusted { everTrusted = true }
+        if !trusted, everTrusted { return (.accessibility, notify) }
+        if broken { return (.configuration, notify) }
+        guard trusted else { return (nil, notify) }
+        return (gateCause(unapplied: unapplied).map(AttentionReason.automaticArrangement), notify)
+    }
+
+    /// Publishes the problem and the checkbox when either changed. Operations queue.
+    /// A problem is published only while it is seen in this very review; a different one only after two equal tick reviews,
+    /// so a one-tick flap posts nothing and a problem that is gone is never published again. `force` (a report between
+    /// ticks) publishes even when nothing changed and never advances the two-review rule.
+    private func reviewAttention(force: Bool = false) {
+        let (seen, notify) = seenAttention()
+        let stable: AttentionReason?
+        if seen == publishedAttention.reason { stable = seen }
+        else if !force, seen != nil, seen == attentionCandidate { stable = seen }
+        else { stable = nil }
+        // A report never counts as a review, but one that no longer sees the candidate forgets it, so the next ticks need two sightings again.
+        if !force { attentionCandidate = seen } else if seen != attentionCandidate { attentionCandidate = nil }
+        let next = AttentionState(reason: stable, notify: notify)
+        guard force || next != publishedAttention else { return }
+        publishedAttention = next
+        DispatchQueue.main.async { self.onAttentionChange?(next) }
+    }
+
+    /// Publishes the current problem and checkbox now, after any reload already applied (for example, the box just turned on).
+    func requestAttentionReport() {
+        queue.async { self.reviewAttention(force: true) }
     }
 
     // MARK: - Status
@@ -3224,6 +3294,7 @@ final class Coordinator {
     /// Reports permission changes to the UI. Revoked: stop input observation; restored: recreate it.
     private func observeTrust() {
         let trusted = system.axTrusted
+        if trusted { everTrusted = true }
         guard trusted != lastTrusted else { return }
         lastTrusted = trusted
         if servicesStarted {
@@ -3361,6 +3432,7 @@ final class Coordinator {
     func tick() {
         if servicesStarted { checkConfigFile() }
         observeTrust()
+        reviewAttention()
         // Process launch times are reread per observation (so a stale cache never misses pid reuse).
         processStarts.removeAll()
         settleDeferred = false
