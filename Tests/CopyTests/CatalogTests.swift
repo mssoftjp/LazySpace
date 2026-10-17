@@ -85,6 +85,28 @@ final class CatalogTests: XCTestCase {
         return out
     }
 
+    /// English arguments used only to choose a plural form: substitutions none of whose forms shows the number ("was" or "were"),
+    /// and that no plain specifier shows either. Another language may leave these out.
+    static func pluralSelectors(_ localization: [String: Any]) -> Set<String> {
+        let substitutions = localization["substitutions"] as? [String: Any] ?? [:]
+        var selectors: Set<String> = []
+        for case let substitution as [String: Any] in substitutions.values {
+            let forms = ((substitution["variations"] as? [String: Any])?["plural"] as? [String: Any] ?? [:]).values
+            let shown = forms.contains { ((($0 as? [String: Any])?["stringUnit"] as? [String: Any])?["value"] as? String ?? "").contains("%arg") }
+            if !shown { selectors.insert("\(substitution["argNum"] as? Int ?? -1):\(kind(substitution["formatSpecifier"] as? String ?? "?"))") }
+        }
+        let value = (localization["stringUnit"] as? [String: Any])?["value"] as? String ?? ""
+        return selectors.subtracting(arguments(value, substitutions: [:]))
+    }
+
+    /// What is wrong with a translation's arguments compared with English, or nil.
+    static func argumentProblem(english: [String: Any], other: [String: Any]) -> String? {
+        let expected = arguments(of: english), actual = arguments(of: other)
+        let missing = expected.subtracting(actual).subtracting(pluralSelectors(english))
+        let extra = actual.subtracting(expected)
+        return missing.isEmpty && extra.isEmpty ? nil : "\(actual.sorted()) vs en \(expected.sorted())"
+    }
+
     static func kind(_ specifier: String) -> String {
         switch specifier {
         case "lld", "ld", "d": "int"
@@ -150,14 +172,10 @@ final class CatalogTests: XCTestCase {
         var found: [String] = []
         for entry in try Self.entries() {
             guard let english = entry.localizations["en"] as? [String: Any] else { continue }
-            let expected = Self.arguments(of: english)
             for language in Language.allCases where language != .english {
                 guard let localization = entry.localizations[language.rawValue] as? [String: Any] else { continue }
-                let actual = Self.arguments(of: localization)
-                let missing = expected.subtracting(actual).filter { !$0.hasSuffix(":int") }
-                let extra = actual.subtracting(expected)
-                if !missing.isEmpty || !extra.isEmpty {
-                    found.append("\(entry.module) \(entry.key) [\(language.rawValue)]: \(actual.sorted()) vs en \(expected.sorted())")
+                if let problem = Self.argumentProblem(english: english, other: localization) {
+                    found.append("\(entry.module) \(entry.key) [\(language.rawValue)]: \(problem)")
                 }
             }
         }
@@ -220,6 +238,24 @@ final class CatalogTests: XCTestCase {
         XCTAssertEqual(Self.symbol("menu.arrangeNow"), "menuArrangeNow")
         XCTAssertEqual(Self.symbol("refusal.noDisplay"), "refusalNoDisplay")
         XCTAssertEqual(Self.symbol("Menu.Upper"), "menuUpper")
+    }
+
+    /// Only a count that English never shows may be left out; a shown count, or any other argument, may not.
+    func testOnlyPluralSelectorsMayBeLeftOut() {
+        func unit(_ value: String) -> [String: Any] { ["stringUnit": ["state": "translated", "value": value]] }
+        func english(_ value: String, one: String, other: String) -> [String: Any] {
+            var localization = unit(value)
+            localization["substitutions"] = ["windows": ["argNum": 2, "formatSpecifier": "lld", "variations": ["plural": [
+                "one": unit(one), "other": unit(other)]]]]
+            return localization
+        }
+        let chooser = english("%1$@ %#@windows@ kept.", one: "was", other: "were")
+        XCTAssertNil(Self.argumentProblem(english: chooser, other: unit("%1$@はそのままです。")))
+        XCTAssertNotNil(Self.argumentProblem(english: chooser, other: unit("そのままです。")), "the name is shown")
+        let shown = english("%1$@: %#@windows@.", one: "%arg window", other: "%arg windows")
+        XCTAssertNotNil(Self.argumentProblem(english: shown, other: unit("%1$@: ウインドウ")), "the count is shown")
+        XCTAssertNil(Self.argumentProblem(english: shown, other: unit("%1$@: %2$lldつ")))
+        XCTAssertNotNil(Self.argumentProblem(english: shown, other: unit("%1$@: %2$lldつ %3$@")), "an argument English lacks")
     }
 
     func testArgumentsAreReadFromEveryKindOfValue() {

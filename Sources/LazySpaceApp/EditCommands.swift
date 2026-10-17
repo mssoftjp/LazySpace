@@ -309,8 +309,8 @@ enum StatusMenuCopy {
 
     /// Tooltip for an overview row: all names, only when some were left out.
     static func spaceToolTip(_ entry: SpaceMenuEntry) -> String? {
-        guard let names = entry.apps?.map(\.name), appList(names) != names.joined(separator: ", ") else { return nil }
-        return names.joined(separator: ", ")
+        guard let names = entry.apps?.map(\.name), appList(names) != names.joined(separator: Copy.listSeparator) else { return nil }
+        return names.joined(separator: Copy.listSeparator)
     }
 
     static var spaceReorderNote: String { L(.editCommandsSpaceReorderNote) }

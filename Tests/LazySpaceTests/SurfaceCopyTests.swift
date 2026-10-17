@@ -317,6 +317,11 @@ final class SurfaceCopyTests: XCTestCase {
         var crowded = entry
         crowded.apps = many.enumerated().map { app($0.element, Int32($0.offset)) }
         XCTAssertEqual(StatusMenuCopy.spaceToolTip(crowded), many.joined(separator: ", "))
+        Copy.language = .japanese
+        XCTAssertEqual(StatusMenuCopy.appList(["Finder", "Safari"]), "Finder、Safari")
+        XCTAssertNil(StatusMenuCopy.spaceToolTip(entry), "a list shown in full needs no tooltip in Japanese either")
+        XCTAssertEqual(StatusMenuCopy.spaceToolTip(crowded), many.joined(separator: "、"))
+        Copy.language = .english
 
         XCTAssertEqual(StatusMenuCopy.barTitle(mode: "main", space: "3"), "3")
         XCTAssertEqual(StatusMenuCopy.barTitle(mode: "service", space: "3"), "3 · service")
