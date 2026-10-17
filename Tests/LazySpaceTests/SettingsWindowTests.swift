@@ -157,6 +157,32 @@ final class SettingsWindowTests: XCTestCase {
         assertNoGlobalSaveControls()
     }
 
+    /// `follow-moved-window`: the checkbox above the shortcut list saves only its line and relabels the Spaces rows and heading at once.
+    func testFollowCheckboxSavesItsLineAndRelabelsTheSpacesRows() throws {
+        try load(Config())
+        let table = try shortcutTable()
+        assertRow("Send Window to Desktop 3", in: table)
+        assertRow("Sends the window and stays on the current Space.", in: table)
+        let original = try String(contentsOf: coordinator.configURL)
+        let box = try button(SettingsCopy.followMovedWindowTitle)
+        XCTAssertEqual(box.state, .off)
+        box.performClick(nil)
+        var expected = Config()
+        expected.followMovedWindow = true
+        XCTAssertEqual(coordinator.config, expected, "only this choice changes")
+        let saved = try String(contentsOf: coordinator.configURL)
+        XCTAssertEqual(saved, original.replacingOccurrences(of: "follow-moved-window = false", with: "follow-moved-window = true"))
+        let on = try shortcutTable()
+        assertRow("Move Window to Desktop 3 and Follow", in: on)
+        assertRow("Moves the window and switches to that Space.", in: on)
+        XCTAssertNil(row(labeled: "Send Window to Desktop 3", in: on))
+        XCTAssertEqual(try button(SettingsCopy.followMovedWindowTitle).state, .on)
+        try button(SettingsCopy.followMovedWindowTitle).performClick(nil)
+        XCTAssertFalse(coordinator.config.followMovedWindow)
+        assertRow("Send Window to Desktop 3", in: try shortcutTable())
+        assertNoGlobalSaveControls()
+    }
+
     func testDisplayDetailsPreserveStyleWhenDisabledAndDiscarded() throws {
         var config = Config()
         config.focusBorder = .init(enabled: true, width: 7, color: "#12345678")

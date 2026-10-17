@@ -153,6 +153,8 @@ public struct Config: Equatable, Codable {
     public var focusAfterClose: Bool = true
     /// Puts dialogs in a strip at the right edge and tiles the rest (sizes unchanged). Off by default.
     public var placeDialogsBeside: Bool = false
+    /// The `move-to-space-*` shortcuts and the menu's sends also switch to the destination (move and follow). The command line is not affected.
+    public var followMovedWindow: Bool = false
     /// Width (pt) of the visible strip of unfocused accordion windows.
     public var accordionPadding: Double = 30
     /// Border around the focused window (optional, off by default). Drawn only on Spaces that have started arranging.
@@ -272,7 +274,7 @@ public struct Config: Equatable, Codable {
         var c = Config()
         var problems: [String] = []
         func boolProblem(_ key: String) -> String { L("\(key) must be true or false.", "\(key)はtrueかfalseで指定してください。") }
-        let known: Set<String> = ["gap", "gaps", "preferred-minimum", "unknown-floor", "quiet-interval", "per-app-timeout", "rule", "keys", "mode", "start-at-login", "exec-on-space-change", "exec-on-mode-change", "exec-on-window-sent", "new-window-placement", "focus-after-close", "accordion-padding", "focus-border", "notifications", "language", "show-shortcut-guide", "place-dialogs-beside"]
+        let known: Set<String> = ["gap", "gaps", "preferred-minimum", "unknown-floor", "quiet-interval", "per-app-timeout", "rule", "keys", "mode", "start-at-login", "exec-on-space-change", "exec-on-mode-change", "exec-on-window-sent", "new-window-placement", "focus-after-close", "accordion-padding", "focus-border", "notifications", "language", "show-shortcut-guide", "place-dialogs-beside", "follow-moved-window"]
         for k in table.keys where !known.contains(k) { problems.append(L("Unknown setting: \(k).", "不明な設定: \(k)。")) }
 
         func number(_ key: String, _ range: ClosedRange<Double>) -> Double? {
@@ -327,6 +329,9 @@ public struct Config: Equatable, Codable {
         }
         if let v = table["place-dialogs-beside"] {
             if let b = v as? Bool { c.placeDialogsBeside = b } else { problems.append(boolProblem("place-dialogs-beside")) }
+        }
+        if let v = table["follow-moved-window"] {
+            if let b = v as? Bool { c.followMovedWindow = b } else { problems.append(boolProblem("follow-moved-window")) }
         }
         if let v = table["show-shortcut-guide"] {
             if let b = v as? Bool { c.showShortcutGuide = b } else { problems.append(boolProblem("show-shortcut-guide")) }
@@ -532,6 +537,7 @@ public struct Config: Equatable, Codable {
         focus-after-close = true       # After closing the focused window, focus a nearby window if no window in this Space has focus
         show-shortcut-guide = true     # Show shortcuts after a modifier key is held for about 0.8 seconds. false hides only that display; shortcuts still work.
         place-dialogs-beside = false   # After you switch away from a fixed-size window (such as Calculator or an alert), move it to a strip at the right or bottom edge; arranged windows use the rest. Its size does not change
+        follow-moved-window = false    # After a shortcut or the menu moves a window to another Space, switch to that Space too. The command line needs --follow either way
 
         # Open at Login (true / false). If omitted, the macOS login-item setting is left unchanged.
         # You can also run `lazyspace login-item on` or `lazyspace login-item off`.
@@ -583,7 +589,7 @@ public struct Config: Equatable, Codable {
         #   resize-width-, resize-height-, resize-smart- + grow, shrink; balance;
         #   toggle-split, accordion, float, zoom, undo, close, fullscreen, minimize, arrange, integrate, pause-resume, reload;
         #   space-1 … space-9, space-next, space-prev, space-back (switch Spaces);
-        #   move-to-space-1 … move-to-space-9, move-to-space-next, move-to-space-prev (send the focused window without switching);
+        #   move-to-space-1 … move-to-space-9, move-to-space-next, move-to-space-prev (send the focused window without switching; with follow-moved-window = true, move and follow);
         #   move-to-space-follow-1 … move-to-space-follow-9, move-to-space-follow-next, move-to-space-follow-prev (move and follow; no default keys)
         # move swaps places with the neighbor when both are in the same split, and each keeps its share of the split, as in AeroSpace.
         # Otherwise it joins the neighbor's split (into the stacked side of a T, for example), sharing the neighbor's place.
@@ -662,6 +668,7 @@ public struct Config: Equatable, Codable {
         out += "focus-after-close = \(focusAfterClose)\n"
         out += "show-shortcut-guide = \(showShortcutGuide)\n"
         out += "place-dialogs-beside = \(placeDialogsBeside)\n"
+        out += "follow-moved-window = \(followMovedWindow)\n"
         out += "language = \"\(language)\"\n"
         if let s = startAtLogin { out += "start-at-login = \(s)\n" }
         func quoted(_ s: String) -> String {

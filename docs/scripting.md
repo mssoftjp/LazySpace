@@ -28,6 +28,7 @@ The IDs above are examples. Use values you have just read.
 - Read window IDs and process IDs again after the target app restarts. Restarting LazySpace makes receipt tokens unusable (see below).
 - With an explicit target, LazySpace never falls back to the focused window.
 - `move-to-space` also requires the target window to be in front.
+- `move-to-space` without `--follow` always stays on the current Space. The setting that makes the shortcuts and the menu follow a moved window does not change the command line.
 - A change of Space, a pause, or user input interrupts an accepted operation.
 - A request that arrives while another operation is running returns `busy`. It is not merged into keyboard work.
 

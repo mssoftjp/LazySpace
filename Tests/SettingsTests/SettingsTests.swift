@@ -771,3 +771,35 @@ final class PlacementTests: XCTestCase {
         XCTAssertEqual(try Config.load(toml: "[gaps]\ninner-horizontal = 2\nouter-left = 3\n").outerLeft, 3)
     }
 }
+
+/// `follow-moved-window`: makes the `move-to-space-*` shortcuts and the menu follow the moved window.
+final class FollowMovedWindowSettingTests: XCTestCase {
+    func testDefaultsOffLoadsRendersAndRejectsNonBool() throws {
+        XCTAssertFalse(Config().followMovedWindow)
+        XCTAssertFalse(try Config.load(toml: "gap = 4\n").followMovedWindow)
+        XCTAssertEqual(try Config.load(toml: Config.template), Config(), "the template states the default")
+        XCTAssertTrue(Config.template.contains("follow-moved-window = false"))
+        let on = try Config.load(toml: "follow-moved-window = true\n")
+        XCTAssertTrue(on.followMovedWindow)
+        XCTAssertTrue(on.render().contains("follow-moved-window = true\n"))
+        XCTAssertEqual(try Config.load(toml: on.render()), on)
+        for bad in ["1", "\"yes\""] {
+            XCTAssertThrowsError(try Config.load(toml: "follow-moved-window = \(bad)\n"), bad) { error in
+                XCTAssertEqual((error as? Config.LoadError)?.problems, ["follow-moved-window must be true or false."])
+            }
+        }
+    }
+
+    func testSpacesHeadingStatesWhatTheRowsDo() {
+        XCTAssertEqual(ShortcutSection.spaces.detail, ShortcutSection.spaces.detail(follow: false))
+        XCTAssertEqual(ShortcutSection.spaces.detail(follow: false), "Sends the window and stays on the current Space.")
+        XCTAssertEqual(ShortcutSection.spaces.detail(follow: true), "Moves the window and switches to that Space.")
+        XCTAssertEqual(ShortcutSection.stepwise.detail(follow: true), "")
+        let commands = Config.commandNames.map { ($0, $0) }
+        for follow in [false, true] {
+            let rows = ShortcutList.rows(commands: commands, saved: Config.defaultKeys, draft: Config.defaultKeys, search: "", follow: follow)
+            let heading = rows.compactMap { row -> ShortcutHeading? in if case .heading(let h) = row, h.section == .spaces { return h } else { return nil } }.first
+            XCTAssertEqual(heading?.detail, ShortcutSection.spaces.detail(follow: follow))
+        }
+    }
+}
