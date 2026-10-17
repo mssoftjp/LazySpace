@@ -11,7 +11,8 @@ private struct UUIDListing: SpaceListing {
     var order: [UInt64]
     var uuids: [UInt64: String]
     var active: () -> UInt64?
-    func orderedSpaces() -> [(id: UInt64, type: Int32?)] { order.map { ($0, 0) } }
+    var fullScreen: Set<UInt64> = []
+    func orderedSpaces() -> [(id: UInt64, type: Int32?)] { order.map { ($0, fullScreen.contains($0) ? 4 : 0) } }
     func neighbor(offset: Int) -> UInt64? {
         guard let active = active(), let i = order.firstIndex(of: active), order.indices.contains(i + offset) else { return nil }
         return order[i + offset]
@@ -65,6 +66,28 @@ final class SendToSpaceTests: XCTestCase {
         let done = expectation(description: "drained")
         coordinator.operationsQueue.async { done.fulfill() }
         wait(for: [done], timeout: 5)
+    }
+
+    private func click(_ row: NSMenuItem, type: NSEvent.EventType) throws {
+        let app = NSApplication.shared
+        let event = try XCTUnwrap(NSEvent.mouseEvent(with: type, location: .zero, modifierFlags: [],
+                                                   timestamp: 0, windowNumber: 0, context: nil,
+                                                   eventNumber: 1, clickCount: 1, pressure: 0))
+        let idle = try XCTUnwrap(NSEvent.otherEvent(with: .applicationDefined, location: .zero, modifierFlags: [],
+                                                  timestamp: 0, windowNumber: 0, context: nil,
+                                                  subtype: 0, data1: 0, data2: 0))
+        defer {
+            // Do not leave a synthetic mouse button as the current event for later menu tests.
+            app.postEvent(idle, atStart: true)
+            _ = app.nextEvent(matching: .applicationDefined, until: Date(), inMode: .default, dequeue: true)
+        }
+        app.postEvent(event, atStart: true)
+        let dequeued = app.nextEvent(matching: NSEvent.EventTypeMask(type: type),
+                                     until: Date(), inMode: .default, dequeue: true)
+        XCTAssertEqual(dequeued?.type, type)
+        XCTAssertEqual(app.currentEvent?.type, type)
+        XCTAssertTrue(app.sendAction(try XCTUnwrap(row.action), to: row.target, from: row))
+        drain()
     }
 
     /// Replaces the sender. Default: confirmed (the window is only on the target Space). `during` runs mid-send.
@@ -271,6 +294,101 @@ final class SendToSpaceTests: XCTestCase {
         XCTAssertTrue(hookCalls.isEmpty)
     }
 
+    func testSpaceOverviewMouseButtonChoosesSendOrSwitch() throws {
+        make()
+        sender()
+        var switches = 0
+        coordinator.spaceSwitcherOverride = { _, _, _ in switches += 1; return .failure(.interrupted) }
+        let delegate = AppDelegate(showReadyAtLaunch: false, coordinator: coordinator)
+        let menu = NSMenu()
+        delegate.menuNeedsUpdate(menu)
+        let item = try XCTUnwrap(menu.items.first {
+            ($0.representedObject as? EditCommandBox)?.command == .space(.id(9))
+        })
+        let current = try XCTUnwrap(menu.items.first {
+            $0.action == item.action && $0.state == .on && $0.representedObject == nil
+        })
+        XCTAssertEqual((item.representedObject as? EditCommandBox)?.menuTarget, coordinator.menuWindowTarget())
+        listing.order = [7, 9, 8]
+        coordinator.spaceListingOverride = listing
+        try click(item, type: .rightMouseDown)
+        XCTAssertEqual(sends.map(\.1), [9])
+        XCTAssertEqual(sends.map(\.0), [2])
+        XCTAssertEqual(switches, 0)
+        sends = []
+        try click(item, type: .leftMouseDown)
+        XCTAssertTrue(sends.isEmpty)
+        XCTAssertEqual(switches, 1)
+        switches = 0
+        try click(current, type: .rightMouseDown)
+        XCTAssertTrue(sends.isEmpty)
+        XCTAssertEqual(switches, 0)
+        try click(current, type: .leftMouseDown)
+        XCTAssertTrue(sends.isEmpty)
+        XCTAssertEqual(switches, 0)
+    }
+
+    func testSpaceOverviewWithoutAPinnedTargetRefusesRatherThanRetargeting() throws {
+        make()
+        sender()
+        system.focused = nil; system.frontPID = nil
+        var switches = 0
+        coordinator.spaceSwitcherOverride = { _, _, _ in switches += 1; return .failure(.interrupted) }
+        let delegate = AppDelegate(showReadyAtLaunch: false, coordinator: coordinator)
+        let menu = NSMenu()
+        delegate.menuNeedsUpdate(menu)
+        let item = try XCTUnwrap(menu.items.first {
+            ($0.representedObject as? EditCommandBox)?.command == .space(.id(9))
+        })
+        XCTAssertNil((item.representedObject as? EditCommandBox)?.menuTarget)
+        system.focused = WindowID(2); system.frontPID = 102
+        try click(item, type: .rightMouseDown)
+        XCTAssertTrue(sends.isEmpty)
+        XCTAssertEqual(switches, 0)
+        XCTAssertEqual(coordinator.lastRefusal,
+                       "“\(EditCommand.sendToSpace(.id(9)).label)”: Could not find the focused window. Select the window to send, then try again.")
+        try click(item, type: .leftMouseDown)
+        XCTAssertTrue(sends.isEmpty)
+        XCTAssertEqual(switches, 1)
+    }
+
+    func testSpaceOverviewPinsOnlyTheFirstObservedWindow() throws {
+        make()
+        sender()
+        var switches = 0
+        coordinator.spaceSwitcherOverride = { _, _, _ in switches += 1; return .failure(.interrupted) }
+        system.focused = nil; system.frontPID = nil
+        let delegate = AppDelegate(showReadyAtLaunch: false, coordinator: coordinator)
+        let menu = NSMenu()
+        delegate.menuNeedsUpdate(menu)
+        let item = try XCTUnwrap(menu.items.first {
+            ($0.representedObject as? EditCommandBox)?.command == .space(.id(9))
+        })
+        let box = try XCTUnwrap(item.representedObject as? EditCommandBox)
+        XCTAssertNil(box.menuTarget)
+        XCTAssertTrue(item.isEnabled)
+        delegate.menuWillOpen(menu)
+        defer { delegate.menuDidClose(menu) }
+        system.focused = WindowID(2); system.frontPID = 102
+        delegate.menuNeedsUpdate(menu)
+        XCTAssertEqual(box.menuTarget, coordinator.menuWindowTarget())
+        XCTAssertEqual(box.menuTarget?.window, WindowID(2))
+        system.focused = WindowID(1); system.frontPID = 101
+        delegate.menuNeedsUpdate(menu)
+        XCTAssertEqual(box.menuTarget?.window, WindowID(2))
+        XCTAssertTrue(item.isEnabled)
+        try click(item, type: .rightMouseDown)
+        XCTAssertTrue(sends.isEmpty)
+        XCTAssertEqual(switches, 0)
+        XCTAssertTrue(coordinator.lastRefusal?.contains("The selected window changed. Open the menu again") == true)
+        try click(item, type: .leftMouseDown)
+        XCTAssertEqual(switches, 1)
+        system.focused = WindowID(2); system.frontPID = 102
+        try click(item, type: .rightMouseDown)
+        XCTAssertEqual(sends.map(\.0), [2])
+        XCTAssertEqual(sends.map(\.1), [9])
+    }
+
     func testSpaceMenuUsesTheVisibleFrontWindowWhenAXFocusIsTemporarilyMissing() throws {
         make()
         sender()
@@ -342,6 +460,35 @@ final class SendToSpaceTests: XCTestCase {
             _ = coordinator.edit(.sendToSpace(.index(3)), source: "menu", menuTarget: captured)
             drain()
             XCTAssertEqual(sends.count, changedBeforeIssue ? 0 : 1)
+            coordinator = nil
+            try? FileManager.default.removeItem(at: root)
+        }
+    }
+
+    /// The right-click on a top-level row can name a full-screen Space; queued while busy, it is refused like an immediate send.
+    func testAQueuedMenuSendNeverTargetsAFullScreenSpace() throws {
+        for destination: UInt64 in [9, 10] {
+            make()
+            sender()
+            listing.order = [7, 8, 9, 10]
+            listing.uuids[10] = "U10"
+            listing.fullScreen = [10]
+            coordinator.spaceListingOverride = listing
+            system.existingSpaces = [7, 8, 9, 10]
+            coordinator.operationsQueue.suspend()
+            _ = coordinator.runSimple(kind: "auto-reconcile", progress: "", source: "auto") { _ in
+                .note(kind: "auto-reconcile", spaceID: 7, message: "test", ok: true)
+            }
+            let captured = try XCTUnwrap(coordinator.menuWindowTarget())
+            let accept = coordinator.edit(.sendToSpace(.id(destination)), source: "menu", menuTarget: captured)
+            coordinator.operationsQueue.resume()
+            drain(); drain()
+            if destination == 10 {
+                XCTAssertTrue(sends.isEmpty, "a full-screen Space is not a send destination")
+                if case .started = accept { XCTFail("queued a send to a full-screen Space") }
+            } else {
+                XCTAssertEqual(sends.map(\.1), [9], "a desktop queued the same way is sent")
+            }
             coordinator = nil
             try? FileManager.default.removeItem(at: root)
         }

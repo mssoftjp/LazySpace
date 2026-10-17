@@ -59,7 +59,7 @@ If a Space should be left alone, uncheck **Automatically Arrange This Space** in
 
 The number next to the icon is the desktop you are on. With more than one display, it shows the desktop each display is showing, in the order of the list below, such as `4|1`, and a Space without a number there (a full-screen Space, or one that cannot be read for a moment) shows as `–`. The display you are on is the one with the focused window; it is not marked.
 
-The list at the top of the menu shows your Spaces and the apps in each. With more than one display, both lists are grouped under each display's name as macOS shows it (in System Settings › Displays), and the check mark is on the Space each display is showing. When two displays have the same name, a number in display order is added, such as "LG HDR 4K (1)". Choosing a Space of another display in the top list switches to it.
+The list at the top of the menu shows your Spaces and the apps in each. With more than one display, both lists are grouped under each display's name as macOS shows it (in System Settings › Displays), and the check mark is on the Space each display is showing. When two displays have the same name, a number in display order is added, such as "LG HDR 4K (1)". Choosing a Space of another display in the top list switches to it. Right-clicking a Space in the top list sends the focused window there, the same as choosing it in **Move Window to Space**.
 
 ### Keyboard shortcuts
 

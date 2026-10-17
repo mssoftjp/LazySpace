@@ -222,7 +222,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                         HotkeyBinding.applyMenuShortcut(bindings.first { $0.command == .space(.index(index)) }, to: item)
                     }
                     // The current Space's row is only a marker; choosing it does nothing.
-                    item.representedObject = sp.isCurrent ? nil : EditCommandBox(command)
+                    item.representedObject = sp.isCurrent ? nil : EditCommandBox(command, menuTarget: menuWindow)
                     item.isEnabled = sp.isCurrent || (canAct && coordinator.canApplyEdit(command, focused: s.focusedWindow))
                     menu.addItem(item)
                 }
@@ -319,6 +319,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let observed = coordinator.menuWindowTarget()
         let canSend = coordinator.canSendFromMenu
         for parent in menu.items {
+            if let box = parent.representedObject as? EditCommandBox,
+               case .space = box.command, box.menuTarget == nil { box.menuTarget = observed }
             for item in parent.submenu?.items ?? [] {
                 guard let box = item.representedObject as? EditCommandBox,
                       case .sendToSpace(.id(let destination)) = box.command else { continue }
@@ -416,7 +418,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func integrateAction() { perform(.integrate, source: "menu") }
     @objc private func spaceOverviewAction(_ sender: NSMenuItem) {
         guard let box = sender.representedObject as? EditCommandBox else { return }
-        runEdit(box.command, source: "menu")
+        // macOS 27 reports the press on the item (`rightMouseDown`), not the release, as the current event.
+        if let type = NSApp.currentEvent?.type, type == .rightMouseDown || type == .rightMouseUp, case .space(let destination) = box.command {
+            let command = EditCommand.sendToSpace(destination)
+            guard let target = box.menuTarget else {
+                let why = L("Could not find the focused window. Select the window to send, then try again.", "フォーカス中のウインドウを確認できません。送りたいウインドウを選んでから操作してください。")
+                coordinator.noteRefusal(L("“\(command.label)”: \(why)", "「\(command.label)」: \(why)"))
+                return
+            }
+            runEdit(command, source: "menu", menuTarget: target)
+        } else {
+            runEdit(box.command, source: "menu")
+        }
     }
     @objc private func editAction(_ sender: NSMenuItem) {
         guard let box = sender.representedObject as? EditCommandBox else { return }

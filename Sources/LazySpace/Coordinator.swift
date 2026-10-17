@@ -1866,7 +1866,9 @@ final class Coordinator {
             // next, prev, and back are relative to the position after the previous operation, so they are resolved when dequeued.
             var accepted = resolved
             if accepted == nil, let destination = Self.absoluteDestination(command) {
-                switch resolveSpace(destination) {
+                // Moves and sends resolve desktops only, as when they run at once; a queued run trusts this resolution.
+                let desktopsOnly: Bool = { if case .space = command { return false } else { return true } }()
+                switch resolveSpace(destination, desktopsOnly: desktopsOnly) {
                 case .failure(let why): return why.accept
                 case .success(let value): accepted = value
                 }
