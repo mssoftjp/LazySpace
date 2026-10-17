@@ -1,6 +1,46 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "arrangeOperation.addedToLayout" : {
+      "comment" : "Arguments: 1 = how many windows were added.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Added %#@windows@ to the layout."
+          },
+          "substitutions" : {
+            "windows" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg window"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg windows"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lldつのウインドウをレイアウトに加えました。"
+          }
+        }
+      }
+    },
     "arrangeOperation.applyingLayout" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -14,6 +54,126 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "適用しています"
+          }
+        }
+      }
+    },
+    "arrangeOperation.arranged" : {
+      "comment" : "Arguments: 1 = how many windows were arranged.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arranged %#@windows@."
+          },
+          "substitutions" : {
+            "windows" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg window"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg windows"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lldつのウインドウを整列しました。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.arrangedUnobservedLeft" : {
+      "comment" : "Arguments: 1 = how many windows were arranged; 2 = the apps that did not answer, joined by copy.listSeparator.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arranged %#@windows@. %2$@ didn't return a window list in time, so its windows were left where they are."
+          },
+          "substitutions" : {
+            "windows" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg window"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg windows"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lldつのウインドウを整列しました。%2$@がウインドウの一覧を期限内に返さなかったため、そのウインドウはそのままにしています。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.arrangedUnobservedUnconfirmed" : {
+      "comment" : "Arguments: 1 = how many windows were arranged; 2 = the apps that did not answer, joined by copy.listSeparator.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arranged %#@windows@, but %2$@ didn't return a window list in time, so the set of windows couldn't be confirmed. Arrange again once that app responds."
+          },
+          "substitutions" : {
+            "windows" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg window"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg windows"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lldつのウインドウを整列しましたが、%2$@がウインドウの一覧を期限内に返さなかったため対象を確定できませんでした。そのアプリが応答するようになってから再度整列してください。"
           }
         }
       }
@@ -121,6 +281,46 @@
         }
       }
     },
+    "arrangeOperation.closedDuringArrangement" : {
+      "comment" : "Arguments: 1 = how many windows closed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@windows@ closed during arrangement. The rest are arranged. Arrange again if needed."
+          },
+          "substitutions" : {
+            "windows" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg window was"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg windows were"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "整列中に%lldつのウインドウが閉じられました。残りは整列済みです。必要なら再度整列してください。"
+          }
+        }
+      }
+    },
     "arrangeOperation.closedDuringOperationNote" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -209,6 +409,46 @@
         }
       }
     },
+    "arrangeOperation.didntFitKeptFloating" : {
+      "comment" : "Arguments: 1 = the apps' names, joined by copy.listSeparator; 2 = how many windows (chooses was or were).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ didn't fit even at minimum size and %#@windows@ kept in place as floating."
+          },
+          "substitutions" : {
+            "windows" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "was"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "were"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@は最小サイズでも収まらないため、位置を保ってフローティングにしました。"
+          }
+        }
+      }
+    },
     "arrangeOperation.didntMatchTheRequestWhen" : {
       "comment" : "Arguments: 1 = `Int(actual.width)`; 2 = `Int(actual.height)`.",
       "extractionState" : "manual",
@@ -263,6 +503,24 @@
         }
       }
     },
+    "arrangeOperation.editDoesntFit" : {
+      "comment" : "Arguments: 1 = why the windows don't fit (whole sentences).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The windows don't fit with this edit. %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この編集ではウインドウが収まりません。%@"
+          }
+        }
+      }
+    },
     "arrangeOperation.editNotPossible" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -276,6 +534,86 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "編集できません"
+          }
+        }
+      }
+    },
+    "arrangeOperation.fixedSizeNotPlaced" : {
+      "comment" : "Arguments: 1 = how many fixed-size windows.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@windows@ could not be placed next to the arranged windows."
+          },
+          "substitutions" : {
+            "windows" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg fixed-size window"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg fixed-size windows"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "大きさが固定のウインドウ%lldつを整列したウインドウと並べられませんでした。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.fixedSizePlaced" : {
+      "comment" : "Arguments: 1 = how many fixed-size windows.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Placed %#@windows@ next to the arranged windows."
+          },
+          "substitutions" : {
+            "windows" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg fixed-size window"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg fixed-size windows"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "大きさが固定のウインドウ%lldつを整列したウインドウと並べました。"
           }
         }
       }
@@ -298,13 +636,13 @@
       }
     },
     "arrangeOperation.interruptedBecauseAnAppDidnt" : {
-      "comment" : "Arguments: 1 = `tail`.",
+      "comment" : "Arguments: 1 = arrangeOperation.interruptedTail.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Interrupted because an app didn't respond%@."
+            "value" : "Interrupted because an app didn't respond %@."
           }
         },
         "ja" : {
@@ -316,13 +654,13 @@
       }
     },
     "arrangeOperation.interruptedBecauseArrangementWasPaused" : {
-      "comment" : "Arguments: 1 = `tail`.",
+      "comment" : "Arguments: 1 = arrangeOperation.interruptedTail.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Interrupted because arrangement was paused%@. Resume, then arrange again."
+            "value" : "Interrupted because arrangement was paused %@. Resume, then arrange again."
           }
         },
         "ja" : {
@@ -334,13 +672,13 @@
       }
     },
     "arrangeOperation.interruptedBecauseInputWasDetected" : {
-      "comment" : "Arguments: 1 = `tail`.",
+      "comment" : "Arguments: 1 = arrangeOperation.interruptedTail.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Interrupted because input was detected%@. Arrange again once input settles."
+            "value" : "Interrupted because input was detected %@. Arrange again once input settles."
           }
         },
         "ja" : {
@@ -352,13 +690,13 @@
       }
     },
     "arrangeOperation.interruptedBecauseThePermissionWas" : {
-      "comment" : "Arguments: 1 = `AccessPane.name()`; 2 = `tail`.",
+      "comment" : "Arguments: 1 = the System Settings pane that grants window control (AccessPane); 2 = arrangeOperation.interruptedTail.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Interrupted because the %@ permission was lost%@. Check it in System Settings."
+            "value" : "Interrupted because the %@ permission was lost %@. Check it in System Settings."
           }
         },
         "ja" : {
@@ -370,13 +708,13 @@
       }
     },
     "arrangeOperation.interruptedBecauseTheSpaceChanged" : {
-      "comment" : "Arguments: 1 = `tail`.",
+      "comment" : "Arguments: 1 = arrangeOperation.interruptedTail.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Interrupted because the Space changed%@. Return to the original Space, then arrange again."
+            "value" : "Interrupted because the Space changed %@. Return to the original Space, then arrange again."
           }
         },
         "ja" : {
@@ -388,19 +726,37 @@
       }
     },
     "arrangeOperation.interruptedBecauseTheWindowsChanged" : {
-      "comment" : "Arguments: 1 = `tail`.",
+      "comment" : "Arguments: 1 = arrangeOperation.interruptedTail.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Interrupted because the windows changed%@. Arrange again."
+            "value" : "Interrupted because the windows changed %@. Arrange again."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "対象のウインドウが変わったため中断しました%@。再度整列してください。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.interruptedTail" : {
+      "comment" : "Arguments: 1 = how many windows were checked; 2 = how many were not applied. Inserted into the arrangeOperation.interrupted… entries.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(%1$lld checked, %2$lld not applied; windows stay where they are now)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "（%1$lldつは確認済み、%2$lldつは未適用。位置は現在のまま保ちます）"
           }
         }
       }
@@ -530,6 +886,23 @@
         }
       }
     },
+    "arrangeOperation.movedStay" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Windows that moved stay where they are."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動いたウインドウはそのまま保ちます。"
+          }
+        }
+      }
+    },
     "arrangeOperation.movingItBackToIts" : {
       "comment" : "Arguments: 1 = `why`.",
       "extractionState" : "manual",
@@ -583,19 +956,36 @@
       }
     },
     "arrangeOperation.noWindowsToArrangeSee" : {
-      "comment" : "Arguments: 1 = `extra`.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No windows to arrange%@. See the window list for excluded windows and reasons."
+            "value" : "No windows to arrange. See the window list for excluded windows and reasons."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "整列するウインドウがありません%@。除外されたウインドウと理由は一覧で確認してください。"
+            "value" : "整列するウインドウがありません。除外されたウインドウと理由は一覧で確認してください。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.noWindowsToArrangeUnobserved" : {
+      "comment" : "Arguments: 1 = the apps that did not return a window list, joined by copy.listSeparator.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No windows to arrange (%@ did not return a window list). See the window list for excluded windows and reasons."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "整列するウインドウがありません（%@はウインドウの一覧を返しませんでした）。除外されたウインドウと理由は一覧で確認してください。"
           }
         }
       }
@@ -703,14 +1093,32 @@
         }
       }
     },
-    "arrangeOperation.operationCanceled" : {
-      "comment" : "Arguments: 1 = `tail`.",
+    "arrangeOperation.noteAndSmaller" : {
+      "comment" : "Arguments: 1 = the earlier note about the window; 2 = arrangeOperation.theAppMadeItSmaller.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Operation canceled%@."
+            "value" : "%1$@. %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@。%2$@"
+          }
+        }
+      }
+    },
+    "arrangeOperation.operationCanceled" : {
+      "comment" : "Arguments: 1 = arrangeOperation.interruptedTail.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Operation canceled %@."
           }
         },
         "ja" : {
@@ -738,6 +1146,86 @@
         }
       }
     },
+    "arrangeOperation.overflowKeptFloating" : {
+      "comment" : "Arguments: 1 = how many windows.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@windows@ kept in place as floating."
+          },
+          "substitutions" : {
+            "windows" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg window didn't fit even at minimum size and was"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg windows didn't fit even at minimum size and were"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lldつのウインドウは最小サイズでも収まらないため、位置を保ってフローティングにしました。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.partiallyApplied" : {
+      "comment" : "Arguments: 1 = how many windows did not match; 2 = how many windows the arrangement had.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partially applied: %1$lld of %#@windows@ did not match the layout."
+          },
+          "substitutions" : {
+            "windows" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg window"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg windows"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$lldつのうち%1$lldつのウインドウがレイアウトどおりになりませんでした。"
+          }
+        }
+      }
+    },
     "arrangeOperation.positionDoesntMatchTheRequest" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -751,6 +1239,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "位置が要求と一致しない"
+          }
+        }
+      }
+    },
+    "arrangeOperation.reasons" : {
+      "comment" : "Arguments: 1 = the reasons, whole sentences joined by copy.sentenceSeparator; 2 = how many reasons (chooses Reason or Reasons).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@reasons@ %1$@"
+          },
+          "substitutions" : {
+            "reasons" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Reason:"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "Reasons:"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "理由: %1$@"
           }
         }
       }
@@ -802,6 +1330,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "収まらないため元の位置に戻しています"
+          }
+        }
+      }
+    },
+    "arrangeOperation.splitOverflow" : {
+      "comment" : "Arguments: 1 = how many windows; 2 = arrangeOperation.width or arrangeOperation.height; 3 = the size needed (pt); 4 = the size available (pt); 5 = the windows' app names, joined by copy.listSeparator.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@windows@ fit in the work area (%2$@ needed: %3$@; available: %4$@). Close or exclude a window, then arrange again. Windows: %5$@."
+          },
+          "substitutions" : {
+            "windows" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg window doesn't"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg windows don't"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lldつのウインドウが作業領域に収まりません（必要な%2$@%3$@ > 利用可能%4$@）。ウインドウを閉じるか除外してから、再度整列してください。対象: %5$@。"
           }
         }
       }
@@ -963,6 +1531,40 @@
         }
       }
     },
+    "arrangeOperation.thisEditCantBePerformed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This edit can't be performed."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この編集は実行できません。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.toFixThis" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To fix this, close or exclude that window, then arrange again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "対処: そのウインドウを閉じるか除外して、再度整列してください。"
+          }
+        }
+      }
+    },
     "arrangeOperation.unreadableSizeNote" : {
       "comment" : "Arguments: 1 = `why`.",
       "extractionState" : "manual",
@@ -977,6 +1579,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "実寸を読めなかった: %@"
+          }
+        }
+      }
+    },
+    "arrangeOperation.unreturnedStay" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Windows that couldn't be returned stay where they are now."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "戻せなかったウインドウは現在の位置のままです。"
           }
         }
       }
@@ -1011,6 +1630,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "現在の操作スペースを確認できないため整列しません。この構成では手動の整列を利用できません。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.windowsWereReturned" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Windows were returned to where they were before."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動かす前の位置に戻しました。"
           }
         }
       }
@@ -1203,6 +1839,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "フォーカスを移せませんでした。"
+          }
+        }
+      }
+    },
+    "focusOperation.couldntMoveFocusBecause" : {
+      "comment" : "Arguments: 1 = why (the note on the focus request, possibly empty).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't move focus: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フォーカスを移せませんでした: %@"
           }
         }
       }

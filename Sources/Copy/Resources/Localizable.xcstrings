@@ -18,6 +18,24 @@
         }
       }
     },
+    "copy.clauseSeparator" : {
+      "comment" : "Joins clauses of one sentence, such as the parts of a desktop shortcut summary.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "; "
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "、"
+          }
+        }
+      }
+    },
     "copy.desktop" : {
       "comment" : "Arguments: 1 = `number`.",
       "extractionState" : "manual",
@@ -49,6 +67,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "デバイスの制御とデータへのアクセス"
+          }
+        }
+      }
+    },
+    "copy.listSeparator" : {
+      "comment" : "Joins the items of a list, such as app names.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", "
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "、"
           }
         }
       }
@@ -134,6 +170,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ログイン時に開く"
+          }
+        }
+      }
+    },
+    "copy.sentenceSeparator" : {
+      "comment" : "Joins two sentences at run time: a space in English, nothing in Japanese.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " "
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ""
           }
         }
       }

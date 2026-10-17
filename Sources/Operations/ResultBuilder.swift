@@ -82,4 +82,3 @@ extension TargetReport {
     }
 }
 
-func windowCount(_ n: Int) -> String { n == 1 ? "1 window" : "\(n) windows" }

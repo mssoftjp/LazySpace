@@ -9,12 +9,18 @@ final class CopyTests: XCTestCase {
 
     func testEnglishIsTheDefaultForTests() {
         XCTAssertEqual(Copy.language, .english)
-        XCTAssertEqual(L("Arrange", "整列"), "Arrange")
+        XCTAssertEqual(MacItem.openAtLogin, "Open at Login")
     }
 
     func testJapaneseIsSelectedExplicitly() {
         Copy.language = .japanese
-        XCTAssertEqual(L("Arrange", "整列"), "整列")
+        XCTAssertEqual(MacItem.openAtLogin, "ログイン時に開く")
+    }
+
+    func testSeparatorsFollowTheLanguage() {
+        XCTAssertEqual([Copy.listSeparator, Copy.clauseSeparator], [", ", "; "])
+        Copy.language = .japanese
+        XCTAssertEqual([Copy.listSeparator, Copy.clauseSeparator], ["、", "、"])
     }
 
     /// macOS's own matching: the first preferred language LazySpace ships, English when there is none.
@@ -44,6 +50,22 @@ final class CopyTests: XCTestCase {
         XCTAssertEqual(MacItem.switchToDesktop(3), "デスクトップ3へ切り替え")
         XCTAssertEqual(MacItem.switchToDesktop(10), "デスクトップ10へ切り替え")
         XCTAssertEqual(MacItem.switchToDesktop(nil), "デスクトップNへ切り替え")
+    }
+
+    /// macOS item names match macOS's own shortcut table in every shipped language. The table is macOS 27's, read without privileges.
+    func testMacItemNamesMatchTheMacOSShortcutTable() throws {
+        let url = URL(fileURLWithPath: "/System/Library/ExtensionKit/Extensions/KeyboardSettings.appex/Contents/Resources/DefaultShortcutsTable.loctable")
+        guard ProcessInfo.processInfo.operatingSystemVersion.majorVersion == 27, let data = try? Data(contentsOf: url),
+              let table = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else {
+            throw XCTSkip("needs macOS 27's DefaultShortcutsTable.loctable")
+        }
+        for language in Language.allCases {
+            let names = try XCTUnwrap(table[language.rawValue] as? [String: Any], language.rawValue)
+            Copy.language = language
+            XCTAssertEqual(MacItem.moveSpace(right: true), names["Move to next space"] as? String, language.rawValue)
+            XCTAssertEqual(MacItem.moveSpace(right: false), names["Move to previous space"] as? String, language.rawValue)
+            XCTAssertEqual(MacItem.switchToDesktop(3), names["Switch to Space 3"] as? String, language.rawValue)
+        }
     }
 
     func testNumberedDesktopLabelAndSentenceSeparatorFollowTheLanguage() {

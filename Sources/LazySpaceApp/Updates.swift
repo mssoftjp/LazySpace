@@ -41,7 +41,7 @@ enum UpdateCopy {
     static func menuTitle(_ offer: UpdateOffer) -> String { L(.updatesMenuTitle(offer.version)) }
     /// Without a final period, for the `status` row.
     static func available(_ offer: UpdateOffer) -> String { L(.updatesAvailable(offer.version)) }
-    static func notice(_ offer: UpdateOffer) -> String { available(offer) + L(".", "。") }
+    static func notice(_ offer: UpdateOffer) -> String { L(.updatesAvailableNotice(offer.version)) }
     static var statusRow: String { L(.updatesStatusRow) }
     static var updateButton: String { L(.updatesUpdateButton) }
     static var checkButton: String { L(.updatesCheckButton) }

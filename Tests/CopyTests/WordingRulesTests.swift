@@ -14,10 +14,8 @@ final class WordingRulesTests: XCTestCase {
 
     /// Exceptions: exact match of file and string (interpolations as `\(…)`), always with a reason.
     static let exceptions: [(file: String, text: String, reason: String)] = [
-        ("Sources/MacSupport/SpaceControl.swift", #"Space \(…)"#,
-         "Diagnostic fallback: identifies a Space without a desktop number by its ID (not a numbered desktop)."),
         ("Sources/MacSupport/Resources/Localizable.xcstrings", #"Space \(…)"#,
-         "The same diagnostic fallback, once its text is in the catalog."),
+         "Diagnostic fallback: identifies a Space without a desktop number by its ID (not a numbered desktop)."),
     ]
 
     static let sourceModules = ["Copy", "LayoutCore", "Operations", "Settings", "MacSupport", "LazySpaceApp", "LazySpace"]
@@ -32,10 +30,31 @@ final class WordingRulesTests: XCTestCase {
 
     // MARK: - Checks
 
-    func testProductJapaneseStrings() throws {
-        let found = try Self.sourceLiterals().filter { $0.text.contains(where: Self.isJapanese) }
-            .flatMap { Self.violations(in: $0, rules: Self.japaneseRules + [Self.w8]) }
-        report(found, kind: "product Japanese strings")
+    /// Every language's text is in the catalogs, so product Swift sources hold no Japanese, except the JIS key names
+    /// that shortcut parsing accepts and displays.
+    func testNoJapaneseInProductSwift() throws {
+        let allowed: Set<String> = ["英数", "かな"]
+        let found = try Self.sourceLiterals().filter { $0.text.contains(where: Self.isJapanese) && !allowed.contains($0.display) }
+        XCTAssertEqual(found.map { "\($0.file):\($0.line): \($0.display)" }, [], "Japanese belongs in the catalogs")
+    }
+
+    /// `L` takes catalog symbols. A string literal would compile (LocalizedStringResource accepts one) but has no translation.
+    /// `String(localized:)` appears only in Copy's `L`, which sets the language.
+    func testTextGoesThroughCatalogSymbols() throws {
+        var found: [String] = []
+        for module in Self.sourceModules {
+            let directory = Self.root.appendingPathComponent("Sources/\(module)")
+            for file in try FileManager.default.contentsOfDirectory(atPath: directory.path).filter({ $0.hasSuffix(".swift") }).sorted() {
+                let path = "Sources/\(module)/\(file)"
+                let text = try String(contentsOf: directory.appendingPathComponent(file), encoding: .utf8)
+                for (index, line) in text.components(separatedBy: "\n").enumerated() {
+                    let literal = line.range(of: #"(?<![A-Za-z0-9_.])L\(\s*#*""#, options: .regularExpression) != nil
+                    let direct = line.contains("String(localized:") && path != "Sources/Copy/Copy.swift"
+                    if literal || direct { found.append("\(path):\(index + 1): \(line.trimmingCharacters(in: .whitespaces))") }
+                }
+            }
+        }
+        XCTAssertEqual(found, [], "pass a catalog symbol to L:\n" + found.joined(separator: "\n"))
     }
 
     func testProductStringsInAnyLanguage() throws {

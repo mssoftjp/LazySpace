@@ -1,3 +1,4 @@
+import Copy
 import Foundation
 import XCTest
 import LayoutCore
@@ -131,6 +132,32 @@ final class WindowTransferCommandTests: XCTestCase {
 }
 
 final class CLIParseTests: XCTestCase {
+    /// The help lists every command in each language, with descriptions in one column whatever the language's widths.
+    func testHelpListsEveryCommandWithAlignedDescriptions() {
+        let commands = ["status", "list-windows", "list-spaces", "show", "settings", "arrange", "integrate", "pause", "resume",
+                        "focus", "swap", "move", "join", "resize", "balance", "toggle-split", "accordion", "float", "zoom", "undo",
+                        "close", "fullscreen", "minimize", "space", "move-to-space", "mode", "reload", "login-item", "wait-settled",
+                        "request-token", "result", "version", "help", "quit"]
+        var shapes: [[String]] = []
+        for language in Language.allCases {
+            Copy.language = language
+            defer { Copy.language = .english }
+            let lines = CLI.usage.components(separatedBy: "\n")
+            for command in commands { XCTAssertTrue(lines.contains { $0.hasPrefix("  \(command)") }, "\(language): \(command)") }
+            // A command narrower than its column keeps the description at column 31.
+            for line in CLI.helpLines {
+                switch line {
+                case .row(let syntax, _): XCTAssertLessThan(CLI.displayWidth(syntax), 29, syntax)
+                case .localizedRow(let syntax, _): XCTAssertLessThan(CLI.displayWidth(L(syntax)), 29, "\(language): \(L(syntax))")
+                default: break
+                }
+            }
+            shapes.append(lines.map { $0.isEmpty ? "blank" : $0.hasPrefix(String(repeating: " ", count: 31)) ? "more" : $0.hasPrefix("  ") ? "indented" : "text" })
+        }
+        XCTAssertEqual(Set(shapes.map(\.count)).count, 1)
+        XCTAssertEqual(shapes.first, shapes.last, "every language has the same lines")
+    }
+
     private func inv(_ args: [String]) -> CLI.Invocation? {
         if case .invocation(let i)? = CLI.parse(args) { return i }
         return nil

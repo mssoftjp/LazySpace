@@ -488,7 +488,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let command = EditCommand.sendToSpace(destination).following(coordinator.config.followMovedWindow)
             guard let target = box.menuTarget else {
                 let why = L(.appDelegateCouldNotFindTheFocused)
-                coordinator.noteRefusal(L("“\(command.label)”: \(why)", "「\(command.label)」: \(why)"))
+                coordinator.noteRefusal(L(.appDelegateCommandRefused(command.label, why)))
                 return
             }
             runEdit(command, source: "menu", menuTarget: target)
@@ -506,7 +506,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         switch coordinator.edit(command, source: source, pressedAt: pressedAt, menuTarget: menuTarget) {
         case .started: break
         case .busy: coordinator.noteRefusal(L(.appDelegateAnotherOperationIsInProgress(command.label)))
-        case .refused(let why, _): coordinator.noteRefusal(L("“\(command.label)”: \(why)", "「\(command.label)」: \(why)"))
+        case .refused(let why, _): coordinator.noteRefusal(L(.appDelegateCommandRefused(command.label, why)))
         }
     }
     @objc private func pauseAction() { coordinator.pause() }

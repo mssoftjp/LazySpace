@@ -67,17 +67,14 @@ enum SettingsPaneLayout {
         return sections(content, spacing: 12, flexible: flexible)
     }
 
-    /// Label column shared by General and Arrangement, measured from both languages' titles and capped at a wrapping width.
-    static let formLabelWidth: CGFloat = SettingsForm.labelWidth(for: [
-        ("Language", "言語"),
-        ("Notifications", "通知"),
-        ("Display", "表示"),
-        ("Window spacing", "ウインドウの間隔"),
-        ("Place new windows", "新しいウインドウの位置"),
-        ("Border", "枠線"),
-        ("Border width", "枠線の太さ"),
-        ("Border color", "枠線の色"),
-    ])
+    /// Titles in the label column shared by General and Arrangement.
+    static let formLabels: [LocalizedStringResource] = [
+        .settingsWindowLanguage, .settingsWindowNotificationsTitle, .settingsWindowWindowSpacing, .settingsWindowPlaceNewWindows,
+        .settingsWindowBorder, .settingsWindowBorderWidth, .settingsWindowBorderColor,
+    ]
+
+    /// That column's width, measured from every language's titles and capped at a wrapping width.
+    static let formLabelWidth: CGFloat = SettingsForm.labelWidth(for: formLabels)
 
     static func centered(_ view: NSView, width: CGFloat = 480) -> NSView {
         let wrap = NSView()
@@ -227,17 +224,14 @@ final class SettingsForm: NSView {
     private let labelColumnWidth: CGFloat
     private var columnsConfigured = false
 
-    /// Measures titles in both languages: 132 for short columns, wrapping at 220 even for long English.
-    static func labelWidth(for titles: [(String, String)]) -> CGFloat {
-        let font = NSFont.systemFont(ofSize: 13)
-        var width: CGFloat = 132
-        for (english, japanese) in titles {
-            for text in [english + ":", japanese + "："] {
-                let size = (text as NSString).size(withAttributes: [.font: font])
-                width = max(width, ceil(size.width) + 12)
-            }
-        }
-        return min(220, width)
+    /// Measures titles in every language: 132 for short columns, wrapping at 220 even for long titles.
+    static func labelWidth(for titles: [LocalizedStringResource]) -> CGFloat {
+        min(220, titles.flatMap { title in Language.allCases.map { measured(titled(L(title, in: $0), in: $0)) } }.reduce(132, max))
+    }
+
+    /// Width a label needs at the form's font, with its margin.
+    static func measured(_ text: String) -> CGFloat {
+        ceil((text as NSString).size(withAttributes: [.font: NSFont.systemFont(ofSize: 13)]).width) + 12
     }
 
     init(labelWidth: CGFloat) {
@@ -272,9 +266,10 @@ final class SettingsForm: NSView {
         add(NSView(), control)
     }
 
-    static func titled(_ title: String) -> String {
-        if title.hasSuffix(":") || title.hasSuffix("：") { return title }
-        return title + (Copy.language == .japanese ? "：" : ":")
+    /// The title with the language's colon, unless it already ends with one.
+    static func titled(_ title: String, in language: Language = Copy.language) -> String {
+        if [":", L(.settingsLabelColon(""), in: language)].contains(where: title.hasSuffix) { return title }
+        return L(.settingsLabelColon(title), in: language)
     }
 
     static func trailingLabel(_ text: String) -> NSTextField {

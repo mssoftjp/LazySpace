@@ -78,19 +78,21 @@ enum EditCommand: Equatable {
     }
 
     var label: String {
-        func en(_ x: Direction) -> String { ["left": "Left", "right": "Right", "up": "Up", "down": "Down"][x.rawValue]! }
-        func ja(_ x: Direction) -> String { ["left": "左", "right": "右", "up": "上", "down": "下"][x.rawValue]! }
-        func neighbor(_ x: Direction) -> String {
-            ["left": "Window on Left", "right": "Window on Right", "up": "Window Above", "down": "Window Below"][x.rawValue]!
+        // One entry per direction: languages build these phrases differently.
+        func by(_ x: Direction, _ left: LocalizedStringResource, _ right: LocalizedStringResource,
+                _ up: LocalizedStringResource, _ down: LocalizedStringResource) -> String {
+            switch x {
+            case .left: L(left)
+            case .right: L(right)
+            case .up: L(up)
+            case .down: L(down)
+            }
         }
         switch self {
-        case .focus(let x): return L("Focus \(en(x))", "\(ja(x))のウインドウに切り替え")
-        case .swap(let x): return L("Swap with \(neighbor(x))", "\(ja(x))のウインドウと交換")
-        case .move(let x): return L("Reorder \(en(x))", "\(ja(x))へ並べ替える")
-        case .join(let x):
-            return x.axis == .horizontal
-                ? L("Stack Below \(neighbor(x))", "\(ja(x))のウインドウの下にまとめる")
-                : L("Place Beside \(neighbor(x))", "\(ja(x))のウインドウの右にまとめる")
+        case .focus(let x): return by(x, .editCommandsFocusLeft, .editCommandsFocusRight, .editCommandsFocusUp, .editCommandsFocusDown)
+        case .swap(let x): return by(x, .editCommandsSwapLeft, .editCommandsSwapRight, .editCommandsSwapUp, .editCommandsSwapDown)
+        case .move(let x): return by(x, .editCommandsMoveLeft, .editCommandsMoveRight, .editCommandsMoveUp, .editCommandsMoveDown)
+        case .join(let x): return by(x, .editCommandsJoinLeft, .editCommandsJoinRight, .editCommandsJoinUp, .editCommandsJoinDown)
         case .resize(let a, let v):
             if a == .horizontal { return v >= 0 ? L(.editCommandsIncreaseWidth) : L(.editCommandsDecreaseWidth) }
             return v >= 0 ? L(.editCommandsIncreaseHeight) : L(.editCommandsDecreaseHeight)
@@ -290,19 +292,19 @@ enum StatusMenuCopy {
         for (i, name) in names.enumerated() {
             let add = (shown.isEmpty ? 0 : 2) + CLI.displayWidth(name)
             if !shown.isEmpty, used + add > width {
-                return shown.joined(separator: ", ") + L(" +\(names.count - i) more", "ほか\(names.count - i)")
+                return L(.editCommandsAppListMore(shown.joined(separator: Copy.listSeparator), names.count - i))
             }
             shown.append(name)
             used += add
         }
-        return shown.joined(separator: ", ")
+        return shown.joined(separator: Copy.listSeparator)
     }
 
     /// Space contents: a dash when empty, with a note for a full-screen Space.
     static func spaceContents(_ names: [String], fullScreen: Bool) -> String {
         if fullScreen && names.isEmpty { return fullScreenNote }
         let list = names.isEmpty ? emptySpace : appList(names)
-        return fullScreen ? list + L(" (\(fullScreenNote))", "（\(fullScreenNote)）") : list
+        return fullScreen ? L(.editCommandsWithFullScreenNote(list, fullScreenNote)) : list
     }
 
     /// Tooltip for an overview row: all names, only when some were left out.
@@ -349,8 +351,8 @@ enum StatusMenuCopy {
     /// The everyday status line. No window numbers, even while zoomed.
     static func occupancyLine(waiting: Int, floatingCount: Int, zoomed: Bool) -> String {
         var line = L(.editCommandsWaitingWindows(waiting))
-        if floatingCount > 0 { line += L("  Floating: \(floatingCount)", "  フローティング: \(floatingCount)") }
-        if zoomed { line += L("  Zoomed", "  ズーム中") }
+        if floatingCount > 0 { line = L(.editCommandsOccupancyFloating(line, floatingCount)) }
+        if zoomed { line = L(.editCommandsOccupancyZoomed(line)) }
         return line
     }
 

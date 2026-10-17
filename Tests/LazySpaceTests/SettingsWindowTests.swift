@@ -6,6 +6,19 @@ import XCTest
 
 @MainActor
 final class SettingsWindowTests: XCTestCase {
+    /// The shared label column fits every label in every shipped language, up to the wrapping width.
+    func testFormLabelColumnFitsEveryLanguage() {
+        for title in SettingsPaneLayout.formLabels {
+            for language in Language.allCases {
+                let needed = SettingsForm.measured(SettingsForm.titled(L(title, in: language), in: language))
+                XCTAssertLessThanOrEqual(min(220, needed), SettingsPaneLayout.formLabelWidth, "\(L(title, in: language))")
+            }
+        }
+        XCTAssertEqual(SettingsForm.titled("Language", in: .english), "Language:")
+        XCTAssertEqual(SettingsForm.titled("言語", in: .japanese), "言語：")
+        XCTAssertEqual(SettingsForm.titled("Done:", in: .english), "Done:")
+    }
+
     private var root: URL!
     private var coordinator: Coordinator!
     private var preferences: UserDefaults!

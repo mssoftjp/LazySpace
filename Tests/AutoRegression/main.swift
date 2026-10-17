@@ -1,6 +1,7 @@
+import Copy
 import Foundation
 import LayoutCore
-import Operations
+@testable import Operations
 import Settings
 @testable import LazySpaceApp
 
@@ -9,6 +10,10 @@ func check(_ condition: @autoclosure () -> Bool, _ name: String) {
     if condition() { print("PASS: \(name)") }
     else { failures += 1; print("FAIL: \(name)") }
 }
+// The catalogs compiled next to each module's library resolve: a missing one would show the key.
+check(MacItem.openAtLogin == "Open at Login" && L(.arrangeOperationArranged(windows: 1), in: .english) == "Arranged 1 window.",
+      "catalog text resolves in the regression build")
+
 func run(_ s: FakeSystem, _ k: ConstraintKnowledge) -> OperationResult {
     ArrangeOperation(system: s, control: OperationControl(), knowledge: k,
                      limits: OperationLimits(settleDelay: 0), sleep: { _ in }).run()

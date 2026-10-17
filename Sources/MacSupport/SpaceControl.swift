@@ -1785,7 +1785,7 @@ public final class SpaceControl {
     static func formatPlace(active: String?, window: [String]?) -> String {
         let space = active ?? L(.spaceControlUnknown)
         guard let window else { return Copy.sentenceSeparator + L(.spaceControlCurrentSpace(space)) }
-        let owned = window.isEmpty ? L(.spaceControlUnknown) : window.joined(separator: ", ")
+        let owned = window.isEmpty ? L(.spaceControlUnknown) : window.joined(separator: Copy.listSeparator)
         return Copy.sentenceSeparator + L(.spaceControlCurrentSpaceWindow(space, owned))
     }
 

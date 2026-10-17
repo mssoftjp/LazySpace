@@ -148,6 +148,18 @@ final class ConfigTests: XCTestCase {
         XCTAssertTrue(Config.template.contains(#"language = "system"            # Display language: "system" (follow macOS), "en", or "ja""# + "\n"))
     }
 
+    /// The error lists the allowed values with the final "or" in English, and with the Japanese list separator.
+    func testInvalidLanguageNamesTheAllowedValues() {
+        func problems() -> [String] {
+            do { _ = try Config.load(toml: "language = \"fr\""); return [] } catch { return (error as? Config.LoadError)?.problems ?? [] }
+        }
+        XCTAssertTrue(problems().contains(#"language must be "system", "en", or "ja"."#), "\(problems())")
+        let saved = Copy.language
+        Copy.language = .japanese
+        defer { Copy.language = saved }
+        XCTAssertTrue(problems().contains(#"languageは"system"、"en"、"ja"のいずれかで指定してください。"#), "\(problems())")
+    }
+
     func testLanguageParsingAndRendering() throws {
         XCTAssertEqual(Config().language, "system")
         for value in Config.languageValues {

@@ -325,7 +325,10 @@ public struct Config: Equatable, Codable {
         }
         if let v = table["language"] {
             if let s = v as? String, languageValues.contains(s) { c.language = s }
-            else { problems.append(L(.configLanguageMustBeSystemEn)) }
+            else {
+                let quoted = languageValues.map { "\"\($0)\"" }
+                problems.append(L(.configLanguageInvalid(quoted.dropLast().joined(separator: Copy.listSeparator), quoted[quoted.count - 1])))
+            }
         }
         if let v = table["place-dialogs-beside"] {
             if let b = v as? Bool { c.placeDialogsBeside = b } else { problems.append(boolProblem("place-dialogs-beside")) }

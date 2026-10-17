@@ -91,7 +91,13 @@ extension Copy {
     }
 
     /// Separator for sentences joined at run time: a space in English, nothing in Japanese.
-    public static var sentenceSeparator: String { L(" ", "") }
+    public static var sentenceSeparator: String { L(.copySentenceSeparator) }
+
+    /// Separator for the items of a list, such as app names.
+    public static var listSeparator: String { L(.copyListSeparator) }
+
+    /// Separator for clauses of one sentence.
+    public static var clauseSeparator: String { L(.copyClauseSeparator) }
 }
 
 /// The current language's text for a catalog entry: `L(.menuArrangeNow)`.
@@ -104,9 +110,4 @@ public func L(_ resource: LocalizedStringResource, in language: Language) -> Str
     var resource = resource
     resource.locale = language.locale
     return String(localized: resource)
-}
-
-/// Picks the current language's text from an English and Japanese pair. English is required and is the fallback.
-public func L(_ english: String, _ japanese: String) -> String {
-    Copy.language == .japanese ? japanese : english
 }

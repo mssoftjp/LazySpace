@@ -566,6 +566,24 @@
         }
       }
     },
+    "appDelegate.commandRefused" : {
+      "comment" : "Arguments: 1 = the command's name; 2 = why it was refused.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%1$@”: %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%1$@」: %2$@"
+          }
+        }
+      }
+    },
     "appDelegate.copyCommand" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1029,6 +1047,42 @@
         }
       }
     },
+    "cli.configError" : {
+      "comment" : "Arguments: 1 = the configuration error.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Error: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "誤り: %@"
+          }
+        }
+      }
+    },
+    "cli.configNote" : {
+      "comment" : "Arguments: 1 = a note on the configuration.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "注記: %@"
+          }
+        }
+      }
+    },
     "cli.configuration" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1111,6 +1165,42 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ディスプレイ%@: %@"
+          }
+        }
+      }
+    },
+    "cli.eligibleExcluded" : {
+      "comment" : "Arguments: 1 = how many windows can be arranged; 2 = how many are excluded.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eligible %1$lld / Excluded %2$lld"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "整列対象%1$lld / 対象外%2$lld"
+          }
+        }
+      }
+    },
+    "cli.eligibleExcludedNoResponse" : {
+      "comment" : "Arguments: 1 = how many windows can be arranged; 2 = how many are excluded; 3 = how many apps did not respond.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eligible %1$lld / Excluded %2$lld / No response %3$lld"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "整列対象%1$lld / 対象外%2$lld / 応答なし%3$lld"
           }
         }
       }
@@ -1298,6 +1388,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "手動整列のみ"
+          }
+        }
+      }
+    },
+    "cli.modeWithChoices" : {
+      "comment" : "Arguments: 1 = the current binding mode; 2 = every mode, joined by copy.listSeparator. Mode names are not translated.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ (available modes: %2$@)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@（使えるモード: %2$@）"
           }
         }
       }
@@ -1540,6 +1648,24 @@
         }
       }
     },
+    "cli.unavailableBecause" : {
+      "comment" : "Arguments: 1 = why.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unavailable — %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "利用不可 — %@"
+          }
+        }
+      }
+    },
     "cli.unknownDisplay" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1605,6 +1731,1590 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "所属が分からないウインドウ: %lld"
+          }
+        }
+      }
+    },
+    "cliHelp.accordion" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toggle accordion layout"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アコーディオン表示を切り替え"
+          }
+        }
+      }
+    },
+    "cliHelp.arrange" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrange the current Space (starts tiling it when automatic arrangement is available)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在の操作スペースを整列（自動整列を利用できるときは、この操作スペースの自動管理を開始）"
+          }
+        }
+      }
+    },
+    "cliHelp.balance" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Balance layout ratios"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "レイアウトの割合を均等にする"
+          }
+        }
+      }
+    },
+    "cliHelp.close" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close the focused window (like ⌘W)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フォーカス中のウインドウを閉じる（⌘W相当）"
+          }
+        }
+      }
+    },
+    "cliHelp.configurationConfigLazyspaceConfig" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configuration: ~/.config/lazyspace/config.toml"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定: ~/.config/lazyspace/config.toml"
+          }
+        }
+      }
+    },
+    "cliHelp.exitCodes0SucceededOr" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "0  Succeeded or completed"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "0  成功・完了"
+          }
+        }
+      }
+    },
+    "cliHelp.exitCodes1RefusedPartially" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1  Refused, partially applied, interrupted, or failed"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1  拒否・一部未適用・中断・失敗"
+          }
+        }
+      }
+    },
+    "cliHelp.exitCodes2CommunicationWith" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2  Communication with LazySpace failed"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2  LazySpaceとの通信に失敗"
+          }
+        }
+      }
+    },
+    "cliHelp.exitCodesWithExit2" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With exit 2, code control-unavailable means the app instance lock is held but CLI communication failed."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "終了コード2のcontrol-unavailableは、アプリの起動ロックが保持されているがCLI通信に失敗したことを示します。"
+          }
+        }
+      }
+    },
+    "cliHelp.explicitTargetsAvailableOnWindow" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Available on window editing commands. Without --window-id, the focused window is used."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウ編集で利用できます。window-idを省略するとフォーカス中のウインドウが対象です。"
+          }
+        }
+      }
+    },
+    "cliHelp.explicitTargetsBusyAndOther" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Busy and other refusals stay attached to that token. Keep the token yourself if this process may exit before printing it."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "処理中や拒否もそのトークンに残ります。プロセスが終了する前にトークンを手元に残してください。"
+          }
+        }
+      }
+    },
+    "cliHelp.explicitTargetsExpectSpaceId" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "--expect-space-id is also available on arrange, integrate, balance, undo, and space."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "expect-space-idはarrange / integrate / balance / undo / spaceでも利用できます。"
+          }
+        }
+      }
+    },
+    "cliHelp.explicitTargetsFocusWindowId" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus --window-id <id> --expect-space-id <id> focuses that window directly."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus --window-id <ID> --expect-space-id <ID>は指定したウインドウへ直接フォーカスします。"
+          }
+        }
+      }
+    },
+    "cliHelp.explicitTargetsMoveToSpace" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move-to-space requires the target to be in front. No implicit focus or Space changes."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "move-to-spaceは対象が前面の場合のみ。暗黙のフォーカス・操作スペース移動は行いません。"
+          }
+        }
+      }
+    },
+    "cliHelp.explicitTargetsRequestIdToken" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "--request-id <token> is accepted only by arrange, integrate, and window or Space edits."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "--request-id <トークン>はarrange、integrate、ウインドウ編集、操作スペース編集だけが受け付けます。"
+          }
+        }
+      }
+    },
+    "cliHelp.explicitTargetsRequestTokenDoes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "request-token does not write a token to the configuration file. Restarting LazySpace makes old tokens unusable."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "request-tokenは設定ファイルへトークンを書きません。アプリを再起動すると古いトークンは使えません。"
+          }
+        }
+      }
+    },
+    "cliHelp.explicitTargetsResendingTheSame" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resending the same token returns its outcome and does not dispatch again. A new attempt needs a new token."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同じトークンの再送は結果を返すだけで、操作はもう始まりません。やり直すときは新しいトークンが必要です。"
+          }
+        }
+      }
+    },
+    "cliHelp.explicitTargetsTheCLIReserves" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The CLI reserves a token when --request-id is omitted, sends the mutation once, and prints that token on failure."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "省略するとCLIが予約してから変更を1回送り、失敗時もそのトークンを出します。"
+          }
+        }
+      }
+    },
+    "cliHelp.explicitTargetsWaitSettledCovers" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "wait-settled covers this Space's observed geometry and LazySpace work, not future app activity."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "wait-settledは現在の操作スペースの観測とLazySpaceの処理が対象です。将来のアプリ動作は保証しません。"
+          }
+        }
+      }
+    },
+    "cliHelp.explicitTargetsWindowIdId" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "--window-id <id> --expect-space-id <id> [--expect-pid <pid>]"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "--window-id <ID> --expect-space-id <ID> [--expect-pid <PID>]"
+          }
+        }
+      }
+    },
+    "cliHelp.floatOnOff" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set floating state"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フローティング状態を指定"
+          }
+        }
+      }
+    },
+    "cliHelp.focusBack" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Focus the previously focused window"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "直前にフォーカスしていたウインドウへ"
+          }
+        }
+      }
+    },
+    "cliHelp.focusDirection" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move focus to the neighboring window"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隣のウインドウへフォーカス"
+          }
+        }
+      }
+    },
+    "cliHelp.focusDirectionSyntax" : {
+      "comment" : "A command as typed in lazyspace help; only the placeholders are translated.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus <direction>"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus <方向>"
+          }
+        }
+      }
+    },
+    "cliHelp.fullscreenOnOff" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set macOS full screen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOSのフルスクリーン状態を指定"
+          }
+        }
+      }
+    },
+    "cliHelp.help" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Print this help"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このヘルプを表示"
+          }
+        }
+      }
+    },
+    "cliHelp.integrate" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add one waiting window to the layout"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "待機中のウインドウを1つレイアウトに追加"
+          }
+        }
+      }
+    },
+    "cliHelp.jSONOutputAFinishedMutation" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A finished mutation has code finished; read ok and result.outcome to see whether it succeeded."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完了はcode finishedです。成功かどうかはokとresult.outcomeを見てください。"
+          }
+        }
+      }
+    },
+    "cliHelp.jSONOutputHelpAndVersion" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "help and version print text; they do not accept --json."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "helpとversionは文字で出力し、--jsonは受け付けません。"
+          }
+        }
+      }
+    },
+    "cliHelp.jSONOutputJsonIncludesSchemaVersion" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "--json includes schemaVersion 2 and a machine-readable code on every error. Unknown arguments are rejected."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "--jsonはschemaVersion 2と、すべてのエラーのcodeを含みます。不明な引数は拒否します。"
+          }
+        }
+      }
+    },
+    "cliHelp.jSONOutputResultIdAnd" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "result.id and operationID are the operation. requestID is the receipt. They are not interchangeable."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "result.idとoperationIDは操作、requestIDは予約です。互いに置き換えられません。"
+          }
+        }
+      }
+    },
+    "cliHelp.jSONOutputScriptsShouldRead" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scripts should read the structured fields rather than the human-readable messages, which follow the display language."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スクリプトでは、表示言語に従う人向けのメッセージではなく、構造化されたフィールドを読んでください。"
+          }
+        }
+      }
+    },
+    "cliHelp.joinDirection" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Group with the neighboring window in a nested split"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隣のウインドウと入れ子の分割でグループ化"
+          }
+        }
+      }
+    },
+    "cliHelp.joinDirectionSyntax" : {
+      "comment" : "A command as typed in lazyspace help; only the placeholders are translated.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "join <direction>"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "join <方向>"
+          }
+        }
+      }
+    },
+    "cliHelp.listSpaces" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spaces and the number of windows in each"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "操作スペースの一覧と各操作スペースのウインドウ数"
+          }
+        }
+      }
+    },
+    "cliHelp.listWindows" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Windows in the current Space and whether each is eligible or excluded"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在の操作スペースのウインドウと、整列対象か対象外か、その理由"
+          }
+        }
+      }
+    },
+    "cliHelp.loginItem" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show whether LazySpace opens at login"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ログイン時に開くかを表示"
+          }
+        }
+      }
+    },
+    "cliHelp.loginItemOnMore" : {
+      "comment" : "Another line of the description above it in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn opening at login on or off"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「ログイン時に開く」をオン / オフ"
+          }
+        }
+      }
+    },
+    "cliHelp.minimizeOnOff" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set minimized state"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最小化状態を指定"
+          }
+        }
+      }
+    },
+    "cliHelp.mode" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show the current binding mode"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在のバインディングモードを表示"
+          }
+        }
+      }
+    },
+    "cliHelp.modeName" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Switch to a declared binding mode (main returns to the main mode)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "宣言したバインディングモードに切り替え（mainでmainモードに戻る）"
+          }
+        }
+      }
+    },
+    "cliHelp.modeNameSyntax" : {
+      "comment" : "A command as typed in lazyspace help; only the placeholders are translated.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode <name>"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode <名前>"
+          }
+        }
+      }
+    },
+    "cliHelp.moveDirection" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move within the layout"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "レイアウト内で移動"
+          }
+        }
+      }
+    },
+    "cliHelp.moveDirectionSyntax" : {
+      "comment" : "A command as typed in lazyspace help; only the placeholders are translated.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "move <direction>"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "move <方向>"
+          }
+        }
+      }
+    },
+    "cliHelp.moveToSpace" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send the focused window to a Space; stay on the current Space"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウだけを操作スペースへ送り、今の操作スペースに留まる"
+          }
+        }
+      }
+    },
+    "cliHelp.moveToSpaceMore" : {
+      "comment" : "Another line of the description above it in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send the focused window to the next or previous desktop without switching"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウだけを次 / 前のデスクトップへ送る"
+          }
+        }
+      }
+    },
+    "cliHelp.moveToSpaceMore2" : {
+      "comment" : "Another line of the description above it in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move the focused window and switch to its Space"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウを移動し、その操作スペースに切り替える"
+          }
+        }
+      }
+    },
+    "cliHelp.moveToSpaceMore3" : {
+      "comment" : "Another line of the description above it in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sending without following needs the direct move; refused otherwise"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切り替えずに送るには直接移動が必要。使えなければ拒否"
+          }
+        }
+      }
+    },
+    "cliHelp.moveToSpaceSyntax" : {
+      "comment" : "A command as typed in lazyspace help; only the placeholders are translated.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "move-to-space <number>"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "move-to-space <番号>"
+          }
+        }
+      }
+    },
+    "cliHelp.pause" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause all Spaces"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべての操作スペースを一時停止"
+          }
+        }
+      }
+    },
+    "cliHelp.quit" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quit LazySpace"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpaceを終了"
+          }
+        }
+      }
+    },
+    "cliHelp.reload" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Request a configuration reload (changes to the file are also reloaded automatically; windows are not moved)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定の再読み込みを要求（ファイルの変更は自動でも再読み込みする。ウインドウは動かさない）"
+          }
+        }
+      }
+    },
+    "cliHelp.requestToken" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reserve a mutation request ID (no window, layout, focus, or settings change)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "変更要求のIDを予約する（ウインドウ・配置・フォーカス・設定は変えない）"
+          }
+        }
+      }
+    },
+    "cliHelp.resizeAxisAmount" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<axis> is width, height, or smart; [amount] is a ratio such as +0.05 or -0.05 (default +0.05)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "<軸>はwidth / height / smart、[量]は+0.05や-0.05のような比率（初期値+0.05）"
+          }
+        }
+      }
+    },
+    "cliHelp.resizeAxisAmountSyntax" : {
+      "comment" : "A command as typed in lazyspace help; only the placeholders are translated.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "resize <axis> [amount]"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "resize <軸> [量]"
+          }
+        }
+      }
+    },
+    "cliHelp.resultId" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retrieve a receipt or an operation (receipt tokens do not fall through)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "予約IDまたは操作IDの結果を取得（予約IDは通常の結果へフォールバックしない）"
+          }
+        }
+      }
+    },
+    "cliHelp.resultIdSyntax" : {
+      "comment" : "A command as typed in lazyspace help; only the placeholders are translated.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "result <id>"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "result <ID>"
+          }
+        }
+      }
+    },
+    "cliHelp.resume" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume all Spaces (resuming does not move windows by itself)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべての操作スペースを再開（再開そのものではウインドウを動かさない）"
+          }
+        }
+      }
+    },
+    "cliHelp.runTheCLIAs" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Run the CLI as the same logged-in user, without sudo. LAZYSPACE_SUPPORT must match the app."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CLIはアプリと同じログインユーザーで実行してください（sudo不可）。LAZYSPACE_SUPPORTはアプリと一致させてください。"
+          }
+        }
+      }
+    },
+    "cliHelp.sectionArrangement" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrangement"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "整列"
+          }
+        }
+      }
+    },
+    "cliHelp.sectionExitCodes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exit codes"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "終了コード"
+          }
+        }
+      }
+    },
+    "cliHelp.sectionExplicitTargets" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Explicit targets"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "対象の明示"
+          }
+        }
+      }
+    },
+    "cliHelp.sectionJSONOutput" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JSON output"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JSON出力"
+          }
+        }
+      }
+    },
+    "cliHelp.sectionLayoutEditing" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Layout editing (acts on the focused window; <direction> is left, down, up, or right)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "レイアウト編集（フォーカス中のウインドウが対象。<方向>はleft / down / up / right）"
+          }
+        }
+      }
+    },
+    "cliHelp.sectionOther" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Other"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "その他"
+          }
+        }
+      }
+    },
+    "cliHelp.sectionSettings" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定"
+          }
+        }
+      }
+    },
+    "cliHelp.sectionSpaces" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spaces (direct when the target Space has a window LazySpace knows; otherwise one Space at a time using the Mission Control shortcuts already set in System Settings, which are not changed, and stepping sends nothing if a shortcut is off; numbers count only ordinary desktops in list-spaces)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "操作スペース（移動先のウインドウやアプリを前面にできれば直接。できなければ近くの操作スペースまで直接移り、残りをシステム設定のMission Controlショートカットで1つずつ移動し、設定は変えない。オフなら1つずつの移動は送らない。番号はlist-spacesの通常デスクトップだけを数える）"
+          }
+        }
+      }
+    },
+    "cliHelp.sectionStatus" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status (does not move windows)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "状態（ウインドウは動かさない）"
+          }
+        }
+      }
+    },
+    "cliHelp.settings" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Settings directly"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定を直接開く"
+          }
+        }
+      }
+    },
+    "cliHelp.settingsLoginItemOn" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "login-item on, login-item off"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "login-item on / login-item off"
+          }
+        }
+      }
+    },
+    "cliHelp.show" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open the window list"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウ一覧を開く"
+          }
+        }
+      }
+    },
+    "cliHelp.spaceBack" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Switch to the Space you were on before"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "直前にいた操作スペースへ移動"
+          }
+        }
+      }
+    },
+    "cliHelp.spaceNextSpace" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Switch to the next or previous Space"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "次 / 前の操作スペースへ移動"
+          }
+        }
+      }
+    },
+    "cliHelp.spaceNextSpaceSyntax" : {
+      "comment" : "A command as typed in lazyspace help; only the placeholders are translated.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "space next, space prev"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "space next / space prev"
+          }
+        }
+      }
+    },
+    "cliHelp.spaceNumber" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Switch to a numbered desktop (1–99)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "番号のデスクトップへ切り替え（1〜99）"
+          }
+        }
+      }
+    },
+    "cliHelp.spaceNumberDisplayMore" : {
+      "comment" : "Another line of the description above it in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A desktop of another display; n is the display's number in list-spaces"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "別のディスプレイのデスクトップ。nはlist-spacesでのディスプレイの番号"
+          }
+        }
+      }
+    },
+    "cliHelp.spaceNumberSyntax" : {
+      "comment" : "A command as typed in lazyspace help; only the placeholders are translated.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "space <number>"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "space <番号>"
+          }
+        }
+      }
+    },
+    "cliHelp.spacesMoveToSpace" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "move-to-space next, move-to-space prev"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "move-to-space next / move-to-space prev"
+          }
+        }
+      }
+    },
+    "cliHelp.spacesMoveToSpace2" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "move-to-space <number> --follow"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "move-to-space <番号> --follow"
+          }
+        }
+      }
+    },
+    "cliHelp.spacesSpaceNumberDisplay" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "space <number> --display <n>, move-to-space <number> --display <n>"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "space <番号> --display <n>、move-to-space <番号> --display <n>"
+          }
+        }
+      }
+    },
+    "cliHelp.status" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Availability, mode, and the latest result"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "利用可否・モード・直近の結果"
+          }
+        }
+      }
+    },
+    "cliHelp.swapDirection" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swap with the neighboring window"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隣のウインドウと交換"
+          }
+        }
+      }
+    },
+    "cliHelp.swapDirectionSyntax" : {
+      "comment" : "A command as typed in lazyspace help; only the placeholders are translated.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "swap <direction>"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "swap <方向>"
+          }
+        }
+      }
+    },
+    "cliHelp.toggleSplit" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toggle split orientation"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分割方向を切り替え"
+          }
+        }
+      }
+    },
+    "cliHelp.undo" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Undo the last layout change"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "直前のレイアウト変更を取り消す"
+          }
+        }
+      }
+    },
+    "cliHelp.usage" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usage: lazyspace <command> [arguments] [--json]"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使い方: lazyspace <コマンド> [引数] [--json]"
+          }
+        }
+      }
+    },
+    "cliHelp.version" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Print the version"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版を表示"
+          }
+        }
+      }
+    },
+    "cliHelp.waitSettledSeconds" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wait for fresh, stable current-Space observation (default 5; maximum 120)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在の操作スペースを再観測し、安定を待つ（初期値5秒、最大120秒）"
+          }
+        }
+      }
+    },
+    "cliHelp.waitSettledSecondsSyntax" : {
+      "comment" : "A command as typed in lazyspace help; only the placeholders are translated.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "wait-settled [seconds]"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "wait-settled [秒]"
+          }
+        }
+      }
+    },
+    "cliHelp.zoomOnOff" : {
+      "comment" : "A command's description in lazyspace help.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set zoom state (fill the current work area)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ズーム状態を指定（現在の作業領域いっぱいに表示）"
           }
         }
       }
@@ -2181,6 +3891,46 @@
         }
       }
     },
+    "coordinator.dialogRegionBottom" : {
+      "comment" : "Arguments: 1 = how many fixed-size windows; 2 = the strip's height (pt).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On, %#@windows@ at the bottom edge (height %2$@ pt)"
+          },
+          "substitutions" : {
+            "windows" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg window"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg windows"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オン、下端に%1$lldつ（高さ%2$@pt）"
+          }
+        }
+      }
+    },
     "coordinator.dialogRegionOn" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2194,6 +3944,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "オン"
+          }
+        }
+      }
+    },
+    "coordinator.dialogRegionRight" : {
+      "comment" : "Arguments: 1 = how many fixed-size windows; 2 = the strip's width (pt).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On, %#@windows@ at the right edge (width %2$@ pt)"
+          },
+          "substitutions" : {
+            "windows" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg window"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg windows"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オン、右端に%1$lldつ（幅%2$@pt）"
           }
         }
       }
@@ -2390,6 +4180,24 @@
         }
       }
     },
+    "coordinator.manualOnlyBecause" : {
+      "comment" : "Arguments: 1 = why automatic arrangement is off (whole sentences).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manual arrangement only. %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "手動整列のみ。%@"
+          }
+        }
+      }
+    },
     "coordinator.minimizing" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2542,6 +4350,166 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ウインドウを別の操作スペースへ移動しています"
+          }
+        }
+      }
+    },
+    "coordinator.newSessionLayouts" : {
+      "comment" : "Arguments: 1 = how many Spaces had a saved layout.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This is a new login session, so the saved layouts for %#@spaces@ are not used. No windows were moved."
+          },
+          "substitutions" : {
+            "spaces" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Space"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Spaces"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "前回とは別のログインセッションのため、保存していた%lldつの操作スペースのレイアウトは使いません（ウインドウは動かしません）。"
+          }
+        }
+      }
+    },
+    "coordinator.noDesktop" : {
+      "comment" : "Arguments: 1 = the desktop asked for (copy.desktop); 2 = how many desktops this display has.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "There is no %1$@. This display has %#@desktops@."
+          },
+          "substitutions" : {
+            "desktops" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg desktop"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg desktops"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@はありません（このディスプレイには%2$lld個）。"
+          }
+        }
+      }
+    },
+    "coordinator.noDesktopOnDisplay" : {
+      "comment" : "Arguments: 1 = the desktop asked for (copy.desktop); 2 = the display's name; 3 = how many desktops it has.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "There is no %1$@ on %2$@. It has %#@desktops@."
+          },
+          "substitutions" : {
+            "desktops" : {
+              "argNum" : 3,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg desktop"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg desktops"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$@には%1$@はありません（%3$lld個）。"
+          }
+        }
+      }
+    },
+    "coordinator.noDisplay" : {
+      "comment" : "Arguments: 1 = the display number asked for; 2 = how many displays are connected.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "There is no display %1$@. %#@displays@"
+          },
+          "substitutions" : {
+            "displays" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg display is connected."
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg displays are connected."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ディスプレイ%1$@はありません（つないでいるディスプレイは%2$lld台）。"
           }
         }
       }
@@ -2786,6 +4754,24 @@
         }
       }
     },
+    "coordinator.onSeveralSpaces" : {
+      "comment" : "Arguments: 1 = the Spaces, joined by copy.listSeparator.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "After the move request, the window belongs to several Spaces (%@). Where it ended up could not be determined."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移動の要求のあと、ウインドウは複数の操作スペース（%@）に属しています。どこに着いたかは判断できません。"
+          }
+        }
+      }
+    },
     "coordinator.pausedInAllSpacesResuming" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2799,6 +4785,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "すべての操作スペースで一時停止中です。再開の操作だけではウインドウは動きません。再開後は自動整列を続けられます。"
+          }
+        }
+      }
+    },
+    "coordinator.pausedUnresponsive" : {
+      "comment" : "Arguments: 1 = the apps, joined by copy.listSeparator; 2 = the menu item that resumes; 3 = how many apps (chooses it or they).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All Spaces remain paused because %1$@ did not respond, so the current window layout could not be confirmed. Choose %2$@ again %#@apps@."
+          },
+          "substitutions" : {
+            "apps" : {
+              "argNum" : 3,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "when it responds, or quit it"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "when they respond, or quit them"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@が応答しないため現在のウインドウ配置を確認できず、一時停止を続けています。応答してから「%2$@」をもう一度選ぶか、終了してください。"
           }
         }
       }
@@ -2920,6 +4946,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ウインドウを%@へ送りました。"
+          }
+        }
+      }
+    },
+    "coordinator.sessionUnidentifiedLayouts" : {
+      "comment" : "Arguments: 1 = how many Spaces had a saved layout.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The login session could not be identified, so the saved layouts for %#@spaces@ are not used. No windows were moved."
+          },
+          "substitutions" : {
+            "spaces" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Space"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg Spaces"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ログインセッションを確かめられないため、保存していた%lldつの操作スペースのレイアウトは使いません（ウインドウは動かしません）。"
           }
         }
       }
@@ -4216,6 +6282,24 @@
         }
       }
     },
+    "desktopShortcuts.inUseFor" : {
+      "comment" : "Arguments: 1 = desktop numbers and ranges, such as 1–3, 5. Starts lowercase: it may follow other clauses.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "in use for Desktop %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用中: デスクトップ%@"
+          }
+        }
+      }
+    },
     "desktopShortcuts.lazySpaceCouldNotPrepareTo" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4338,6 +6422,24 @@
         }
       }
     },
+    "desktopShortcuts.notUsedBecause" : {
+      "comment" : "Arguments: 1 = why.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not used — %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使っていません — %@"
+          }
+        }
+      }
+    },
     "desktopShortcuts.notUsedFor" : {
       "comment" : "Arguments: 1 = `ranges(list)`; 2 = `reason(block)`.",
       "extractionState" : "manual",
@@ -4369,6 +6471,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "使っていません — 通常のデスクトップがありません"
+          }
+        }
+      }
+    },
+    "desktopShortcuts.notYetConfirmedFor" : {
+      "comment" : "Arguments: 1 = desktop numbers and ranges. Starts lowercase: it may follow other clauses.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "on but not yet confirmed for %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定あり・未確認: %@"
           }
         }
       }
@@ -4615,6 +6735,24 @@
         }
       }
     },
+    "editCommands.appListMore" : {
+      "comment" : "Arguments: 1 = the app names that fit, joined by copy.listSeparator; 2 = how many more apps.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ +%2$lld more"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ほか%2$lld"
+          }
+        }
+      }
+    },
     "editCommands.arrangeThisSpace" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4837,6 +6975,40 @@
         }
       }
     },
+    "editCommands.focusDown" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Focus Down"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下のウインドウに切り替え"
+          }
+        }
+      }
+    },
+    "editCommands.focusLeft" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Focus Left"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "左のウインドウに切り替え"
+          }
+        }
+      }
+    },
     "editCommands.focusPreviousWindow" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4850,6 +7022,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "直前のウインドウに戻る"
+          }
+        }
+      }
+    },
+    "editCommands.focusRight" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Focus Right"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "右のウインドウに切り替え"
+          }
+        }
+      }
+    },
+    "editCommands.focusUp" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Focus Up"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上のウインドウに切り替え"
           }
         }
       }
@@ -4922,6 +7128,74 @@
         }
       }
     },
+    "editCommands.joinDown" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Place Beside Window Below"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下のウインドウの右にまとめる"
+          }
+        }
+      }
+    },
+    "editCommands.joinLeft" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stack Below Window on Left"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "左のウインドウの下にまとめる"
+          }
+        }
+      }
+    },
+    "editCommands.joinRight" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stack Below Window on Right"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "右のウインドウの下にまとめる"
+          }
+        }
+      }
+    },
+    "editCommands.joinUp" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Place Beside Window Above"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上のウインドウの右にまとめる"
+          }
+        }
+      }
+    },
     "editCommands.minimizeWindow" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4953,6 +7227,74 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "モード: %@"
+          }
+        }
+      }
+    },
+    "editCommands.moveDown" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reorder Down"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下へ並べ替える"
+          }
+        }
+      }
+    },
+    "editCommands.moveLeft" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reorder Left"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "左へ並べ替える"
+          }
+        }
+      }
+    },
+    "editCommands.moveRight" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reorder Right"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "右へ並べ替える"
+          }
+        }
+      }
+    },
+    "editCommands.moveUp" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reorder Up"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上へ並べ替える"
           }
         }
       }
@@ -5056,6 +7398,42 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ウインドウを別の操作スペースへ"
+          }
+        }
+      }
+    },
+    "editCommands.occupancyFloating" : {
+      "comment" : "Arguments: 1 = the status line so far; 2 = how many windows float. Two spaces separate the parts of the line.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@  Floating: %2$lld"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@  フローティング: %2$lld"
+          }
+        }
+      }
+    },
+    "editCommands.occupancyZoomed" : {
+      "comment" : "Arguments: 1 = the status line so far. Two spaces separate the parts of the line.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@  Zoomed"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@  ズーム中"
           }
         }
       }
@@ -5487,6 +7865,40 @@
         }
       }
     },
+    "editCommands.swapDown" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swap with Window Below"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下のウインドウと交換"
+          }
+        }
+      }
+    },
+    "editCommands.swapLeft" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swap with Window on Left"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "左のウインドウと交換"
+          }
+        }
+      }
+    },
     "editCommands.swapPositions" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5500,6 +7912,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "位置を交換"
+          }
+        }
+      }
+    },
+    "editCommands.swapRight" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swap with Window on Right"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "右のウインドウと交換"
+          }
+        }
+      }
+    },
+    "editCommands.swapUp" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swap with Window Above"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上のウインドウと交換"
           }
         }
       }
@@ -5759,6 +8205,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ウインドウ"
+          }
+        }
+      }
+    },
+    "editCommands.withFullScreenNote" : {
+      "comment" : "Arguments: 1 = the app names in the Space; 2 = cli.fullScreen.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ (%2$@)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@（%2$@）"
           }
         }
       }
@@ -6288,6 +8752,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "今の操作スペース以外では行いません。"
+          }
+        }
+      }
+    },
+    "settings.labelColon" : {
+      "comment" : "Arguments: 1 = a Settings label. Adds the colon after it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@："
           }
         }
       }
@@ -8439,6 +10921,24 @@
         }
       }
     },
+    "updates.availableNotice" : {
+      "comment" : "Arguments: 1 = the new version.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace %@ is available."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace %@が利用できます。"
+          }
+        }
+      }
+    },
     "updates.checkButton" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -9466,6 +11966,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ウインドウを読むには「%@」の許可が必要です。設定の「一般」で「システム設定を開く…」をクリックしてください。"
+          }
+        }
+      }
+    },
+    "windowList.titleAndNote" : {
+      "comment" : "Arguments: 1 = a title; 2 = its note.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@"
           }
         }
       }

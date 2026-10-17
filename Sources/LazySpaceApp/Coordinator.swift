@@ -954,12 +954,9 @@ final class Coordinator {
         state.sessionKey = key ?? ""
         store.save(state)
         if had > 0 {
-            let spaces = had == 1 ? "1 Space" : "\(had) Spaces"
             lastRefusal = key == nil
-                ? L("The login session could not be identified, so the saved layouts for \(spaces) are not used. No windows were moved.",
-                    "ログインセッションを確かめられないため、保存していた\(had)つの操作スペースのレイアウトは使いません（ウインドウは動かしません）。")
-                : L("This is a new login session, so the saved layouts for \(spaces) are not used. No windows were moved.",
-                    "前回とは別のログインセッションのため、保存していた\(had)つの操作スペースのレイアウトは使いません（ウインドウは動かしません）。")
+                ? L(.coordinatorSessionUnidentifiedLayouts(spaces: had))
+                : L(.coordinatorNewSessionLayouts(spaces: had))
         }
     }
 
@@ -1129,7 +1126,7 @@ final class Coordinator {
                 reason = L(.coordinatorWaitingToStartThisSpace)
             }
         }
-        else { availability = .manualOnly; reason = L("Manual arrangement only. ", "手動整列のみ。") + gate.reason }
+        else { availability = .manualOnly; reason = L(.coordinatorManualOnlyBecause(gate.reason)) }
         let progress: AppStatus.Progress = busy ? (paused ? .pausing : .running) : .idle
         let settled = idleLocked()
         return AppStatus(
@@ -2156,13 +2153,12 @@ final class Coordinator {
         if case .desktop(let n, let display) = target {
             let count = max(snapshot.groups.count, 1)
             guard display >= 1, display <= count else {
-                return .failure(CodedRefusal(message: L("There is no display \(display). \(count == 1 ? "1 display is" : "\(count) displays are") connected.",
-                                                        "ディスプレイ\(display)はありません（つないでいるディスプレイは\(count)台）。"), code: "space-not-found"))
+                return .failure(CodedRefusal(message: L(.coordinatorNoDisplay(String(display), displays: count)), code: "space-not-found"))
             }
             if let group = snapshot.groups.dropFirst(display - 1).first, group.display != snapshot.display {
                 guard n >= 1, n <= group.desktops.count else {
-                    return .failure(CodedRefusal(message: L("There is no \(Copy.desktop(n)) on \(group.name). It has \(group.desktops.count == 1 ? "1 desktop" : "\(group.desktops.count) desktops").",
-                                                            "\(group.name)には\(Copy.desktop(n))はありません（\(group.desktops.count)個）。"), code: "space-not-found"))
+                    return .failure(CodedRefusal(message: L(.coordinatorNoDesktopOnDisplay(Copy.desktop(n), group.name, desktops: group.desktops.count)),
+                                                 code: "space-not-found"))
                 }
                 return resolved(group.desktops[n - 1])
             }
@@ -2180,8 +2176,7 @@ final class Coordinator {
         case .desktop: return .failure(CodedRefusal(message: "Unresolved display target.", code: "invalid-request"))
         case .index(let n):
             guard n >= 1, n <= snapshot.desktops.count else {
-                let count = snapshot.desktops.count == 1 ? "1 desktop" : "\(snapshot.desktops.count) desktops"
-                return .failure(CodedRefusal(message: L("There is no \(Copy.desktop(n)). This display has \(count).", "\(Copy.desktop(n))はありません（このディスプレイには\(snapshot.desktops.count)個）。"), code: "space-not-found"))
+                return .failure(CodedRefusal(message: L(.coordinatorNoDesktop(Copy.desktop(n), desktops: snapshot.desktops.count)), code: "space-not-found"))
             }
             return resolved(snapshot.desktops[n - 1])
         case .next:
@@ -2301,8 +2296,7 @@ final class Coordinator {
         case .movedElsewhere(let to): text = L(.coordinatorTheWindowEndedUpOn(spaceLabel(to)))
         case .notSwitched: text = L(.coordinatorTheWindowMovedToTheTarget)
         case .moveUnconfirmed: text = L(.coordinatorTheMoveRequestWasSent)
-        case .onSeveralSpaces(let ids): text = L("After the move request, the window belongs to several Spaces (\(ids.map { spaceLabel($0) }.joined(separator: ", "))). Where it ended up could not be determined.",
-                                                 "移動の要求のあと、ウインドウは複数の操作スペース（\(ids.map { spaceLabel($0) }.joined(separator: "、"))）に属しています。どこに着いたかは判断できません。")
+        case .onSeveralSpaces(let ids): text = L(.coordinatorOnSeveralSpaces(ids.map { spaceLabel($0) }.joined(separator: Copy.listSeparator)))
         case .membershipUnreadable: text = L(.coordinatorAfterTheMoveRequestThe)
         case .activeSpaceUnreadable: text = L(.coordinatorTheWindowIsOnThe)
         case .switchUnconfirmed: text = L(.coordinatorLazySpaceAskedAWindowOr)
@@ -3240,11 +3234,9 @@ final class Coordinator {
             let ids = Set(prior.windowIDs)
             let snap = system.snapshot(limitingTo: ids, deadline: Date().addingTimeInterval(0.5))
             if !snap.unobservedApps.isEmpty {
-                let apps = snap.unobservedApps.map(AppNames.localized).joined(separator: L(", ", "、"))
+                let apps = snap.unobservedApps.map(AppNames.localized).joined(separator: Copy.listSeparator)
                 let resume = StatusMenuCopy.globalPauseTitle(paused: true)
-                let after = snap.unobservedApps.count == 1 ? "when it responds, or quit it" : "when they respond, or quit them"
-                return refuse(L("All Spaces remain paused because \(apps) did not respond, so the current window layout could not be confirmed. Choose \(resume) again \(after).",
-                                "\(apps)が応答しないため現在のウインドウ配置を確認できず、一時停止を続けています。応答してから「\(resume)」をもう一度選ぶか、終了してください。"))
+                return refuse(L(.coordinatorPausedUnresponsive(apps, resume, apps: snap.unobservedApps.count)))
             }
             guard snap.trusted,
                   authorization.stopReason(system: system, control: control, snapshot: snap) == nil,
@@ -5266,10 +5258,9 @@ final class Coordinator {
         guard let region = state.dialogRegions?[spaceKey], !region.members.isEmpty else { return L(.coordinatorDialogRegionOn) }
         let width = Int(region.thickness.rounded())
         let count = region.members.count
-        let windows = count == 1 ? "1 window" : "\(count) windows"
         switch region.edge {
-        case .right: return L("On, \(windows) at the right edge (width \(width) pt)", "オン、右端に\(count)つ（幅\(width)pt）")
-        case .bottom: return L("On, \(windows) at the bottom edge (height \(width) pt)", "オン、下端に\(count)つ（高さ\(width)pt）")
+        case .right: return L(.coordinatorDialogRegionRight(windows: count, String(width)))
+        case .bottom: return L(.coordinatorDialogRegionBottom(windows: count, String(width)))
         }
     }
 

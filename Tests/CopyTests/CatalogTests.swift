@@ -144,6 +144,8 @@ final class CatalogTests: XCTestCase {
         XCTAssertEqual(found, [], "untranslated catalog entries:\n" + found.joined(separator: "\n"))
     }
 
+    /// Every language uses English's arguments with the same types. A count that English uses only to choose a plural form
+    /// ("was" or "were") may be left out by a language without that choice; anything else left out or added is a mistake.
     func testEveryLanguageUsesTheSameArgumentsAsEnglish() throws {
         var found: [String] = []
         for entry in try Self.entries() {
@@ -152,7 +154,9 @@ final class CatalogTests: XCTestCase {
             for language in Language.allCases where language != .english {
                 guard let localization = entry.localizations[language.rawValue] as? [String: Any] else { continue }
                 let actual = Self.arguments(of: localization)
-                if actual != expected {
+                let missing = expected.subtracting(actual).filter { !$0.hasSuffix(":int") }
+                let extra = actual.subtracting(expected)
+                if !missing.isEmpty || !extra.isEmpty {
                     found.append("\(entry.module) \(entry.key) [\(language.rawValue)]: \(actual.sorted()) vs en \(expected.sorted())")
                 }
             }

@@ -230,19 +230,20 @@
         }
       }
     },
-    "config.languageMustBeSystemEn" : {
+    "config.languageInvalid" : {
+      "comment" : "Arguments: 1 = every allowed value but the last, quoted and joined by copy.listSeparator; 2 = the last allowed value, quoted.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "language must be \"system\", \"en\", or \"ja\"."
+            "value" : "language must be %1$@, or %2$@."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "languageは \"system\"、\"en\"、\"ja\" のいずれかで指定してください。"
+            "value" : "languageは%1$@、%2$@のいずれかで指定してください。"
           }
         }
       }

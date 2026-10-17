@@ -217,7 +217,7 @@ extension ReadyWindowController {
     static func statusText(_ target: TargetReport) -> String {
         func withNote(_ title: String) -> String {
             guard let note = target.note, !note.isEmpty else { return title }
-            return L("\(title): \(note)", "\(title): \(note)")
+            return L(.windowListTitleAndNote(title, note))
         }
         switch target.status {
         case .verified: return L(.windowListApplied)

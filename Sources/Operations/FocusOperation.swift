@@ -101,7 +101,7 @@ public final class FocusOperation {
         let ok = report.status == .verified
         let failure = result == .issued
             ? Self.focusNotReceivedNote
-            : L("Couldn't move focus: \(report.note ?? "")", "フォーカスを移せませんでした: \(report.note ?? "")")
+            : L(.focusOperationCouldntMoveFocusBecause(report.note ?? ""))
         return builder.finish(outcome: ok ? .complete : .partial, stopReason: ok ? nil : (result == .timedOut ? .appUnresponsive : nil),
                               message: ok ? L(.focusOperationFocused(window.app)) : failure,
                               finishedAt: now(), wallMs: elapsedMs())

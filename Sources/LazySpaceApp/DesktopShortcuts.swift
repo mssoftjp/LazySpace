@@ -150,14 +150,14 @@ enum DesktopShortcuts {
 
     /// The `lazyspace status` line. `global` is why it is unused on the whole display (several displays, rearranging, unreadable order, unknown Dock).
     static func statusLine(global: DesktopShortcutBlock?, states: [(desktop: Int, state: State)]) -> String {
-        if let global { return L("Not used", "使っていません") + " — " + reason(global) }
+        if let global { return L(.desktopShortcutsNotUsedBecause(reason(global))) }
         guard !states.isEmpty else { return L(.desktopShortcutsNotUsedNoOrdinaryDesktops) }
         var parts: [String] = []
         func numbers(_ wanted: (State) -> Bool) -> [Int] { states.filter { wanted($0.state) }.map(\.desktop) }
         let working = numbers { $0 == .working }
-        if !working.isEmpty { parts.append(L("in use for Desktop ", "使用中: デスクトップ") + ranges(working)) }
+        if !working.isEmpty { parts.append(L(.desktopShortcutsInUseFor(ranges(working)))) }
         let unverified = numbers { $0 == .unverified }
-        if !unverified.isEmpty { parts.append(L("on but not yet confirmed for ", "設定あり・未確認: ") + ranges(unverified)) }
+        if !unverified.isEmpty { parts.append(L(.desktopShortcutsNotYetConfirmedFor(ranges(unverified)))) }
         let paused = numbers { $0 == .paused }
         if !paused.isEmpty {
             parts.append(L(.desktopShortcutsPausedForMacOSDidNot(ranges(paused), pausedAdvice)))
@@ -168,7 +168,7 @@ enum DesktopShortcuts {
             let list = numbers { $0 == .ineligible(block) }
             parts.append(L(.desktopShortcutsNotUsedFor(ranges(list), reason(block))))
         }
-        let text = parts.joined(separator: L("; ", "、"))
+        let text = parts.joined(separator: Copy.clauseSeparator)
         return text.prefix(1).uppercased() + text.dropFirst()
     }
 

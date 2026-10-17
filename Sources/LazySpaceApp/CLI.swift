@@ -56,7 +56,41 @@ enum CLI {
         case error(String)
     }
 
-    static var usage: String { L(usageEnglish, usageJapanese) }
+    /// `lazyspace help`. Command syntax that reads the same in every language stays in code; the descriptions are catalog entries,
+    /// and the columns are laid out here so a translation never aligns text.
+    static var usage: String { helpLines.map(render).joined(separator: "\n") }
+
+    enum HelpLine {
+        case blank
+        /// A heading or paragraph at the left margin.
+        case text(LocalizedStringResource)
+        /// A line at the left margin that reads the same in every language.
+        case plain(String)
+        /// An indented line.
+        case indented(LocalizedStringResource)
+        /// An indented line that reads the same in every language.
+        case literal(String)
+        /// A command and its description.
+        case row(String, LocalizedStringResource)
+        /// A command whose placeholders are translated, and its description.
+        case localizedRow(LocalizedStringResource, LocalizedStringResource)
+        /// Another line of the description above, in the description column.
+        case more(LocalizedStringResource)
+    }
+
+    /// Commands start after two spaces; descriptions start at column 31.
+    static func render(_ line: HelpLine) -> String {
+        switch line {
+        case .blank: ""
+        case .text(let text): L(text)
+        case .plain(let text): text
+        case .indented(let text): "  " + L(text)
+        case .literal(let text): "  " + text
+        case .row(let syntax, let text): "  " + padded(syntax, to: 29) + L(text)
+        case .localizedRow(let syntax, let text): "  " + padded(L(syntax), to: 29) + L(text)
+        case .more(let text): String(repeating: " ", count: 31) + L(text)
+        }
+    }
 
     private static let commandNames: Set<String> = [
         "help", "version", "status", "show", "settings", "pause", "resume", "quit", "reload",
@@ -65,191 +99,100 @@ enum CLI {
         "space", "move-to-space", "mode", "login-item", "wait-settled", "result", "request-token"
     ]
 
-    private static let usageEnglish = """
-    Usage: lazyspace <command> [arguments] [--json]
+    static let helpLines: [HelpLine] = [
+        .text(.cliHelpUsage),
+        .blank,
+        .text(.cliHelpSectionStatus),
+        .row("status", .cliHelpStatus),
+        .row("list-windows", .cliHelpListWindows),
+        .row("list-spaces", .cliHelpListSpaces),
+        .row("show", .cliHelpShow),
+        .row("settings", .cliHelpSettings),
+        .blank,
+        .text(.cliHelpSectionArrangement),
+        .row("arrange", .cliHelpArrange),
+        .row("integrate", .cliHelpIntegrate),
+        .row("pause", .cliHelpPause),
+        .row("resume", .cliHelpResume),
+        .blank,
+        .text(.cliHelpSectionLayoutEditing),
+        .localizedRow(.cliHelpFocusDirectionSyntax, .cliHelpFocusDirection),
+        .row("focus back", .cliHelpFocusBack),
+        .localizedRow(.cliHelpSwapDirectionSyntax, .cliHelpSwapDirection),
+        .localizedRow(.cliHelpMoveDirectionSyntax, .cliHelpMoveDirection),
+        .localizedRow(.cliHelpJoinDirectionSyntax, .cliHelpJoinDirection),
+        .localizedRow(.cliHelpResizeAxisAmountSyntax, .cliHelpResizeAxisAmount),
+        .row("balance", .cliHelpBalance),
+        .row("toggle-split", .cliHelpToggleSplit),
+        .row("accordion", .cliHelpAccordion),
+        .row("float on|off", .cliHelpFloatOnOff),
+        .row("zoom on|off", .cliHelpZoomOnOff),
+        .row("undo", .cliHelpUndo),
+        .row("close", .cliHelpClose),
+        .row("fullscreen on|off", .cliHelpFullscreenOnOff),
+        .row("minimize on|off", .cliHelpMinimizeOnOff),
+        .blank,
+        .text(.cliHelpSectionSpaces),
+        .localizedRow(.cliHelpSpaceNumberSyntax, .cliHelpSpaceNumber),
+        .localizedRow(.cliHelpSpaceNextSpaceSyntax, .cliHelpSpaceNextSpace),
+        .row("space back", .cliHelpSpaceBack),
+        .localizedRow(.cliHelpMoveToSpaceSyntax, .cliHelpMoveToSpace),
+        .indented(.cliHelpSpacesMoveToSpace),
+        .more(.cliHelpMoveToSpaceMore),
+        .indented(.cliHelpSpacesMoveToSpace2),
+        .more(.cliHelpMoveToSpaceMore2),
+        .more(.cliHelpMoveToSpaceMore3),
+        .indented(.cliHelpSpacesSpaceNumberDisplay),
+        .more(.cliHelpSpaceNumberDisplayMore),
+        .blank,
+        .text(.cliHelpSectionSettings),
+        .row("mode", .cliHelpMode),
+        .localizedRow(.cliHelpModeNameSyntax, .cliHelpModeName),
+        .row("reload", .cliHelpReload),
+        .row("login-item", .cliHelpLoginItem),
+        .indented(.cliHelpSettingsLoginItemOn),
+        .more(.cliHelpLoginItemOnMore),
+        .blank,
+        .text(.cliHelpSectionOther),
+        .localizedRow(.cliHelpWaitSettledSecondsSyntax, .cliHelpWaitSettledSeconds),
+        .row("request-token", .cliHelpRequestToken),
+        .localizedRow(.cliHelpResultIdSyntax, .cliHelpResultId),
+        .row("version", .cliHelpVersion),
+        .row("help", .cliHelpHelp),
+        .row("quit", .cliHelpQuit),
+        .blank,
+        .text(.cliHelpSectionExplicitTargets),
+        .indented(.cliHelpExplicitTargetsWindowIdId),
+        .indented(.cliHelpExplicitTargetsAvailableOnWindow),
+        .indented(.cliHelpExplicitTargetsFocusWindowId),
+        .indented(.cliHelpExplicitTargetsExpectSpaceId),
+        .indented(.cliHelpExplicitTargetsRequestIdToken),
+        .indented(.cliHelpExplicitTargetsTheCLIReserves),
+        .indented(.cliHelpExplicitTargetsResendingTheSame),
+        .indented(.cliHelpExplicitTargetsBusyAndOther),
+        .indented(.cliHelpExplicitTargetsRequestTokenDoes),
+        .indented(.cliHelpExplicitTargetsMoveToSpace),
+        .indented(.cliHelpExplicitTargetsWaitSettledCovers),
+        .blank,
+        .text(.cliHelpSectionJSONOutput),
+        .indented(.cliHelpJSONOutputJsonIncludesSchemaVersion),
+        .indented(.cliHelpJSONOutputAFinishedMutation),
+        .indented(.cliHelpJSONOutputResultIdAnd),
+        .indented(.cliHelpJSONOutputHelpAndVersion),
+        .indented(.cliHelpJSONOutputScriptsShouldRead),
+        .blank,
+        .text(.cliHelpSectionExitCodes),
+        .indented(.cliHelpExitCodes0SucceededOr),
+        .indented(.cliHelpExitCodes1RefusedPartially),
+        .indented(.cliHelpExitCodes2CommunicationWith),
+        .indented(.cliHelpExitCodesWithExit2),
+        .blank,
+        .text(.cliHelpRunTheCLIAs),
+        .blank,
+        .text(.cliHelpConfigurationConfigLazyspaceConfig),
+    ]
 
-    Status (does not move windows)
-      status                       Availability, mode, and the latest result
-      list-windows                 Windows in the current Space and whether each is eligible or excluded
-      list-spaces                  Spaces and the number of windows in each
-      show                         Open the window list
-      settings                     Open Settings directly
 
-    Arrangement
-      arrange                      Arrange the current Space (starts tiling it when automatic arrangement is available)
-      integrate                    Add one waiting window to the layout
-      pause                        Pause all Spaces
-      resume                       Resume all Spaces (resuming does not move windows by itself)
-
-    Layout editing (acts on the focused window; <direction> is left, down, up, or right)
-      focus <direction>            Move focus to the neighboring window
-      focus back                   Focus the previously focused window
-      swap <direction>             Swap with the neighboring window
-      move <direction>             Move within the layout
-      join <direction>             Group with the neighboring window in a nested split
-      resize <axis> [amount]       <axis> is width, height, or smart; [amount] is a ratio such as +0.05 or -0.05 (default +0.05)
-      balance                      Balance layout ratios
-      toggle-split                 Toggle split orientation
-      accordion                    Toggle accordion layout
-      float on|off                 Set floating state
-      zoom on|off                  Set zoom state (fill the current work area)
-      undo                         Undo the last layout change
-      close                        Close the focused window (like ⌘W)
-      fullscreen on|off            Set macOS full screen
-      minimize on|off              Set minimized state
-
-    Spaces (direct when the target Space has a window LazySpace knows; otherwise one Space at a time using the Mission Control shortcuts already set in System Settings, which are not changed, and stepping sends nothing if a shortcut is off; numbers count only ordinary desktops in list-spaces)
-      space <number>               Switch to a numbered desktop (1–99)
-      space next, space prev       Switch to the next or previous Space
-      space back                   Switch to the Space you were on before
-      move-to-space <number>       Send the focused window to a Space; stay on the current Space
-      move-to-space next, move-to-space prev
-                                   Send the focused window to the next or previous desktop without switching
-      move-to-space <number> --follow
-                                   Move the focused window and switch to its Space
-                                   Sending without following needs the direct move; refused otherwise
-      space <number> --display <n>, move-to-space <number> --display <n>
-                                   A desktop of another display; n is the display's number in list-spaces
-
-    Settings
-      mode                         Show the current binding mode
-      mode <name>                  Switch to a declared binding mode (main returns to the main mode)
-      reload                       Request a configuration reload (changes to the file are also reloaded automatically; windows are not moved)
-      login-item                   Show whether LazySpace opens at login
-      login-item on, login-item off
-                                   Turn opening at login on or off
-
-    Other
-      wait-settled [seconds]       Wait for fresh, stable current-Space observation (default 5; maximum 120)
-      request-token                Reserve a mutation request ID (no window, layout, focus, or settings change)
-      result <id>                  Retrieve a receipt or an operation (receipt tokens do not fall through)
-      version                      Print the version
-      help                         Print this help
-      quit                         Quit LazySpace
-
-    Explicit targets
-      --window-id <id> --expect-space-id <id> [--expect-pid <pid>]
-      Available on window editing commands. Without --window-id, the focused window is used.
-      focus --window-id <id> --expect-space-id <id> focuses that window directly.
-      --expect-space-id is also available on arrange, integrate, balance, undo, and space.
-      --request-id <token> is accepted only by arrange, integrate, and window or Space edits.
-      The CLI reserves a token when --request-id is omitted, sends the mutation once, and prints that token on failure.
-      Resending the same token returns its outcome and does not dispatch again. A new attempt needs a new token.
-      Busy and other refusals stay attached to that token. Keep the token yourself if this process may exit before printing it.
-      request-token does not write a token to the configuration file. Restarting LazySpace makes old tokens unusable.
-      Move-to-space requires the target to be in front. No implicit focus or Space changes.
-      wait-settled covers this Space's observed geometry and LazySpace work, not future app activity.
-
-    JSON output
-      --json includes schemaVersion 2 and a machine-readable code on every error. Unknown arguments are rejected.
-      A finished mutation has code finished; read ok and result.outcome to see whether it succeeded.
-      result.id and operationID are the operation. requestID is the receipt. They are not interchangeable.
-      help and version print text; they do not accept --json.
-      Scripts should read the structured fields rather than the human-readable messages, which follow the display language.
-
-    Exit codes
-      0  Succeeded or completed
-      1  Refused, partially applied, interrupted, or failed
-      2  Communication with LazySpace failed
-      With exit 2, code control-unavailable means the app instance lock is held but CLI communication failed.
-
-    Run the CLI as the same logged-in user, without sudo. LAZYSPACE_SUPPORT must match the app.
-
-    Configuration: ~/.config/lazyspace/config.toml
-    """
-
-    private static let usageJapanese = """
-    使い方: lazyspace <コマンド> [引数] [--json]
-
-    状態（ウインドウは動かさない）
-      status                       利用可否・モード・直近の結果
-      list-windows                 現在の操作スペースのウインドウと、整列対象か対象外か、その理由
-      list-spaces                  操作スペースの一覧と各操作スペースのウインドウ数
-      show                         ウインドウ一覧を開く
-      settings                     設定を直接開く
-
-    整列
-      arrange                      現在の操作スペースを整列（自動整列を利用できるときは、この操作スペースの自動管理を開始）
-      integrate                    待機中のウインドウを1つレイアウトに追加
-      pause                        すべての操作スペースを一時停止
-      resume                       すべての操作スペースを再開（再開そのものではウインドウを動かさない）
-
-    レイアウト編集（フォーカス中のウインドウが対象。<方向>はleft / down / up / right）
-      focus <方向>                 隣のウインドウへフォーカス
-      focus back                   直前にフォーカスしていたウインドウへ
-      swap <方向>                  隣のウインドウと交換
-      move <方向>                  レイアウト内で移動
-      join <方向>                  隣のウインドウと入れ子の分割でグループ化
-      resize <軸> [量]             <軸>はwidth / height / smart、[量]は+0.05や-0.05のような比率（初期値+0.05）
-      balance                      レイアウトの割合を均等にする
-      toggle-split                 分割方向を切り替え
-      accordion                    アコーディオン表示を切り替え
-      float on|off                 フローティング状態を指定
-      zoom on|off                  ズーム状態を指定（現在の作業領域いっぱいに表示）
-      undo                         直前のレイアウト変更を取り消す
-      close                        フォーカス中のウインドウを閉じる（⌘W相当）
-      fullscreen on|off            macOSのフルスクリーン状態を指定
-      minimize on|off              最小化状態を指定
-
-    操作スペース（移動先のウインドウやアプリを前面にできれば直接。できなければ近くの操作スペースまで直接移り、残りをシステム設定のMission Controlショートカットで1つずつ移動し、設定は変えない。オフなら1つずつの移動は送らない。番号はlist-spacesの通常デスクトップだけを数える）
-      space <番号>                 番号のデスクトップへ切り替え（1〜99）
-      space next / space prev      次 / 前の操作スペースへ移動
-      space back                   直前にいた操作スペースへ移動
-      move-to-space <番号>         ウインドウだけを操作スペースへ送り、今の操作スペースに留まる
-      move-to-space next / move-to-space prev
-                                   ウインドウだけを次 / 前のデスクトップへ送る
-      move-to-space <番号> --follow
-                                   ウインドウを移動し、その操作スペースに切り替える
-                                   切り替えずに送るには直接移動が必要。使えなければ拒否
-      space <番号> --display <n>、move-to-space <番号> --display <n>
-                                   別のディスプレイのデスクトップ。nはlist-spacesでのディスプレイの番号
-
-    設定
-      mode                         現在のバインディングモードを表示
-      mode <名前>                  宣言したバインディングモードに切り替え（mainでmainモードに戻る）
-      reload                       設定の再読み込みを要求（ファイルの変更は自動でも再読み込みする。ウインドウは動かさない）
-      login-item                   ログイン時に開くかを表示
-      login-item on / login-item off
-                                   「ログイン時に開く」をオン / オフ
-
-    その他
-      wait-settled [秒]            現在の操作スペースを再観測し、安定を待つ（初期値5秒、最大120秒）
-      request-token                変更要求のIDを予約する（ウインドウ・配置・フォーカス・設定は変えない）
-      result <ID>                  予約IDまたは操作IDの結果を取得（予約IDは通常の結果へフォールバックしない）
-      version                      版を表示
-      help                         このヘルプを表示
-      quit                         LazySpaceを終了
-
-    対象の明示
-      --window-id <ID> --expect-space-id <ID> [--expect-pid <PID>]
-      ウインドウ編集で利用できます。window-idを省略するとフォーカス中のウインドウが対象です。
-      focus --window-id <ID> --expect-space-id <ID>は指定したウインドウへ直接フォーカスします。
-      expect-space-idはarrange / integrate / balance / undo / spaceでも利用できます。
-      --request-id <トークン>はarrange、integrate、ウインドウ編集、操作スペース編集だけが受け付けます。
-      省略するとCLIが予約してから変更を1回送り、失敗時もそのトークンを出します。
-      同じトークンの再送は結果を返すだけで、操作はもう始まりません。やり直すときは新しいトークンが必要です。
-      処理中や拒否もそのトークンに残ります。プロセスが終了する前にトークンを手元に残してください。
-      request-tokenは設定ファイルへトークンを書きません。アプリを再起動すると古いトークンは使えません。
-      move-to-spaceは対象が前面の場合のみ。暗黙のフォーカス・操作スペース移動は行いません。
-      wait-settledは現在の操作スペースの観測とLazySpaceの処理が対象です。将来のアプリ動作は保証しません。
-
-    JSON出力
-      --jsonはschemaVersion 2と、すべてのエラーのcodeを含みます。不明な引数は拒否します。
-      完了はcode finishedです。成功かどうかはokとresult.outcomeを見てください。
-      result.idとoperationIDは操作、requestIDは予約です。互いに置き換えられません。
-      helpとversionは文字で出力し、--jsonは受け付けません。
-      スクリプトでは、表示言語に従う人向けのメッセージではなく、構造化されたフィールドを読んでください。
-
-    終了コード
-      0  成功・完了
-      1  拒否・一部未適用・中断・失敗
-      2  LazySpaceとの通信に失敗
-      終了コード2のcontrol-unavailableは、アプリの起動ロックが保持されているがCLI通信に失敗したことを示します。
-
-    CLIはアプリと同じログインユーザーで実行してください（sudo不可）。LAZYSPACE_SUPPORTはアプリと一致させてください。
-
-    設定: ~/.config/lazyspace/config.toml
-    """
 
     /// Parses arguments; nil means not the CLI (launch as the app).
     static func parse(_ rawArgs: [String]) -> Parsed? {
@@ -676,7 +619,7 @@ enum CLI {
     }
 
     static func automaticArrangementText(_ s: AppStatus) -> String {
-        s.autoAvailable ? L(.cliAvailable) : L("Unavailable", "利用不可") + " — " + s.autoReason
+        s.autoAvailable ? L(.cliAvailable) : L(.cliUnavailableBecause(s.autoReason))
     }
 
     static func statusText(_ s: AppStatus) -> String {
@@ -692,12 +635,12 @@ enum CLI {
             row(L(.cliStatus), StatusMenuCopy.availabilityTitle(s)),
             row(L(.cliThisSpace), currentSpaceText(s)),
             row(AccessPane.name(), s.trusted ? L(.cliGranted) : L(.cliNotGranted)),
-            row(L(.cliManualArrangement), s.manualAvailable ? L(.cliAvailable) : L("Unavailable", "利用不可") + " — " + s.manualReason),
+            row(L(.cliManualArrangement), s.manualAvailable ? L(.cliAvailable) : L(.cliUnavailableBecause(s.manualReason))),
             row(L(.cliAutomaticArrangement), automaticArrangementText(s)),
-            row(L(.appDelegateMode), s.mode + (s.modes.count > 1 ? L(" (available modes: \(s.modes.joined(separator: ", ")))", "（使えるモード: \(s.modes.joined(separator: ", "))）") : "")),
+            row(L(.appDelegateMode), s.modes.count > 1 ? L(.cliModeWithChoices(s.mode, s.modes.joined(separator: Copy.listSeparator))) : s.mode),
             row(MacItem.openAtLogin, s.loginItem),
             StatusMenuCopy.occupancyLine(waiting: s.waiting.count, floatingCount: s.floating.count, zoomed: s.zoomed != nil),
-            row(L(.cliConfiguration), s.configPath) + (s.configError.map { "\n  " + L("Error: ", "誤り: ") + indented($0) } ?? "") + s.configNotes.map { "\n  " + L("Note: ", "注記: ") + indented($0) }.joined(),
+            row(L(.cliConfiguration), s.configPath) + (s.configError.map { "\n  " + L(.cliConfigError(indented($0))) } ?? "") + s.configNotes.map { "\n  " + L(.cliConfigNote(indented($0))) }.joined(),
         ]
         lines.append(row(L(.cliFixedSizeWindows), s.dialogRegion))
         if let desktop = s.desktopShortcuts { lines.append(row(L(.cliDesktopShortcuts), desktop)) }
@@ -765,8 +708,9 @@ enum CLI {
         for a in ins.snapshot.unobservedApps { row("-", ReadyWindowController.shownApp(a, name: name), "?", L(.cliNoResponseCouldNotRead)) }
         if ins.targets.isEmpty && ins.excluded.isEmpty { lines.append(ins.snapshot.trusted ? L(.cliNoWindows) : L(.cliCannotReadWindowsWithoutThe(AccessPane.name()))) }
         let unobserved = ins.snapshot.unobservedApps.count
-        lines.append(L("Eligible \(ins.targets.count) / Excluded \(ins.excluded.count)", "整列対象\(ins.targets.count) / 対象外\(ins.excluded.count)")
-                     + (unobserved == 0 ? "" : L(" / No response \(unobserved)", " / 応答なし\(unobserved)")))
+        lines.append(unobserved == 0
+                     ? L(.cliEligibleExcluded(ins.targets.count, ins.excluded.count))
+                     : L(.cliEligibleExcludedNoResponse(ins.targets.count, ins.excluded.count, unobserved)))
         return lines.joined(separator: "\n")
     }
 
