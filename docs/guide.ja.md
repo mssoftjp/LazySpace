@@ -152,6 +152,7 @@ Homebrewでインストールした場合も、同じ方法でアップデート
 | `start-at-login` | 未設定 | ログイン時に開く。未設定ならmacOSのログイン項目をそのままにします |
 | `show-shortcut-guide` | `true` | 修飾キーを1秒ほど押したままにすると、ショートカットの一覧を出す。オフでもショートカットは使えます |
 | `[focus-border]` | オフ | `enabled`、`width`（1〜12ポイント）、`color`（`"#RRGGBB"`または`"#RRGGBBAA"`） |
+| `[notifications]` | オフ | `needs-attention`：対処が必要なときにmacOSの通知で知らせる（上の「通知」を参照） |
 | `[keys]` | 上のショートカット | キーボードショートカット。操作に`"none"`を指定すると割り当てを外します |
 
 ### 例

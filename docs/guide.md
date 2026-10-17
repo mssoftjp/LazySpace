@@ -152,6 +152,7 @@ You can change settings in the Settings window or in the file `~/.config/lazyspa
 | `start-at-login` | not set | Open at Login. When unset, the macOS login item is left as it is |
 | `show-shortcut-guide` | `true` | Show the shortcut list after you hold a modifier key for about a second. Shortcuts work either way |
 | `[focus-border]` | off | `enabled`, `width` (1–12 points), `color` (`"#RRGGBB"` or `"#RRGGBBAA"`) |
+| `[notifications]` | off | `needs-attention`: a macOS notification when LazySpace needs your attention (see Notifications above) |
 | `[keys]` | the shortcuts above | Keyboard shortcuts. Set an action to `"none"` to remove its shortcut |
 
 ### Example
