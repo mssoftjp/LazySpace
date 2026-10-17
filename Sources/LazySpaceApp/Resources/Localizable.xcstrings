@@ -1574,6 +1574,23 @@
         }
       }
     },
+    "cli.windowCountHeading" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Windows"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウ数"
+          }
+        }
+      }
+    },
     "cli.windowsInAnUnknownSpace" : {
       "comment" : "Arguments: 1 = `overview.unknown.count`.",
       "extractionState" : "manual",
@@ -1588,6 +1605,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "所属が分からないウインドウ: %lld"
+          }
+        }
+      }
+    },
+    "coordinator.aNewWindowMayNot" : {
+      "comment" : "Arguments: 1 = `spaceLabel(dest)`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A new window may not have reached %@; LazySpace leaves it alone until its Space is known."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新しいウインドウが%@に届いたか確かめられません。所属が分かるまで、このウインドウには書き込みません。"
           }
         }
       }
@@ -1726,6 +1761,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "目標の操作スペースを確認した後、現在の操作スペースが%@に変わりました。切り替わった原因は確認できていません。"
+          }
+        }
+      }
+    },
+    "coordinator.afterTheMoveRequestThe" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "After the move request, the window's Space could not be read. The window may have closed."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移動の要求のあと、ウインドウの所属を読めませんでした。ウインドウが閉じた可能性があります。"
           }
         }
       }
@@ -1938,6 +1990,24 @@
         }
       }
     },
+    "coordinator.checkAndInSystemSettings" : {
+      "comment" : "Arguments: 1 = `left`; 2 = `right`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check “%@” and “%@” in System Settings › Keyboard › Keyboard Shortcuts… › Mission Control."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "システム設定 › キーボード › キーボードショートカット… › Mission Controlの「%@」と「%@」を確認してください。"
+          }
+        }
+      }
+    },
     "coordinator.closingTheWindow" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2004,6 +2074,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "設定を読めません: %@"
+          }
+        }
+      }
+    },
+    "coordinator.couldNotConfirmThatThe" : {
+      "comment" : "Arguments: 1 = `AccessPane.name()`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not confirm that the window moved to the target Space. Check the %@ permission, input observation, Mission Control settings, and whether the top center of the window can be dragged."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目標の操作スペースへのウインドウの移動を確認できませんでした。「%@」の許可・入力監視・Mission Controlの設定と、ウインドウの上端中央をドラッグできるかを確認してください。"
           }
         }
       }
@@ -2216,6 +2304,57 @@
         }
       }
     },
+    "coordinator.lazySpaceAskedAWindowOr" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace asked a window or app on the target Space to come to the front, but the Space switch could not be confirmed. Stepping was not attempted because the switch may still happen."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目標の操作スペースのウインドウまたはアプリを前面にするよう要求しましたが、操作スペースの切り替えを確認できませんでした。遅れて切り替わることがあるため、1つずつの移動は行っていません。"
+          }
+        }
+      }
+    },
+    "coordinator.lazySpaceBroughtAnAppForward" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace brought an app forward, but could not confirm that the app became active, so it stopped there. LazySpace itself may still be the active app."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アプリを前面にしましたが、そのアプリが前面になったことを確認できなかったため、そこで止めました。LazySpaceが前面のまま残っていることがあります。"
+          }
+        }
+      }
+    },
+    "coordinator.lazySpaceCanSwitchToA" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace can switch to a Space of another display only by bringing forward a window or app there, and none could be used."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "別のディスプレイの操作スペースへは、そこにあるウインドウかアプリを前面にすることでしか切り替えられません。使えるものがありませんでした。"
+          }
+        }
+      }
+    },
     "coordinator.lazySpaceSentTheMacOSShortcut" : {
       "comment" : "Arguments: 1 = `name`.",
       "extractionState" : "manual",
@@ -2230,6 +2369,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "macOSの「%@」のショートカットを送りましたが、操作スペースの切り替えを確認できませんでした。遅れて切り替わることがあるため、ほかの方法は試していません。"
+          }
+        }
+      }
+    },
+    "coordinator.lazySpaceSwitchedToASpace" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace switched to a Space on the way, but the order of Spaces on this display then changed, so the remaining steps were not sent."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "途中の操作スペースへ切り替えましたが、その後このディスプレイの操作スペースの並びが変わったため、残りの移動は送っていません。"
           }
         }
       }
@@ -2322,6 +2478,23 @@
         }
       }
     },
+    "coordinator.movingAWindowToA" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moving a window to a Space of another display needs the direct move, which is not available on this macOS."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "別のディスプレイの操作スペースへウインドウを移すには直接の移動が必要ですが、このmacOSでは使えません。"
+          }
+        }
+      }
+    },
     "coordinator.movingFocus" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2335,6 +2508,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "フォーカスを移しています"
+          }
+        }
+      }
+    },
+    "coordinator.movingItOntoThatDisplay" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moving it onto that display could not be confirmed, so it may not be visible there yet."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "そのディスプレイの上へ動かせたかは確認できなかったため、まだ見えないことがあります。"
           }
         }
       }
@@ -2716,6 +2906,24 @@
         }
       }
     },
+    "coordinator.sentTheWindowTo" : {
+      "comment" : "Arguments: 1 = `destLabel`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sent the window to %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウを%@へ送りました。"
+          }
+        }
+      }
+    },
     "coordinator.spaceDetectionIsUnavailable" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2768,6 +2976,40 @@
         }
       }
     },
+    "coordinator.stoppedAfterTheRequestTo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stopped after the request to send the window was made, because of input, pausing or cancellation. The window may still move."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウを送る要求のあと、入力・停止・取消のため確認をやめました。ウインドウがあとで移ることがあります。"
+          }
+        }
+      }
+    },
+    "coordinator.stoppedBecauseInputPauseState" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stopped because input, pause state, or the current Space changed."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "入力・停止・操作スペースの状態が変わったため中断しました。"
+          }
+        }
+      }
+    },
     "coordinator.switchedTo" : {
       "comment" : "Arguments: 1 = `spaceLabel(dest)`.",
       "extractionState" : "manual",
@@ -2803,6 +3045,23 @@
         }
       }
     },
+    "coordinator.switchingToThatSpaceCould" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Switching to that Space could not be confirmed."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "その操作スペースへの切り替えは確認できませんでした。"
+          }
+        }
+      }
+    },
     "coordinator.thatSpaceIsNoLonger" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2816,6 +3075,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "その操作スペースは利用できません。"
+          }
+        }
+      }
+    },
+    "coordinator.thatSpaceIsNotOn" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That Space is not on this display."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "その操作スペースはこのディスプレイにありません。"
           }
         }
       }
@@ -2854,6 +3130,23 @@
         }
       }
     },
+    "coordinator.theAppKeptOpeningNew" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The app kept opening new windows, so this rule is paused on this Space for a minute."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アプリが新しいウインドウを開き続けたため、この操作スペースではこのルールを1分止めます。"
+          }
+        }
+      }
+    },
     "coordinator.theAppRejectedTheRequest" : {
       "comment" : "Arguments: 1 = `why`.",
       "extractionState" : "manual",
@@ -2885,6 +3178,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "設定ファイルは変わっていません。"
+          }
+        }
+      }
+    },
+    "coordinator.theConfigurationHasErrorsSo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The configuration has errors, so the last valid configuration is still in use:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定に誤りがあるため、直前の有効な設定を使っています:"
           }
         }
       }
@@ -3062,6 +3372,23 @@
         }
       }
     },
+    "coordinator.theMoveRequestWasSent" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The move request was sent, but the window's Space did not change while LazySpace waited. No drag was attempted; the window may still move."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移動の要求は送りましたが、待っている間にウインドウの所属は変わりませんでした。ドラッグには切り替えていません。遅れて移動することがあります。"
+          }
+        }
+      }
+    },
     "coordinator.thePermissionIsRequired" : {
       "comment" : "Arguments: 1 = `AccessPane.name()`.",
       "extractionState" : "manual",
@@ -3094,6 +3421,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "直前のウインドウは前面に戻していないため、フォーカスは%@に移ったままです。"
+          }
+        }
+      }
+    },
+    "coordinator.thePreviousWindowWasNotBrought" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The previous window was not brought forward."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "直前のウインドウは前面に戻していません。"
+          }
+        }
+      }
+    },
+    "coordinator.theRequestToSendThe" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The request to send the window was made, but its new Space could not be confirmed. It may still move."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウを送る要求はしましたが、移った先を確認できませんでした。あとで移ることがあります。"
           }
         }
       }
@@ -3235,6 +3596,24 @@
         }
       }
     },
+    "coordinator.theWindowEndedUpOnInstead" : {
+      "comment" : "Arguments: 1 = `spaceLabel(space, in: labels)`; 2 = `destLabel`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The window ended up on %@ instead of %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウは%2$@ではなく%1$@に移りました。"
+          }
+        }
+      }
+    },
     "coordinator.theWindowIsAlreadyOn" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3265,6 +3644,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ウインドウはすでにルールの操作スペースにあります。"
+          }
+        }
+      }
+    },
+    "coordinator.theWindowIsOnThe" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The window is on the target Space, but the current Space could not be read."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウは目標の操作スペースにありますが、現在の操作スペースを読めませんでした。"
           }
         }
       }
@@ -3336,6 +3732,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "操作スペースへの移動は確認しましたが、移動後の位置の補正は確認できませんでした。"
+          }
+        }
+      }
+    },
+    "coordinator.theWindowMovedToTheTarget" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The window moved to the target Space, but switching to that Space could not be confirmed."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウは目標の操作スペースへ移りましたが、その操作スペースへの切り替えを確認できませんでした。"
+          }
+        }
+      }
+    },
+    "coordinator.theWindowMovedToTheTargetSpace" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The window moved to the target Space and LazySpace switched there, but could not confirm focus on the moved window."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウは目標の操作スペースへ移り、その操作スペースへも切り替えましたが、移動したウインドウへのフォーカスを確認できませんでした。"
           }
         }
       }
@@ -3507,6 +3937,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "右に隣のウインドウがありません。"
+          }
+        }
+      }
+    },
+    "coordinator.thisLayoutChangeCannotBe" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This layout change cannot be made."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この編集は実行できません。"
           }
         }
       }
@@ -3786,6 +4233,24 @@
         }
       }
     },
+    "desktopShortcuts.lazySpaceIsNotUsingFor" : {
+      "comment" : "Arguments: 1 = `name`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace is not using “%@” for now because macOS did not respond to it earlier."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以前macOSが「%@」に応答しなかったため、いまは使っていません。"
+          }
+        }
+      }
+    },
     "desktopShortcuts.logOutAdvice" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3816,6 +4281,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "応答なし"
+          }
+        }
+      }
+    },
+    "desktopShortcuts.macOSDidNotRespondTo" : {
+      "comment" : "Arguments: 1 = `name`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS did not respond to “%@”."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOSが「%@」に応答しませんでした。"
           }
         }
       }

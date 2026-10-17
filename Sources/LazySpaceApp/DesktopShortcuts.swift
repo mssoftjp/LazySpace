@@ -210,11 +210,10 @@ enum DesktopShortcuts {
         switch issue {
         case .notHonored(let right):
             let name = MacItem.moveSpace(right: right)
-            return L("macOS did not respond to “\(name)”.", "macOSが「\(name)」に応答しませんでした。") + Copy.sentenceSeparator + logOutAdvice
+            return L(.desktopShortcutsMacOSDidNotRespondTo(name)) + Copy.sentenceSeparator + logOutAdvice
         case .suppressed(let right):
             let name = MacItem.moveSpace(right: right)
-            return L("LazySpace is not using “\(name)” for now because macOS did not respond to it earlier.",
-                     "以前macOSが「\(name)」に応答しなかったため、いまは使っていません。") + Copy.sentenceSeparator + logOutAdvice
+            return L(.desktopShortcutsLazySpaceIsNotUsingFor(name)) + Copy.sentenceSeparator + logOutAdvice
         case .noTap:
             return L(.desktopShortcutsLazySpaceCouldNotPrepareTo)
         case .configuration(let text):

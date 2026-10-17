@@ -944,7 +944,7 @@ public final class SpaceControl {
     /// Text for a shortcut setting problem found after the route started: setting name and reason, and that the rest of the moves were not sent.
     private func remainingText(_ issue: ShortcutIssue, right: Bool) -> String {
         let settings = L(.spaceControlSystemSettingsKeyboardKeyboardShortcuts)
-        return Self.lead(issue, right: right) + Copy.sentenceSeparator + L("The remaining steps were not sent. \(settings).", "残りの移動は送っていません。\(settings)。")
+        return Self.lead(issue, right: right) + Copy.sentenceSeparator + L(.spaceControlTheRemainingStepsWereNot(settings))
     }
 
     /// Text for an assignment or Dock change after the preflight.
@@ -1784,9 +1784,9 @@ public final class SpaceControl {
     /// `active` is the display name from `label`; nil means unread. `window` nil means a switch, so no window sentence. An empty array means unread.
     static func formatPlace(active: String?, window: [String]?) -> String {
         let space = active ?? L(.spaceControlUnknown)
-        guard let window else { return Copy.sentenceSeparator + L("Current Space: \(space).", "現在の操作スペースは\(space)。") }
+        guard let window else { return Copy.sentenceSeparator + L(.spaceControlCurrentSpace(space)) }
         let owned = window.isEmpty ? L(.spaceControlUnknown) : window.joined(separator: ", ")
-        return Copy.sentenceSeparator + L("Current Space: \(space). Window: \(owned).", "現在の操作スペースは\(space)。ウインドウの所属は\(owned)。")
+        return Copy.sentenceSeparator + L(.spaceControlCurrentSpaceWindow(space, owned))
     }
 
     public func failureDetail(_ failure: Failure) -> String? {

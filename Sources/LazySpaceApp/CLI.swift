@@ -774,7 +774,7 @@ enum CLI {
         let idWidth = 8
         let kindWidth = 14
         // The last column's heading is not cut (it is wider than the numbers).
-        var lines = ["     " + padded("ID", to: idWidth) + " " + padded(L(.cliType), to: kindWidth) + " " + L("Windows", "ウインドウ数")]
+        var lines = ["     " + padded("ID", to: idWidth) + " " + padded(L(.cliType), to: kindWidth) + " " + L(.cliWindowCountHeading)]
         let numbers = SpaceObserver.desktopNumbers(overview.spaces.map { ($0.spaceID, $0.type) })
         // A heading per display only when there are several (`--display` takes its number).
         let grouped = Set(overview.spaces.compactMap(\.display)).count > 1

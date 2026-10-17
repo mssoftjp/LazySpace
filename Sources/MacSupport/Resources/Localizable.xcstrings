@@ -259,6 +259,42 @@
         }
       }
     },
+    "spaceControl.currentSpace" : {
+      "comment" : "Arguments: 1 = `space`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Current Space: %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在の操作スペースは%@。"
+          }
+        }
+      }
+    },
+    "spaceControl.currentSpaceWindow" : {
+      "comment" : "Arguments: 1 = `space`; 2 = `owned`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Current Space: %@. Window: %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在の操作スペースは%@。ウインドウの所属は%@。"
+          }
+        }
+      }
+    },
     "spaceControl.fullScreen" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -629,6 +665,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mission Controlのショートカット「%@」は矢印以外のキーにFnが付いています。"
+          }
+        }
+      }
+    },
+    "spaceControl.theRemainingStepsWereNot" : {
+      "comment" : "Arguments: 1 = `settings`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The remaining steps were not sent. %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "残りの移動は送っていません。%@。"
           }
         }
       }

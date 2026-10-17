@@ -813,7 +813,7 @@ final class Coordinator {
             }
             return ([L(.coordinatorConfigurationLoadedNoWindowsWere)] + notes).joined(separator: "\n")
         } catch let e as Config.LoadError {
-            let message = L("The configuration has errors, so the last valid configuration is still in use:", "設定に誤りがあるため、直前の有効な設定を使っています:") + "\n" + e.problems.joined(separator: "\n")
+            let message = L(.coordinatorTheConfigurationHasErrorsSo) + "\n" + e.problems.joined(separator: "\n")
             lock.lock(); configError = message; if source == "launch" { unappliedSinceLaunch = true }; lock.unlock()
             publishConfigStatus()
             DispatchQueue.main.async { self.onChange?() }
@@ -1353,7 +1353,7 @@ final class Coordinator {
     /// - kind: "arrange" (explicit, all targets), "integrate-waiting" (explicit integration of waiting windows), "auto-integrate", "auto-refit"
     @discardableResult
     func arrange(source: String, kind: String = "arrange", heldOut: [WindowID: String] = [:],
-                 transform: ArrangeOperation.Transform? = nil, transformFailure: String = L("This layout change cannot be made.", "この編集は実行できません。"),
+                 transform: ArrangeOperation.Transform? = nil, transformFailure: String = L(.coordinatorThisLayoutChangeCannotBe),
                  layoutOverride: Layout? = nil, ignoreZoom: Bool = false,
                  adding: Set<WindowID> = [], automaticFront: WindowID? = nil,
                  editState: EditState? = nil,
@@ -2290,43 +2290,31 @@ final class Coordinator {
         let text: String
         switch f {
         case .unavailable(let why): text = why
-        case .noSuchSpace: text = L("That Space is not on this display.", "その操作スペースはこのディスプレイにありません。")
-        case .alreadyThere: text = L("You are already on that Space.", "既にその操作スペースにいます。")
-        case .interrupted: text = L("Stopped because input, pause state, or the current Space changed.", "入力・停止・操作スペースの状態が変わったため中断しました。")
+        case .noSuchSpace: text = L(.coordinatorThatSpaceIsNotOn)
+        case .alreadyThere: text = L(.coordinatorYouAreAlreadyOnThat)
+        case .interrupted: text = L(.coordinatorStoppedBecauseInputPauseState)
         case .timedOut(let why):
             let left = MacItem.moveSpace(right: false), right = MacItem.moveSpace(right: true)
-            text = why + Copy.sentenceSeparator + L("Check “\(left)” and “\(right)” in System Settings › Keyboard › Keyboard Shortcuts… › Mission Control.",
-                                                    "システム設定 › キーボード › キーボードショートカット… › Mission Controlの「\(left)」と「\(right)」を確認してください。")
-        case .notMoved: text = L("Could not confirm that the window moved to the target Space. Check the \(AccessPane.name()) permission, input observation, Mission Control settings, and whether the top center of the window can be dragged.",
-                                 "目標の操作スペースへのウインドウの移動を確認できませんでした。「\(AccessPane.name())」の許可・入力監視・Mission Controlの設定と、ウインドウの上端中央をドラッグできるかを確認してください。")
+            text = why + Copy.sentenceSeparator + L(.coordinatorCheckAndInSystemSettings(left, right))
+        case .notMoved: text = L(.coordinatorCouldNotConfirmThatThe(AccessPane.name()))
         case .drifted(let to): text = L(.coordinatorAfterReachingTheTargetSpace(spaceLabel(to)))
         case .movedElsewhere(let to): text = L(.coordinatorTheWindowEndedUpOn(spaceLabel(to)))
-        case .notSwitched: text = L("The window moved to the target Space, but switching to that Space could not be confirmed.",
-                                    "ウインドウは目標の操作スペースへ移りましたが、その操作スペースへの切り替えを確認できませんでした。")
-        case .moveUnconfirmed: text = L("The move request was sent, but the window's Space did not change while LazySpace waited. No drag was attempted; the window may still move.",
-                                        "移動の要求は送りましたが、待っている間にウインドウの所属は変わりませんでした。ドラッグには切り替えていません。遅れて移動することがあります。")
+        case .notSwitched: text = L(.coordinatorTheWindowMovedToTheTarget)
+        case .moveUnconfirmed: text = L(.coordinatorTheMoveRequestWasSent)
         case .onSeveralSpaces(let ids): text = L("After the move request, the window belongs to several Spaces (\(ids.map { spaceLabel($0) }.joined(separator: ", "))). Where it ended up could not be determined.",
                                                  "移動の要求のあと、ウインドウは複数の操作スペース（\(ids.map { spaceLabel($0) }.joined(separator: "、"))）に属しています。どこに着いたかは判断できません。")
-        case .membershipUnreadable: text = L("After the move request, the window's Space could not be read. The window may have closed.",
-                                             "移動の要求のあと、ウインドウの所属を読めませんでした。ウインドウが閉じた可能性があります。")
-        case .activeSpaceUnreadable: text = L("The window is on the target Space, but the current Space could not be read.",
-                                              "ウインドウは目標の操作スペースにありますが、現在の操作スペースを読めませんでした。")
-        case .switchUnconfirmed: text = L("LazySpace asked a window or app on the target Space to come to the front, but the Space switch could not be confirmed. Stepping was not attempted because the switch may still happen.",
-                                          "目標の操作スペースのウインドウまたはアプリを前面にするよう要求しましたが、操作スペースの切り替えを確認できませんでした。遅れて切り替わることがあるため、1つずつの移動は行っていません。")
-        case .activationUnconfirmed: text = L("LazySpace brought an app forward, but could not confirm that the app became active, so it stopped there. LazySpace itself may still be the active app.",
-                                              "アプリを前面にしましたが、そのアプリが前面になったことを確認できなかったため、そこで止めました。LazySpaceが前面のまま残っていることがあります。")
+        case .membershipUnreadable: text = L(.coordinatorAfterTheMoveRequestThe)
+        case .activeSpaceUnreadable: text = L(.coordinatorTheWindowIsOnThe)
+        case .switchUnconfirmed: text = L(.coordinatorLazySpaceAskedAWindowOr)
+        case .activationUnconfirmed: text = L(.coordinatorLazySpaceBroughtAnAppForward)
         case .hotkeyUnconfirmed:
             let name = MacItem.switchToDesktop(nil)
             text = L(.coordinatorLazySpaceSentTheMacOSShortcut(name))
         case .steppingUnavailable(let issue): text = DesktopShortcuts.steppingText(issue)
-        case .frontUnconfirmed: text = L("The window moved to the target Space and LazySpace switched there, but could not confirm focus on the moved window.",
-                                         "ウインドウは目標の操作スペースへ移り、その操作スペースへも切り替えましたが、移動したウインドウへのフォーカスを確認できませんでした。")
-        case .otherDisplayNoRoute: text = L("LazySpace can switch to a Space of another display only by bringing forward a window or app there, and none could be used.",
-                                            "別のディスプレイの操作スペースへは、そこにあるウインドウかアプリを前面にすることでしか切り替えられません。使えるものがありませんでした。")
-        case .otherDisplayNeedsDirectMove: text = L("Moving a window to a Space of another display needs the direct move, which is not available on this macOS.",
-                                                    "別のディスプレイの操作スペースへウインドウを移すには直接の移動が必要ですが、このmacOSでは使えません。")
-        case .routeChanged: text = L("LazySpace switched to a Space on the way, but the order of Spaces on this display then changed, so the remaining steps were not sent.",
-                                     "途中の操作スペースへ切り替えましたが、その後このディスプレイの操作スペースの並びが変わったため、残りの移動は送っていません。")
+        case .frontUnconfirmed: text = L(.coordinatorTheWindowMovedToTheTargetSpace)
+        case .otherDisplayNoRoute: text = L(.coordinatorLazySpaceCanSwitchToA)
+        case .otherDisplayNeedsDirectMove: text = L(.coordinatorMovingAWindowToA)
+        case .routeChanged: text = L(.coordinatorLazySpaceSwitchedToASpace)
         }
         if let place = spaceControl?.failureDetail(f) { return text + place }
         return text
@@ -2715,8 +2703,7 @@ final class Coordinator {
             let source = authorization.spaceID
             var fitNote = ""
             if case .confirmed = outcome, resolved.otherDisplay, fitOntoDisplay(target, pid: targetPID, resolved: resolved, gate: authorized) == false {
-                fitNote = Copy.sentenceSeparator + L("Moving it onto that display could not be confirmed, so it may not be visible there yet.",
-                                                     "そのディスプレイの上へ動かせたかは確認できなかったため、まだ見えないことがあります。")
+                fitNote = Copy.sentenceSeparator + L(.coordinatorMovingItOntoThatDisplay)
             }
             // Front restoration only for confirmed sends, and only while still on the source Space,
             // or while focus that went with the window to another display left the source shown there (focus comes back to the source display).
@@ -2729,7 +2716,7 @@ final class Coordinator {
                 let focusWent = resolved.otherDisplay && current == dest && system.spaceDisplay(source)?.shown == true
                 if current == source || focusWent {
                     restored = restoreFront(restore, on: source, comingFrom: resolved.otherDisplay ? dest : nil, authorization: authorization)
-                    if !restored { restoreNote = Copy.sentenceSeparator + L("The previous window was not brought forward.", "直前のウインドウは前面に戻していません。") }
+                    if !restored { restoreNote = Copy.sentenceSeparator + L(.coordinatorThePreviousWindowWasNotBrought) }
                 }
             }
             // Focus left on the destination's display is named, since the shortcuts now act on that display.
@@ -2761,20 +2748,20 @@ final class Coordinator {
             }
             switch outcome {
             case .confirmed:
-                let message = L("Sent the window to \(destLabel).", "ウインドウを\(destLabel)へ送りました。") + fitNote + (moved.isEmpty ? restoreNote : moved)
+                let message = L(.coordinatorSentTheWindowTo(destLabel)) + fitNote + (moved.isEmpty ? restoreNote : moved)
                 return OperationResult.note(kind: "send-to-space", spaceID: source, message: message, ok: true)
             case .notIssued(let failure):
                 return OperationResult.note(kind: "send-to-space", spaceID: source, message: describe(failure), ok: false)
             case .unconfirmed:
-                var result = OperationResult.note(kind: "send-to-space", spaceID: source, message: L("The request to send the window was made, but its new Space could not be confirmed. It may still move.", "ウインドウを送る要求はしましたが、移った先を確認できませんでした。あとで移ることがあります。") + moved, ok: false)
+                var result = OperationResult.note(kind: "send-to-space", spaceID: source, message: L(.coordinatorTheRequestToSendThe) + moved, ok: false)
                 result.outcome = .partial
                 return result
             case .elsewhere(let space):
-                var result = OperationResult.note(kind: "send-to-space", spaceID: source, message: L("The window ended up on \(spaceLabel(space, in: labels)) instead of \(destLabel).", "ウインドウは\(destLabel)ではなく\(spaceLabel(space, in: labels))に移りました。") + moved, ok: false)
+                var result = OperationResult.note(kind: "send-to-space", spaceID: source, message: L(.coordinatorTheWindowEndedUpOnInstead(spaceLabel(space, in: labels), destLabel)) + moved, ok: false)
                 result.outcome = .partial
                 return result
             case .interrupted:
-                var result = OperationResult.note(kind: "send-to-space", spaceID: source, message: L("Stopped after the request to send the window was made, because of input, pausing or cancellation. The window may still move.", "ウインドウを送る要求のあと、入力・停止・取消のため確認をやめました。ウインドウがあとで移ることがあります。") + moved, ok: false)
+                var result = OperationResult.note(kind: "send-to-space", spaceID: source, message: L(.coordinatorStoppedAfterTheRequestTo) + moved, ok: false)
                 result.outcome = .partial
                 return result
             }
@@ -4714,7 +4701,7 @@ final class Coordinator {
             }
             var looping = ""
             if router.noteSend(app: window.app, space: source, rule: ruleIndex, now: routingClock()) {
-                looping = Copy.sentenceSeparator + L("The app kept opening new windows, so this rule is paused on this Space for a minute.", "アプリが新しいウインドウを開き続けたため、この操作スペースではこのルールを1分止めます。")
+                looping = Copy.sentenceSeparator + L(.coordinatorTheAppKeptOpeningNew)
             }
             switch outcome {
             case .confirmed:
@@ -4733,16 +4720,16 @@ final class Coordinator {
                     }
                 } else if let restore, system.currentSpaceID() == source,
                           !restoreFront(restore, on: source, authorization: authorization, gate: { gate() }) {
-                    restoreNote = Copy.sentenceSeparator + L("The previous window was not brought forward.", "直前のウインドウは前面に戻していません。")
+                    restoreNote = Copy.sentenceSeparator + L(.coordinatorThePreviousWindowWasNotBrought)
                 }
                 announceSent(identity: saved, app: window.app, from: source, to: dest)
                 // The position note comes from the last observation after follow and restoration.
                 let after = system.currentSpaceID()
                 let followed = rule.follow && !followFailed && after == dest
-                let moved = after != nil && after != source && !followed ? Copy.sentenceSeparator + L("The display then moved to \(spaceLabel(after!)).", "その後、表示が\(spaceLabel(after!))に移りました。") : ""
+                let moved = after != nil && after != source && !followed ? Copy.sentenceSeparator + L(.coordinatorTheDisplayThenMovedTo(spaceLabel(after!))) : ""
                 let sent = L(.coordinatorSentANewWindowTo(AppNames.localized(window.app), spaceLabel(dest)))
                 if followFailed {
-                    var result = OperationResult.note(kind: "auto-route", spaceID: source, message: sent + Copy.sentenceSeparator + L("Switching to that Space could not be confirmed.", "その操作スペースへの切り替えは確認できませんでした。") + moved + looping, ok: false)
+                    var result = OperationResult.note(kind: "auto-route", spaceID: source, message: sent + Copy.sentenceSeparator + L(.coordinatorSwitchingToThatSpaceCould) + moved + looping, ok: false)
                     result.outcome = .partial
                     result.issued = 1
                     return result
@@ -4753,7 +4740,7 @@ final class Coordinator {
             case .unconfirmed, .elsewhere, .interrupted:
                 // With an uncertain result, stop layout writes to that window and reconcile by membership (no resend, no drag).
                 holdUncertainSend(saved, source: source, target: dest, targetUUID: resolved.uuid)
-                var result = OperationResult.note(kind: "auto-route", spaceID: source, message: L("A new window may not have reached \(spaceLabel(dest)); LazySpace leaves it alone until its Space is known.", "新しいウインドウが\(spaceLabel(dest))に届いたか確かめられません。所属が分かるまで、このウインドウには書き込みません。") + looping, ok: false)
+                var result = OperationResult.note(kind: "auto-route", spaceID: source, message: L(.coordinatorANewWindowMayNot(spaceLabel(dest))) + looping, ok: false)
                 result.outcome = .partial
                 return result
             }
