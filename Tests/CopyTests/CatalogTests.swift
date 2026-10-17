@@ -85,26 +85,43 @@ final class CatalogTests: XCTestCase {
         return out
     }
 
-    /// English arguments used only to choose a plural form: substitutions none of whose forms shows the number ("was" or "were"),
-    /// and that no plain specifier shows either. Another language may leave these out.
-    static func pluralSelectors(_ localization: [String: Any]) -> Set<String> {
+    /// Arguments a localization uses: those its text shows, and those that only choose a plural form (a substitution none of
+    /// whose forms shows `%arg`, such as "was" or "were"). A plural form may leave out its count, so the forms are combined.
+    static func argumentUse(of localization: [String: Any]) -> (shown: Set<String>, selectors: Set<String>) {
         let substitutions = localization["substitutions"] as? [String: Any] ?? [:]
-        var selectors: Set<String> = []
-        for case let substitution as [String: Any] in substitutions.values {
-            let forms = ((substitution["variations"] as? [String: Any])?["plural"] as? [String: Any] ?? [:]).values
-            let shown = forms.contains { ((($0 as? [String: Any])?["stringUnit"] as? [String: Any])?["value"] as? String ?? "").contains("%arg") }
-            if !shown { selectors.insert("\(substitution["argNum"] as? Int ?? -1):\(kind(substitution["formatSpecifier"] as? String ?? "?"))") }
+        var values: [String] = []
+        if let value = (localization["stringUnit"] as? [String: Any])?["value"] as? String { values.append(value) }
+        if let plural = (localization["variations"] as? [String: Any])?["plural"] as? [String: Any] {
+            values += plural.values.compactMap { (($0 as? [String: Any])?["stringUnit"] as? [String: Any])?["value"] as? String }
         }
-        let value = (localization["stringUnit"] as? [String: Any])?["value"] as? String ?? ""
-        return selectors.subtracting(arguments(value, substitutions: [:]))
+        var shown: Set<String> = [], selectors: Set<String> = []
+        for value in values {
+            // Plain specifiers; a substitution token reads as "-1:?" without its definition.
+            shown.formUnion(arguments(value, substitutions: [:]).filter { !$0.hasPrefix("-1:") })
+            for name in substitutionNames(value) {
+                let substitution = substitutions[name] as? [String: Any] ?? [:]
+                let argument = "\(substitution["argNum"] as? Int ?? -1):\(kind(substitution["formatSpecifier"] as? String ?? "?"))"
+                let forms = ((substitution["variations"] as? [String: Any])?["plural"] as? [String: Any] ?? [:]).values
+                let displayed = forms.contains { ((($0 as? [String: Any])?["stringUnit"] as? [String: Any])?["value"] as? String ?? "").contains("%arg") }
+                if displayed { shown.insert(argument) } else { selectors.insert(argument) }
+            }
+        }
+        return (shown, selectors.subtracting(shown))
     }
 
-    /// What is wrong with a translation's arguments compared with English, or nil.
+    static func substitutionNames(_ value: String) -> [String] {
+        let range = NSRange(value.startIndex..., in: value)
+        return specifierPattern.matches(in: value, range: range).compactMap { Range($0.range(at: 3), in: value).map { String(value[$0]) } }
+    }
+
+    /// What is wrong with a translation's arguments compared with English, or nil: every argument English shows must be shown,
+    /// and nothing English lacks may be used. A count English uses only to choose a plural form may be left out.
     static func argumentProblem(english: [String: Any], other: [String: Any]) -> String? {
-        let expected = arguments(of: english), actual = arguments(of: other)
-        let missing = expected.subtracting(actual).subtracting(pluralSelectors(english))
-        let extra = actual.subtracting(expected)
-        return missing.isEmpty && extra.isEmpty ? nil : "\(actual.sorted()) vs en \(expected.sorted())"
+        let expected = argumentUse(of: english), actual = argumentUse(of: other)
+        let missing = expected.shown.subtracting(actual.shown)
+        let extra = actual.shown.union(actual.selectors).subtracting(expected.shown.union(expected.selectors))
+        guard !missing.isEmpty || !extra.isEmpty else { return nil }
+        return "shows \(actual.shown.sorted()) vs en \(expected.shown.sorted())" + (extra.isEmpty ? "" : ", extra \(extra.sorted())")
     }
 
     static func kind(_ specifier: String) -> String {
@@ -114,22 +131,6 @@ final class CatalogTests: XCTestCase {
         case "lf", "f": "double"
         default: "object"
         }
-    }
-
-    /// Arguments of one language across its forms. A plural form may leave out its count, so the union is compared.
-    static func arguments(of localization: [String: Any]) -> Set<String> {
-        let substitutions = localization["substitutions"] as? [String: Any] ?? [:]
-        var out: Set<String> = []
-        if let unit = localization["stringUnit"] as? [String: Any] {
-            out.formUnion(arguments(unit["value"] as? String ?? "", substitutions: substitutions))
-        }
-        if let plural = (localization["variations"] as? [String: Any])?["plural"] as? [String: Any] {
-            for form in plural.values {
-                let value = ((form as? [String: Any])?["stringUnit"] as? [String: Any])?["value"] as? String ?? ""
-                out.formUnion(arguments(value, substitutions: substitutions))
-            }
-        }
-        return out
     }
 
     /// The plural categories each shipped language distinguishes for whole numbers (CLDR). A new language adds its own.
@@ -228,7 +229,8 @@ final class CatalogTests: XCTestCase {
     func testEntriesWithArgumentsHaveComments() throws {
         let found = try Self.entries().filter { entry in
             guard let english = entry.localizations["en"] as? [String: Any] else { return false }
-            return !Self.arguments(of: english).isEmpty && entry.comment.trimmingCharacters(in: .whitespaces).isEmpty
+            let use = Self.argumentUse(of: english)
+            return !(use.shown.isEmpty && use.selectors.isEmpty) && entry.comment.trimmingCharacters(in: .whitespaces).isEmpty
         }.map { "\($0.module) \($0.key)" }
         XCTAssertEqual(found, [], "entries with arguments need a comment naming them:\n" + found.joined(separator: "\n"))
     }
@@ -285,6 +287,12 @@ final class CatalogTests: XCTestCase {
         XCTAssertNotNil(Self.argumentProblem(english: shown, other: unit("%1$@: ウインドウ")), "the count is shown")
         XCTAssertNil(Self.argumentProblem(english: shown, other: unit("%1$@: %2$lldつ")))
         XCTAssertNotNil(Self.argumentProblem(english: shown, other: unit("%1$@: %2$lldつ %3$@")), "an argument English lacks")
+        var hidden = unit("%1$@: %#@windows@")
+        hidden["substitutions"] = ["windows": ["argNum": 2, "formatSpecifier": "lld", "variations": ["plural": ["other": unit("ウインドウ")]]]]
+        XCTAssertNotNil(Self.argumentProblem(english: shown, other: hidden), "a substitution that hides a count English shows")
+        var kept = hidden
+        kept["substitutions"] = ["windows": ["argNum": 2, "formatSpecifier": "lld", "variations": ["plural": ["other": unit("%argつ")]]]]
+        XCTAssertNil(Self.argumentProblem(english: shown, other: kept))
     }
 
     func testArgumentsAreReadFromEveryKindOfValue() {
