@@ -254,9 +254,13 @@ public final class SpaceControl {
         /// Number of left/right key steps sent; 0 when moved by the direct path (membership change -> activation).
         public var steps: Int
         public var wallMs: Double
+        /// The follow was confirmed, then input, Pause, cancellation, or a lost permission or input observation ended the watch after it:
+        /// the window moved and has focus, but the caller does nothing more.
+        public var stoppedWhileWatching: Bool
 
-        public init(fromSpace: UInt64, toSpace: UInt64, steps: Int, wallMs: Double) {
+        public init(fromSpace: UInt64, toSpace: UInt64, steps: Int, wallMs: Double, stoppedWhileWatching: Bool = false) {
             self.fromSpace = fromSpace; self.toSpace = toSpace; self.steps = steps; self.wallMs = wallMs
+            self.stoppedWhileWatching = stoppedWhileWatching
         }
     }
 
@@ -302,7 +306,8 @@ public final class SpaceControl {
     /// Whatever the wait, the final authorization, input, and arrival checks run after it (sent keys, modifiers included, are already released).
     /// Shortcut routes (Desktop N, the last step of left/right stepping, follow with Desktop N) do not wait; back-to-back commands with no gap must still end on the right Space
     /// without false arrivals or false suppression records.
-    /// Space switches by activation, app, or hop watch for 0.3 s. Follow after moving a window confirms activation and the target window's focus, so it adds no wait.
+    /// Space switches by activation, app, or hop watch for 0.3 s. Follow after moving a window confirms activation and the target window's focus, so it adds no wait;
+    /// it then watches the front app until `followWatch` after arrival.
     /// Waits can be restored per route (`fixedWaits` holds the old values; lzprobe `--settle fixed`). Drag step intervals and post-release checks are kept separately.
     public struct Settle: Equatable {
         /// After reaching the target by tier 0 (Desktop N).
@@ -317,15 +322,19 @@ public final class SpaceControl {
         public var hop: TimeInterval = 0.3
         /// After following by raise / reactivate. The target window's focus is already confirmed, so no extra wait by default.
         public var raiseFollow: TimeInterval = 0
+        /// How long after arrival a confirmed follow by raise / reactivate keeps watching the front app, so another app that came forward
+        /// as the switch completed (seen late through the main thread's copy) is handed back. Input ends it at once.
+        public var followWatch: TimeInterval = 0.2
         public init() {}
 
-        /// Same as the default (shortcuts return on arrival; window follow returns once the target window's focus is observed).
+        /// Same as the default (shortcuts return on arrival; window follow returns once the target window's focus is observed and the short watch ends).
         public static var observedArrival: Settle { Settle() }
 
         /// The fixed waits from before step 1 (Desktop N 0.3 s, last left/right step 0.4 s, Desktop N follow 0.3 s), for comparison and restoring.
+        /// No watch: its time from arrival has passed by the end of the fixed wait.
         public static var fixedWaits: Settle {
             var settle = Settle()
-            settle.desktopHotkey = 0.3; settle.arrowFinal = 0.4; settle.hotkeyFollow = 0.3; settle.raiseFollow = 0.3
+            settle.desktopHotkey = 0.3; settle.arrowFinal = 0.4; settle.hotkeyFollow = 0.3; settle.raiseFollow = 0.3; settle.followWatch = 0
             return settle
         }
     }
@@ -424,6 +433,8 @@ public final class SpaceControl {
     private let commandConflicts: (UInt16, CGEventFlags) -> Bool
     /// The front app's pid, observed to see whether the us -> target-app hand-off worked.
     private let frontmostPID: () -> pid_t?
+    /// LazySpace's own pid: in front during a hand-off, never a reason to hand focus back.
+    private let ownPID: pid_t
     private let source: CGEventSource?
 
     public convenience init?(input: InputMonitor) {
@@ -447,6 +458,7 @@ public final class SpaceControl {
          hotkey: @escaping (Int32) -> PrivateSymbols.SymbolicHotKey,
          commandConflicts: @escaping (UInt16, CGEventFlags) -> Bool = { _, _ in false },
          frontmostPID: @escaping () -> pid_t? = { FrontmostApplication.shared.pid },
+         ownPID: pid_t = getpid(),
          passThroughTap: PassThroughTap? = nil) {
         self.spaces = spaces
         self.inputCount = inputCount
@@ -459,6 +471,7 @@ public final class SpaceControl {
         self.hotkey = hotkey
         self.commandConflicts = commandConflicts
         self.frontmostPID = frontmostPID
+        self.ownPID = ownPID
         self.passThroughTap = passThroughTap
         source = CGEventSource(stateID: .privateState)
     }
@@ -1537,14 +1550,131 @@ public final class SpaceControl {
             focusedHandoff = reactivated
         }
         // Wait for activation and the target window's focus under one deadline. If a late arrival made reactivation unnecessary, check the original raise.
-        switch waitForHandoff(focusedHandoff, on: target, window: wid, ifDeclined: raised, canContinue: canContinue) {
-        case .arrived: break
-        case .failed(.activationUnconfirmed), .nothingIssued: return .failed(.frontUnconfirmed)
-        case .failed(let failure): return .failed(failure)
+        return completeFollow(wid, from: active, to: target, handoff: focusedHandoff, ifDeclined: raised, liveness: liveness, startedAt: t0, canContinue: canContinue)
+    }
+
+    /// A hand-back starts only with at least this much of the confirmation deadline left, so a begun hand-off has time to finish.
+    private static let handBackStartBudget: TimeInterval = 0.5
+
+    /// What the hand-back decision did: issued it, found it not needed or not allowed (used, no request, not another app, too late),
+    /// stopped on input, Pause, or a lost permission during its reads, or saw the window or the Space change.
+    private enum HandBack { case issued, notNeeded, stopped, place(Failure) }
+
+    /// After arriving by raise / reactivate: confirms under one deadline (1.5 s from arrival) that the requested app is in front with the moved window
+    /// focused, runs the final checks, then watches the front app until `settle.followWatch` after arrival. macOS sometimes brings another app
+    /// (Finder) forward as the switch completes, and LazySpace may see it only later through the main thread's copy of the front app.
+    /// Another app in front on the destination (neither the owner nor LazySpace) after the owner's activation was requested is handed back once
+    /// through the reactivation hand-off, whether it is seen while confirming, by the final checks, or during the watch.
+    /// Input, Pause, or another stop ends the watch with the confirmed move; while confirming or handing back, it interrupts.
+    private func completeFollow(_ wid: CGWindowID, from active: UInt64, to target: UInt64, handoff: Handoff, ifDeclined fallback: Handoff,
+                                liveness: Liveness, startedAt t0: Date, canContinue: @escaping () -> Bool) -> DirectOutcome {
+        let arrivedAt = now()
+        let deadline = arrivedAt.addingTimeInterval(1.5)
+        let watchEnd = arrivedAt.addingTimeInterval(settle.followWatch)
+        var handBack: Handoff?
+        // The hand-off whose request decides confirmation: a declined reactivation falls back to the raise, a declined hand-back to that.
+        var base: Handoff { handoff.declined ? fallback : handoff }
+        var current: Handoff { handBack.map { $0.declined ? base : $0 } ?? base }
+        // The pid confirmed in front with the moved window focused; nil while confirming.
+        var confirmed: pid_t?
+        func done(stopped: Bool = false) -> DirectOutcome {
+            .done(Result(fromSpace: active, toSpace: target, steps: 0, wallMs: now().timeIntervalSince(t0) * 1000, stoppedWhileWatching: stopped))
         }
-        settleFor(settle.raiseFollow)
-        guard canContinue() else { return .failed(.interrupted) }
-        return finishFollow(wid, from: active, to: target, startedAt: t0, canContinue: canContinue)
+
+        // The membership read (taken first) is classified before the Space read after it, as in `finishFollow`.
+        func placeFailure(_ membership: [UInt64]) -> Failure? {
+            if let failure = Self.membershipFailure(membership, source: active, target: target, confirmed: true) { return failure }
+            guard let space = spaces.activeSpace() else { return .activeSpaceUnreadable }
+            return space == target ? nil : .drifted(to: space)
+        }
+
+        // Hands focus back once when `front` (one sample) is another app on the destination.
+        func handBackIfStolen(_ front: pid_t?) -> HandBack {
+            guard handBack == nil, let direct, let owner = base.requested, let front, front != owner, front != ownPID else { return .notNeeded }
+            // Membership is the slower read; the cheap gates, the place, and the start budget are checked after it.
+            let membership = spaces.spaces(for: wid)
+            guard canContinue() else { return .stopped }
+            if let failure = placeFailure(membership) { return .place(failure) }
+            guard liveness.live, deadline.timeIntervalSince(now()) >= Self.handBackStartBudget else { return .notNeeded }
+            let attempt = Handoff()
+            handBack = attempt
+            trace("followRecoverRequested")
+            let onlyOnTarget = { [spaces] in spaces.spaces(for: wid) == [target] }
+            direct.reactivate(wid, { [self] in
+                // Begins only on the destination, with another app still in front and time left.
+                guard liveness.live, onlyOnTarget() else { return false }
+                let front = frontmostPID()
+                return front != nil && front != owner && front != ownPID && canContinue() && spaces.activeSpace() == target
+                    && deadline.timeIntervalSince(now()) >= Self.handBackStartBudget && liveness.live
+            }, { [spaces] in
+                // Finishes only on the destination (the original reactivation may finish on the source).
+                liveness.live && onlyOnTarget() && canContinue() && spaces.activeSpace() == target && liveness.live
+            }, attempt.note)
+            return .issued
+        }
+
+        while true {
+            if let pid = confirmed {
+                // Watching. Input, Pause, or another stop ends the watch with the confirmed move. Membership is the slower read,
+                // so the stop, the Space, and the front app are read after it, and nothing returns success on reads taken before it.
+                guard canContinue() else { return done(stopped: true) }
+                let membership = spaces.spaces(for: wid)
+                guard canContinue() else { return done(stopped: true) }
+                if let failure = placeFailure(membership) { return canContinue() ? .failed(failure) : done(stopped: true) }
+                if let front = frontmostPID(), front != pid, front != ownPID {
+                    switch handBackIfStolen(front) {
+                    case .issued: confirmed = nil; sleep(0.02); continue
+                    case .stopped: return done(stopped: true)
+                    case .place(let failure): return canContinue() ? .failed(failure) : done(stopped: true)
+                    case .notNeeded: return .failed(.frontUnconfirmed)
+                    }
+                }
+                let left = watchEnd.timeIntervalSince(now())
+                if left <= 0 { return done() }
+                sleep(min(0.02, left))
+                continue
+            }
+            // Confirming: the requested app in front with the moved window focused (as `waitForHandoff` with a window).
+            guard canContinue() else { return .failed(.interrupted) }
+            let front = frontmostPID()
+            guard spaces.activeSpace() == target else { return .failed(.interrupted) }
+            let hand = current
+            // With no request left, a window ID unique across apps and a stable front pid confirm it (an AXRaise that took effect late).
+            let expectedPID = hand.declined || hand.abandoned ? front : hand.requested
+            if let pid = expectedPID, front == pid {
+                let focused = direct?.focusedWindow() == wid
+                // Input or Space switches during the AX read do not count as success either.
+                guard canContinue(), spaces.activeSpace() == target else { return .failed(.interrupted) }
+                if focused && frontmostPID() == pid {
+                    trace("activationConfirmed")
+                    trace("focusConfirmed")
+                    settleFor(settle.raiseFollow)
+                    guard canContinue() else { return .failed(.interrupted) }
+                    switch finishFollow(wid, from: active, to: target, startedAt: t0, canContinue: canContinue) {
+                    case .done: confirmed = pid
+                    case .failed(.frontUnconfirmed):
+                        // Another app may have come forward during the final reads.
+                        switch handBackIfStolen(frontmostPID()) {
+                        case .issued: sleep(0.02)
+                        case .stopped: return .failed(.interrupted)
+                        case .place(let failure): return .failed(failure)
+                        case .notNeeded: return .failed(.frontUnconfirmed)
+                        }
+                    case let other: return other
+                    }
+                    continue
+                }
+            }
+            // While confirming, a stop or another Space interrupts (as the next poll would say), and a membership change is that failure.
+            switch handBackIfStolen(front) {
+            case .issued: sleep(0.02); continue
+            case .stopped, .place(.drifted), .place(.activeSpaceUnreadable): return .failed(.interrupted)
+            case .place(let failure): return .failed(failure)
+            case .notNeeded: break
+            }
+            if now() >= deadline { return .failed(.frontUnconfirmed) }
+            sleep(0.02)
+        }
     }
 
     /// Final follow check (raise / reactivate and Desktop N alike): read membership, then recheck the cheap gates (interruption, authorization, input) and

@@ -2595,7 +2595,8 @@ final class Coordinator {
             guard destinationStillValid(resolved), system.currentSpaceID() != dest else {
                 return OperationResult.note(kind: "move-to-space", spaceID: current, message: Self.destinationChanged, ok: false)
             }
-            let authorized = { authorization.interruptionReason(system: self.system, control: self.control) == nil }
+            // Permission loss closes every gate of the move too, including the follow's activations on the main thread.
+            let authorized = { self.system.axTrusted && authorization.interruptionReason(system: self.system, control: self.control) == nil }
             // Another display: the direct move keeps the old frame, so the window is fitted onto that display before it is brought forward there.
             var fitted: Bool?
             let hooks = SpaceControl.MoveHooks(beforeIssue: {
@@ -2612,10 +2613,20 @@ final class Coordinator {
                 landing.origin = result.fromSpace
             }
             switch moved {
-            case .success:
-                guard authorization.interruptionReason(system: system, control: control) == nil, system.currentSpaceID() == dest else {
-                    return OperationResult.note(kind: "move-to-space", spaceID: dest, message: L("After the window moved, input, pause state, or the current Space changed, so position correction and adding it to the layout were canceled.",
-                                                                                                "ウインドウの移動後に入力・停止・操作スペースの状態が変わったため、位置の補正とレイアウトへの追加を中止しました。"), ok: false)
+            case .success(let result):
+                // The window moved; input, Pause, a Space change, or a lost permission or input observation that ended the follow's watch cancels the rest (partial).
+                let interrupted = authorization.interruptionReason(system: system, control: control) != nil || system.currentSpaceID() != dest
+                if result.stoppedWhileWatching, !interrupted {
+                    var result = OperationResult.note(kind: "move-to-space", spaceID: dest, message: L("The window moved to \(spaceLabel(dest)), but the \(AccessPane.name()) permission or mouse and keyboard input observation became unavailable, so position correction and adding it to the layout were canceled.",
+                                                                                                     "ウインドウは\(spaceLabel(dest))へ移りましたが、「\(AccessPane.name())」の許可がなくなったか、マウスとキーボードの入力を観測できなくなったため、位置の補正とレイアウトへの追加を中止しました。"), ok: false)
+                    result.outcome = .partial
+                    return result
+                }
+                guard !interrupted else {
+                    var result = OperationResult.note(kind: "move-to-space", spaceID: dest, message: L("After the window moved, input, pause state, or the current Space changed, so position correction and adding it to the layout were canceled.",
+                                                                                                     "ウインドウの移動後に入力・停止・操作スペースの状態が変わったため、位置の補正とレイアウトへの追加を中止しました。"), ok: false)
+                    result.outcome = .partial
+                    return result
                 }
                 if resolved.otherDisplay {
                     if fitted == false {
@@ -2629,7 +2640,9 @@ final class Coordinator {
                 else if case .frame(let after) = system.readFrame(target), after != frame, after.size == frame.size,
                    abs(after.origin.x - frame.origin.x) <= 20, abs(after.origin.y - frame.origin.y) <= 20 {
                     guard authorization.interruptionReason(system: system, control: control) == nil, system.currentSpaceID() == dest else {
-                        return OperationResult.note(kind: "move-to-space", spaceID: dest, message: L("Position correction after the move was canceled.", "移動後の位置の補正を中断しました。"), ok: false)
+                        var result = OperationResult.note(kind: "move-to-space", spaceID: dest, message: L("Position correction after the move was canceled.", "移動後の位置の補正を中断しました。"), ok: false)
+                        result.outcome = .partial
+                        return result
                     }
                     let write = system.writeFrame(target, frame: frame, currentFrame: after, timeout: limits.perAppTimeout) { [self] in
                         system.axTrusted && authorization.interruptionReason(system: system, control: control) == nil && system.currentSpaceID() == dest
@@ -2643,8 +2656,10 @@ final class Coordinator {
                 // Recheck input, pause, cancellation, and Space changes during position correction (writes and readback) or the frame read, before creating arrival handling and before reporting success.
                 // If it stops here, no arrival handling is created under the new cancellation generation and it is not success (the window is on the destination).
                 guard authorization.interruptionReason(system: system, control: control) == nil, system.currentSpaceID() == dest else {
-                    return OperationResult.note(kind: "move-to-space", spaceID: dest, message: L("The window moved to \(spaceLabel(dest)), but input, pause state, or the current Space changed before the move finished, so it was not added to the layout.",
-                                                                                                "ウインドウは\(spaceLabel(dest))へ移りましたが、移動の終わりまでに入力・停止・操作スペースの状態が変わったため、レイアウトには加えていません。"), ok: false)
+                    var result = OperationResult.note(kind: "move-to-space", spaceID: dest, message: L("The window moved to \(spaceLabel(dest)), but input, pause state, or the current Space changed before the move finished, so it was not added to the layout.",
+                                                                                                     "ウインドウは\(spaceLabel(dest))へ移りましたが、移動の終わりまでに入力・停止・操作スペースの状態が変わったため、レイアウトには加えていません。"), ok: false)
+                    result.outcome = .partial
+                    return result
                 }
                 // On the arrived Space, this window joins the layout without the arrival dwell, on the same operations queue as the tick.
                 expectArrival(of: target, on: dest)

@@ -118,13 +118,16 @@ private final class SpaceHarness {
         }, hotkey: { id in
             self.hotkeyReads.append(id)
             return self.hotkey(id)
-        }, commandConflicts: { code, flags in self.conflicts(code, flags) }, frontmostPID: { self.frontmost }, passThroughTap: tap)
+        }, commandConflicts: { code, flags in self.conflicts(code, flags) }, frontmostPID: { self.frontmost }, ownPID: Self.ownPID, passThroughTap: tap)
+    /// LazySpace's own pid in the harness (the window's app is 700; another app is 999).
+    static let ownPID: pid_t = 600
     /// A control with the same replacements but a different observer.
     func control(with observer: SpaceObserving) -> SpaceControl {
         SpaceControl(spaces: observer, inputCount: { self.inputs }, inputAvailable: { self.inputAvailable }, now: { self.time },
                      sleep: { self.time.addTimeInterval($0); self.onSleep?($0) }, cursorPosition: { self.cursor },
                      warpCursor: { self.warps.append($0) }, postEvent: { self.events.append($0) },
-                     hotkey: { id in self.hotkeyReads.append(id); return self.hotkey(id) }, commandConflicts: { _, _ in false }, frontmostPID: { self.frontmost }, passThroughTap: tap)
+                     hotkey: { id in self.hotkeyReads.append(id); return self.hotkey(id) }, commandConflicts: { _, _ in false }, frontmostPID: { self.frontmost },
+                     ownPID: Self.ownPID, passThroughTap: tap)
     }
     /// Passes window candidates as is and app candidates lazily (as Coordinator does). `onCollect` simulates something during collection.
     func switchSpace(_ target: UInt64, _ table: [UInt64: [SpaceControl.Candidate]], hop: Bool = true, source: UInt64? = nil, hotkey: SpaceControl.HotkeyPlan? = nil,
@@ -273,6 +276,7 @@ final class SpaceControlTests: XCTestCase {
             XCTAssertEqual(h.spaces.membership, [2], mode)
             XCTAssertTrue(h.events.isEmpty, "\(mode): no shortcut retry or drag")
             XCTAssertEqual(d.lastIsCurrent?(), false, "\(mode): queued work expires")
+            if mode == "wrong app" { XCTAssertEqual(d.reactivates, [10], "another app in front: handed back once, without effect here") }
         }
     }
 
@@ -374,18 +378,21 @@ final class SpaceControlTests: XCTestCase {
         XCTAssertTrue(h.events.isEmpty)
     }
 
+    /// Typing after the focus is confirmed ends the watch at the next poll with the confirmed move; nothing is handed back.
     func testMoveFollowFinishesBeforeTypingAfterConfirmedFocus() throws {
         for reactivate in [false, true] {
             let h = SpaceHarness(); let d = DirectStub(); d.raiseSwitches = !reactivate
             h.control.direct = d.path(h)
-            var focusedAt: Date?
+            var focusedAt: Date?, typedAt: Date?
             h.onFocusRead = { if focusedAt == nil { focusedAt = h.time } }
             h.onSleep = { _ in
-                if let focusedAt, h.time.timeIntervalSince(focusedAt) >= 0.15 { h.inputs += 1 }
+                if typedAt == nil, let focusedAt, h.time.timeIntervalSince(focusedAt) >= 0.15 { typedAt = h.time; h.inputs += 1 }
             }
             XCTAssertEqual(try h.move(to: 2).get().toSpace, 2)
             XCTAssertNotNil(focusedAt)
-            XCTAssertLessThan(h.time.timeIntervalSince(focusedAt ?? h.time), 0.15)
+            if let typedAt { XCTAssertEqual(h.time, typedAt, "returned at the poll that saw the input") }
+            XCTAssertLessThanOrEqual(h.time.timeIntervalSince(focusedAt ?? h.time), 0.2 + 1e-6)
+            XCTAssertEqual(d.reactivates.count, reactivate ? 1 : 0, "only the original reactivation")
             XCTAssertTrue(h.events.isEmpty)
         }
     }
@@ -2937,11 +2944,11 @@ extension SpaceControlTests {
     func testSettleDefaultsPerRoute() {
         let settle = SpaceControl.Settle()
         XCTAssertEqual([settle.desktopHotkey, settle.arrowFinal, settle.hotkeyFollow], [0, 0, 0])
-        XCTAssertEqual([settle.directArrival, settle.hop, settle.raiseFollow], [0.3, 0.3, 0])
+        XCTAssertEqual([settle.directArrival, settle.hop, settle.raiseFollow, settle.followWatch], [0.3, 0.3, 0, 0.2])
         XCTAssertEqual(SpaceControl.Settle.observedArrival, settle)
         let fixed = SpaceControl.Settle.fixedWaits
         XCTAssertEqual([fixed.desktopHotkey, fixed.arrowFinal, fixed.hotkeyFollow], [0.3, 0.4, 0.3])
-        XCTAssertEqual([fixed.directArrival, fixed.hop, fixed.raiseFollow], [0.3, 0.3, 0.3])
+        XCTAssertEqual([fixed.directArrival, fixed.hop, fixed.raiseFollow, fixed.followWatch], [0.3, 0.3, 0.3, 0])
         XCTAssertEqual(SpaceHarness().control.settle, settle, "the product default")
     }
 
@@ -3058,7 +3065,8 @@ extension SpaceControlTests {
     }
 
     /// Input or an interruption during follow's final membership read is not success even if membership and Space are right (raise follow, Desktop N follow).
-    /// An uninterrupted run counts membership reads from reaching the target to success, and the input or interruption happens in the last one.
+    /// An uninterrupted Desktop N follow counts membership reads from reaching the target to success, and the input or interruption happens in the last one.
+    /// The raise follow's final check is its first read on the target; the reads after it are the watch's, where input ends the watch with the confirmed move.
     func testInterruptionDuringTheFinalMembershipReadIsNotSuccess() throws {
         for follow in [false, true] {
             let (clean, _) = desktopHarness(dock: "switches")
@@ -3073,7 +3081,7 @@ extension SpaceControlTests {
                 h.spaces.onMembershipRead = { _ in
                     guard h.spaces.active == 2 else { return }
                     readsOnTarget += 1
-                    guard readsOnTarget == cleanReads else { return }
+                    guard readsOnTarget == (follow ? cleanReads : 1) else { return }
                     if interruption == "input" { h.inputs += 1 } else { h.allowed = false }
                 }
                 XCTAssertEqual(h.move(to: 2, follow: follow ? hotkeyPlan() : nil), .failure(.interrupted), label)
@@ -3240,5 +3248,424 @@ extension SpaceControlTests {
         let dragHooks = SpaceControl.MoveHooks(beforeIssue: { drag.spaces.active = 3; return true })
         XCTAssertEqual(drag.control.moveWindow(10, frame: SpaceHarness.frame, toSpace: 2, hooks: dragHooks), .failure(.interrupted))
         XCTAssertFalse(drag.events.contains { $0.type == .leftMouseDown }, "the window is not grabbed")
+    }
+}
+
+// MARK: - Handing focus back after move-and-follow
+
+extension SpaceControlTests {
+    /// The default stub, except that another app (999) is in front as the raise switches, before the first confirmation.
+    private func stealOnArrival(_ h: SpaceHarness, _ d: DirectStub) -> SpaceControl.DirectPath {
+        var path = d.path(h)
+        let raise = path.raise
+        path.raise = { wid, isCurrent, report in
+            let outcome = raise(wid, isCurrent, report)
+            h.frontmost = 999
+            return outcome
+        }
+        return path
+    }
+
+    private func moveWithTimeline(_ h: SpaceHarness) -> (Result<SpaceControl.Result, SpaceControl.Failure>, [String]) {
+        let timeline = OperationTimeline()
+        let result = h.control.moveWindow(10, frame: SpaceHarness.frame, toSpace: 2, timeline: timeline, shouldContinue: { h.allowed })
+        return (result, timeline.events.map(\.event))
+    }
+
+    func testMoveFollowHandsFocusBackOnceWhenAnotherAppComesForwardOnArrival() throws {
+        let h = SpaceHarness(); let d = DirectStub()
+        h.control.direct = stealOnArrival(h, d)
+        let arrival = watchArrival(h, at: 2)
+        let (result, events) = moveWithTimeline(h)
+        XCTAssertEqual(try result.get().toSpace, 2)
+        XCTAssertEqual(d.raises, [10])
+        XCTAssertEqual(d.reactivates, [10], "handed back once")
+        XCTAssertEqual(h.frontmost, 700)
+        XCTAssertEqual(events.filter { $0 == "followRecoverRequested" }.count, 1)
+        let recover = try XCTUnwrap(events.firstIndex(of: "followRecoverRequested"))
+        XCTAssertLessThan(try XCTUnwrap(events.firstIndex(of: "arrivalObserved")), recover)
+        XCTAssertLessThan(recover, try XCTUnwrap(events.lastIndex(of: "focusConfirmed")))
+        XCTAssertLessThan(h.time.timeIntervalSince(try XCTUnwrap(arrival())), 0.3)
+        XCTAssertTrue(h.events.isEmpty, "no keys or mouse")
+        XCTAssertEqual(d.lastMayBegin?(), false, "the hand-off expires with the operation")
+        XCTAssertEqual(d.lastMayFinish?(), false)
+    }
+
+    func testMoveFollowHandsFocusBackWhenAnotherAppComesForwardJustAfterConfirmation() throws {
+        let h = SpaceHarness(); let d = DirectStub()
+        h.control.direct = d.path(h)
+        let arrival = watchArrival(h, at: 2)
+        var stolen = false
+        h.onSleep = { _ in
+            if !stolen, let at = arrival(), h.time.timeIntervalSince(at) >= 0.06 { stolen = true; h.frontmost = 999 }
+        }
+        let (result, events) = moveWithTimeline(h)
+        XCTAssertEqual(try result.get().toSpace, 2)
+        XCTAssertTrue(stolen)
+        XCTAssertEqual(d.reactivates, [10])
+        XCTAssertEqual(h.frontmost, 700)
+        XCTAssertEqual(events.filter { $0 == "followRecoverRequested" }.count, 1)
+        XCTAssertTrue(h.events.isEmpty)
+    }
+
+    /// Input, Pause, or lost input observation during the watch ends it with the move already confirmed and marked stopped, so the caller does nothing more;
+    /// nothing is handed back after it.
+    func testMoveFollowWatchEndsWithTheConfirmedMoveOnInputOrPause() throws {
+        for mode in ["input", "pause", "input observation", "input with a steal"] {
+            let h = SpaceHarness(); let d = DirectStub()
+            h.control.direct = d.path(h)
+            let arrival = watchArrival(h, at: 2)
+            var stoppedAt: Date?
+            h.onSleep = { _ in
+                guard stoppedAt == nil, let at = arrival(), h.time.timeIntervalSince(at) >= 0.05 else { return }
+                stoppedAt = h.time
+                switch mode {
+                case "pause": h.allowed = false
+                case "input observation": h.inputAvailable = false
+                default: h.inputs += 1
+                }
+                if mode == "input with a steal" { h.frontmost = 999 }
+            }
+            let result = try h.move(to: 2).get()
+            XCTAssertEqual(result.toSpace, 2, mode)
+            XCTAssertTrue(result.stoppedWhileWatching, mode)
+            XCTAssertEqual(h.time, try XCTUnwrap(stoppedAt), "\(mode): ends at that poll")
+            XCTAssertTrue(d.reactivates.isEmpty, mode)
+            XCTAssertNil(d.lastMayBegin, mode)
+        }
+    }
+
+    /// The final poll of the watch reads the Space after membership, so a change during that read is not success.
+    func testMoveFollowFinalWatchPollRereadsTheSpaceAfterMembership() throws {
+        let cases: [(String, SpaceControl.Failure?)] = [("source", .drifted(to: 1)), ("third", .drifted(to: 3)), ("unreadable Space", .activeSpaceUnreadable), ("input", nil)]
+        for (mode, expected) in cases {
+            let h = SpaceHarness(); let d = DirectStub()
+            h.control.direct = d.path(h)
+            let arrival = watchArrival(h, at: 2)
+            var changed = false
+            h.spaces.onMembershipRead = { _ in
+                guard !changed, let at = arrival(), h.time.timeIntervalSince(at) >= 0.2 - 1e-9 else { return }
+                changed = true
+                switch mode {
+                case "source": h.spaces.active = 1
+                case "third": h.spaces.active = 3
+                case "unreadable Space": h.spaces.active = nil
+                default: h.inputs += 1
+                }
+            }
+            let result = h.move(to: 2)
+            XCTAssertTrue(changed, mode)
+            if let expected { XCTAssertEqual(result, .failure(expected), mode) } else { XCTAssertEqual(try result.get().stoppedWhileWatching, true, mode) }
+            XCTAssertTrue(d.reactivates.isEmpty, mode)
+        }
+    }
+
+    /// A hand-back refused by its own checks during the watch reports what stopped it: a stop keeps the confirmed move, a changed place is that failure.
+    func testMoveFollowWatchClassifiesARefusedHandBack() throws {
+        let cases: [(String, SpaceControl.Failure?)] = [
+            ("input", nil), ("pause", nil), ("elsewhere", .movedElsewhere(to: 3)), ("third", .drifted(to: 3)), ("unreadable Space", .activeSpaceUnreadable),
+            ("elsewhere with an unreadable Space", .movedElsewhere(to: 3)),
+        ]
+        for (mode, expected) in cases {
+            let h = SpaceHarness(); let d = DirectStub()
+            h.control.direct = d.path(h)
+            let arrival = watchArrival(h, at: 2)
+            h.onSleep = { _ in if d.reactivates.isEmpty, let at = arrival(), h.time.timeIntervalSince(at) >= 0.06 { h.frontmost = 999 } }
+            var readsSinceSteal = 0
+            h.spaces.onMembershipRead = { _ in
+                guard h.frontmost == 999 else { return }
+                readsSinceSteal += 1
+                // The watch's own read comes first; the second is the hand-back's.
+                guard readsSinceSteal == 2 else { return }
+                switch mode {
+                case "input": h.inputs += 1
+                case "pause": h.allowed = false
+                case "elsewhere": h.spaces.membership = [3]
+                case "third": h.spaces.active = 3
+                case "unreadable Space": h.spaces.active = nil
+                default: h.spaces.membership = [3]; h.spaces.active = nil
+                }
+            }
+            let result = h.move(to: 2)
+            XCTAssertGreaterThanOrEqual(readsSinceSteal, 2, mode)
+            if let expected { XCTAssertEqual(result, .failure(expected), mode) } else { XCTAssertEqual(try result.get().stoppedWhileWatching, true, mode) }
+            XCTAssertTrue(d.reactivates.isEmpty, "\(mode): not issued")
+        }
+    }
+
+    func testMoveFollowDoesNotWatchPastItsEnd() throws {
+        let h = SpaceHarness(); let d = DirectStub()
+        h.control.direct = d.path(h)
+        let arrival = watchArrival(h, at: 2)
+        h.onSleep = { _ in if let at = arrival(), h.time.timeIntervalSince(at) >= 0.2 + 1e-3 { h.frontmost = 999 } }
+        let result = try h.move(to: 2).get()
+        XCTAssertEqual(result.toSpace, 2)
+        XCTAssertFalse(result.stoppedWhileWatching)
+        let watched = h.time.timeIntervalSince(try XCTUnwrap(arrival()))
+        XCTAssertGreaterThanOrEqual(watched, 0.2 - 1e-6, "one last poll at the end of the watch")
+        XCTAssertLessThan(watched, 0.2 + 1e-3)
+        XCTAssertTrue(d.reactivates.isEmpty)
+        XCTAssertNil(d.lastMayBegin)
+    }
+
+    func testMoveFollowSecondStealAfterTheHandBackEndsUnconfirmed() throws {
+        let h = SpaceHarness(); let d = DirectStub()
+        h.control.direct = stealOnArrival(h, d)
+        let arrival = watchArrival(h, at: 2)
+        h.onSleep = { _ in
+            if d.reactivates.count == 1, let at = arrival(), h.time.timeIntervalSince(at) >= 0.1 { h.frontmost = 999 }
+        }
+        XCTAssertEqual(h.move(to: 2), .failure(.frontUnconfirmed))
+        XCTAssertEqual(d.reactivates, [10], "only once")
+        XCTAssertLessThan(h.time.timeIntervalSince(try XCTUnwrap(arrival())), 0.2)
+        XCTAssertEqual(d.lastMayBegin?(), false)
+    }
+
+    /// Not a steal: our own activation still queued, LazySpace in front, the owner in front with another window, or no front app.
+    func testMoveFollowDoesNotHandBackWithoutAnotherAppInFront() {
+        for mode in ["own activation pending", "LazySpace in front", "owner with another window", "front unknown"] {
+            let h = SpaceHarness(); let d = DirectStub()
+            d.raiseReports = mode != "own activation pending"
+            var path = d.path(h)
+            let raise = path.raise
+            path.raise = { wid, isCurrent, report in
+                let outcome = raise(wid, isCurrent, report)
+                switch mode {
+                case "own activation pending": h.frontmost = 999
+                case "LazySpace in front": h.frontmost = SpaceHarness.ownPID
+                case "owner with another window": h.frontmost = 700; h.focused = 11
+                default: h.frontmost = nil
+                }
+                return outcome
+            }
+            h.control.direct = path
+            XCTAssertEqual(h.move(to: 2), .failure(.frontUnconfirmed), mode)
+            XCTAssertTrue(d.reactivates.isEmpty, mode)
+            XCTAssertTrue(h.events.isEmpty, mode)
+        }
+    }
+
+    /// Input, Pause, a Space change, or the window leaving during the membership read of the decision prevents the hand-back.
+    func testMoveFollowHandBackIsNotRequestedAfterAChangeDuringItsChecks() {
+        for mode in ["input", "pause", "source space", "third space", "window left"] {
+            let h = SpaceHarness(); let d = DirectStub()
+            h.control.direct = stealOnArrival(h, d)
+            var changed = false
+            h.spaces.onMembershipRead = { _ in
+                guard !changed, h.frontmost == 999, h.spaces.active == 2 else { return }
+                changed = true
+                switch mode {
+                case "input": h.inputs += 1
+                case "pause": h.allowed = false
+                case "source space": h.spaces.active = 1
+                case "third space": h.spaces.active = 3
+                default: h.spaces.membership = [3]
+                }
+            }
+            let result = h.move(to: 2)
+            XCTAssertTrue(changed, mode)
+            XCTAssertNil(try? result.get(), "\(mode): not success")
+            XCTAssertTrue(d.reactivates.isEmpty, mode)
+        }
+    }
+
+    func testMoveFollowHandBackIsNotStartedInTheLastHalfSecond() throws {
+        let h = SpaceHarness(); let d = DirectStub(); d.focusTakesEffect = false
+        h.control.direct = d.path(h)
+        h.focused = 11 // the owner is in front with another window: neither confirmed nor a steal
+        let arrival = watchArrival(h, at: 2)
+        h.onSleep = { _ in if let at = arrival(), h.time.timeIntervalSince(at) >= 1.05 { h.frontmost = 999 } }
+        XCTAssertEqual(h.move(to: 2), .failure(.frontUnconfirmed))
+        XCTAssertTrue(d.reactivates.isEmpty)
+        XCTAssertLessThanOrEqual(h.time.timeIntervalSince(try XCTUnwrap(arrival())), 1.55)
+    }
+
+    /// The hand-back begins only on the destination with another app in front and time left, and finishes only on the destination.
+    func testMoveFollowHandBackGatesStayOnTheDestination() {
+        let h = SpaceHarness(); let d = DirectStub()
+        var path = stealOnArrival(h, d)
+        var checked = false
+        path.reactivate = { wid, mayBegin, mayFinish, report in
+            d.reactivates.append(wid); d.lastMayBegin = mayBegin; d.lastMayFinish = mayFinish
+            XCTAssertTrue(mayBegin(), "another app in front on the destination")
+            XCTAssertTrue(mayFinish())
+            for front: pid_t? in [700, SpaceHarness.ownPID, nil] {
+                h.frontmost = front
+                XCTAssertFalse(mayBegin(), "front \(String(describing: front))")
+            }
+            h.frontmost = 999
+            for space: UInt64? in [1, 3, nil] {
+                h.spaces.active = space
+                XCTAssertFalse(mayBegin(), "Space \(String(describing: space))")
+                XCTAssertFalse(mayFinish(), "finishes only on the destination, not on \(String(describing: space))")
+            }
+            h.spaces.active = 2
+            for membership: [UInt64] in [[3], [], [2, 3]] {
+                h.spaces.membership = membership
+                XCTAssertFalse(mayBegin(), "membership \(membership)")
+                XCTAssertFalse(mayFinish(), "membership \(membership)")
+            }
+            h.spaces.membership = [2]
+            h.inputs += 1
+            XCTAssertFalse(mayBegin(), "input"); XCTAssertFalse(mayFinish(), "input")
+            h.inputs -= 1
+            h.allowed = false
+            XCTAssertFalse(mayBegin(), "pause"); XCTAssertFalse(mayFinish(), "pause")
+            h.allowed = true
+            h.inputAvailable = false
+            XCTAssertFalse(mayBegin(), "input observation"); XCTAssertFalse(mayFinish(), "input observation")
+            h.inputAvailable = true
+            h.time.addTimeInterval(1.1)
+            XCTAssertFalse(mayBegin(), "less than 0.5 s left: no start")
+            XCTAssertTrue(mayFinish(), "a begun hand-back may still finish")
+            report(.declined)
+            checked = true
+        }
+        h.control.direct = path
+        XCTAssertEqual(h.move(to: 2), .failure(.frontUnconfirmed))
+        XCTAssertTrue(checked)
+        XCTAssertEqual(d.reactivates, [10])
+        XCTAssertEqual(d.lastMayBegin?(), false)
+        XCTAssertEqual(d.lastMayFinish?(), false)
+    }
+
+    /// A steal seen by the final check, or during the fixed settle, is handed back too.
+    func testMoveFollowHandsBackAStealSeenByTheFinalCheckOrDuringTheSettle() throws {
+        for mode in ["final check", "fixed settle"] {
+            let h = SpaceHarness(); let d = DirectStub()
+            h.control.direct = d.path(h)
+            var reads = 0
+            if mode == "final check" {
+                h.onFocusRead = { reads += 1; if reads == 2 { h.frontmost = 999 } }
+            } else {
+                h.control.settle = .fixedWaits
+                h.onSleep = { interval in if interval == 0.3, d.reactivates.isEmpty { h.frontmost = 999 } }
+            }
+            XCTAssertEqual(try h.move(to: 2).get().toSpace, 2, mode)
+            XCTAssertEqual(d.reactivates, [10], mode)
+            XCTAssertEqual(h.frontmost, 700, mode)
+        }
+    }
+
+    /// A hand-back declined on the main thread falls back to the earlier request (the raise, or the original reactivation).
+    func testMoveFollowDeclinedHandBackFallsBackToTheEarlierRequest() throws {
+        for route in ["raise", "reactivation"] {
+            let h = SpaceHarness(); let d = DirectStub(); d.raiseSwitches = route == "raise"
+            var path = stealOnArrival(h, d)
+            let reactivate = path.reactivate
+            var handBacks = 0
+            path.reactivate = { wid, mayBegin, mayFinish, report in
+                if route == "reactivation", d.reactivates.isEmpty {
+                    reactivate(wid, mayBegin, mayFinish, report)
+                    h.frontmost = 999
+                    return
+                }
+                handBacks += 1
+                report(.declined)
+            }
+            h.control.direct = path
+            let arrival = watchArrival(h, at: 2)
+            h.onSleep = { _ in
+                if handBacks == 1, let at = arrival(), h.time.timeIntervalSince(at) >= 0.3 { h.frontmost = 700; h.focused = 10 }
+            }
+            XCTAssertEqual(try h.move(to: 2).get().toSpace, 2, route)
+            XCTAssertEqual(handBacks, 1, route)
+        }
+    }
+
+    /// A Space or membership change during the watch is the existing failure, never success.
+    func testMoveFollowWatchReportsASpaceOrMembershipChange() {
+        let cases: [(String, SpaceControl.Failure)] = [
+            ("source", .drifted(to: 1)), ("third", .drifted(to: 3)), ("unreadable Space", .activeSpaceUnreadable),
+            ("elsewhere", .movedElsewhere(to: 3)), ("unreadable membership", .membershipUnreadable), ("several", .onSeveralSpaces([2, 3])),
+            ("elsewhere with an unreadable Space", .movedElsewhere(to: 3)),
+        ]
+        for (mode, expected) in cases {
+            let h = SpaceHarness(); let d = DirectStub()
+            h.control.direct = d.path(h)
+            let arrival = watchArrival(h, at: 2)
+            var changed = false
+            h.onSleep = { _ in
+                guard !changed, let at = arrival(), h.time.timeIntervalSince(at) >= 0.05 else { return }
+                changed = true
+                switch mode {
+                case "source": h.spaces.active = 1
+                case "third": h.spaces.active = 3
+                case "unreadable Space": h.spaces.active = nil
+                case "elsewhere": h.spaces.membership = [3]
+                case "unreadable membership": h.spaces.membership = []
+                case "several": h.spaces.membership = [2, 3]
+                default: h.spaces.membership = [3]; h.spaces.active = nil
+                }
+            }
+            XCTAssertEqual(h.move(to: 2), .failure(expected), mode)
+            XCTAssertTrue(d.reactivates.isEmpty, mode)
+        }
+    }
+
+    /// While confirming, a hand-back refused during its own (slow) membership read reports the stop or the window's move, even past the deadline;
+    /// only a hand-back that is merely too late leaves the deadline's `frontUnconfirmed`.
+    func testMoveFollowRefusedHandBackWhileConfirmingIsClassifiedPastTheDeadline() {
+        let cases: [(String, SpaceControl.Failure)] = [
+            ("input", .interrupted), ("third Space", .interrupted), ("unreadable Space", .interrupted), ("elsewhere", .movedElsewhere(to: 3)), ("too late", .frontUnconfirmed),
+        ]
+        for (mode, expected) in cases {
+            let h = SpaceHarness(); let d = DirectStub()
+            h.control.direct = stealOnArrival(h, d)
+            var slowed = false
+            h.spaces.onMembershipRead = { _ in
+                guard !slowed, h.frontmost == 999, h.spaces.active == 2 else { return }
+                slowed = true
+                h.time.addTimeInterval(1.6) // the read crosses the confirmation deadline
+                switch mode {
+                case "input": h.inputs += 1
+                case "third Space": h.spaces.active = 3
+                case "unreadable Space": h.spaces.active = nil
+                case "elsewhere": h.spaces.membership = [3]
+                default: break
+                }
+            }
+            XCTAssertEqual(h.move(to: 2), .failure(expected), mode)
+            XCTAssertTrue(slowed, mode)
+            XCTAssertTrue(d.reactivates.isEmpty, mode)
+        }
+    }
+
+    /// `space N` (the direct switch) does not hand focus back.
+    func testDirectSwitchDoesNotHandFocusBack() {
+        let h = SpaceHarness(); let d = DirectStub()
+        h.spaces.membership = [3]
+        var path = d.path(h)
+        let raise = path.raise
+        path.raise = { wid, isCurrent, report in
+            let outcome = raise(wid, isCurrent, report)
+            h.frontmost = 999
+            return outcome
+        }
+        h.control.direct = path
+        XCTAssertNil(try? h.control.switchTo(spaceID: 3, candidates: [21]).get())
+        XCTAssertTrue(d.reactivates.isEmpty)
+    }
+}
+
+// MARK: - Input around the hand-back
+
+extension SpaceControlTests {
+    /// The hand-back is not begun after input, and the interrupted operation returns at once.
+    func testHandBackDoesNotBeginAfterInput() {
+        let h = SpaceHarness(); let d = DirectStub()
+        var path = stealOnArrival(h, d)
+        var begun: Bool?
+        path.reactivate = { wid, mayBegin, _, report in
+            d.reactivates.append(wid)
+            h.inputs += 1
+            begun = mayBegin()
+            report(.declined)
+        }
+        h.control.direct = path
+        let arrival = watchArrival(h, at: 2)
+        XCTAssertEqual(h.move(to: 2), .failure(.interrupted))
+        XCTAssertEqual(begun, false)
+        XCTAssertLessThan(h.time.timeIntervalSince(arrival() ?? h.time), 0.05, "returns at the next poll")
     }
 }

@@ -303,7 +303,7 @@ final class CompletionBookkeepingTests: XCTestCase {
             run(.moveToSpace(.index(2)))
             XCTAssertTrue(fired, label)
             let result = try XCTUnwrap(coordinator.lastResult)
-            XCTAssertNotEqual(result.outcome, .complete, "\(label): \(result.message)")
+            XCTAssertEqual(result.outcome, .partial, "\(label): the window moved, the rest was canceled: \(result.message)")
             XCTAssertEqual(system.space, 8, "\(label): still on the destination")
             let book = coordinator.testingSpaceBookkeeping()
             XCTAssertNil(book.expected, "\(label): no arrival expectation")
@@ -314,6 +314,44 @@ final class CompletionBookkeepingTests: XCTestCase {
             try? FileManager.default.removeItem(at: root)
             hookLock.lock(); hookCalls = []; hookLock.unlock()
         }
+    }
+
+    /// A follow whose watch was stopped (here by a lost permission, which the post-move checks would not see as input) cancels the rest:
+    /// partial, with no arrival handling.
+    func testStoppedFollowWatchCancelsTheRestOfTheMove() throws {
+        make()
+        system.focused = WindowID(2)
+        coordinator.spaceMoverOverride = { wid, _, dest, _ in
+            self.system.spaceOf[WindowID(wid)] = dest
+            self.system.space = dest
+            self.system.trusted = false
+            return .success(SpaceControl.Result(fromSpace: 7, toSpace: dest, steps: 0, wallMs: 1, stoppedWhileWatching: true))
+        }
+        run(.moveToSpace(.index(2)))
+        let result = try XCTUnwrap(coordinator.lastResult)
+        XCTAssertEqual(result.outcome, .partial, result.message)
+        XCTAssertTrue(result.message.contains("permission or mouse and keyboard input observation became unavailable"), "says what stopped it: \(result.message)")
+        XCTAssertNil(coordinator.testingSpaceBookkeeping().expected, "no arrival expectation")
+        XCTAssertEqual(system.space, 8)
+    }
+
+    /// Every gate of a move (the follow's activations included) closes when the Accessibility permission is turned off.
+    func testMoveGatesCloseWhenAccessibilityIsTurnedOff() {
+        make()
+        system.focused = WindowID(2)
+        var before: Bool?, after: Bool?, beforeIssue: Bool?
+        coordinator.spaceMoverOverride = { _, _, _, gates in
+            before = gates.shouldContinue()
+            self.system.trusted = false
+            after = gates.shouldContinue()
+            beforeIssue = gates.hooks.beforeIssue()
+            return .failure(.interrupted)
+        }
+        run(.moveToSpace(.index(2)))
+        XCTAssertEqual(before, true)
+        XCTAssertEqual(after, false)
+        XCTAssertEqual(beforeIssue, false)
+        drain()
     }
 
     /// A `space N` queued behind a non-Space operation (arranging) is refused when dequeued because the user moved to another Space:
