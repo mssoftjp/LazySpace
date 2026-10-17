@@ -211,6 +211,70 @@ final class AttentionNotifierTests: XCTestCase {
         XCTAssertEqual(fake.posted, [])
     }
 
+    /// A request that completes without macOS asking (measured for an app run from /tmp) is remembered until another answer.
+    func testARequestMacOSDidNotShowIsRememberedUntilAnotherAnswer() {
+        let fake = FakeNotifier()
+        fake.answer = .notDetermined
+        let notifier = AttentionNotifier(notifier: fake)
+        var changes = 0
+        notifier.onPermissionChange = { changes += 1 }
+        notifier.update(stageManager)
+        XCTAssertEqual(fake.requests, 1)
+        XCTAssertEqual(notifier.permission, .notDetermined)
+        XCTAssertTrue(notifier.askFailed)
+        XCTAssertEqual(fake.posted, [])
+        XCTAssertEqual(changes, 1)
+        notifier.refreshPermission()
+        XCTAssertTrue(notifier.askFailed, "a read of the same answer does not clear it")
+        XCTAssertEqual(changes, 1)
+        fake.stored = .allowed
+        notifier.refreshPermission()
+        XCTAssertFalse(notifier.askFailed)
+        XCTAssertEqual(fake.posted.count, 1, "the problem that holds is posted once macOS allows it")
+    }
+
+    /// A plain read of .notDetermined only means "not asked yet".
+    func testAReadOfNotDeterminedIsNotARefusal() {
+        let fake = FakeNotifier()
+        fake.holdRequests = true
+        let notifier = AttentionNotifier(notifier: fake)
+        notifier.refreshPermission()
+        XCTAssertEqual(notifier.permission, .notDetermined)
+        XCTAssertFalse(notifier.askFailed)
+        notifier.update(stageManager)
+        fake.finishRequest(.allowed)
+        XCTAssertFalse(notifier.askFailed)
+        XCTAssertEqual(fake.posted.count, 1)
+    }
+
+    /// A read that the change callback starts while an answer is stored waits for the queued one: never two at once.
+    func testACallbackDuringAnAnswerDoesNotStartASecondRead() {
+        let fake = FakeNotifier()
+        fake.holdRequests = true
+        fake.holdReads = true
+        let notifier = AttentionNotifier(notifier: fake)
+        notifier.update(stageManager)
+        notifier.refreshPermission()
+        notifier.onPermissionChange = { notifier.refreshPermission() }
+        fake.finishRequest()
+        XCTAssertEqual(fake.reads, 1, "the queued read and the callback's read become one")
+    }
+
+    /// The flag alone changing is a change, so Settings shows the line even when .notDetermined was read before.
+    func testAChangeOfAskFailedAloneReportsAChange() {
+        let fake = FakeNotifier()
+        let notifier = AttentionNotifier(notifier: fake)
+        var changes = 0
+        notifier.onPermissionChange = { changes += 1 }
+        notifier.refreshPermission()
+        XCTAssertEqual(changes, 1)
+        fake.answer = .notDetermined
+        notifier.requestAuthorization()
+        XCTAssertEqual(notifier.permission, .notDetermined)
+        XCTAssertTrue(notifier.askFailed)
+        XCTAssertEqual(changes, 2)
+    }
+
     /// Notices are fixed text: nothing from the configuration file, its path, or windows reaches a banner.
     func testNoticesAreFixedTextInBothLanguages() {
         let reasons: [AttentionReason] = [.accessibility, .configuration, .automaticArrangement(.inputUnobservable),
@@ -487,5 +551,30 @@ final class AttentionWiringTests: XCTestCase {
         fake.stored = .allowed
         delegate.applicationDidBecomeActive(Notification(name: NSApplication.didBecomeActiveNotification))
         XCTAssertEqual(fake.posted.map(\.reason), ["automatic-arrangement"])
+    }
+
+    /// Clicking the macOS prompt opens System Settings; leaving it rereads the permission even when Settings is closed.
+    func testLeavingSystemSettingsRereadsPermission() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let system = CoordinatorSystem()
+        let coordinator = Coordinator(system: system, store: StateStore(root: root), configURL: root.appendingPathComponent("config.toml"),
+                                      takeCensus: system.census, takeOverview: { nil })
+        let delegate = AppDelegate(showReadyAtLaunch: false, coordinator: coordinator)
+        let fake = FakeNotifier()
+        fake.answer = .denied
+        delegate.attachNotifier(fake)
+        coordinator.onAttentionChange?(AttentionState(reason: .automaticArrangement(.stageManager), notify: true))
+        XCTAssertEqual(fake.posted, [])
+        fake.stored = .allowed
+        delegate.systemSettingsLeft()
+        XCTAssertEqual(fake.posted.map(\.reason), ["automatic-arrangement"])
+        XCTAssertEqual(AppDelegate.systemSettingsBundleID, "com.apple.systempreferences")
+
+        coordinator.onAttentionChange?(AttentionState(reason: .automaticArrangement(.stageManager), notify: false))
+        let reads = fake.reads
+        delegate.systemSettingsLeft()
+        XCTAssertEqual(fake.reads, reads, "nothing is read while the kind is off")
     }
 }

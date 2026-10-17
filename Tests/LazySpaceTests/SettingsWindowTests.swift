@@ -255,7 +255,6 @@ final class SettingsWindowTests: XCTestCase {
             try XCTUnwrap(views().compactMap { $0 as? NSButton }.first { $0.action == NSSelectorFromString("notificationButtonClicked") })
         }
         let denied = "Notifications for LazySpace are turned off in System Settings."
-        let notYet = "LazySpace is not allowed to send notifications yet."
 
         let fake = FakeNotifier()
         fake.stored = .denied
@@ -271,22 +270,108 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertEqual(try notificationButton().title, "Open System Settings…")
         try notificationButton().performClick(nil)
         XCTAssertEqual(fake.settingsOpened, 1)
-
-        fake.stored = .notDetermined
-        controller.windowDidBecomeKey(Notification(name: NSWindow.didBecomeKeyNotification))
-        XCTAssertTrue(visibleTexts().contains(notYet))
-        fake.answer = .allowed
-        XCTAssertEqual(try notificationButton().title, "Allow Notifications…")
-        try notificationButton().performClick(nil)
-        XCTAssertEqual(fake.requests, 1)
-        XCTAssertFalse(visibleTexts().contains(notYet))
-        XCTAssertFalse(visibleButtons().contains("Allow Notifications…"))
+        XCTAssertFalse(visibleButtons().contains("Allow Notifications…"), "no button asks macOS again")
 
         box.performClick(nil)
         XCTAssertFalse(coordinator.config.notifications.needsAttention)
         fake.stored = .denied
         attention.refreshPermission()
         XCTAssertFalse(visibleTexts().contains(denied), "nothing once the box is off again")
+    }
+
+    /// macOS tells an app nothing when its notification switch changes, and clicking the prompt opens System Settings in front
+    /// of this window; while the window is open with the box on, the line and delivery follow System Settings anyway.
+    func testNotificationLineFollowsSystemSettingsWhileTheWindowIsOpen() throws {
+        try load(Config())
+        controller.showWindow(nil)
+        try select(.general)
+        let denied = "Notifications for LazySpace are turned off in System Settings."
+        func lineVisible() -> Bool {
+            views().compactMap { $0 as? NSTextField }.contains { !$0.isHiddenOrHasHiddenAncestor && $0.stringValue == denied }
+        }
+        let fake = FakeNotifier()
+        fake.stored = .denied
+        let attention = AttentionNotifier(notifier: fake)
+        controller.attention = attention
+        XCTAssertFalse(controller.isPollingNotificationPermission, "no reads while the box is off")
+        let box = try button("Notify when LazySpace needs your attention")
+        box.performClick(nil)
+        attention.update(AttentionState(reason: .automaticArrangement(.stageManager), notify: true))
+        XCTAssertTrue(controller.isPollingNotificationPermission)
+        XCTAssertTrue(lineVisible())
+        XCTAssertEqual(fake.posted, [])
+
+        // Switched on in System Settings; LazySpace is neither active nor key. The timer also fires while a menu tracks.
+        fake.stored = .allowed
+        let readsBefore = fake.reads
+        let deadline = Date().addingTimeInterval(1.5)
+        while fake.reads == readsBefore, Date() < deadline { _ = RunLoop.main.run(mode: .eventTracking, before: deadline) }
+        XCTAssertGreaterThan(fake.reads, readsBefore)
+        XCTAssertFalse(lineVisible())
+        XCTAssertEqual(fake.posted.map(\.reason), ["automatic-arrangement"], "the problem that holds is posted")
+
+        fake.stored = .denied
+        controller.pollNotificationPermission()
+        XCTAssertTrue(lineVisible(), "switched off behind the window")
+
+        box.performClick(nil)
+        XCTAssertFalse(controller.isPollingNotificationPermission)
+        XCTAssertFalse(lineVisible())
+        box.performClick(nil)
+        XCTAssertTrue(controller.isPollingNotificationPermission)
+
+        // Hidden without closing: nothing is read, and it reads again once visible.
+        controller.window?.orderOut(nil)
+        var reads = fake.reads
+        controller.pollNotificationPermission()
+        XCTAssertEqual(fake.reads, reads)
+        XCTAssertTrue(controller.isPollingNotificationPermission)
+        controller.showWindow(nil)
+        controller.pollNotificationPermission()
+        XCTAssertGreaterThan(fake.reads, reads)
+
+        controller.close()
+        XCTAssertEqual(controller.window?.isVisible, false)
+        XCTAssertFalse(controller.isPollingNotificationPermission)
+        reads = fake.reads
+        controller.showWindow(nil)
+        XCTAssertTrue(controller.isPollingNotificationPermission, "reopening with the same draft starts it again")
+        XCTAssertGreaterThan(fake.reads, reads, "and reads at once")
+    }
+
+    /// When macOS did not ask at all, Settings says so and offers no button that would ask again for nothing.
+    func testNotificationLineWhenMacOSDidNotAsk() throws {
+        try load(Config())
+        controller.showWindow(nil)
+        try select(.general)
+        let notAsked = "macOS did not ask whether LazySpace may send notifications. If you opened LazySpace from a temporary location, quit it and open it from the Applications folder."
+        func visibleTexts() -> [String] {
+            views().compactMap { $0 as? NSTextField }.filter { !$0.isHiddenOrHasHiddenAncestor }.map(\.stringValue)
+        }
+        func notificationButtonVisible() -> Bool {
+            views().compactMap { $0 as? NSButton }.contains { $0.action == NSSelectorFromString("notificationButtonClicked") && !$0.isHiddenOrHasHiddenAncestor }
+        }
+        let fake = FakeNotifier()
+        let attention = AttentionNotifier(notifier: fake)
+        controller.attention = attention
+        try button("Notify when LazySpace needs your attention").performClick(nil)
+        attention.refreshPermission()
+        XCTAssertFalse(visibleTexts().contains(notAsked), "a read of not determined means not asked yet")
+        XCTAssertFalse(notificationButtonVisible())
+
+        fake.answer = .notDetermined
+        attention.update(AttentionState(reason: nil, notify: true))
+        XCTAssertTrue(visibleTexts().contains(notAsked))
+        XCTAssertFalse(notificationButtonVisible())
+        XCTAssertFalse(views().contains { ($0 as? NSButton)?.title == "Allow Notifications…" })
+
+        fake.stored = .allowed
+        controller.pollNotificationPermission()
+        XCTAssertFalse(visibleTexts().contains(notAsked))
+
+        Copy.language = .japanese
+        XCTAssertTrue(SettingsCopy.notificationsNotAsked.contains("「アプリケーション」"))
+        Copy.language = .english
     }
 
     /// A found update waits quietly in About; one button checks or updates, and the pane follows the updater while open.

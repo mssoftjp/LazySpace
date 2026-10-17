@@ -21,6 +21,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// The one pending later reading of the menu bar number.
     private var statusReread: DispatchWorkItem?
     private var trustToken: NSObjectProtocol?
+    /// System Settings deactivating or quitting.
+    private var systemSettingsTokens: [NSObjectProtocol] = []
+    static let systemSettingsBundleID = "com.apple.systempreferences"
     private weak var trackedMenu: NSMenu?
     private var menuRefreshTimer: Timer?
     private static let accessPromptedKey = "access.prompted"
@@ -65,6 +68,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     /// Notifications may have been allowed in System Settings meanwhile.
     func applicationDidBecomeActive(_ notification: Notification) {
+        if attention?.enabled == true { attention?.refreshPermission() }
+    }
+
+    /// Clicking the macOS prompt and "Open System Settings…" both lead to System Settings, and LazySpace is told nothing when the
+    /// switch changes there; reread when the user leaves it, also with Settings closed.
+    func systemSettingsLeft() {
         if attention?.enabled == true { attention?.refreshPermission() }
     }
 
@@ -117,6 +126,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // Right after the permission changes, the old value may be returned, so reread after a short delay.
         trustToken = DistributedNotificationCenter.default().addObserver(forName: NSNotification.Name("com.apple.accessibility.api"), object: nil, queue: .main) { [weak self] _ in
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { self?.coordinator.checkTrust() }
+        }
+        for name in [NSWorkspace.didDeactivateApplicationNotification, NSWorkspace.didTerminateApplicationNotification] {
+            systemSettingsTokens.append(NSWorkspace.shared.notificationCenter.addObserver(forName: name, object: nil, queue: .main) { [weak self] note in
+                let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
+                if app?.bundleIdentifier == Self.systemSettingsBundleID { self?.systemSettingsLeft() }
+            })
         }
         spaceToken = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
             self?.refreshStatusItem()

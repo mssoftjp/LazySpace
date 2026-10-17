@@ -96,8 +96,11 @@ final class AttentionNotifier {
     private(set) var reason: AttentionReason?
     /// The checkbox of the configuration in use; changes only with a published state, so it always comes with a fresh reason.
     private(set) var enabled = false
-    /// The last accepted answer from macOS; nil until one is read.
+    /// The last accepted answer from macOS; nil until one is read. `.denied` also covers a prompt still on screen.
     private(set) var permission: NotificationPermission?
+    /// A request completed `.notDetermined`: macOS showed no prompt (seen for an app run from /tmp). Any other answer clears it;
+    /// a plain read of `.notDetermined` means only "not asked yet" and keeps it.
+    private(set) var askFailed = false
     /// Posted and not withdrawn. A post is attempted only while macOS allows it, so a refused one is never counted.
     private var delivered: AttentionReason?
     /// One question to macOS at a time, so the last answer is always the newest; asks that arrive meanwhile run once after it.
@@ -139,8 +142,9 @@ final class AttentionNotifier {
         asking = true
         let answered: (NotificationPermission) -> Void = { [weak self] answer in
             guard let self else { return }
+            // Still asking while the answer is stored, so a read its callbacks start waits instead of overlapping.
+            store(answer, failed: answer == .notDetermined && (request || askFailed))
             asking = false
-            store(answer)
             // A request also reads the current answer, so it covers a waiting read. It runs only while the box is on.
             if requestWaiting, enabled { requestWaiting = false; readWaiting = false; ask(request: true) }
             else if readWaiting { requestWaiting = false; readWaiting = false; ask(request: false) }
@@ -159,9 +163,10 @@ final class AttentionNotifier {
 
     private var wanted: AttentionReason? { enabled ? reason : nil }
 
-    private func store(_ answer: NotificationPermission) {
-        let changed = answer != permission
+    private func store(_ answer: NotificationPermission, failed: Bool) {
+        let changed = answer != permission || failed != askFailed
         permission = answer
+        askFailed = failed
         reconcile()
         if changed { onPermissionChange?() }
     }

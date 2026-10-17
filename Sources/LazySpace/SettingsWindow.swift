@@ -22,8 +22,10 @@ enum SettingsCopy {
           "対処するまで整列が止まるときや、設定ファイルの変更を適用できないときに通知します。表示のしかたはシステム設定 › 通知で選べます。")
     }
     static var notificationsDenied: String { L("Notifications for LazySpace are turned off in System Settings.", "システム設定でLazySpaceの通知がオフになっています。") }
-    static var notificationsNotYet: String { L("LazySpace is not allowed to send notifications yet.", "LazySpaceはまだ通知の送信を許可されていません。") }
-    static var allowNotifications: String { L("Allow Notifications…", "通知を許可…") }
+    static var notificationsNotAsked: String {
+        L("macOS did not ask whether LazySpace may send notifications. If you opened LazySpace from a temporary location, quit it and open it from the Applications folder.",
+          "macOSはLazySpaceが通知を送ってよいかを確認しませんでした。一時的な場所から開いている場合は、終了して「アプリケーション」フォルダから開き直してください。")
+    }
     static var accessHelp: String {
         L("Turn on LazySpace in Privacy & Security › \(AccessPane.name()). If it’s already on but this doesn’t change, an older copy of the app may still be listed: select LazySpace, click the Remove button (−), then click Open System Settings… again.",
           "プライバシーとセキュリティ › \(AccessPane.name())でLazySpaceをオンにしてください。オンなのにここが変わらない場合は、古いバージョンのアプリが登録されている可能性があります。LazySpaceを選択して削除ボタン（−）をクリックし、もう一度「システム設定を開く…」をクリックしてください。")
@@ -123,6 +125,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
     private let notificationButton = NSButton(title: "", target: nil, action: nil)
     private var notificationStatusRow: NSGridRow?
     private var notificationButtonRow: NSGridRow?
+    /// Rereads the permission while the window is open with the box on: macOS does not tell an app when its notification switch
+    /// changes, and clicking the macOS prompt opens System Settings in front of this window. It skips reads while hidden and
+    /// stops only when the window closes or the box goes off, so showing the window again needs no restart.
+    private var permissionPoll: Timer?
+    var isPollingNotificationPermission: Bool { permissionPoll != nil }
     /// Nil when this copy cannot send notifications (no bundle, tests); the checkbox still saves the choice.
     var attention: AttentionNotifier? {
         didSet {
@@ -324,6 +331,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     deinit {
+        permissionPoll?.invalidate()
         hotkeyResumeTimer?.invalidate()
         if let appResignObserver { NotificationCenter.default.removeObserver(appResignObserver) }
         if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
@@ -638,6 +646,37 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
     override func showWindow(_ sender: Any?) {
         super.showWindow(sender)
         resizePane()
+        // `refresh` skips drawing an unchanged draft, so reopening starts the permission reads here.
+        syncPermissionPoll()
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        permissionPoll?.invalidate()
+        permissionPoll = nil
+    }
+
+    private func syncPermissionPoll() {
+        let wanted = window?.isVisible == true && notificationBox.state == .on && attention != nil
+        if wanted, permissionPoll == nil {
+            let timer = Timer(timeInterval: 1, repeats: true) { [weak self] timer in
+                guard let self else { timer.invalidate(); return }
+                pollNotificationPermission()
+            }
+            timer.tolerance = 0.2
+            permissionPoll = timer
+            // Common modes: it keeps reading while a menu tracks.
+            RunLoop.main.add(timer, forMode: .common)
+            pollNotificationPermission()
+        } else if !wanted, notificationBox.state == .off || attention == nil {
+            permissionPoll?.invalidate()
+            permissionPoll = nil
+        }
+    }
+
+    /// What the timer does; tests call it directly.
+    func pollNotificationPermission() {
+        guard window?.isVisible == true, notificationBox.state == .on else { return }
+        attention?.refreshPermission()
     }
 
     func windowDidChangeScreen(_ notification: Notification) {
@@ -1221,35 +1260,39 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         refreshAccess()
         refreshNativeShortcuts()
         refreshAutomaticCheck()
-        // Notifications may have been allowed or turned off in System Settings meanwhile.
-        if notificationBox.state == .on { attention?.refreshPermission() }
     }
 
-    /// One line and a button, only while the box is on and macOS does not allow LazySpace to send notifications.
+    /// A line only while the box is on and macOS does not allow LazySpace to send notifications. `.denied` always means the switch
+    /// in System Settings is off now (Don't Allow, Close, the prompt clicked away and left undecided, or switched off there), so it
+    /// offers that page. A request that ended `.notDetermined` means macOS did not ask; asking again would show nothing, so no
+    /// button. A plain read of `.notDetermined` is "not asked yet" and shows nothing.
     func renderNotifications() {
-        let before = notificationStatusRow?.isHidden
-        let permission = notificationBox.state == .on ? attention?.permission : nil
-        switch permission {
-        case .denied?:
-            notificationStatus.stringValue = SettingsCopy.notificationsDenied
-            notificationButton.title = SettingsCopy.accessButton
-        case .notDetermined?:
-            notificationStatus.stringValue = SettingsCopy.notificationsNotYet
-            notificationButton.title = SettingsCopy.allowNotifications
-        case .allowed?, nil:
-            break
+        let before = (notificationStatusRow?.isHidden, notificationButtonRow?.isHidden, notificationStatus.stringValue)
+        var line: String?
+        var offersSettings = false
+        if notificationBox.state == .on, let attention {
+            switch attention.permission {
+            case .denied?:
+                line = SettingsCopy.notificationsDenied
+                offersSettings = true
+            case .notDetermined? where attention.askFailed:
+                line = SettingsCopy.notificationsNotAsked
+            default:
+                break
+            }
         }
-        let hidden = permission == nil || permission == .allowed
-        notificationStatus.isHidden = hidden
-        notificationButton.isHidden = hidden
-        notificationStatusRow?.isHidden = hidden
-        notificationButtonRow?.isHidden = hidden
-        if before != nil, before != hidden { resizePane() }
+        notificationStatus.stringValue = line ?? ""
+        notificationButton.title = SettingsCopy.accessButton
+        notificationStatus.isHidden = line == nil
+        notificationStatusRow?.isHidden = line == nil
+        notificationButton.isHidden = !offersSettings
+        notificationButtonRow?.isHidden = !offersSettings
+        let after = (notificationStatusRow?.isHidden, notificationButtonRow?.isHidden, notificationStatus.stringValue)
+        if before.0 != nil, before != after { resizePane() }
+        syncPermissionPoll()
     }
 
-    @objc private func notificationButtonClicked() {
-        if attention?.permission == .notDetermined { attention?.requestAuthorization() } else { attention?.openSettings() }
-    }
+    @objc private func notificationButtonClicked() { attention?.openSettings() }
 
     func windowDidResignKey(_ notification: Notification) {
         if claimingRecordingFocus { return }
