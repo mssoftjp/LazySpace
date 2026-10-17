@@ -48,7 +48,7 @@ enum SettingsRules {
         var released: [String] = []
         for (other, existing) in config.keys where existing == key && !except.contains(other) {
             config.keys[other] = nil
-            released.append(SettingsCopy.commandLabel(other))
+            released.append(SettingsCopy.commandLabel(other, follow: config.followMovedWindow))
         }
         return released
     }

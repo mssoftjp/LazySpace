@@ -28,6 +28,10 @@ enum SettingsCopy {
           "ファイルが変更されています。「再読み込み」で読み込み直してください。保存していません。")
     }
     static var configBannerMessage: String { L("The configuration file could not be applied.", "設定ファイルを適用できません。") }
+    /// `follow-moved-window`. Also quoted by the refusal that suggests turning it on.
+    static var followMovedWindowTitle: String {
+        L("When moving a window to another Space, switch to that Space", "ウインドウを別の操作スペースに移動するときに、その操作スペースに切り替える")
+    }
     static var configNotesMessage: String { L("The configuration loaded with notes.", "設定を読み込みました。注記があります。") }
     static var showDetailsTitle: String { L("Show Details", "詳細を表示") }
     static var tryAgainTitle: String { L("Try Again", "再試行") }
@@ -44,8 +48,10 @@ enum SettingsCopy {
         return name(app)
     }
 
-    static func commandLabel(_ name: String) -> String {
+    /// `follow`: `follow-moved-window` of the configuration being shown, so `move-to-space-*` read as what they do.
+    static func commandLabel(_ name: String, follow: Bool = false) -> String {
         guard let action = HotkeyBinding.action(forCommand: name) else { return name }
+        if case .edit(let command) = action { return command.following(follow).label }
         return HotkeyBinding(keyCode: 0, modifiers: 0, action: action, display: "").label
     }
 }
@@ -104,6 +110,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
     private let loginSettingsButton = NSButton(title: "", target: nil, action: nil)
     private let languagePopup = NSPopUpButton()
     private let shortcutGuideBox = NSButton(checkboxWithTitle: "", target: nil, action: nil)
+    private let followMovedWindowBox = NSButton(checkboxWithTitle: "", target: nil, action: nil)
     private let borderBox = NSButton(checkboxWithTitle: "", target: nil, action: nil)
     private let borderWidthField = NSTextField()
     private let borderColorWell = NSColorWell()
@@ -871,6 +878,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
     private func buildKeys() -> NSView {
         shortcutGuideBox.title = L("Show shortcuts when holding modifier keys", "修飾キーの長押しでショートカットを表示")
         shortcutGuideBox.target = self; shortcutGuideBox.action = #selector(controlChanged)
+        followMovedWindowBox.title = SettingsCopy.followMovedWindowTitle
+        followMovedWindowBox.target = self; followMovedWindowBox.action = #selector(controlChanged)
         removeColumns(keysTable)
         keysTable.columnAutoresizingStyle = .lastColumnOnlyAutoresizingStyle
         column(keysTable, "label", SettingsCopy.keyColumns[0], width: 404, minWidth: 240)
@@ -983,8 +992,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         messageDetailsButton.setContentHuggingPriority(.required, for: .horizontal)
         messageDetailsButton.setContentCompressionResistancePriority(.required, for: .horizontal)
         shortcutActionRow = actions
+        // It decides what the Spaces rows below do, so it sits above the list.
+        let follow = SettingsForm.checkboxColumn(followMovedWindowBox, explanation: nil, columnWidth: SettingsForm.width)
         return SettingsPaneLayout.sections([
             topRow,
+            follow,
             shortcutInstruction,
             table,
             actions,
@@ -1213,6 +1225,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         renderAccess()
         languagePopup.selectItem(at: max(0, languagePopup.indexOfItem(withRepresentedObject: SettingsRules.languageID(c.language))))
         shortcutGuideBox.state = c.showShortcutGuide ? .on : .off
+        followMovedWindowBox.state = c.followMovedWindow ? .on : .off
         borderBox.state = c.focusBorder.enabled ? .on : .off
         if !uncommittedNumbers.contains(.borderWidth) { borderWidthField.stringValue = Config.number(c.focusBorder.width) }
         if let (r, g, b, a) = c.focusBorder.rgba { borderColorWell.color = NSColor(srgbRed: r, green: g, blue: b, alpha: a) }
@@ -1241,9 +1254,10 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
 
     private func renderShortcuts() {
         let names = Config.commandNames.filter { !$0.hasPrefix("mode-") }
+        let follow = draft.followMovedWindow
         let commands = names.compactMap { name -> (name: String, label: String)? in
-            guard let action = HotkeyBinding.action(forCommand: name) else { return nil }
-            return (name, HotkeyBinding(keyCode: 0, modifiers: 0, action: action, display: "").label)
+            guard HotkeyBinding.action(forCommand: name) != nil else { return nil }
+            return (name, SettingsCopy.commandLabel(name, follow: follow))
         }
         let previousIndex = keysTable.selectedRow
         let token: ShortcutSelection? = {
@@ -1254,7 +1268,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         reconcileMissingShortcut = false
         let origin = keysScroll?.contentView.bounds.origin
         shortcutSelection = token
-        keyRows = ShortcutList.rows(commands: commands, saved: saved.keys, draft: draft.keys, search: keySearch.stringValue)
+        keyRows = ShortcutList.rows(commands: commands, saved: saved.keys, draft: draft.keys, search: keySearch.stringValue, follow: follow)
         if let target = recordingTarget, !recordingTargetIsVisible(target) { endRecording(.cancelShow) }
         restoringSelection = true
         keysTable.reloadData()
@@ -1465,6 +1479,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
             changed = true
         }
         if next.showShortcutGuide != (shortcutGuideBox.state == .on) { next.showShortcutGuide = shortcutGuideBox.state == .on; changed = true }
+        if next.followMovedWindow != (followMovedWindowBox.state == .on) { next.followMovedWindow = followMovedWindowBox.state == .on; changed = true }
         if next.focusBorder.enabled != (borderBox.state == .on) { next.focusBorder.enabled = borderBox.state == .on; changed = true }
         guard changed else { return }
         commit(next)
@@ -2342,7 +2357,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         for row in keyRows {
             if case .command(let command, let label) = row, command == name { return label }
         }
-        return SettingsCopy.commandLabel(name)
+        return SettingsCopy.commandLabel(name, follow: draft.followMovedWindow)
     }
 
     private func setShortcutMessage(_ text: String, warning: Bool, sticky: Bool = false) {

@@ -54,7 +54,7 @@ When you want more, the shortcuts are ready. Many of the defaults are the same a
 | `⌥Z` | Zoom the window to fill the work area, or restore it |
 | `⌥F` | Take the window out of tiling, or put it back |
 | `⌥1` … `⌥9` | Switch to Desktop 1–9 |
-| `⌥⇧1` … `⌥⇧9` | Send the window to Desktop 1–9 and stay here (needs macOS 27) |
+| `⌥⇧1` … `⌥⇧9` | Send the window to Desktop 1–9 and stay here (needs macOS 27). A setting in Settings › Shortcuts takes you there with it |
 | `⌥⇥` | Go back to the previous Space |
 
 Everything the shortcuts do is also a command:

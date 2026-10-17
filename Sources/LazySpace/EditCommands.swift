@@ -165,6 +165,12 @@ enum EditCommand: Equatable {
         case .minimize: return "edit:minimize"
         }
     }
+
+    /// `follow-moved-window`: a default send becomes "move and follow". Resolved where the user acts (shortcuts, the menu), never for the command line.
+    func following(_ on: Bool) -> EditCommand {
+        if on, case .sendToSpace(let target) = self { return .moveToSpace(target) }
+        return self
+    }
 }
 
 /// One Space row in the menu. apps is nil when window membership could not be observed.
@@ -543,12 +549,13 @@ struct HotkeyBinding: Equatable {
         }
     }
 
-    /// Bindings of the given mode; empty for an undeclared mode.
+    /// Bindings of the given mode; empty for an undeclared mode. `move-to-space-*` follow when `follow-moved-window` is on.
     static func from(_ config: Config, mode: String = Config.mainModeName) -> [HotkeyBinding] {
         guard let keys = config.keys(forMode: mode) else { return [] }
         var out: [HotkeyBinding] = []
         for (name, key) in keys.sorted(by: { $0.key < $1.key }) {
-            guard let action = action(forCommand: name) else { continue }
+            guard var action = action(forCommand: name) else { continue }
+            if case .edit(let command) = action { action = .edit(command.following(config.followMovedWindow)) }
             out.append(HotkeyBinding(keyCode: key.keyCode, modifiers: key.carbonModifiers, action: action, display: key.display))
         }
         return out

@@ -123,9 +123,15 @@ public enum ShortcutSection: String, CaseIterable, Equatable {
         }
     }
 
-    public var detail: String {
+    public var detail: String { detail(follow: false) }
+
+    /// `follow`: `follow-moved-window`, which decides what the `move-to-space-*` rows do.
+    public func detail(follow: Bool) -> String {
         switch self {
-        case .spaces: return L("Sends the window while keeping the current Space. Following is an explicit action.", "ウインドウだけを送り、今の操作スペースに留まります。移動先への切り替えは明示した場合だけ行います。")
+        case .spaces:
+            return follow
+                ? L("Moves the window and switches to that Space.", "ウインドウを移動し、その操作スペースに切り替えます。")
+                : L("Sends the window and stays on the current Space.", "ウインドウだけを送り、今の操作スペースに留まります。")
         case .adjacentAssigned: return L("Still active. macOS has the same actions in Mission Control shortcuts.", "今も有効です。macOSのMission Controlにも同じ操作があります。")
         case .window, .actions, .stepwise: return ""
         }
@@ -157,7 +163,7 @@ public enum ShortcutList {
     }
 
     /// The five direction rows, then commands matching the search under section headings. The order is decided here, not by `Config.commandNames`.
-    public static func rows(commands: [(name: String, label: String)], saved: [String: Config.Key], draft: [String: Config.Key], search: String) -> [ShortcutRow] {
+    public static func rows(commands: [(name: String, label: String)], saved: [String: Config.Key], draft: [String: Config.Key], search: String, follow: Bool = false) -> [ShortcutRow] {
         let query = search.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         func hits(_ text: String) -> Bool { query.isEmpty || text.lowercased().contains(query) }
         func keyHits(_ name: String) -> Bool {
@@ -182,7 +188,7 @@ public enum ShortcutList {
         for section in [ShortcutSection.window, .actions, .spaces, .stepwise, .adjacentAssigned] {
             let members = ordered(listed, in: section).filter { shows($0.name, saved: saved, draft: draft) && (hits($0.label) || hits($0.name) || keyHits($0.name)) }
             guard !members.isEmpty else { continue }
-            rows.append(.heading(ShortcutHeading(section: section, title: section.title, detail: section.detail)))
+            rows.append(.heading(ShortcutHeading(section: section, title: section.title, detail: section.detail(follow: follow))))
             rows.append(contentsOf: members.map { .command(name: $0.name, label: $0.label) })
         }
         return rows

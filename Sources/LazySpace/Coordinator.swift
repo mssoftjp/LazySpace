@@ -1886,8 +1886,9 @@ final class Coordinator {
         // Edits that need no focused window, or no started Space.
         switch command {
         case .moveToSpace(let destination):
-            guard let focused = target ?? frontWindowForEdit() else { return .refused(L("Could not find the focused window. Select the window to move, then try again.", "フォーカス中のウインドウを確認できません。移動したいウインドウを選んでから操作してください。"), code: "no-focused-window") }
-            return runMoveToSpace(focused, target: destination, source: source, authorization: authorization, timeline: timeline, resolved: resolved)
+            // From the menu (with `follow-moved-window`), the window pinned when the menu opened, as for a send.
+            guard let focused = menuTarget?.window ?? target ?? frontWindowForEdit() else { return .refused(L("Could not find the focused window. Select the window to move, then try again.", "フォーカス中のウインドウを確認できません。移動したいウインドウを選んでから操作してください。"), code: "no-focused-window") }
+            return runMoveToSpace(focused, target: destination, source: source, authorization: authorization, timeline: timeline, resolved: resolved, menuTarget: menuTarget)
         case .sendToSpace(let destination):
             // Sending a background window with `--window-id` is not accepted (front window only, as with `move-to-space`).
             guard let focused = menuTarget?.window ?? target ?? frontWindowForEdit() else { return .refused(L("Could not find the focused window. Select the window to send, then try again.", "フォーカス中のウインドウを確認できません。送りたいウインドウを選んでから操作してください。"), code: "no-focused-window") }
@@ -2156,6 +2157,23 @@ final class Coordinator {
 
     private static var destinationChanged: String {
         L("The destination Space changed after the request, so nothing was done.", "受け付けたあとで移動先の操作スペースが変わったため、何もしていません。")
+    }
+
+    /// Without the direct move a send is refused. A shortcut or the menu names the setting that makes them follow; the command line names `--follow`.
+    /// With the setting already on, only a send accepted before it was turned on gets here, and trying again follows.
+    static func sendUnavailable(fromShortcutOrMenu: Bool, followSetting: Bool) -> String {
+        let reason = L("Sending a window without switching needs the direct move, which is not available on this macOS.", "切り替えずに送るには直接の移動が必要ですが、このmacOSでは使えません。")
+        let remedy: String
+        if !fromShortcutOrMenu {
+            remedy = L("To move and follow the window, use move-to-space --follow.", "移動先へ追従してよければmove-to-space --followを使ってください。")
+        } else if followSetting {
+            remedy = L("Try again to move the window and switch to its Space.", "もう一度操作すると、ウインドウと一緒に切り替えます。")
+        } else {
+            let title = SettingsCopy.followMovedWindowTitle
+            remedy = L("To move the window and switch with it, turn on “\(title)” in Settings › Shortcuts.",
+                       "ウインドウと一緒に切り替えるには、設定 › ショートカットの「\(title)」をオンにしてください。")
+        }
+        return reason + Copy.sentenceSeparator + remedy
     }
 
     /// For the menu and results: the current display's Spaces, or every display's when there are groups, in display order.
@@ -2467,8 +2485,9 @@ final class Coordinator {
     }
 
     /// Sends the focused window to another Space (membership change and activation with the direct path, otherwise a synthesized Mission Control drag), follows to that Space, and integrates the window if it has a layout.
+    /// `menuTarget`: the window pinned by the menu, checked instead of the focused window (an old AX focus of the same app is not reused), as in `runSendToSpace`.
     private func runMoveToSpace(_ target: WindowID, target spaceTarget: SpaceTarget, source: String, authorization: OperationAuthorization? = nil,
-                                timeline: OperationTimeline? = nil, resolved accepted: ResolvedSpace? = nil) -> EditAccept {
+                                timeline: OperationTimeline? = nil, resolved accepted: ResolvedSpace? = nil, menuTarget: MenuWindowTarget? = nil) -> EditAccept {
         let resolved: ResolvedSpace
         if let accepted { resolved = accepted } else {
             switch resolveSpace(spaceTarget, desktopsOnly: true) {
@@ -2493,9 +2512,11 @@ final class Coordinator {
         else { return .refused(L("Space detection is unavailable.", "操作スペースの観測が使えません。"), code: "space-unavailable") }
         prestartPassThroughTap()
         let landing = SpaceLanding(dest: dest)
-        return runSimple(kind: "move-to-space", progress: L("Moving the window to another Space", "ウインドウを別の操作スペースへ移動しています"), source: source, target: target, authorization: authorization,
+        let sameTarget = { [self] in menuTarget.map { self.menuWindowTarget() == $0 } ?? (frontWindowForEdit() == target) }
+        return runSimple(kind: "move-to-space", progress: L("Moving the window to another Space", "ウインドウを別の操作スペースへ移動しています"), source: source, target: target,
+                         requireFocus: menuTarget == nil, authorization: authorization,
                          timeline: timeline, finalize: { [self] in finishSpaceBookkeeping(landing) }) { [self] authorization in
-            guard case .frame(let frame) = system.readFrame(target), frontWindowForEdit() == target,
+            guard case .frame(let frame) = system.readFrame(target), sameTarget(),
                   system.currentSpaceID() == authorization.spaceID,
                   authorization.interruptionReason(system: system, control: control) == nil else {
                 return OperationResult.note(kind: "move-to-space", spaceID: current, message: L("Not moved because the window or the pause state changed.", "ウインドウまたは停止状態が変わったため移動しません。"), ok: false)
@@ -2507,7 +2528,9 @@ final class Coordinator {
             let authorized = { authorization.interruptionReason(system: self.system, control: self.control) == nil }
             // Another display: the direct move keeps the old frame, so the window is fitted onto that display before it is brought forward there.
             var fitted: Bool?
-            let hooks = SpaceControl.MoveHooks(beforeIssue: { authorized() && self.destinationStillValid(resolved) && authorized() }, beforeRaise: { [self] in
+            let hooks = SpaceControl.MoveHooks(beforeIssue: {
+                (menuTarget.map { self.menuWindowTarget() == $0 } ?? true) && authorized() && self.destinationStillValid(resolved) && authorized()
+            }, beforeRaise: { [self] in
                 if resolved.otherDisplay { fitted = fitOntoDisplay(target, pid: targetPID, resolved: resolved, gate: authorized) }
             })
             let moved = mover(CGWindowID(target.raw), frame, dest, MoveGates(shouldContinue: authorized, hooks: hooks))
@@ -2587,8 +2610,7 @@ final class Coordinator {
         else { return .refused(L("Space detection is unavailable.", "操作スペースの観測が使えません。"), code: "space-unavailable") }
         // Dragging instead would switch Spaces, so without the direct move it is refused.
         guard sendAvailableOverride ?? spaceControl?.canSendWithoutFollowing ?? true else {
-            return .refused(L("Sending a window without switching needs the direct move, which is not available on this macOS. To move and follow the window, use move-to-space --follow.",
-                              "切り替えずに送るには直接の移動が必要ですが、このmacOSでは使えません。移動先へ追従してよければmove-to-space --followを使ってください。"), code: "send-unavailable")
+            return .refused(Self.sendUnavailable(fromShortcutOrMenu: UserWorkQueue.queuesWhileBusy(source), followSetting: config.followMovedWindow), code: "send-unavailable")
         }
         let census = takeCensus(current)
         guard let targetPID = census.windows[target] else { return .refused(L("The focused window is not on the current Space.", "フォーカス中のウインドウは現在の操作スペースにありません。"), code: "target-not-found") }

@@ -129,6 +129,15 @@ final class ConfigDocumentTests: XCTestCase {
         XCTAssertEqual(try Config.load(toml: patched).preferredMinimum, CGSize(width: 500, height: 350))
     }
 
+    func testFollowMovedWindowChangesOnlyItsLine() throws {
+        let source = "gap = 0 # x\nplace-dialogs-beside = false # beside\n[keys]\nzoom = \"alt-z\"\n"
+        let added = try patch(source) { $0.followMovedWindow = true }
+        XCTAssertEqual(added, "gap = 0 # x\nplace-dialogs-beside = false # beside\nfollow-moved-window = true\n[keys]\nzoom = \"alt-z\"\n")
+        XCTAssertTrue(try Config.load(toml: added).followMovedWindow)
+        let off = try patch(added) { $0.followMovedWindow = false }
+        XCTAssertEqual(off, "gap = 0 # x\nplace-dialogs-beside = false # beside\nfollow-moved-window = false\n[keys]\nzoom = \"alt-z\"\n")
+    }
+
     func testSeveralRuleEditsKeepUnchangedBlocksAndOrder() throws {
         let rules = """
         [[rule]]

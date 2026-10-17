@@ -204,7 +204,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         s.availableUpdate = updates?.offer
         let menuWindow = coordinator.menuWindowTarget()
         s.focusedWindow = menuWindow?.window
-        let bindings = HotkeyBinding.from(coordinator.config, mode: s.mode)
+        // One read, so the transfer rows' shortcuts and actions come from the same configuration.
+        let config = coordinator.config
+        let bindings = HotkeyBinding.from(config, mode: s.mode)
         let menuSpaces = coordinator.spaceMenu()
         let canAct = s.manualAvailable && !s.paused && s.progress == .idle
         let onFullscreenSpace = menuSpaces.entries.contains { $0.isCurrent && $0.fullScreen }
@@ -273,7 +275,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 // Separates the window actions from what follows.
                 menu.addItem(.separator())
             case .space:
-                if let item = spaceMenuItem(bindings: bindings, menuSpaces: menuSpaces, window: menuWindow) { menu.addItem(item) }
+                if let item = spaceMenuItem(bindings: bindings, menuSpaces: menuSpaces, window: menuWindow, follow: config.followMovedWindow) { menu.addItem(item) }
             case .mode:
                 menu.addItem(modeMenuItem(status: s))
             case .update:
@@ -322,8 +324,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             if let box = parent.representedObject as? EditCommandBox,
                case .space = box.command, box.menuTarget == nil { box.menuTarget = observed }
             for item in parent.submenu?.items ?? [] {
-                guard let box = item.representedObject as? EditCommandBox,
-                      case .sendToSpace(.id(let destination)) = box.command else { continue }
+                guard let box = item.representedObject as? EditCommandBox else { continue }
+                let destination: UInt64
+                switch box.command {
+                case .sendToSpace(.id(let id)), .moveToSpace(.id(let id)): destination = id
+                default: continue
+                }
                 // Only if the window was not yet visible mid-move, pin the first target observed.
                 if box.menuTarget == nil { box.menuTarget = observed }
                 updateSendItem(item, box: box, destination: destination, observed: observed, canSend: canSend)
@@ -374,7 +380,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return editItem
     }
 
-    private func spaceMenuItem(bindings: [HotkeyBinding], menuSpaces: (entries: [SpaceMenuEntry], reordersByRecentUse: Bool), window: MenuWindowTarget?) -> NSMenuItem? {
+    /// `follow` (`follow-moved-window` as the menu opens) decides each row's command once; an open menu keeps it, like its shortcuts.
+    private func spaceMenuItem(bindings: [HotkeyBinding], menuSpaces: (entries: [SpaceMenuEntry], reordersByRecentUse: Bool), window: MenuWindowTarget?, follow: Bool) -> NSMenuItem? {
         let spaces = menuSpaces.entries.filter { $0.index != nil }
         guard spaces.count > 1 else { return nil }
         let title = StatusMenuCopy.moveWindowToSpaceTitle
@@ -384,9 +391,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         for (offset, sp) in spaces.enumerated() {
             guard let index = sp.index else { continue }
             if let header = SpaceOverviewMenu.header(before: offset, in: spaces) { spaceMenu.addItem(header) }
-            let command = EditCommand.sendToSpace(.id(sp.id))
+            let command = EditCommand.sendToSpace(.id(sp.id)).following(follow)
             let item = SpaceOverviewMenu.item(sp, action: #selector(editAction(_:)), target: self)
-            if !sp.otherDisplay { HotkeyBinding.applyMenuShortcut(bindings.first { $0.command == .sendToSpace(.index(index)) }, to: item) }
+            if !sp.otherDisplay {
+                let shortcut = EditCommand.sendToSpace(.index(index)).following(follow)
+                HotkeyBinding.applyMenuShortcut(bindings.first { $0.command == shortcut }, to: item)
+            }
             let box = EditCommandBox(command, menuTarget: window)
             item.representedObject = box
             updateSendItem(item, box: box, destination: sp.id, observed: window, canSend: coordinator.canSendFromMenu)
@@ -420,7 +430,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         guard let box = sender.representedObject as? EditCommandBox else { return }
         // macOS 27 reports the press on the item (`rightMouseDown`), not the release, as the current event.
         if let type = NSApp.currentEvent?.type, type == .rightMouseDown || type == .rightMouseUp, case .space(let destination) = box.command {
-            let command = EditCommand.sendToSpace(destination)
+            let command = EditCommand.sendToSpace(destination).following(coordinator.config.followMovedWindow)
             guard let target = box.menuTarget else {
                 let why = L("Could not find the focused window. Select the window to send, then try again.", "フォーカス中のウインドウを確認できません。送りたいウインドウを選んでから操作してください。")
                 coordinator.noteRefusal(L("“\(command.label)”: \(why)", "「\(command.label)」: \(why)"))

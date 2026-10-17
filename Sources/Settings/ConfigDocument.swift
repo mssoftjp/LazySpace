@@ -113,6 +113,7 @@ public enum ConfigDocument {
             try syncBool("focus-after-close", previous.focusAfterClose, next.focusAfterClose)
             try syncBool("show-shortcut-guide", previous.showShortcutGuide, next.showShortcutGuide)
             try syncBool("place-dialogs-beside", previous.placeDialogsBeside, next.placeDialogsBeside)
+            try syncBool("follow-moved-window", previous.followMovedWindow, next.followMovedWindow)
             try syncString("language", previous.language, next.language)
             try syncString("new-window-placement", previous.newWindowPlacement.rawValue, next.newWindowPlacement.rawValue)
             try syncSize("preferred-minimum", previous.preferredMinimum, next.preferredMinimum)

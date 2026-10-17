@@ -48,7 +48,7 @@ If a Space should be left alone, uncheck **Automatically Arrange This Space** in
 
 | Item | What it does |
 |---|---|
-| **Move Window to Space** | Sends the focused window to another desktop, on this display or another one. The Space you are on does not change (see the note on other displays below). Shown when there are two or more desktops, except on a full-screen Space |
+| **Move Window to Space** | Sends the focused window to another desktop, on this display or another one. The Space you are on does not change unless **When moving a window to another Space, switch to that Space** is on in Settings › Shortcuts (see the note on other displays below). Shown when there are two or more desktops, except on a full-screen Space |
 | **Edit Layout** | Layout actions for the focused window |
 | **Automatically Arrange This Space** | Turns automatic arrangement on or off for the current Space |
 | **Arrange Now** | Arranges the current Space now and starts tiling it (`⌥⇧A`). It does not change the automatic setting above |
@@ -83,7 +83,7 @@ Hold a modifier key for about a second to see the shortcuts (you can turn this o
 | `⌥⇧A` | Arrange this Space now | Arrange This Space (in the menu, Arrange Now) |
 | `⌥⇧I` | Add one waiting window | Add One Waiting Window |
 | `⌥1` … `⌥9` | Switch to Desktop 1–9 | Switch to Desktop 1 … Switch to Desktop 9 |
-| `⌥⇧1` … `⌥⇧9` | Send the focused window to Desktop 1–9 and stay here | Send Window to Desktop 1 … Send Window to Desktop 9 |
+| `⌥⇧1` … `⌥⇧9` | Send the focused window to Desktop 1–9 and stay here, or go with it when that is turned on (see Spaces below) | Send Window to Desktop 1 … Send Window to Desktop 9 (Move Window to Desktop 1 and Follow … when turned on) |
 | `⌥⇥` | Go back to the previous Space | Switch to Last Used Space |
 
 `⌥` Option, `⇧` Shift, `⌃` Control, `⌘` Command. On some keyboard layouts, Option with a letter types a special character; Settings warns you, and you can pick other keys.
@@ -100,6 +100,7 @@ When automatic arrangement is on, you can edit tiled windows with the mouse:
 
 - `⌥1`–`⌥9` (or `lazyspace space N`) switch to a numbered desktop, counted in Mission Control order. Full-screen and Split View Spaces are not numbered. With more than one display, numbers count the desktops of each display, and these shortcuts use the display with the focused window.
 - `⌥⇧1`–`⌥⇧9` (or `lazyspace move-to-space N`) send the focused window to another desktop while you stay where you are. This needs macOS 27. Add `--follow` on the command line to go with it. To reach a desktop of another display, use the menu or add `--display N` on the command line (the display's position in `lazyspace list-spaces`). macOS gives focus to the window on that display; LazySpace brings back the window that was in front before it so you stay on this display, and if there is none, or it cannot be brought back, focus stays with the sent window.
+- To go with the window when you use the shortcuts or the menu, turn on **When moving a window to another Space, switch to that Space** in Settings › Shortcuts (`follow-moved-window` in the file). `⌥⇥` takes you back. The command line is not affected: `lazyspace move-to-space N` always stays, and `--follow` always goes with the window. Before macOS 27, the shortcuts and the menu move a window only with this on: LazySpace holds the window by its title bar while it switches, so the pointer moves for a moment, and a window whose title bar cannot be dragged is not moved.
 - Switching uses what your Mac already has: the macOS shortcut **Switch to Desktop N** when it is on, a window or app on the destination, and otherwise the Mission Control shortcuts **Move left a Space** and **Move right a Space** (on by default). LazySpace never changes these shortcuts, and sends nothing when one it needs is off.
 - For numbers that do not change, turn off **Automatically rearrange Spaces based on most recent use** in System Settings › Desktop & Dock.
 - Pressing a key or the mouse while LazySpace is switching stops the operation.
@@ -110,7 +111,7 @@ Choose **Settings…** from the menu bar.
 
 - **General**: access, **Open at Login**, and language.
 - **Arrangement**: keeping fixed-size windows next to arranged windows, spacing between windows, where new windows go, and an optional border around the focused window.
-- **Shortcuts**: shortcuts for the main mode. Double-click a shortcut or press Return to change it; Delete removes it, Option-Delete restores its default, and **Restore Defaults** resets the whole list. Below the list, a warning appears only when switching to the neighboring Space cannot work, and it says what to change.
+- **Shortcuts**: shortcuts for the main mode. Double-click a shortcut or press Return to change it; Delete removes it, Option-Delete restores its default, and **Restore Defaults** resets the whole list. Below the list, a warning appears only when switching to the neighboring Space cannot work, and it says what to change. Above the list, **When moving a window to another Space, switch to that Space** makes the Spaces shortcuts and the menu go with the window they move.
 - **Apps**: apps whose windows are never tiled, or kept floating. Each row shows the app's name and its bundle identifier; the name comes from the running app or the installed app, so it is blank for an app that is not installed and for a prefix rule such as `com.microsoft.*`. The identifier is the editable part.
 - **Advanced**: the configuration file.
 - **About**: the version, a link to the source on GitHub, and updates.
@@ -136,6 +137,7 @@ You can change settings in the Settings window or in the file `~/.config/lazyspa
 | `language` | `"system"` | `"system"`, `"en"`, or `"ja"` |
 | `gap` | `0` | Space between windows, 0–200 points (rounded to whole points). `[gaps]` sets `inner-horizontal`, `inner-vertical`, `outer-left`, `outer-top`, `outer-right`, and `outer-bottom` separately (each 0–200) |
 | `place-dialogs-beside` | `false` | After you switch away from a fixed-size window (such as Calculator or an alert), move it to a strip at the right or bottom edge; arranged windows use the rest |
+| `follow-moved-window` | `false` | After a shortcut or the menu moves a window to another Space, switch to that Space too. The command line is not affected |
 | `new-window-placement` | `"beside-focused"` | Where new windows join. `"end"` adds them at the end |
 | `focus-after-close` | `true` | After the focused window closes, focus a nearby window if no window on this Space has focus |
 | `accordion-padding` | `30` | Width of the strip shown for other windows in an accordion, 0–200 points (rounded to whole points) |
