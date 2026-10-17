@@ -564,6 +564,38 @@ final class ArrangeOperationTests: XCTestCase {
         XCTAssertTrue(s.writes.isEmpty)
     }
 
+    /// When an app that owns a layout window does not answer: waiting writes nothing, arranging around writes the windows that answered without committing,
+    /// and reclaiming writes them and commits the layout without the app's window.
+    func testUnansweredAppPolicies() {
+        for policy in [ArrangeOperation.UnansweredPolicy.wait, .arrangeAround, .reclaim] {
+            let s = FakeSystem(windows: [window(1), window(2, x: 900)])
+            _ = makeOp(s).run()
+            let prior = Coordinator_priorFor(s)
+            s.snap.windows.removeAll { $0.id == WindowID(2) }
+            s.snap.unobservedApps = ["com.example.hung"]
+            s.writes = []
+            let op = ArrangeOperation(system: s, control: control, knowledge: knowledge,
+                                      limits: OperationLimits(settleDelay: 0), priorLayout: prior,
+                                      allowedWindows: [WindowID(1), WindowID(2)],
+                                      kind: "auto-refit", unanswered: policy, sleep: { _ in })
+            let result = op.run()
+            switch policy {
+            case .wait:
+                XCTAssertTrue(s.writes.isEmpty)
+                XCTAssertEqual(result.stopReason, .appUnresponsive)
+                XCTAssertNil(op.resultingLayout)
+            case .arrangeAround:
+                XCTAssertFalse(s.writes.isEmpty)
+                XCTAssertEqual(result.outcome, .partial)
+                XCTAssertNil(op.resultingLayout)
+            case .reclaim:
+                XCTAssertFalse(s.writes.isEmpty)
+                XCTAssertEqual(result.outcome, .complete)
+                XCTAssertEqual(op.resultingLayout?.windowIDs, [WindowID(1)])
+            }
+        }
+    }
+
     func testProtectedIntegrationDoesNotPullInOtherSimultaneousWindows() {
         let s = FakeSystem(windows: [window(1), window(2, x: 900)])
         _ = makeOp(s).run()

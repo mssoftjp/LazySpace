@@ -459,6 +459,30 @@ final class CoordinatorTests: XCTestCase {
         XCTAssertEqual(system.frames[WindowID(1)]?.width, 1920, "A window whose process exited cannot come back")
     }
 
+    /// A window that closed while automatic arrangement was unavailable, or off for this Space, leaves the layout once it is back:
+    /// the observation restarts without a difference, so the departure is owed as a pending refit.
+    func testWindowClosedWhileAutomaticArrangementWasOffIsRefitWhenItReturns() {
+        for reason in ["stage-manager", "space-off"] {
+            setUpWithErrorOrFail()
+            prepareMouseLayout()
+            system.focused = WindowID(1)
+            if reason == "stage-manager" { system.stageManagerOn = true } else { coordinator.setCurrentSpaceAutoPaused(true) }
+            system.frames.removeValue(forKey: WindowID(2))
+            tick()
+            tick()
+            XCTAssertEqual(system.frames[WindowID(1)]?.width, 960, "\(reason): nothing is written while off")
+            if reason == "stage-manager" { system.stageManagerOn = false } else { coordinator.setCurrentSpaceAutoPaused(false) }
+            for _ in 0..<4 { tick() }
+            XCTAssertEqual(coordinator.state.layouts["7"]?.windowIDs, [WindowID(1)], reason)
+            XCTAssertEqual(system.frames[WindowID(1)]?.width, 1920, "\(reason): the gap is filled")
+        }
+    }
+
+    private func setUpWithErrorOrFail() {
+        drain()
+        do { try tearDownWithError(); try setUpWithError() } catch { XCTFail("\(error)") }
+    }
+
     /// Changes after dragging a managed window still wait for stillness (the drag result is adopted first).
     func testDragThatMovedAWindowStillDefersRefit() {
         prepareMouseLayout()

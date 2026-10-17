@@ -24,4 +24,18 @@ final class SpaceObserverTests: XCTestCase {
         let old = try? JSONDecoder().decode(SpaceObserver.ManagedDisplay.self, from: Data(#"{"display":"x","spaces":[1,2],"spaceTypes":[0,4]}"#.utf8))
         XCTAssertNil(old)
     }
+
+    /// While displays share one Space, a window counts as the current Space's only when centered on the menu-bar display,
+    /// whether it was first seen in the window list or only through Accessibility (both use this).
+    func testMembershipOnSharedSpacesFollowsTheWindowCenter() {
+        let main = CGRect(x: 0, y: 0, width: 1920, height: 1080)
+        let here = CGRect(x: 100, y: 100, width: 800, height: 600)
+        let beside = CGRect(x: 2000, y: 100, width: 800, height: 600)
+        XCTAssertEqual(MacWindowSystem.membership([7], active: 7, frame: beside, sharedDisplay: main), .otherDisplay)
+        XCTAssertEqual(MacWindowSystem.membership([7], active: 7, frame: here, sharedDisplay: main), .current)
+        XCTAssertEqual(MacWindowSystem.membership([7], active: 7, frame: beside, sharedDisplay: nil), .current, "separate Spaces")
+        XCTAssertEqual(MacWindowSystem.membership([7, 8], active: 7, frame: beside, sharedDisplay: main), .allSpaces)
+        XCTAssertEqual(MacWindowSystem.membership([8], active: 7, frame: here, sharedDisplay: main), .other)
+        XCTAssertEqual(MacWindowSystem.membership([], active: 7, frame: here, sharedDisplay: main), .unknown)
+    }
 }

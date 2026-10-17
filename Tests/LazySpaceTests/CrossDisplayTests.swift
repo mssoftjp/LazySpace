@@ -370,6 +370,19 @@ final class CrossDisplayTests: XCTestCase {
         XCTAssertEqual(system.frames[WindowID(2)]?.width, 1920)
     }
 
+    /// A Space list that cannot be read once (waking from sleep, a display change) postpones the arrival instead of dropping it.
+    func testAShownArrivalSurvivesAnUnreadableSpaceList() throws {
+        make()
+        sender()
+        _ = try XCTUnwrap(send(.id(20)))
+        system.existingSpaces = nil
+        for _ in 0..<3 { tick() }
+        XCTAssertEqual(coordinator.state.layouts["20"]?.windowIDs, [WindowID(3)])
+        system.existingSpaces = [7, 8, 20, 21]
+        for _ in 0..<6 { tick() }
+        XCTAssertEqual(Set(coordinator.state.layouts["20"]?.windowIDs ?? []), [WindowID(2), WindowID(3)])
+    }
+
     func testAShownArrivalWaitsWhileAMouseButtonIsHeld() throws {
         make()
         sender()

@@ -111,4 +111,27 @@ final class ReturningWindowsTests: XCTestCase {
         XCTAssertEqual(coordinator.state.layouts["7"]?.windowIDs.contains(WindowID(4)), true, "it joins as before")
         XCTAssertEqual(Set(coordinator.state.layouts["7"]?.windowIDs ?? []), [WindowID(1), WindowID(2), WindowID(3), WindowID(4)])
     }
+
+    /// A window minimized while the user was on another Space leaves the layout on return and, shown again, returns to its place.
+    func testWindowMinimizedWhileAwayReturnsToItsPlace() {
+        system.spaceOf = [WindowID(1): 7, WindowID(2): 7, WindowID(3): 7, WindowID(5): 8]
+        system.frames[WindowID(5)] = CGRect(x: 200, y: 200, width: 600, height: 500)
+        system.focused = WindowID(3)
+        system.space = 8
+        tick(); tick()
+        system.hiddenFromCensus = [WindowID(1)]
+        system.minimizedWindows = [WindowID(1)]
+        system.space = 7
+        tick(); tick()
+        coordinator.noteSpaceArrival(at: Date().addingTimeInterval(-2))
+        tick(); tick()
+        XCTAssertEqual(coordinator.state.layouts["7"]?.windowIDs, [WindowID(2), WindowID(3)])
+        // It comes back somewhere else on screen, so only the remembered place puts it back on the left.
+        system.frames[WindowID(1)] = CGRect(x: 1400, y: 300, width: 400, height: 400)
+        system.hiddenFromCensus = []
+        system.minimizedWindows = []
+        tick(); tick(); tick()
+        XCTAssertEqual(coordinator.state.layouts["7"]?.windowIDs, t.windowIDs)
+        XCTAssertEqual(coordinator.state.layouts["7"]?.windowIDs.first, WindowID(1), "it returns to its place")
+    }
 }

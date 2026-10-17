@@ -46,6 +46,11 @@ struct ObservationBackoff {
 
     mutating func clear(_ id: WindowID) { entries[id] = nil }
 
+    /// Waits without a schedule until cleared (or the frame changes): for windows looked at only after a change.
+    mutating func hold(_ ids: some Sequence<WindowID>, frames: [WindowID: CGRect] = [:]) {
+        for id in ids { entries[id] = Entry(attempts: Self.maxAttempts, notBefore: .distantFuture, frame: frames[id] ?? entries[id]?.frame) }
+    }
+
     mutating func removeAll() { entries.removeAll() }
 
     /// Keeps only windows still seen as unplaced. Forgets windows that were placed, disappeared, or whose frame changed.

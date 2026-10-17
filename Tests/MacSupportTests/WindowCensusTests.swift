@@ -11,6 +11,22 @@ final class WindowCensusTests: XCTestCase {
         XCTAssertFalse(WindowList.mayExist(99, in: [100]))
     }
 
+    /// A pid whose app could not be looked up is asked again on the next census instead of being left out for 30 s.
+    func testFailedPolicyLookupIsNotKept() {
+        var cache = WindowCensus.ActivationPolicyCache()
+        var answer: NSApplication.ActivationPolicy? = nil
+        var lookups = 0
+        let now = Date()
+        func ask(_ at: Date) -> Bool { cache.isRegular(42, now: at) { _ in lookups += 1; return answer } }
+        XCTAssertFalse(ask(now))
+        answer = .regular
+        XCTAssertTrue(ask(now.addingTimeInterval(0.5)), "the failed lookup was not cached")
+        answer = .prohibited
+        XCTAssertTrue(ask(now.addingTimeInterval(1)), "a successful lookup is kept")
+        XCTAssertEqual(lookups, 2)
+        XCTAssertFalse(ask(now.addingTimeInterval(31)), "and asked again after 30 s")
+    }
+
     /// A window fully faded while closing counts as gone even if still listed.
     func testFadedWindowsAreNotCounted() {
         XCTAssertTrue(WindowCensus.isVisible(alpha: 1))

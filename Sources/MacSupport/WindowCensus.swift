@@ -7,17 +7,26 @@ import Operations
 /// On-screen layer-0 windows are those visible on the current Space. Windows on all Spaces and dialogs
 /// are mixed in, but the snapshot excludes them when an operation runs.
 public enum WindowCensus {
-    private static var policyCache: [pid_t: (NSApplication.ActivationPolicy, Date)] = [:]
+    private static var policyCache = ActivationPolicyCache()
     private static let policyLock = NSLock()
 
     private static func isRegularApp(_ pid: pid_t) -> Bool {
         policyLock.lock()
         defer { policyLock.unlock() }
-        let now = Date()
-        if let (policy, at) = policyCache[pid], now.timeIntervalSince(at) < 30 { return policy == .regular }
-        let policy = NSRunningApplication(processIdentifier: pid)?.activationPolicy ?? .prohibited
-        policyCache[pid] = (policy, now)
-        return policy == .regular
+        return policyCache.isRegular(pid, now: Date()) { NSRunningApplication(processIdentifier: $0)?.activationPolicy }
+    }
+
+    /// Activation policy per pid, kept for 30 s.
+    struct ActivationPolicyCache {
+        private var entries: [pid_t: (policy: NSApplication.ActivationPolicy, at: Date)] = [:]
+
+        /// A failed lookup is not kept: the windows are left out of this census only, so a managed window is not taken as gone for 30 s.
+        mutating func isRegular(_ pid: pid_t, now: Date, lookup: (pid_t) -> NSApplication.ActivationPolicy?) -> Bool {
+            if let entry = entries[pid], now.timeIntervalSince(entry.at) < 30 { return entry.policy == .regular }
+            guard let policy = lookup(pid) else { entries[pid] = nil; return false }
+            entries[pid] = (policy, now)
+            return policy == .regular
+        }
     }
 
     /// Windows fainter than this count as invisible. A closing window stays listed for about 0.3 s after fading

@@ -367,6 +367,19 @@ final class HiddenSpaceRefitTests: XCTestCase {
         XCTAssertTrue(system.hiddenWrites.isEmpty)
     }
 
+    /// A Space list that cannot be read once (waking from sleep, a display change) postpones the redistribution instead of dropping it.
+    func testUnreadableSpaceListPostponesTheHiddenRefit() {
+        carryWindowTwoToEight()
+        system.existingSpaces = nil
+        tick()
+        XCTAssertTrue(system.hiddenWrites.isEmpty)
+        system.existingSpaces = [7, 8]
+        tick()
+        drain()
+        XCTAssertTrue(sevenFillsTheScreen)
+        XCTAssertEqual(coordinator.state.layouts["7"]?.windowIDs, [WindowID(1)])
+    }
+
     /// If the window returns to its (hidden) source Space while waiting to retry, the departure is dropped.
     func testDepartureThatReversesWhileWaitingIsDropped() {
         var first = true

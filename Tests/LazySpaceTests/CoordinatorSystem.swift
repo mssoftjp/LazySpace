@@ -73,15 +73,21 @@ final class CoordinatorSystem: CoordinatorWindowSystem {
     /// Per-window membership (windows on a Space shown on another display, for example).
     var membershipOf: [WindowID: ObservedWindow.Membership] = [:]
     var onSnapshot: (() -> Void)?
-    /// Windows missing only from scoped observations (operation snapshots), standing in for windows briefly missing from an app's AX list.
+    /// Windows missing only from operation observations (scoped to the layout and the windows being added, so they also hold other windows),
+    /// standing in for windows briefly missing from an app's AX list. A look at only these windows still sees them.
     var hiddenFromScopedSnapshots: Set<WindowID> = []
     var onSpaceRead: (() -> Void)?
     func snapshot() -> Snapshot {
         onSnapshot?()
         snapshotCount += 1
-        return Snapshot(trusted: trusted, spaceID: space, workArea: workArea(of: space),
+        var snap = Snapshot(trusted: trusted, spaceID: space, workArea: workArea(of: space),
                  windows: frames.filter { onSpace($0.key, space) }.map { ObservedWindow(id: $0.key, pid: pids[$0.key] ?? 1, app: apps[$0.key] ?? "test", frame: $0.value, membership: membershipOf[$0.key] ?? membership, kind: kindOf[$0.key] ?? kind, detail: "", title: titles[$0.key] ?? "") },
                  spaceObservationAvailable: spaceObservationAvailable)
+        // Like the real observation, an app that does not answer leaves out its windows and is reported unobserved.
+        let unanswering = Set(snap.windows.map(\.pid)).intersection(unansweringPIDs)
+        snap.windows.removeAll { unanswering.contains($0.pid) }
+        snap.unobservedApps = unanswering.sorted().map { "pid\($0)" }
+        return snap
     }
     /// Unresponsive apps (pid -> seconds one read blocks). Bounded observations wait only until the deadline and mark that app unobservable.
     var blockingPIDs: [Int32: TimeInterval] = [:]
@@ -99,10 +105,21 @@ final class CoordinatorSystem: CoordinatorWindowSystem {
         snap.unobservedApps += blocked.map { pid in apps.first { pids[$0.key] == pid }?.value ?? "pid\(pid)" }
         return snap
     }
+    /// Apps (pid) that do not return a window list: observations leave out their windows and report the app unobserved
+    /// (a scoped observation only asks the owners of its windows).
+    var unansweringPIDs: Set<Int32> = []
+    /// Scoped observations could not read the full window list: no windows, and the list is reported unavailable.
+    var scopedListUnreadable = false
     func snapshot(limitingTo ids: Set<WindowID>?) -> Snapshot {
         snapshotScopes.append(ids)
         var snap = snapshot()
-        if let ids { snap.windows.removeAll { !ids.contains($0.id) || hiddenFromScopedSnapshots.contains($0.id) } }
+        if let ids {
+            let hidden = ids.subtracting(hiddenFromScopedSnapshots).isEmpty ? [] : hiddenFromScopedSnapshots
+            snap.windows.removeAll { !ids.contains($0.id) || hidden.contains($0.id) }
+            let asked = Set(ids.compactMap { id in frames[id].map { _ in pids[id] ?? 1 } })
+            snap.unobservedApps = unansweringPIDs.intersection(asked).sorted().map { "pid\($0)" }
+        }
+        if scopedListUnreadable { snap.windows = []; snap.windowListAvailable = false }
         return snap
     }
     func currentSpaceID() -> UInt64? {
@@ -321,7 +338,8 @@ final class CoordinatorSystem: CoordinatorWindowSystem {
     /// Display identifier per Space ("D1" when absent).
     var displayOf: [UInt64: String] = [:]
     func spaceDisplay(_ space: UInt64) -> SpaceDisplay? {
-        guard hiddenSpaces, !hiddenVisibilityUnknown else { return nil }
+        // Both come from the same SkyLight display list, so an unreadable Space list leaves the displays unknown too.
+        guard hiddenSpaces, !hiddenVisibilityUnknown, existingSpaces != nil else { return nil }
         return SpaceDisplay(display: displayOf[space] ?? "D1", workArea: workArea(of: space), shown: space == self.space || shownSpaces.contains(space))
     }
 

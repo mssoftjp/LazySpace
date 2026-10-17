@@ -15,7 +15,7 @@ protocol CoordinatorWindowSystem: WindowSystem {
     func currentWorkArea() -> CGRect
     /// Title of one observed window, without querying every app.
     func windowTitle(_ id: WindowID) -> String?
-    /// Only whether Spaces exist; no window lists or membership.
+    /// Only whether Spaces exist; no window lists or membership. nil when the list cannot be read.
     func existingSpaceIDs() -> Set<UInt64>?
     /// Whether the process has exited. Windows of a quit app never come back, so their disappearance is not waited for.
     func processExited(_ pid: Int32) -> Bool
@@ -445,6 +445,16 @@ final class Coordinator {
     private var observationBackoff = ObservationBackoff()
     /// Redistribution for departed managed windows deferred because, for example, the button was held on arrival. Read and written on the operations queue.
     private var pendingDepartedRefit: (spaceKey: String, generation: UInt64)?
+    /// Per Space, automatic fits (redistribution, display or launch fit) in a row that wrote nothing because an app did not answer, and when the next is due.
+    /// Operations queue.
+    private var unansweredFits: [String: (attempts: Int, notBefore: Date)] = [:]
+    /// Windows a reclaim left out because their app did not answer. They are not polled: `placeMissing` reads one again only after a change on its Space
+    /// (a window opening or closing, the front window changing), as AeroSpace restores such a window on the next event, until it rejoins a layout or
+    /// `forgetClosedTrackedWindows` confirms it closed. Under the lock.
+    private var reclaimedWindows: Set<WindowID> = []
+    /// The window set and front window when reclaimed windows were last released for a look. Operations queue.
+    private var reclaimLook: (front: WindowID?, windows: Set<WindowID>)?
+    var fitRetryClock: () -> Date = Date.init
     /// Hidden Spaces whose managed windows SkyLight confirmed departed. The rest is redistributed while the user is on another Space.
     /// Read and written on the operations queue.
     private struct HiddenRefit {
@@ -545,15 +555,19 @@ final class Coordinator {
     private var displayChangedAt = Date.distantPast
     /// How long the setup must stay unchanged after a display change before the current Space is refit.
     var displaySettleInterval: TimeInterval = 2
-    /// Spaces not yet fit to the new work area after a display change, and how many attempts ended without fitting. Read and written under lock.
+    /// Spaces not yet fit to the new work area after a display change or launch, and how many attempts ended without fitting. Read and written under lock.
     private var displayRefitPending: Set<String> = []
     private var displayRefitFailures: [String: Int] = [:]
 
     /// Result of a redistribution after a display change. Done once complete. If only user input, pause, or a Space change stopped it,
     /// it is retried on the next quiet observation (not counted). Otherwise it gives up after 3 unfinished tries. Operations queue.
     private func noteDisplayRefit(_ result: OperationResult, spaceKey: String) {
+        lock.lock(); let empty = state.layouts[spaceKey]?.windowIDs.isEmpty ?? true; lock.unlock()
+        // A layout with no window left has nothing to fit, which is done too; an unreadable window list proves nothing and is tried again.
+        let nothingLeft = result.outcome == .nothingToDo && result.stopReason == nil && empty
+        if !nothingLeft, case .retry = unansweredStep(after: result, spaceKey: spaceKey) { return }
         lock.lock(); defer { lock.unlock() }
-        if result.outcome == .complete {
+        if result.outcome == .complete || nothingLeft {
             displayRefitPending.remove(spaceKey)
             displayRefitFailures[spaceKey] = nil
             return
@@ -681,6 +695,8 @@ final class Coordinator {
         state = store.load()
         control = OperationControl(paused: state.paused)
         servicesStarted = startServices
+        // What changed while LazySpace was not running (windows moved, the display setup) is unknown: every saved layout is fit again, as after a display change.
+        displayRefitPending = Set(state.layouts.keys)
         guard startServices else {
             knowledge.restore(Self.sizeFacts(state.sizeFacts), observedAt: Date())
             return
@@ -920,6 +936,7 @@ final class Coordinator {
         if let key, state.sessionKey == key { return }
         let had = state.layouts.count
         state.layouts.removeAll(); state.floating.removeAll(); state.zoomed.removeAll(); state.sizeFacts.removeAll(); state.floatHomes.removeAll(); state.dialogRegions = nil
+        displayRefitPending.removeAll()
         knowledge.forgetAll()
         state.sessionKey = key ?? ""
         store.save(state)
@@ -1286,6 +1303,7 @@ final class Coordinator {
                  otherSpace: (space: UInt64, mode: OtherSpaceWindowSystem.Mode)? = nil,
                  region: RegionApply? = nil,
                  followsUserCommand: Bool = false,
+                 unanswered: ArrangeOperation.UnansweredPolicy = .arrangeAround,
                  completion: ((OperationResult) -> Void)? = nil) -> Accept {
         // Continuations of a user command (rewriting the accordion to follow a focus move) skip the automatic-arrangement gate.
         let automatic = kind.hasPrefix("auto-") && !followsUserCommand
@@ -1341,7 +1359,7 @@ final class Coordinator {
             OtherSpaceWindowSystem(base: system, control: control, space: $0.space, mode: $0.mode, windows: Set(prior?.windowIDs ?? []).union(adding).subtracting(heldOut.keys))
         } ?? system
         let op = ArrangeOperation(system: opSystem, control: control, knowledge: knowledge, limits: limits, options: options, priorLayout: prior, adoptObservedProportions: layoutOverride == nil && kind != EditCommand.toggleZoom.kind, heldOut: held, allowedWindows: allowedWindows,
-                                  adding: kind.hasPrefix("auto-") ? adding : [], kind: kind,
+                                  adding: kind.hasPrefix("auto-") ? adding : [], kind: kind, unanswered: automatic ? unanswered : .arrangeAround,
                                   transform: transform, transformFailure: transformFailure, zoomed: zoomed, appRule: { [config] window in config.tilingExclusionReason(bundleID: window.app, title: window.title) },
                                   displayName: AppNames.localized, authorization: authorization, observedWindows: observed, probeMaximums: probeMaximums, pressedAt: pressedAt)
         if options.reservesRegion {
@@ -1439,6 +1457,15 @@ final class Coordinator {
                 if let before = state.layouts[key], before != layout, kind != EditCommand.undo.kind, kind != EditCommand.toggleFloat.kind, !kind.hasPrefix("auto-") {
                     pushLayoutHistory(before, spaceKey: key)
                 }
+                // The Space is arranged: a wait for an app that did not answer is over (operations queue).
+                unansweredFits[key] = nil
+                // A reclaim leaves out windows whose app did not answer (they stay where they are): remembered like departures, they return to their place.
+                if !result.unobservedApps.isEmpty, let before = state.layouts[key] {
+                    let left = before.windowIDs.filter { !layout.windowIDs.contains($0) }
+                    rememberDeparturesLocked(left, spaceKey: key)
+                    reclaimedWindows.formUnion(left)
+                }
+                reclaimedWindows.subtract(layout.windowIDs)
                 state.layouts[key] = layout
                 // A maximum learned from a request for the whole tiling area leaves the solo probe nothing to test.
                 if layout.windowIDs.count == 1, let id = layout.windowIDs.first, let tiles = op.maximumsLearnedAlone[id],
@@ -1450,6 +1477,9 @@ final class Coordinator {
                 if let region { setRegionLocked(key, op.regionDropped ? nil : region.plan) }
                 else if op.regionDropped || !options.reservesRegion { setRegionLocked(key, nil) }
                 lastPlans[key] = Dictionary(uniqueKeysWithValues: result.targets.compactMap { t in t.after.map { (t.id, $0) } })
+                // The layout now fits the current work area: a pending display or launch fit is done.
+                displayRefitPending.remove(key)
+                displayRefitFailures[key] = nil
                 let overflow = result.excluded.filter { $0.code == ArrangeOperation.overflowFloatCode }.map(\.window.id)
                 if !overflow.isEmpty {
                     var list = state.floating[key] ?? []
@@ -1520,6 +1550,12 @@ final class Coordinator {
             record(result)
             store.save(state)
             lock.unlock()
+            // An integration that waited for another app counts toward the Space's tries; one whose own windows could not be read does not.
+            // The reclaim ends the wait whatever its result.
+            if kind == "auto-integrate", unanswered != .arrangeAround, let sid = result.spaceID,
+               unanswered == .reclaim || result.targets.contains(where: { adding.contains($0.id) }) {
+                _ = unansweredStep(after: result, spaceKey: String(sid))
+            }
             completion?(result)
             drainUserQueue()
             DispatchQueue.main.async { self.onChange?() }
@@ -1572,7 +1608,9 @@ final class Coordinator {
     /// Adds a window opened in front to the layout: beside the previously focused window or at the end, as configured.
     @discardableResult
     /// `authorization` is the input at the start of the decision (input during the decision's reads also stops it). Taken here when omitted.
-    func integrateForeground(_ ids: [WindowID], beside anchor: WindowID?, inPlaceOf floated: WindowID? = nil, authorization: OperationAuthorization? = nil) -> Accept {
+    /// `unanswered` is how a layout app that does not answer is treated (the Space's tries; callers on the operations queue pass `unansweredPolicy`).
+    func integrateForeground(_ ids: [WindowID], beside anchor: WindowID?, inPlaceOf floated: WindowID? = nil, authorization: OperationAuthorization? = nil,
+                             unanswered: ArrangeOperation.UnansweredPolicy = .arrangeAround) -> Accept {
         // Rebuilding after a failed insertion is part of the same automatic decision and inherits input, Pause, and Space changes along the way.
         let authorization = authorization ?? OperationAuthorization(system: system, control: control)
         lock.lock()
@@ -1581,7 +1619,7 @@ final class Coordinator {
         let returning = ids.contains { departures[$0].map { departureClock().timeIntervalSince($0.at) < Self.departureMemory } ?? false }
         lock.unlock()
         guard placement == .besideFocused, anchor != nil || floated != nil || returning else {
-            return arrange(source: "auto", kind: "auto-integrate", ignoreZoom: true, adding: Set(ids), authorization: authorization)
+            return arrange(source: "auto", kind: "auto-integrate", ignoreZoom: true, adding: Set(ids), authorization: authorization, unanswered: unanswered)
         }
         let transform: ArrangeOperation.Transform = { [weak self] current, rects in
             guard let self else { return nil }
@@ -1596,7 +1634,9 @@ final class Coordinator {
             var beside = anchor
             // Returning windows first, together with the others that left the same home, so a stack comes back whole and a new window cannot get in the way.
             let now = self.departureClock()
-            let back = ids.sorted().filter { id in !layout.windowIDs.contains(id) && remembered[id].map { now.timeIntervalSince($0.at) < Self.departureMemory } ?? false }
+            let back = ids.sorted().filter { id in remembered[id].map { now.timeIntervalSince($0.at) < Self.departureMemory } ?? false }
+            // An emptied layout starts from the planner's first layout, which already holds them: they are taken out and put back by their home.
+            layout = layout.removing(Set(back))
             var homes: [(home: Layout, ids: [WindowID])] = []
             for id in back {
                 let home = remembered[id]!.home
@@ -1617,7 +1657,15 @@ final class Coordinator {
             }
             return layout
         }
-        return arrange(source: "auto", kind: "auto-integrate", transform: transform, ignoreZoom: true, adding: Set(ids), authorization: authorization)
+        return arrange(source: "auto", kind: "auto-integrate", transform: transform, ignoreZoom: true, adding: Set(ids), authorization: authorization, unanswered: unanswered)
+    }
+
+    /// Remembers windows leaving this Space's layout with that layout, so they return to their place within `departureMemory`. Call with lock held.
+    private func rememberDeparturesLocked(_ gone: [WindowID], spaceKey: String) {
+        guard let layout = state.layouts[spaceKey] else { return }
+        let now = departureClock()
+        for id in gone { departures[id] = Departure(home: layout, at: now) }
+        departures = departures.filter { now.timeIntervalSince($0.value.at) < Self.departureMemory }
     }
 
     /// Redistribution after managed windows vanished. If the front window closed and focus is left floating, focus moves to the window nearest the vanished one.
@@ -1627,16 +1675,12 @@ final class Coordinator {
         lock.lock()
         let plan = lastPlans[spaceKey] ?? [:]
         let wantsFocus = wasFront && config.focusAfterClose
-        if let layout = state.layouts[spaceKey] {
-            let now = departureClock()
-            for id in gone { departures[id] = Departure(home: layout, at: now) }
-            departures = departures.filter { now.timeIntervalSince($0.value.at) < Self.departureMemory }
-        }
+        rememberDeparturesLocked(gone, spaceKey: spaceKey)
         lock.unlock()
         // If user input, pause, or a Space change happens between deciding it closed and finishing the redistribution, focus does not move.
         let focusAuthorization = authorization
         let generation = control.cancellationGeneration
-        return arrange(source: "auto", kind: "auto-refit", authorization: authorization, completion: { [weak self] result in
+        return arrange(source: "auto", kind: "auto-refit", authorization: authorization, unanswered: unansweredPolicy(spaceKey), completion: { [weak self] result in
             guard let self else { return }
             rearmDepartedRefit(after: result, spaceKey: spaceKey, generation: generation)
             guard wantsFocus, result.outcome == .complete || result.outcome == .partial else { return }
@@ -3151,12 +3195,15 @@ final class Coordinator {
         }
         state.layouts[key] = adopted
         if adopted == nil { lastPlans[key] = nil; layoutHistory[key] = nil; state.dialogRegions?[key] = nil }
+        // The adopted layout is where the windows are: a pending display or launch fit of this Space is done.
+        displayRefitPending.remove(key)
+        displayRefitFailures[key] = nil
         state.paused = false
         control.paused = false
         lastRefusal = nil
         store.save(state)
         lock.unlock()
-        queue.async { [self] in baseline = nil; lastSeen = nil }
+        queue.async { [self] in baseline = nil; lastSeen = nil; unansweredFits[key] = nil }
         DispatchQueue.main.async { self.onChange?() }
         return nil
     }
@@ -3460,6 +3507,7 @@ final class Coordinator {
         noteArrivalsFromOtherSpaces(current, spaceKey: spaceKey)
         guard let prev = baseline else {
             baseline = current
+            oweUnobservedDepartures(current: current, spaceKey: spaceKey)
             // Windows present since launch never show as differences; before taking the baseline unstarted, judge once with the current count.
             if enrollUnstartedSpace(previous: current, current: current, spaceKey: spaceKey, quiet: quiet, authorization: decision) { return }
             // A Space that already has a layout aligns visible standard windows with it even without differences.
@@ -3532,6 +3580,8 @@ final class Coordinator {
                 if !autoOff, !buttonDown { scheduleSettleDeadline(settledOnSpace: settledOnSpace, quiet: quiet, sinceInput: sinceInput) }
                 return
             case .integrate(let ids, let anchor):
+                // During the delay after an app did not answer, a new window is left to `placeMissing`, which tries once the delay is over.
+                guard unansweredFitDue(spaceKey) else { break }
                 // If another operation is running and this is not accepted, it is kept out of the baseline and seen as "new" again on the next tick.
                 // If the front window is floating, the new window goes where that window was before it left the layout.
                 var floated: WindowID? = nil
@@ -3540,8 +3590,17 @@ final class Coordinator {
                     if (state.floating[spaceKey] ?? []).contains(front) { floated = front }
                     lock.unlock()
                 }
-                if integrateForeground(ids, beside: anchor, inPlaceOf: floated, authorization: decision) == .busy { retryAdded.append(contentsOf: ids) }
+                if integrateForeground(ids, beside: anchor, inPlaceOf: floated, authorization: decision, unanswered: unansweredPolicy(spaceKey)) == .busy {
+                    retryAdded.append(contentsOf: ids)
+                }
             case .refitAfterRemoval(let gone, let wasFront):
+                // During that delay the redistribution is owed instead (without focus-after-close) and runs once the delay is over.
+                // The windows that left are remembered now, before another arrangement can replace the layout they belong to.
+                guard unansweredFitDue(spaceKey) else {
+                    lock.lock(); let generation = control.cancellationGeneration; rememberDeparturesLocked(gone, spaceKey: spaceKey); lock.unlock()
+                    if pendingDepartedRefit == nil { pendingDepartedRefit = (spaceKey, generation) }
+                    break
+                }
                 // Focus moves only when the window confirmed closed was in front; not for windows that moved to another Space or were minimized.
                 let closedFront = wasFront ? prev.frontWindow.flatMap { closedGone.contains($0) ? $0 : nil } : nil
                 if refitAfterRemoval(gone, wasFront: closedFront != nil, spaceKey: spaceKey, closedFront: closedFront, authorization: decision) == .busy { retryRemoved.append(contentsOf: gone) }
@@ -3572,7 +3631,7 @@ final class Coordinator {
         // A partial write made while hidden is redistributed here until fixed (up to 3 times). If input stops it midway, the next quiet tick retries.
         lock.lock(); let dirty = hiddenRefitDirty.contains(spaceKey); lock.unlock()
         let dirtyRepair = dirty && pendingDepartedRefit == nil && dirtyRepairs[spaceKey, default: 0] < 3
-        if out.actions.isEmpty, !holdingRemoval, setQuiet, !autoOff, let layout, !isBusy, pendingDepartedRefit != nil || dirtyRepair {
+        if out.actions.isEmpty, !holdingRemoval, setQuiet, !autoOff, let layout, !isBusy, pendingDepartedRefit != nil || dirtyRepair, unansweredFitDue(spaceKey) {
             let pending = pendingDepartedRefit
             pendingDepartedRefit = nil
             lock.lock(); let generation = control.cancellationGeneration; lock.unlock()
@@ -3585,7 +3644,9 @@ final class Coordinator {
                 scheduleNextTick(after: fastTickInterval)
             } else if pending.map({ $0.generation == generation }) ?? true, !departed.isEmpty || dirty {
                 if pending == nil { dirtyRepairs[spaceKey, default: 0] += 1 }
-                if arrange(source: "auto", kind: "auto-refit", heldOut: [:], authorization: decision, completion: { [weak self] result in
+                lock.lock(); rememberDeparturesLocked(departed, spaceKey: spaceKey); lock.unlock()
+                if arrange(source: "auto", kind: "auto-refit", heldOut: [:], authorization: decision, unanswered: unansweredPolicy(spaceKey),
+                           completion: { [weak self] result in
                     self?.rearmDepartedRefit(after: result, spaceKey: spaceKey, generation: generation)
                 }) == .busy {
                     pendingDepartedRefit = pending ?? (spaceKey, generation)
@@ -3593,26 +3654,26 @@ final class Coordinator {
                 }
             }
         }
-        // A Space whose display setup changed is fit to the new work area once the setup stays unchanged for `displaySettleInterval`, the user stays on the Space,
-        // and input is quiet. Until then, other corrections (rewriting drift, refilling a single window) wait too.
-        lock.lock(); let displayRefit = displayRefitPending.contains(spaceKey); lock.unlock()
-        if displayRefit, displaysSettled, out.actions.isEmpty, !holdingRemoval, pendingDepartedRefit == nil, quiet, settledOnSpace, !buttonDown, !autoOff, layout != nil, !isBusy {
-            if case .started = arrange(source: "auto", kind: "auto-refit", authorization: decision, completion: { [weak self] in self?.noteDisplayRefit($0, spaceKey: spaceKey) }) { return }
-        }
         // Even without a difference, standard windows not in the layout are inserted by the same rule.
         // Leaving full screen or moving from another display is already in the observation on arrival, so it never shows as a difference.
         // Fitting windows right after arriving waits until the user stays on the Space; Spaces only passed through are left alone.
         // Windows carried by move-to-space are inserted without the arrival dwell (other corrections wait).
+        // Inserting fits the whole layout, so it goes before the display or launch fit below, which a completed insertion makes unnecessary.
         if out.actions.isEmpty, !holdingRemoval, quiet, displaysSettled, settledOnSpace || arrivalExpected(in: current), !buttonDown, !autoOff, layout != nil, !isBusy {
             _ = placeMissing(current: current, spaceKey: spaceKey, authorization: decision)
+        }
+        // A Space whose display setup changed (or any saved layout after launch) is fit to the work area once the setup stays unchanged for `displaySettleInterval`, the user stays on the Space,
+        // and input is quiet. Until then, other corrections (rewriting drift, refilling a single window) wait too. Any completed arrangement of the Space also counts.
+        lock.lock(); let displayRefit = displayRefitPending.contains(spaceKey); lock.unlock()
+        if displayRefit, displaysSettled, out.actions.isEmpty, !holdingRemoval, pendingDepartedRefit == nil, quiet, settledOnSpace, !buttonDown, !autoOff, layout != nil, !isBusy,
+           unansweredFitDue(spaceKey) {
+            if case .started = arrange(source: "auto", kind: "auto-refit", authorization: decision, unanswered: unansweredPolicy(spaceKey),
+                                       completion: { [weak self] in self?.noteDisplayRefit($0, spaceKey: spaceKey) }) { return }
         }
         if out.actions.isEmpty, !buttonDown, !autoOff, layout != nil {
             scheduleSettleDeadline(settledOnSpace: settledOnSpace, quiet: quiet, sinceInput: sinceInput)
         }
         if out.actions.isEmpty, !holdingRemoval, !displayRefit, quiet, settledOnSpace, !buttonDown, !autoOff, layout != nil, !isBusy {
-            if displaysSettled, pendingDepartedRefit == nil, out.deferredAdded.isEmpty, out.deferredRemoved.isEmpty, !pendingMouseEdit {
-                seedPlanAfterLaunch(current: current, spaceKey: spaceKey, layout: layout!, managed: managed)
-            }
             if reconcileDrift(current: current, spaceKey: spaceKey, layout: layout!, managed: managed, authorization: decision) { return }
         }
         if out.actions.isEmpty, !holdingRemoval, !displayRefit, quiet, settledOnSpace, !buttonDown, !autoOff, layout != nil, !isBusy {
@@ -3643,6 +3704,23 @@ final class Coordinator {
         if changed { DispatchQueue.main.async { self.onChange?() } }
     }
 
+    /// Layout windows that left while the observation was stopped (LazySpace not running included) never show as a difference; their redistribution is owed
+    /// as the pending departed refit, which assesses them like any other removal on the next quiet tick. Nothing is owed under Pause (Resume adopts the layout)
+    /// or with this Space turned off. One still owed for another Space (left while the observation was stopped) is replaced; it would be dropped here anyway.
+    /// The missing windows are remembered at once (a window only briefly missing stays in the layout, so the record goes unused), so another arrangement
+    /// running before the refit cannot drop them without a place to return to.
+    private func oweUnobservedDepartures(current: Census, spaceKey: String) {
+        lock.lock()
+        let missing = state.layouts[spaceKey]?.windowIDs.filter { current.windows[$0] == nil } ?? []
+        let off = control.paused || state.pausedSpaces.contains(spaceKey)
+        let generation = control.cancellationGeneration
+        if !missing.isEmpty, !off { rememberDeparturesLocked(missing, spaceKey: spaceKey) }
+        lock.unlock()
+        guard !missing.isEmpty, !off, pendingDepartedRefit?.spaceKey != spaceKey else { return }
+        pendingDepartedRefit = (spaceKey, generation)
+        scheduleNextTick(after: fastTickInterval)
+    }
+
     /// Forgets only waiting windows, floating windows, return targets, and zoom for windows confirmed closed. Read failures and being off screen are no evidence of disappearance.
     /// Waiting windows that joined this Space's layout or floating set, or that SkyLight confirms moved to one other Space, are removed too (even on Spaces with automatic arrangement off).
     private func forgetClosedTrackedWindows(current: Census, spaceKey: String) -> Bool {
@@ -3652,6 +3730,7 @@ final class Coordinator {
         let placedWaiting = waitingHere.intersection(managed)
         if !placedWaiting.isEmpty { setWaitingLocked(waitingHere.subtracting(placedWaiting), spaceKey: spaceKey) }
         var tracked = waitingHere.subtracting(placedWaiting).union(state.floating[spaceKey] ?? []).union((state.floatHomes[spaceKey] ?? []).map(\.id)).union(soloProbed.keys)
+            .union(reclaimedWindows)
         if let zoomed = state.zoomed[spaceKey] { tracked.insert(zoomed) }
         lock.unlock()
         let unseen = Self.windowsNeedingListCheck(tracked: tracked, visible: Set(current.windows.keys))
@@ -3680,6 +3759,7 @@ final class Coordinator {
         }
         if let zoomed = state.zoomed[spaceKey], gone.contains(zoomed) { state.zoomed[spaceKey] = nil; stateChanged = true }
         soloProbed = soloProbed.filter { !gone.contains($0.key) }
+        reclaimedWindows.subtract(gone)
         if stateChanged { store.save(state) }
         return stateChanged || !waitingGone.isEmpty || !placedWaiting.isEmpty
     }
@@ -3789,6 +3869,7 @@ final class Coordinator {
         hiddenRefits[spaceKey] = nil
         hiddenRefitExhausted[spaceKey] = nil
         dirtyRepairs[spaceKey] = nil
+        unansweredFits[spaceKey] = nil
         lock.lock()
         let dirty = hiddenRefitDirty.contains(spaceKey)
         if pendingAutoStart?.spaceKey != spaceKey { pendingAutoStart = nil }
@@ -3825,6 +3906,8 @@ final class Coordinator {
             removalGate = spaceKey
         }
         notTileable = notTileable.filter { current.windows[$0.key] != nil }
+        // Remembered before anything rearranges the layout they belong to, so they return to their place.
+        if !departed.isEmpty { lock.lock(); rememberDeparturesLocked(departed, spaceKey: spaceKey); lock.unlock() }
         let placed = !paused && quiet && !departedHeld && placeMissing(current: current, spaceKey: spaceKey, authorization: authorization)
         if departedHeld, !paused {
             lock.lock(); let generation = control.cancellationGeneration; lock.unlock()
@@ -3833,7 +3916,7 @@ final class Coordinator {
         } else if !placed, !departed.isEmpty || dirty, !paused, system.currentSpaceID() == current.spaceID {
             // The baseline advances with this arrival, so a deferred redistribution never comes back as a difference; remember it separately.
             lock.lock(); let generation = control.cancellationGeneration; lock.unlock()
-            if !refitNow || arrange(source: "auto", kind: "auto-refit", heldOut: [:], authorization: authorization, completion: { [weak self] result in
+            if !refitNow || arrange(source: "auto", kind: "auto-refit", heldOut: [:], authorization: authorization, unanswered: unansweredPolicy(spaceKey), completion: { [weak self] result in
                 self?.rearmDepartedRefit(after: result, spaceKey: spaceKey, generation: generation)
             }) == .busy {
                 pendingDepartedRefit = (spaceKey, generation)
@@ -3850,7 +3933,7 @@ final class Coordinator {
     func placeMissing(current: Census, spaceKey: String, authorization: OperationAuthorization? = nil) -> Bool {
         let authorization = authorization ?? OperationAuthorization(system: system, control: control)
         guard !autoPaused(spaceKey), system.currentSpaceID().map(String.init) == spaceKey,
-              current.spaceID.map(String.init) == spaceKey else { return false }
+              current.spaceID.map(String.init) == spaceKey, unansweredFitDue(spaceKey) else { return false }
         // Cleared only when focus moves to it; while the same window stays watched, the count is kept.
         let backoffNow = backoffClock()
         lock.lock()
@@ -3859,8 +3942,11 @@ final class Coordinator {
         let needsFocus = focusReadRequested || !integrateLedger.isEmpty || current.frontWindow != lastFrontForFailures
             || current.windows.keys.contains { !known.contains($0) && !observationBackoff.isWaiting($0, now: backoffNow) }
         lock.unlock()
+        // Focus is read at most once per call (a front app that does not answer costs one read timeout).
+        var focusRead: WindowID?? = nil
         if needsFocus {
             let focused = system.focusedWindowID()
+            focusRead = .some(focused)
             if let focused, focused != lastFocusForFailures { clearIntegrateFailure(focused) }
             lastFocusForFailures = focused
             lastFrontForFailures = current.frontWindow
@@ -3892,6 +3978,13 @@ final class Coordinator {
         }
         lock.lock()
         observationBackoff.keep(only: current.bounds.filter { unknown.contains($0.key) }, tolerance: limits.tolerance)
+        // Reclaimed windows are read again only after a change on the Space, until they rejoin or are confirmed closed.
+        let look = (front: current.frontWindow, windows: Set(current.windows.keys))
+        let reclaimedHere = reclaimedWindows.intersection(unknown)
+        if !reclaimedHere.isEmpty, reclaimLook.map({ $0.front != look.front || $0.windows != look.windows }) ?? true {
+            reclaimLook = look
+            for id in reclaimedHere { observationBackoff.clear(id) }
+        }
         let backingOff = Set(unknown.filter { observationBackoff.isWaiting($0, now: backoffNow) })
         let retryAt = observationBackoff.nextAttempt(among: backingOff, now: backoffNow)
         lock.unlock()
@@ -3911,7 +4004,8 @@ final class Coordinator {
             lock.unlock()
             return false
         }
-        let snap = system.snapshot()
+        // Only the windows looked at are read, so an app that does not answer elsewhere on the Space does not stall the look.
+        let snap = system.snapshot(limitingTo: Set(needsLook))
         guard snap.spaceID == current.spaceID, system.currentSpaceID() == current.spaceID else { return false }
         let standard = Set(TargetSelection.inspect(snap, appRule: { cfg.tilingExclusionReason(bundleID: $0.app, title: $0.title) }).targets.map(\.id))
         var transient: [WindowID] = []
@@ -3930,8 +4024,13 @@ final class Coordinator {
             }
         }
         if !transient.isEmpty {
-            lock.lock(); observationBackoff.note(transient, frames: current.bounds, now: backoffClock()); lock.unlock()
-            scheduleNextTick(after: ObservationBackoff.firstDelay)
+            lock.lock()
+            let held = transient.filter { reclaimedWindows.contains($0) }
+            let retried = transient.filter { !reclaimedWindows.contains($0) }
+            observationBackoff.hold(held, frames: current.bounds)
+            observationBackoff.note(retried, frames: current.bounds, now: backoffClock())
+            lock.unlock()
+            if !retried.isEmpty { scheduleNextTick(after: ObservationBackoff.firstDelay) }
         }
         let missing = unknown.filter { standard.contains($0) && !integrateGaveUp($0) && !backingOff.contains($0) }
         let gaveUp = unknown.filter { standard.contains($0) && integrateGaveUp($0) }
@@ -3940,7 +4039,9 @@ final class Coordinator {
         waitingBySpace[spaceKey] = waitingNow.isEmpty ? nil : waitingNow
         lock.unlock()
         guard !missing.isEmpty else { return false }
-        let accept = integrateForeground(missing, beside: focusedManaged(in: layout, spaceKey: spaceKey), authorization: authorization)
+        let focused = focusRead ?? system.focusedWindowID()
+        let accept = integrateForeground(missing, beside: focusedManaged(focused, in: layout, spaceKey: spaceKey), authorization: authorization,
+                                         unanswered: unansweredPolicy(spaceKey))
         if case .started = accept { return true }
         if case .busy = accept { revealAsNew(missing) }
         return false
@@ -4126,8 +4227,9 @@ final class Coordinator {
     @discardableResult
     func runHiddenRefitIfDue(currentKey: String) -> Bool {
         guard !hiddenRefits.isEmpty else { return false }
+        // An unreadable Space list (waking from sleep, a display change) proves nothing about the departures; they wait for a readable one.
+        guard let existing = system.existingSpaceIDs() else { return false }
         let now = Date()
-        let existing = system.existingSpaceIDs()
         var nextWake: Date?
         for key in hiddenRefits.keys.sorted(by: { hiddenRefits[$0]!.deadline < hiddenRefits[$1]!.deadline }) {
             guard var record = hiddenRefits[key] else { continue }
@@ -4141,7 +4243,7 @@ final class Coordinator {
                 return list[0] != space
             }
             let remaining = Set(layout?.windowIDs ?? []).subtracting(departed)
-            guard key != currentKey, !blocked, let space = UInt64(key), existing?.contains(space) ?? false,
+            guard key != currentKey, !blocked, let space = UInt64(key), existing.contains(space),
                   !departed.isEmpty, !remaining.isEmpty, system.inputObservationAvailable,
                   let display = system.spaceDisplay(space), !display.shown else {
                 // Departures that fail the conditions are dropped and left to the redistribution on returning to that Space.
@@ -4212,7 +4314,8 @@ final class Coordinator {
     @discardableResult
     /// `authorization` is the observation's decision baseline, so input or cancellation since the tick began stops it.
     func runShownArrivalIfDue(currentKey: String, authorization: OperationAuthorization) -> Bool {
-        guard !shownArrivals.isEmpty else { return false }
+        // An unreadable Space list leaves every display unknown; the arrivals wait for a readable one until their deadline.
+        guard !shownArrivals.isEmpty, system.existingSpaceIDs() != nil else { return false }
         let now = Date()
         var nextWake: Date?
         for (id, record) in shownArrivals.sorted(by: { $0.value.deadline < $1.value.deadline }) {
@@ -5213,10 +5316,16 @@ final class Coordinator {
 
     /// Splits windows requested for automatic integration into those whose nature the operation's observation confirmed (counted as failures)
     /// and those missing from observation or looking transient (retried after an interval).
-    /// Windows of unresponsive apps still count as failures, since each wait stalls operations.
+    /// An app that did not return its window list is no failure of the windows being added: one whose own app did not answer is retried after an interval,
+    /// and one that was read waited for another app (the Space's tries cover it) unless writes were issued and did not apply in time, which still counts,
+    /// since each wait stalls operations.
     static func integrateObservation(adding: Set<WindowID>, result: OperationResult) -> (settled: [WindowID], transient: [WindowID]) {
-        if result.stopReason == .appUnresponsive { return (adding.sorted(), []) }
         let targeted = Set(result.targets.map(\.id))
+        if result.stopReason == .appUnresponsive {
+            guard !result.unobservedApps.isEmpty else { return (adding.sorted(), []) }
+            let read = adding.sorted().filter { targeted.contains($0) }
+            return (result.issued > 0 ? read : [], adding.sorted().filter { !targeted.contains($0) })
+        }
         var excluded: [WindowID: ObservedWindow] = [:]
         for exclusion in result.excluded { excluded[exclusion.window.id] = exclusion.window }
         var settled: [WindowID] = []
@@ -5251,8 +5360,7 @@ final class Coordinator {
     }
 
     /// Reference for inserting an arriving window beside: the currently focused managed window.
-    private func focusedManaged(in layout: Layout, spaceKey: String) -> WindowID? {
-        let focused = system.focusedWindowID()
+    private func focusedManaged(_ focused: WindowID?, in layout: Layout, spaceKey: String) -> WindowID? {
         guard let focused, layout.windowIDs.contains(focused) else { return nil }
         lock.lock(); let floating = state.floating[spaceKey] ?? []; lock.unlock()
         return floating.contains(focused) ? nil : focused
@@ -5412,32 +5520,6 @@ final class Coordinator {
         return false
     }
 
-    /// After launch a Space with a saved layout has no plan until something is arranged, so mouse edits and drift would go unnoticed.
-    /// Seeds it from the census, writing nothing, only when every managed window is on screen, did not move since the previous tick,
-    /// and sits where the planner puts it for the saved layout (windows moved while LazySpace was not running are left alone).
-    /// A plan cleared on purpose (`[:]`, or a partial hidden refit waiting for repair) is never seeded.
-    private func seedPlanAfterLaunch(current: Census, spaceKey: String, layout: Layout, managed: Set<WindowID>) {
-        lock.lock()
-        let unplanned = lastPlans[spaceKey] == nil && !hiddenRefitDirty.contains(spaceKey)
-        let tiles = managed.subtracting(state.floating[spaceKey] ?? [])
-        lock.unlock()
-        guard unplanned, !tiles.isEmpty else { return }
-        let still = tiles.allSatisfy { id in
-            guard let now = current.bounds[id], let before = driftReference[id] else { return false }
-            return now.matches(before, tolerance: limits.tolerance)
-        }
-        guard still else { return }
-        let workArea = system.currentWorkArea()
-        let constraints = knowledge.constraints(for: layout.windowIDs, spaceID: current.spaceID, workArea: workArea)
-        let maximums = knowledge.maximums(for: layout.windowIDs, workArea: workArea)
-        guard case .fits(let desired) = Planner.fit(layout, in: workArea, constraints: constraints, options: plannerOptions(forSpaceKey: spaceKey),
-                                                    maximums: maximums, focused: current.frontWindow),
-              tiles.allSatisfy({ id in desired.rects[id].map { current.bounds[id]!.matches($0, tolerance: limits.tolerance) } ?? false }) else { return }
-        lock.lock()
-        if lastPlans[spaceKey] == nil { lastPlans[spaceKey] = current.bounds.filter { tiles.contains($0.key) } }
-        lock.unlock()
-    }
-
     /// For tests: whether a mouse edit is still waiting to be adopted.
     func testingMouseEditPending() -> Bool { operationsQueue.sync { pendingMouseEdit } }
 
@@ -5555,11 +5637,53 @@ final class Coordinator {
     /// A redistribution stopped before writing is owed again as the pending departed refit; the next quiet tick recomputes the departed
     /// windows from a fresh census, so a window that came back stays. Focus-after-close is not repeated. Operations queue.
     private func rearmDepartedRefit(after result: OperationResult, spaceKey: String, generation: UInt64) {
+        let step = unansweredStep(after: result, spaceKey: spaceKey)
         lock.lock(); let current = control.cancellationGeneration; let off = control.paused || state.pausedSpaces.contains(spaceKey); lock.unlock()
-        guard Self.stoppedBeforeWriting(result), current == generation, !off,
+        let retry: TimeInterval? = if case .retry(let delay) = step { delay } else { nil }
+        guard Self.stoppedBeforeWriting(result) || retry != nil, current == generation, !off,
               system.currentSpaceID().map(String.init) == spaceKey, pendingDepartedRefit == nil else { return }
         pendingDepartedRefit = (spaceKey, generation)
-        scheduleNextTick(after: fastTickInterval)
+        scheduleNextTick(after: max(retry ?? 0, fastTickInterval))
+    }
+
+    private enum UnansweredStep: Equatable {
+        /// Handled as any result (the Space's wait is over, unless input stopped the try before it wrote).
+        case handled
+        /// Read nothing to write (an app did not answer, or the window list could not be read): try again after the delay (the last try reclaims).
+        case retry(after: TimeInterval)
+    }
+
+    /// Notes how a redistribution, a display or launch fit, or an integration that waited ended. One that wrote nothing because an app did not answer,
+    /// or because nothing could be read, is tried again after 1, 2, then 4 s; then once more with `.reclaim`, which commits the windows that answered
+    /// (the app's windows, left where they are, are remembered as departures). Whatever the reclaim's result, the wait is over; input that stopped a try
+    /// before it wrote keeps the count.
+    private func unansweredStep(after result: OperationResult, spaceKey: String) -> UnansweredStep {
+        if Self.stoppedBeforeWriting(result) { return .handled }
+        let attempts = unansweredEntry(spaceKey)?.attempts ?? 0
+        let readNothing = result.issued == 0 && (result.stopReason == .appUnresponsive || (result.outcome == .nothingToDo && result.stopReason == nil))
+        guard readNothing, attempts <= Self.unansweredRetryDelays.count else { unansweredFits[spaceKey] = nil; return .handled }
+        let delay = attempts < Self.unansweredRetryDelays.count ? Self.unansweredRetryDelays[attempts] : 0
+        unansweredFits[spaceKey] = (attempts + 1, fitRetryClock().addingTimeInterval(delay))
+        return .retry(after: delay)
+    }
+    static let unansweredRetryDelays: [TimeInterval] = [1, 2, 4]
+    /// A wait whose next try has not come for this long is over (the next silence starts with the full delay).
+    static let unansweredWaitExpiry: TimeInterval = 10
+
+    /// The Space's current run of tries, or nil when there is none or it is over.
+    private func unansweredEntry(_ spaceKey: String) -> (attempts: Int, notBefore: Date)? {
+        guard let entry = unansweredFits[spaceKey], fitRetryClock() <= entry.notBefore.addingTimeInterval(Self.unansweredWaitExpiry) else { return nil }
+        return entry
+    }
+
+    /// How a fit or an integration of the Space treats an app that does not answer: wait while the Space's tries last, then reclaim.
+    private func unansweredPolicy(_ spaceKey: String) -> ArrangeOperation.UnansweredPolicy {
+        (unansweredEntry(spaceKey)?.attempts ?? 0) > Self.unansweredRetryDelays.count ? .reclaim : .wait
+    }
+
+    /// Whether an automatic fit of the Space may run now (not waiting out the delay after an app did not answer).
+    private func unansweredFitDue(_ spaceKey: String) -> Bool {
+        unansweredEntry(spaceKey).map { fitRetryClock() >= $0.notBefore } ?? true
     }
 
     private func rearmMouseEdit(spaceKey: String) {

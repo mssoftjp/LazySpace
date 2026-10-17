@@ -33,6 +33,15 @@ public final class MacWindowSystem: WindowSystem {
         #endif
     }
 
+    /// Membership from SkyLight's Space list. While several displays share one Space (`sharedDisplay` is the menu-bar display's frame),
+    /// a window on that Space counts as the current Space's only when its center is on that display.
+    static func membership(_ list: [UInt64], active: UInt64, frame: CGRect, sharedDisplay: CGRect?) -> ObservedWindow.Membership {
+        if list.isEmpty { return .unknown }
+        if list.count > 1 && list.contains(active) { return .allSpaces }
+        guard list.contains(active) else { return .other }
+        return sharedDisplay.map { $0.contains(CGPoint(x: frame.midX, y: frame.midY)) } ?? true ? .current : .otherDisplay
+    }
+
     /// Whether a failed window-list request leaves it unknown whether the app has windows.
     /// Unknown when it does not respond or permission is missing; no windows when it quit (invalid element) or has no list (unsupported, unimplemented, no value).
     /// Other failures are unknown too, except that an app failing 3 times in a row without ever returning a list (games that always fail, for example)
@@ -56,7 +65,9 @@ public final class MacWindowSystem: WindowSystem {
     public func currentSpaceID() -> UInt64? { spaces?.activeSpace() }
 
     public func existingSpaceIDs() -> Set<UInt64>? {
-        spaces.map { Set($0.managedDisplays().flatMap(\.spaces)) }
+        // There is always a display with a Space, so an empty list means SkyLight's copy failed, not that no Space exists.
+        guard let ids = spaces.map({ Set($0.managedDisplays().flatMap(\.spaces)) }), !ids.isEmpty else { return nil }
+        return ids
     }
 
     public var inputActivityCount: UInt64 { input.count }
@@ -143,14 +154,7 @@ public final class MacWindowSystem: WindowSystem {
             var pids: Set<pid_t> = []
             for (wid, rec) in cgWindows where rec.layer == 0 && regularPIDs.contains(rec.pid) {
                 if let ids, !ids.contains(WindowID(wid)) { continue }
-                let list = spaces.spaces(for: wid)
-                let m: ObservedWindow.Membership
-                if list.isEmpty { m = .unknown }
-                else if list.count > 1 && list.contains(active) { m = .allSpaces }
-                else if list.contains(active) {
-                    m = sharedDisplay.map { $0.contains(CGPoint(x: rec.bounds.midX, y: rec.bounds.midY)) } ?? true ? .current : .otherDisplay
-                }
-                else { m = .other }
+                let m = Self.membership(spaces.spaces(for: wid), active: active, frame: rec.bounds, sharedDisplay: sharedDisplay)
                 membership[wid] = m
                 // Windows with unknown membership are invisible helper windows many apps have; unless on screen, they alone are no reason to query.
                 if m == .current || m == .allSpaces || (m == .unknown && rec.onScreen) { pids.insert(rec.pid) }
@@ -236,11 +240,7 @@ public final class MacWindowSystem: WindowSystem {
                     let m: ObservedWindow.Membership
                     if let known = membership[wid] { m = known }
                     else if let spaces, let active {
-                        let list = spaces.spaces(for: wid)
-                        if list.isEmpty { m = .unknown }
-                        else if list.count > 1 && list.contains(active) { m = .allSpaces }
-                        else if list.contains(active) { m = .current }
-                        else { m = .other }
+                        m = Self.membership(spaces.spaces(for: wid), active: active, frame: frame, sharedDisplay: sharedDisplay)
                     } else { m = .unknown }
 
                     guard limit(w) else { out.unresponsive = true; break }

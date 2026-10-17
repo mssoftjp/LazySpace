@@ -2,7 +2,7 @@ import XCTest
 import CoreGraphics
 import LayoutCore
 @testable import MacSupport
-import Operations
+@testable import Operations
 @testable import LazySpace
 
 /// A window moved to another Space joins the layout without waiting for a click; response times on the arriving and departing sides.
@@ -263,12 +263,23 @@ final class SpaceMoveResponsivenessTests: XCTestCase {
     }
 
     /// Windows of unresponsive apps still count as failures (each wait stalls operations).
-    func testUnresponsiveAppStillCountsAsFailure() {
+    /// An app that did not return its window list is no failure of the windows being added: one that was read waited for another app,
+    /// and one whose own app did not answer is retried after an interval. An app that did not apply writes in time still counts.
+    func testUnresponsiveAppIsNoFailureOfTheWindowsBeingAdded() {
         var result = OperationResult.note(kind: "auto-integrate", spaceID: 7, message: "", ok: false)
         result.stopReason = .appUnresponsive
-        let split = Coordinator.integrateObservation(adding: [WindowID(3)], result: result)
-        XCTAssertEqual(split.settled, [WindowID(3)])
-        XCTAssertTrue(split.transient.isEmpty)
+        result.targets = [TargetReport(id: WindowID(4), app: "test", before: .zero, planned: nil, after: nil, status: .unapplied, issued: 0, note: nil)]
+        result.unobservedApps = ["com.example.hung"]
+        let split = Coordinator.integrateObservation(adding: [WindowID(3), WindowID(4)], result: result)
+        XCTAssertTrue(split.settled.isEmpty)
+        XCTAssertEqual(split.transient, [WindowID(3)])
+        // Writes that timed out strike only the windows that were read and written.
+        result.issued = 1
+        let wrote = Coordinator.integrateObservation(adding: [WindowID(3), WindowID(4)], result: result)
+        XCTAssertEqual(wrote.settled, [WindowID(4)])
+        XCTAssertEqual(wrote.transient, [WindowID(3)])
+        result.unobservedApps = []
+        XCTAssertEqual(Coordinator.integrateObservation(adding: [WindowID(3), WindowID(4)], result: result).settled, [WindowID(3), WindowID(4)])
     }
 
     // MARK: - move-to-space

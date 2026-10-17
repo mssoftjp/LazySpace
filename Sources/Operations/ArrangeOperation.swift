@@ -31,6 +31,16 @@ public final class ArrangeOperation {
     /// Windows that triggered automatic integration. If none is an arrangement target (a transient window during a full-screen transition, for example), nothing is written.
     private let adding: Set<WindowID>
     private let kind: String
+    /// What to do when an app that owns one of the windows does not answer.
+    public enum UnansweredPolicy: Sendable {
+        /// Arrange the windows that answered, without committing (the app's windows keep their place).
+        case arrangeAround
+        /// Write nothing, so the caller can try again once the app answers.
+        case wait
+        /// Arrange the windows that answered and commit that layout without the app's windows.
+        case reclaim
+    }
+    private let unanswered: UnansweredPolicy
     /// Edit of layout intent: takes the current intent and frames computed from it, returns the new intent; nil means "cannot be done".
     public typealias Transform = (Layout, [WindowID: CGRect]) -> Layout?
     private let transform: Transform?
@@ -185,6 +195,7 @@ public final class ArrangeOperation {
         allowedWindows: Set<WindowID>? = nil,
         adding: Set<WindowID> = [],
         kind: String = "arrange",
+        unanswered: UnansweredPolicy = .arrangeAround,
         transform: Transform? = nil,
         transformFailure: String = L("This edit can't be performed.", "この編集は実行できません。"),
         zoomed: WindowID? = nil,
@@ -211,6 +222,7 @@ public final class ArrangeOperation {
         self.allowedWindows = allowedWindows
         self.adding = adding
         self.kind = kind
+        self.unanswered = unanswered
         self.transform = transform
         self.transformFailure = transformFailure
         self.zoomed = zoomed
@@ -268,6 +280,15 @@ public final class ArrangeOperation {
                 message: Self.changedAfterRequestMessage,
                 finishedAt: now(), wallMs: elapsedMs())
         }
+        // A fit waiting for an app that did not answer writes nothing instead of placing the other windows over that app's windows.
+        if unanswered == .wait, !snapshot.unobservedApps.isEmpty {
+            let apps = snapshot.unobservedApps.map(displayName).joined(separator: L(", ", "、"))
+            return builder.finish(
+                outcome: .nothingToDo, stopReason: .appUnresponsive,
+                message: L("Not arranged: \(apps) didn't return a window list in time. Automatic arrangement waits for it.",
+                           "\(apps)がウインドウの一覧を期限内に返さなかったため、整列していません。自動整列はその応答を待ちます。"),
+                finishedAt: now(), wallMs: elapsedMs())
+        }
         guard !inspection.targets.isEmpty else {
             // Even with no tiles, region changes are committed (operations that only place strip dialogs or only remove the strip),
             // and saved windows missing from a complete observation are removed (closed, or confirmed minimized or on another Space).
@@ -275,7 +296,9 @@ public final class ArrangeOperation {
             let prior = priorLayout ?? Layout(root: nil)
             let seen = Set(snapshot.windows.filter { $0.kind != .minimized && $0.membership != .other }.map(\.id))
             let gone = Set(prior.windowIDs).subtracting(seen)
-            if appliesRegion || !gone.isEmpty, snapshot.unobservedApps.isEmpty, snapshot.windowListAvailable {
+            // A reclaim commits even when no window answered (the caller remembers the apps' windows to return).
+            let reclaiming = unanswered == .reclaim && !snapshot.unobservedApps.isEmpty
+            if appliesRegion || !gone.isEmpty, snapshot.unobservedApps.isEmpty || reclaiming, snapshot.windowListAvailable {
                 if appliesRegion {
                     switch placeDialogs(snapshot: snapshot) {
                     case .stopped:
@@ -288,8 +311,13 @@ public final class ArrangeOperation {
                 }
                 resultingLayout = prior.removing(gone).normalized()
                 let note = dialogPlacementMessage()
+                let apps = snapshot.unobservedApps.map(displayName).joined(separator: L(", ", "、"))
+                let none = reclaiming
+                    ? L("\(apps) didn't return a window list in time, so its windows were left where they are.",
+                        "\(apps)がウインドウの一覧を期限内に返さなかったため、そのウインドウはそのままにしています。")
+                    : L("No windows to arrange.", "整列するウインドウがありません。")
                 return builder.finish(outcome: .complete, stopReason: nil,
-                                      message: note.isEmpty ? L("No windows to arrange.", "整列するウインドウがありません。") : note,
+                                      message: note.isEmpty ? none : note,
                                       finishedAt: now(), wallMs: elapsedMs())
             }
             let apps = snapshot.unobservedApps.map(displayName).joined(separator: L(", ", "、"))
@@ -840,6 +868,14 @@ public final class ArrangeOperation {
         if allGood, !snapshot.unobservedApps.isEmpty {
             // Some apps could not be observed. What moved is correct, but this is not overall success.
             let apps = snapshot.unobservedApps.map(displayName).joined(separator: L(", ", "、"))
+            if unanswered == .reclaim {
+                // The layout without those apps' windows is committed; the windows stay where they are (the caller remembers them to return).
+                resultingLayout = zoomed == nil ? plan.layout.normalized().packing(rects: plan.rects) : finalLayout.normalized()
+                return builder.finish(outcome: .complete, stopReason: nil,
+                                      message: L("Arranged \(windowCount(statuses.count)). \(apps) didn't return a window list in time, so its windows were left where they are.",
+                                                 "\(statuses.count)つのウインドウを整列しました。\(apps)がウインドウの一覧を期限内に返さなかったため、そのウインドウはそのままにしています。"),
+                                      finishedAt: finishedAt, wallMs: elapsedMs())
+            }
             let message = L("Arranged \(windowCount(statuses.count)), but \(apps) didn't return a window list in time, so the set of windows couldn't be confirmed. Arrange again once that app responds.",
                             "\(statuses.count)つのウインドウを整列しましたが、\(apps)がウインドウの一覧を期限内に返さなかったため対象を確定できませんでした。そのアプリが応答するようになってから再度整列してください。")
             return builder.finish(outcome: .partial, stopReason: .appUnresponsive, message: message, finishedAt: finishedAt, wallMs: elapsedMs())
