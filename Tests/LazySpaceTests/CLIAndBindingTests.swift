@@ -4,7 +4,7 @@ import LayoutCore
 import Settings
 import Operations
 import MacSupport
-@testable import LazySpace
+@testable import LazySpaceApp
 
 final class HotkeyBindingTests: XCTestCase {
     func testBindingsFollowModes() throws {

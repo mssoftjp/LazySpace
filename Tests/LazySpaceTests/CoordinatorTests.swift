@@ -4,7 +4,7 @@ import LayoutCore
 @testable import MacSupport
 import Operations
 import Settings
-@testable import LazySpace
+@testable import LazySpaceApp
 
 final class CoordinatorTests: XCTestCase {
     private var root: URL!

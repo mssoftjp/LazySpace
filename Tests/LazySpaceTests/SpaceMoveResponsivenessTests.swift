@@ -3,7 +3,7 @@ import CoreGraphics
 import LayoutCore
 @testable import MacSupport
 @testable import Operations
-@testable import LazySpace
+@testable import LazySpaceApp
 
 /// A window moved to another Space joins the layout without waiting for a click; response times on the arriving and departing sides.
 final class SpaceMoveResponsivenessTests: XCTestCase {

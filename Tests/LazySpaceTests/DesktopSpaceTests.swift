@@ -4,7 +4,7 @@ import Copy
 import LayoutCore
 @testable import MacSupport
 import Operations
-@testable import LazySpace
+@testable import LazySpaceApp
 
 private final class MixedSpaceListing: SpaceListing {
     var order: [(id: UInt64, type: Int32?)] = [(7, 0), (70, 4), (8, 0), (80, 4), (9, 0)]

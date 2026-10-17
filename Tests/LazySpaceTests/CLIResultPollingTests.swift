@@ -1,6 +1,6 @@
 import XCTest
 import Operations
-@testable import LazySpace
+@testable import LazySpaceApp
 
 /// CLI result polling: the interval (short at first, longer for long operations) and `--json` `receivedAt` (the CLI's clock, from the acceptance reply).
 final class CLIResultPollingTests: XCTestCase {

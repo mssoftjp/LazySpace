@@ -5,7 +5,7 @@ import LayoutCore
 import Settings
 @testable import MacSupport
 @testable import Operations
-@testable import LazySpace
+@testable import LazySpaceApp
 
 final class SurfaceCopyTests: XCTestCase {
     func testReadyResultHidesIssueCounts() {

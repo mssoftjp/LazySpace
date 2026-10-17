@@ -1,6 +1,6 @@
 import XCTest
 import LayoutCore
-@testable import LazySpace
+@testable import LazySpaceApp
 
 /// Automatic integration limits, undoing drops, per-Space offset correction, and observing unclassified windows.
 final class RobustnessTests: XCTestCase {

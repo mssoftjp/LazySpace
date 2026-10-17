@@ -2,7 +2,7 @@ import Foundation
 import LayoutCore
 import Operations
 import Settings
-@testable import LazySpace
+@testable import LazySpaceApp
 
 var failures = 0
 func check(_ condition: @autoclosure () -> Bool, _ name: String) {

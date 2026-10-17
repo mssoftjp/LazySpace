@@ -2,7 +2,7 @@ import Foundation
 import LayoutCore
 import Operations
 import Settings
-@testable import LazySpace
+@testable import LazySpaceApp
 
 /// Shared by XCTest and the CLT-only regression runner. All window writes use the test double.
 func automaticIntegrationChecks() throws -> [(String, Bool)] {

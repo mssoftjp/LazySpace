@@ -3,7 +3,7 @@ import XCTest
 import Copy
 import LayoutCore
 @testable import Operations
-@testable import LazySpace
+@testable import LazySpaceApp
 
 final class WindowInspectorTests: XCTestCase {
     func testRemediationIgnoresPauseAndLocalOff() {

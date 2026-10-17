@@ -1,5 +1,5 @@
 import Copy
-@testable import LazySpace
+@testable import LazySpaceApp
 import XCTest
 
 /// Stands in for Sparkle: records checks and lets the test publish or clear an offer.

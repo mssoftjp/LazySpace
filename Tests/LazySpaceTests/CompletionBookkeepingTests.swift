@@ -3,7 +3,7 @@ import CoreGraphics
 import LayoutCore
 @testable import MacSupport
 import Operations
-@testable import LazySpace
+@testable import LazySpaceApp
 
 private struct ThreeSpaces: SpaceListing {
     var order: [UInt64]

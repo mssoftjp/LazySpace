@@ -3,7 +3,7 @@ import LayoutCore
 import MacSupport
 import Operations
 import Settings
-@testable import LazySpace
+@testable import LazySpaceApp
 
 final class ResponsivenessTests: XCTestCase {
     private var root: URL!

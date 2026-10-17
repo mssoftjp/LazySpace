@@ -1,6 +1,6 @@
 import Darwin
 import XCTest
-@testable import LazySpace
+@testable import LazySpaceApp
 
 /// Hooks and `[[exec]]` commands run as their own processes in macOS's eyes, with their own privacy permissions.
 final class HookRunnerTests: XCTestCase {

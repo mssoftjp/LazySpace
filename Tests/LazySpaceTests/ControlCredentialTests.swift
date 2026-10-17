@@ -1,7 +1,7 @@
 import Darwin
 import Foundation
 import XCTest
-@testable import LazySpace
+@testable import LazySpaceApp
 
 final class ControlCredentialTests: XCTestCase {
     private func root() throws -> URL {

@@ -18,7 +18,7 @@ final class WordingRulesTests: XCTestCase {
          "Diagnostic fallback: identifies a Space without a desktop number by its ID (not a numbered desktop)."),
     ]
 
-    static let sourceModules = ["Copy", "LayoutCore", "Operations", "Settings", "MacSupport", "LazySpace"]
+    static let sourceModules = ["Copy", "LayoutCore", "Operations", "Settings", "MacSupport", "LazySpaceApp", "LazySpace"]
     static let japaneseDocuments = ["README.ja.md", "docs/guide.ja.md"]
     static let englishDocuments = ["README.md", "Tests/README.md", "docs/scripting.md", "docs/guide.md"]
 
@@ -83,7 +83,7 @@ final class WordingRulesTests: XCTestCase {
     /// Sentences joined at run time use `Copy.sentenceSeparator` (a space in English, nothing in Japanese); only command arguments join with a space.
     /// Per-string checks cannot see the joined result, so the source is checked for how it joins.
     func testSentencesAreNotJoinedWithASpace() throws {
-        let allowed = ["Sources/LazySpace/Integration.swift"]
+        let allowed = ["Sources/LazySpaceApp/Integration.swift"]
         var found: [String] = []
         for module in Self.sourceModules {
             let directory = Self.root.appendingPathComponent("Sources/\(module)")

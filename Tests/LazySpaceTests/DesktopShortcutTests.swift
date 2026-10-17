@@ -4,7 +4,7 @@ import Copy
 import LayoutCore
 @testable import MacSupport
 import Operations
-@testable import LazySpace
+@testable import LazySpaceApp
 
 private struct Listing: SpaceListing {
     var order: [UInt64]

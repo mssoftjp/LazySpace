@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 import LayoutCore
-@testable import LazySpace
+@testable import LazySpaceApp
 
 final class StateStoreTests: XCTestCase {
     func testOldNamesDoNotDiscardOtherPersistedStateAndAreNotSavedAgain() throws {

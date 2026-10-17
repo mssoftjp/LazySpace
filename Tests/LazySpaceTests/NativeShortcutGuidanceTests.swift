@@ -2,7 +2,7 @@ import Copy
 import MacSupport
 import Settings
 import XCTest
-@testable import LazySpace
+@testable import LazySpaceApp
 
 final class NativeShortcutGuidanceTests: XCTestCase {
     private let left = SystemSpaceShortcut.usable(keyCode: 123, modifiers: ["ctrl"])

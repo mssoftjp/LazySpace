@@ -3,7 +3,7 @@ import Copy
 import Foundation
 import Settings
 import XCTest
-@testable import LazySpace
+@testable import LazySpaceApp
 
 /// Stands in for the notification center: records posts and withdrawals, and answers permission like macOS.
 final class FakeNotifier: Notifying {

@@ -3,7 +3,7 @@ import LayoutCore
 @testable import MacSupport
 import Operations
 import Settings
-@testable import LazySpace
+@testable import LazySpaceApp
 
 /// A drag's result is adopted once the windows are still after the release, instead of after the input quiet time,
 /// and only when that is safe; everything else keeps the quiet path.

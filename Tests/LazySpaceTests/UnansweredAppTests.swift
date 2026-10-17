@@ -3,7 +3,7 @@ import LayoutCore
 @testable import MacSupport
 import Operations
 import Settings
-@testable import LazySpace
+@testable import LazySpaceApp
 
 /// A new window joins while another layout app does not answer, as in AeroSpace: after a short wait the windows that answered are committed,
 /// the silent app's window is left where it is, and it returns to its place once its app answers.

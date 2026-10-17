@@ -11,11 +11,11 @@ swiftc -emit-library -emit-module -module-name Operations -I "$BUILD" -L "$BUILD
 swiftc -emit-library -emit-module -module-name Settings -I "$BUILD" -L "$BUILD" -lLayoutCore -lCopy Sources/Settings/*.swift -o "$BUILD/libSettings.dylib" -emit-module-path "$BUILD/Settings.swiftmodule"
 swiftc -emit-library -emit-module -enable-testing -module-name MacSupport -I "$BUILD" -L "$BUILD" -lLayoutCore -lOperations -lCopy Sources/MacSupport/*.swift -o "$BUILD/libMacSupport.dylib" -emit-module-path "$BUILD/MacSupport.swiftmodule"
 APP_SOURCES=()
-for source in Sources/LazySpace/*.swift; do
-    # main.swift starts the app; SparkleUpdates.swift is the only Sparkle file and MacNotifier.swift the only UserNotifications
+for source in Sources/LazySpaceApp/*.swift; do
+    # AppMain.swift starts the app; SparkleUpdates.swift is the only Sparkle file and MacNotifier.swift the only UserNotifications
     # file, so the checks use no updater and no notification center.
-    [[ "$source" == "Sources/LazySpace/main.swift" || "$source" == "Sources/LazySpace/SparkleUpdates.swift" || "$source" == "Sources/LazySpace/MacNotifier.swift" ]] || APP_SOURCES+=("$source")
+    [[ "$source" == "Sources/LazySpaceApp/AppMain.swift" || "$source" == "Sources/LazySpaceApp/SparkleUpdates.swift" || "$source" == "Sources/LazySpaceApp/MacNotifier.swift" ]] || APP_SOURCES+=("$source")
 done
-swiftc -emit-library -emit-module -enable-testing -module-name LazySpace -I "$BUILD" -L "$BUILD" -lLayoutCore -lOperations -lSettings -lMacSupport -lCopy "${APP_SOURCES[@]}" -o "$BUILD/libLazySpace.dylib" -emit-module-path "$BUILD/LazySpace.swiftmodule"
-swiftc -I "$BUILD" -L "$BUILD" -lLayoutCore -lOperations -lSettings -lMacSupport -lLazySpace -lCopy -Xlinker -rpath -Xlinker "$BUILD" Tests/OperationsTests/FakeSystem.swift Tests/LazySpaceTests/CoordinatorSystem.swift Tests/LazySpaceTests/AutomaticIntegrationChecks.swift Tests/MacSupportTests/FrameWriterChecks.swift Tests/AutoRegression/main.swift -o "$BUILD/checks"
+swiftc -emit-library -emit-module -enable-testing -module-name LazySpaceApp -I "$BUILD" -L "$BUILD" -lLayoutCore -lOperations -lSettings -lMacSupport -lCopy "${APP_SOURCES[@]}" -o "$BUILD/libLazySpaceApp.dylib" -emit-module-path "$BUILD/LazySpaceApp.swiftmodule"
+swiftc -I "$BUILD" -L "$BUILD" -lLayoutCore -lOperations -lSettings -lMacSupport -lLazySpaceApp -lCopy -Xlinker -rpath -Xlinker "$BUILD" Tests/OperationsTests/FakeSystem.swift Tests/LazySpaceTests/CoordinatorSystem.swift Tests/LazySpaceTests/AutomaticIntegrationChecks.swift Tests/MacSupportTests/FrameWriterChecks.swift Tests/AutoRegression/main.swift -o "$BUILD/checks"
 LAZYSPACE_LANGUAGE=en "$BUILD/checks"

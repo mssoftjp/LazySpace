@@ -3,7 +3,7 @@ import LayoutCore
 @testable import MacSupport
 import Operations
 import Settings
-@testable import LazySpace
+@testable import LazySpaceApp
 
 /// A kAXWindowCreated announcement shortens the wait for the window to appear, without making the announcement a decision.
 final class NewWindowDetectionTests: XCTestCase {

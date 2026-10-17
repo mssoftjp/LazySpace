@@ -1,7 +1,7 @@
 import CoreGraphics
 import XCTest
 import LayoutCore
-@testable import LazySpace
+@testable import LazySpaceApp
 
 final class IntegrationRetryLedgerTests: XCTestCase {
     private let window = WindowID(7)

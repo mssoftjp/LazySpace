@@ -1,7 +1,7 @@
 import XCTest
 import LayoutCore
 import Operations
-@testable import LazySpace
+@testable import LazySpaceApp
 
 final class QueueAndRuleChangeTests: XCTestCase {
     func testRemovingIgnoreRuleReconsidersUnplacedWindow() throws {

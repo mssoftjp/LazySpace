@@ -1,6 +1,6 @@
 import AppKit
 import Operations
-@testable import LazySpace
+@testable import LazySpaceApp
 
 /// Real AppKit windows (key window, first responder, event dispatch) that never appear on the user's screen or take their clicks.
 enum TestWindows {

@@ -5,7 +5,7 @@ import LayoutCore
 import MacSupport
 import Operations
 import Settings
-@testable import LazySpace
+@testable import LazySpaceApp
 
 /// Retry limits, title rules, input availability, rendered commands, and light focus across Space changes.
 final class CoordinatorRegressionTests: XCTestCase {

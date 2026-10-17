@@ -3,7 +3,7 @@ import LayoutCore
 @testable import MacSupport
 import Operations
 import Settings
-@testable import LazySpace
+@testable import LazySpaceApp
 
 /// Automatic decisions measure input from when the decision started, and write nothing while a mouse button is held or after automatic arrangement is turned off for that Space.
 final class AutomaticDecisionGateTests: XCTestCase {

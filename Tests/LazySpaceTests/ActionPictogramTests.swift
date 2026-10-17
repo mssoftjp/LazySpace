@@ -2,7 +2,7 @@ import AppKit
 import Copy
 import Settings
 import XCTest
-@testable import LazySpace
+@testable import LazySpaceApp
 
 final class ActionPictogramTests: XCTestCase {
     private let kinds: [ActionPictogram] = [

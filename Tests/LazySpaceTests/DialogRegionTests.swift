@@ -4,7 +4,7 @@ import LayoutCore
 @testable import MacSupport
 import Operations
 import Settings
-@testable import LazySpace
+@testable import LazySpaceApp
 
 /// Region calculation and the planner's reservation (the pure parts).
 final class DialogRegionPlannerTests: XCTestCase {

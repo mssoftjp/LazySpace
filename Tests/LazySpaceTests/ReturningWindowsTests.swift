@@ -3,7 +3,7 @@ import LayoutCore
 @testable import MacSupport
 import Operations
 import Settings
-@testable import LazySpace
+@testable import LazySpaceApp
 
 /// Windows that were removed because their app was hidden (or they were minimized) return to their place when they come back,
 /// whether or not the window in front at that moment belongs to the layout.

@@ -1,6 +1,6 @@
 import XCTest
 import LayoutCore
-@testable import LazySpace
+@testable import LazySpaceApp
 
 final class TrackedWindowLifetimeTests: XCTestCase {
     private func checkSweep(listUnavailable: Bool, alive: Bool) throws {

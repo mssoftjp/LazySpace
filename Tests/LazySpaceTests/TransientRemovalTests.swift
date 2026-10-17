@@ -3,7 +3,7 @@ import CoreGraphics
 import LayoutCore
 @testable import MacSupport
 import Operations
-@testable import LazySpace
+@testable import LazySpaceApp
 
 /// A managed window briefly missing from the on-screen list (right after a drag, for example) is not treated as closed.
 final class TransientRemovalTests: XCTestCase {

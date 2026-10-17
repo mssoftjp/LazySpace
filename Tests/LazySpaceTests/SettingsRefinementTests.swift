@@ -2,7 +2,7 @@ import AppKit
 import Copy
 import Settings
 import XCTest
-@testable import LazySpace
+@testable import LazySpaceApp
 
 @MainActor
 final class SettingsRefinementTests: XCTestCase {

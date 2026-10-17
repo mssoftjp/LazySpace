@@ -1,7 +1,7 @@
 import XCTest
 import CoreGraphics
 import LayoutCore
-@testable import LazySpace
+@testable import LazySpaceApp
 
 /// State of `WindowRouter` (tracking new windows for `action = "space"` rules) only.
 final class WindowRouterTests: XCTestCase {

@@ -1,6 +1,6 @@
 import XCTest
 import LayoutCore
-@testable import LazySpace
+@testable import LazySpaceApp
 
 final class UserWorkQueueTests: XCTestCase {
     func testSameFocusDirectionKeepsTheFirstTicketSourceAndTime() {

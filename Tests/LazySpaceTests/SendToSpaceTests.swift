@@ -5,7 +5,7 @@ import LayoutCore
 @testable import MacSupport
 import Operations
 import Settings
-@testable import LazySpace
+@testable import LazySpaceApp
 
 private struct UUIDListing: SpaceListing {
     var order: [UInt64]

@@ -3,7 +3,7 @@ import CoreGraphics
 import LayoutCore
 @testable import MacSupport
 import Operations
-@testable import LazySpace
+@testable import LazySpaceApp
 
 /// Two displays with their own Spaces: "Built-in" (D1: 7, 8; showing 7) on the left and "LG" (D2: 20, 21; showing 20) on the right.
 private final class TwoDisplays: SpaceListing {

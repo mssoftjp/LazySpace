@@ -3,7 +3,7 @@ import LayoutCore
 @testable import MacSupport
 import Operations
 import Settings
-@testable import LazySpace
+@testable import LazySpaceApp
 
 /// After a restart, every Space with a saved layout is fit again (what changed while LazySpace was not running is unknown), writing only windows
 /// not already in place; the fit becomes the reference for mouse edits and drift. A layout window that left meanwhile is refit right after launch.

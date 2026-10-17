@@ -1,7 +1,7 @@
 import XCTest
 import LayoutCore
 import Operations
-@testable import LazySpace
+@testable import LazySpaceApp
 
 private final class ManualClock {
     var time: TimeInterval = 10_000

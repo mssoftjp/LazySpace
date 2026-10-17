@@ -4,7 +4,7 @@ import LayoutCore
 @testable import MacSupport
 import Operations
 import Settings
-@testable import LazySpace
+@testable import LazySpaceApp
 
 /// Space observation for running the real `sendWindow` on CoordinatorSystem.
 private final class SystemSpaces: SpaceObserving {
