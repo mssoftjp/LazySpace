@@ -650,7 +650,7 @@ enum CLI {
         case "status":
             return res.status.map(statusText) ?? res.message
         case "inspect":
-            if invocation.view == "spaces" { return res.spaces.map(spacesText) ?? L("Could not get the list of Spaces. This version of macOS does not report which Space a window belongs to.", "操作スペースの一覧を取得できません（このmacOSではウインドウの所属を確認できません）。") }
+            if invocation.view == "spaces" { return res.spaces.map(spacesText) ?? L(.cliCouldNotGetTheList) }
             return res.inspection.map { windowsText($0) } ?? res.message
         case "arrange.v3", "integrate.v3", "edit.v3", "focus-window.v3", "result", "request-token.v3":
             var lines: [String] = []
@@ -662,21 +662,21 @@ enum CLI {
             if lines.isEmpty { lines.append(res.message) }
             return lines.joined(separator: "\n")
         default:
-            return res.message.isEmpty ? (res.ok ? "OK" : L("Failed", "失敗")) : res.message
+            return res.message.isEmpty ? (res.ok ? "OK" : L(.cliFailed)) : res.message
         }
     }
 
     /// The "This Space" line, from the configuration, global pause, automatic availability, this Space's pause, and whether it started.
     static func currentSpaceText(_ s: AppStatus) -> String {
-        if !s.trusted || s.availability == .needsSetup { return L("Setup Required", "初期設定が必要") }
-        if s.paused { return L("Paused Globally", "すべての操作スペースで一時停止中") }
-        if !s.autoAvailable { return L("Manual Arrangement Only", "手動整列のみ") }
-        if s.currentSpaceAutoPaused { return L("Automatic Arrangement Off in This Space", "この操作スペースの自動整列はオフ") }
-        return s.currentSpaceManaged ? L("Automatic Arrangement Active", "自動整列中") : L("Waiting to Start", "開始待ち")
+        if !s.trusted || s.availability == .needsSetup { return L(.cliSetupRequired) }
+        if s.paused { return L(.cliPausedGlobally) }
+        if !s.autoAvailable { return L(.cliManualArrangementOnly) }
+        if s.currentSpaceAutoPaused { return L(.cliAutomaticArrangementOffInThis) }
+        return s.currentSpaceManaged ? L(.cliAutomaticArrangementActive) : L(.cliWaitingToStart)
     }
 
     static func automaticArrangementText(_ s: AppStatus) -> String {
-        s.autoAvailable ? L("Available", "利用可能") : L("Unavailable", "利用不可") + " — " + s.autoReason
+        s.autoAvailable ? L(.cliAvailable) : L("Unavailable", "利用不可") + " — " + s.autoReason
     }
 
     static func statusText(_ s: AppStatus) -> String {
@@ -688,30 +688,30 @@ enum CLI {
         func indented(_ text: String) -> String { text.replacingOccurrences(of: "\n", with: "\n  ") }
         var lines = [
             "LazySpace \(s.version)",
-            row(L("Activity", "処理"), s.idle ? L("Idle", "待機中") : L("Operations or mouse interactions in progress", "操作またはマウス操作の途中")),
-            row(L("Status", "状態"), StatusMenuCopy.availabilityTitle(s)),
-            row(L("This Space", "この操作スペース"), currentSpaceText(s)),
-            row(AccessPane.name(), s.trusted ? L("Granted", "許可済み") : L("Not Granted", "未許可")),
-            row(L("Manual arrangement", "手動整列"), s.manualAvailable ? L("Available", "利用可能") : L("Unavailable", "利用不可") + " — " + s.manualReason),
-            row(L("Automatic arrangement", "自動整列"), automaticArrangementText(s)),
-            row(L("Mode", "モード"), s.mode + (s.modes.count > 1 ? L(" (available modes: \(s.modes.joined(separator: ", ")))", "（使えるモード: \(s.modes.joined(separator: ", "))）") : "")),
+            row(L(.cliActivity), s.idle ? L(.cliIdle) : L(.cliOperationsOrMouseInteractionsIn)),
+            row(L(.cliStatus), StatusMenuCopy.availabilityTitle(s)),
+            row(L(.cliThisSpace), currentSpaceText(s)),
+            row(AccessPane.name(), s.trusted ? L(.cliGranted) : L(.cliNotGranted)),
+            row(L(.cliManualArrangement), s.manualAvailable ? L(.cliAvailable) : L("Unavailable", "利用不可") + " — " + s.manualReason),
+            row(L(.cliAutomaticArrangement), automaticArrangementText(s)),
+            row(L(.appDelegateMode), s.mode + (s.modes.count > 1 ? L(" (available modes: \(s.modes.joined(separator: ", ")))", "（使えるモード: \(s.modes.joined(separator: ", "))）") : "")),
             row(MacItem.openAtLogin, s.loginItem),
             StatusMenuCopy.occupancyLine(waiting: s.waiting.count, floatingCount: s.floating.count, zoomed: s.zoomed != nil),
-            row(L("Configuration", "設定"), s.configPath) + (s.configError.map { "\n  " + L("Error: ", "誤り: ") + indented($0) } ?? "") + s.configNotes.map { "\n  " + L("Note: ", "注記: ") + indented($0) }.joined(),
+            row(L(.cliConfiguration), s.configPath) + (s.configError.map { "\n  " + L("Error: ", "誤り: ") + indented($0) } ?? "") + s.configNotes.map { "\n  " + L("Note: ", "注記: ") + indented($0) }.joined(),
         ]
-        lines.append(row(L("Fixed-size windows", "大きさが固定のウインドウ"), s.dialogRegion))
-        if let desktop = s.desktopShortcuts { lines.append(row(L("Desktop shortcuts", "デスクトップのショートカット"), desktop)) }
+        lines.append(row(L(.cliFixedSizeWindows), s.dialogRegion))
+        if let desktop = s.desktopShortcuts { lines.append(row(L(.cliDesktopShortcuts), desktop)) }
         if let left = s.leftShortcut { lines.append(row(MacItem.moveSpace(right: false), left)) }
         if let right = s.rightShortcut { lines.append(row(MacItem.moveSpace(right: true), right)) }
-        if let freshness = s.dockShortcutFreshness { lines.append(row(L("Shortcut preferences", "ショートカットの設定"), freshness)) }
-        if s.progress != .idle { lines.append(row(L("In progress", "処理中"), s.progressText)) }
-        if let refusal = s.lastRefusal { lines.append(row(L("Latest notice", "直近の通知"), refusal)) }
+        if let freshness = s.dockShortcutFreshness { lines.append(row(L(.cliShortcutPreferences), freshness)) }
+        if s.progress != .idle { lines.append(row(L(.cliInProgress), s.progressText)) }
+        if let refusal = s.lastRefusal { lines.append(row(L(.cliLatestNotice), refusal)) }
         if let update = s.availableUpdate { lines.append(row(UpdateCopy.statusRow, UpdateCopy.available(update))) }
         if let r = s.lastResult, StatusMenuCopy.showsRecent(result: r, managed: s.currentSpaceManaged) {
             let title = ReadyWindowController.outcomeTitle(r)
             let body = ReadyWindowController.resultBody(r, name: AppNames.localized)
             let text = body.isEmpty ? title : title + "\n" + body
-            lines.append(row(L("Latest operation", "直近の操作"), indented(text)))
+            lines.append(row(L(.cliLatestOperation), indented(text)))
         }
         return lines.joined(separator: "\n")
     }
@@ -759,11 +759,11 @@ enum CLI {
         func row(_ id: String, _ app: String, _ size: String, _ note: String) {
             lines.append(padded(id, to: 8) + padded(app, to: 28) + padded(size, to: 22) + note)
         }
-        row("ID", L("App", "アプリ"), L("Size and Position", "現在の位置・サイズ"), ReadyWindowController.verdictColumnTitle)
+        row("ID", L(.cliApp), L(.cliSizeAndPosition), ReadyWindowController.verdictColumnTitle)
         for t in ins.targets { row(t.id.description, ReadyWindowController.shownApp(t.app, name: name), sizeText(t.frame), ReadyWindowController.eligibleVerdict) }
         for e in ins.excluded { row(e.window.id.description, ReadyWindowController.shownApp(e.window.app, name: name), sizeText(e.window.frame), ReadyWindowController.exclusionText(e)) }
-        for a in ins.snapshot.unobservedApps { row("-", ReadyWindowController.shownApp(a, name: name), "?", L("No Response: could not read this app's windows before the timeout", "応答なし: 期限内にウインドウの一覧を読めませんでした")) }
-        if ins.targets.isEmpty && ins.excluded.isEmpty { lines.append(ins.snapshot.trusted ? L("(No windows)", "（ウインドウがありません）") : L("(Cannot read windows without the \(AccessPane.name()) permission)", "（「\(AccessPane.name())」の許可がないため読めません）")) }
+        for a in ins.snapshot.unobservedApps { row("-", ReadyWindowController.shownApp(a, name: name), "?", L(.cliNoResponseCouldNotRead)) }
+        if ins.targets.isEmpty && ins.excluded.isEmpty { lines.append(ins.snapshot.trusted ? L(.cliNoWindows) : L(.cliCannotReadWindowsWithoutThe(AccessPane.name()))) }
         let unobserved = ins.snapshot.unobservedApps.count
         lines.append(L("Eligible \(ins.targets.count) / Excluded \(ins.excluded.count)", "整列対象\(ins.targets.count) / 対象外\(ins.excluded.count)")
                      + (unobserved == 0 ? "" : L(" / No response \(unobserved)", " / 応答なし\(unobserved)")))
@@ -774,14 +774,14 @@ enum CLI {
         let idWidth = 8
         let kindWidth = 14
         // The last column's heading is not cut (it is wider than the numbers).
-        var lines = ["     " + padded("ID", to: idWidth) + " " + padded(L("Type", "種類"), to: kindWidth) + " " + L("Windows", "ウインドウ数")]
+        var lines = ["     " + padded("ID", to: idWidth) + " " + padded(L(.cliType), to: kindWidth) + " " + L("Windows", "ウインドウ数")]
         let numbers = SpaceObserver.desktopNumbers(overview.spaces.map { ($0.spaceID, $0.type) })
         // A heading per display only when there are several (`--display` takes its number).
         let grouped = Set(overview.spaces.compactMap(\.display)).count > 1
         for (offset, e) in overview.spaces.enumerated() {
             if grouped, offset == 0 || overview.spaces[offset - 1].display != e.display {
-                let name = e.displayName ?? L("Unknown display", "不明なディスプレイ")
-                lines.append(e.displayIndex.map { L("Display \($0): \(name)", "ディスプレイ\($0): \(name)") } ?? name)
+                let name = e.displayName ?? L(.cliUnknownDisplay)
+                lines.append(e.displayIndex.map { L(.cliDisplay(String($0), name)) } ?? name)
             }
             let number = e.desktopIndex ?? numbers[e.spaceID]
             let label = number.map { "\($0)." } ?? " —"
@@ -790,11 +790,11 @@ enum CLI {
             let type = Self.spaceKindLabel(e.type)
             lines.append("\(mark) \(label) \(padded(String(e.spaceID), to: idWidth)) \(padded(type, to: kindWidth)) \(count)")
         }
-        if !overview.unknown.isEmpty { lines.append(L("Windows in an unknown Space: \(overview.unknown.count)", "所属が分からないウインドウ: \(overview.unknown.count)")) }
-        lines.append(L("* = current Space. Only ordinary desktops are numbered, in macOS order on each display. Full-screen / Split View spaces are unnumbered.", "* = 現在の操作スペース。通常のデスクトップだけをディスプレイごとにmacOSの並び順で数えます。フルスクリーン・Split Viewに番号は付きません。"))
-        if grouped { lines.append(L("For a desktop of another display, add --display with the display's number.", "別のディスプレイのデスクトップには、--displayにディスプレイの番号を付けて指定します。")) }
+        if !overview.unknown.isEmpty { lines.append(L(.cliWindowsInAnUnknownSpace(overview.unknown.count))) }
+        lines.append(L(.cliCurrentSpaceOnlyOrdinaryDesktops))
+        if grouped { lines.append(L(.cliForADesktopOfAnother)) }
         if overview.reordersByRecentUse {
-            lines.append(L("Note: Mission Control’s “Automatically rearrange Spaces based on most recent use” is on. The order changes as you switch, so space numbers are not stable. Turning it off is recommended.", "注意: Mission Controlの「最新の使用状況に基づいて操作スペースを自動的に並べ替える」がオンです。切り替えのたびに並びが変わるため、デスクトップの番号は安定しません。オフを推奨します。"))
+            lines.append(L(.cliNoteMissionControlsAutomaticallyRearrange))
         }
         return lines.joined(separator: "\n")
     }
@@ -802,9 +802,9 @@ enum CLI {
     /// Space kind for the Space list, without OS numbers or English abbreviations.
     static func spaceKindLabel(_ type: Int32?) -> String {
         switch type {
-        case 0: return L("Standard", "通常")
-        case 4: return L("Full Screen", "フルスクリーン")
-        default: return L("Other", "その他")
+        case 0: return L(.cliStandard)
+        case 4: return L(.cliFullScreen)
+        default: return L(.cliOther)
         }
     }
 

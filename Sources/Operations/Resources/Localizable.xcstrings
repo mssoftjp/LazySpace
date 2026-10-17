@@ -1,7 +1,1606 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-
+    "arrangeOperation.applyingLayout" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Applying layout"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "適用しています"
+          }
+        }
+      }
+    },
+    "arrangeOperation.becameLargerThanRequestedBecause" : {
+      "comment" : "Arguments: 1 = `apps`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ became larger than requested because of minimum size."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@が最小サイズのため要求より大きくなりました。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.calculatingLayout" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calculating layout"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "配置を計算しています"
+          }
+        }
+      }
+    },
+    "arrangeOperation.changedAfterRequestMessage" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Windows were not arranged because pause, input, or the Space changed after the request. Try again if needed."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "受付後に一時停止・入力・操作スペースの状態が変わったため整列しません。必要なら改めて操作してください。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.checkingActualSizes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Checking actual sizes"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "実寸を確認しています"
+          }
+        }
+      }
+    },
+    "arrangeOperation.checkingWindows" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Checking windows"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "対象を確認しています"
+          }
+        }
+      }
+    },
+    "arrangeOperation.closedBeforeCheckNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Closed before it could be checked"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "確認時に閉じられていた"
+          }
+        }
+      }
+    },
+    "arrangeOperation.closedDuringOperationNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Closed during the operation"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "操作中に閉じられた"
+          }
+        }
+      }
+    },
+    "arrangeOperation.closedWhileRestoringNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Closed while being returned to its original position"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "戻す途中で閉じられた"
+          }
+        }
+      }
+    },
+    "arrangeOperation.couldntReadTheActualSize" : {
+      "comment" : "Arguments: 1 = `why`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't read the actual size after returning it: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "戻したあと実寸を読めなかった: %@"
+          }
+        }
+      }
+    },
+    "arrangeOperation.couldntReadTheWindowsFrame" : {
+      "comment" : "Arguments: 1 = `why`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't read the window's frame: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "読取失敗: %@"
+          }
+        }
+      }
+    },
+    "arrangeOperation.couldntReturnToItsOriginal" : {
+      "comment" : "Arguments: 1 = `Int(actual.width)`; 2 = `Int(actual.height)`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't return to its original position (%@×%@)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "元の位置に戻せなかった（%@×%@）"
+          }
+        }
+      }
+    },
+    "arrangeOperation.didntMatchTheRequestWhen" : {
+      "comment" : "Arguments: 1 = `Int(actual.width)`; 2 = `Int(actual.height)`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Didn't match the request when interrupted (%@×%@)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "中断時点で要求と一致していない（%@×%@）"
+          }
+        }
+      }
+    },
+    "arrangeOperation.didntRespondInTime" : {
+      "comment" : "Arguments: 1 = `apps`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ didn't respond in time."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@が期限内に応答しませんでした。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.didntReturnAWindowList" : {
+      "comment" : "Arguments: 1 = `apps`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ didn't return a window list in time, so its windows were left where they are."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@がウインドウの一覧を期限内に返さなかったため、そのウインドウはそのままにしています。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.editNotPossible" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit not possible"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編集できません"
+          }
+        }
+      }
+    },
+    "arrangeOperation.height" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "height"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "高さ"
+          }
+        }
+      }
+    },
+    "arrangeOperation.interruptedBecauseAnAppDidnt" : {
+      "comment" : "Arguments: 1 = `tail`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrupted because an app didn't respond%@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アプリが応答しないため中断しました%@。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.interruptedBecauseArrangementWasPaused" : {
+      "comment" : "Arguments: 1 = `tail`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrupted because arrangement was paused%@. Resume, then arrange again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一時停止したため中断しました%@。再開してから再度整列してください。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.interruptedBecauseInputWasDetected" : {
+      "comment" : "Arguments: 1 = `tail`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrupted because input was detected%@. Arrange again once input settles."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "操作中の入力を検知したため中断しました%@。操作が落ち着いてから再度整列してください。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.interruptedBecauseThePermissionWas" : {
+      "comment" : "Arguments: 1 = `AccessPane.name()`; 2 = `tail`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrupted because the %@ permission was lost%@. Check it in System Settings."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」の許可が失われたため中断しました%@。システム設定で許可を確認してください。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.interruptedBecauseTheSpaceChanged" : {
+      "comment" : "Arguments: 1 = `tail`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrupted because the Space changed%@. Return to the original Space, then arrange again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "操作スペースが切り替わったため中断しました%@。元の操作スペースに戻ってから再度整列してください。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.interruptedBecauseTheWindowsChanged" : {
+      "comment" : "Arguments: 1 = `tail`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrupted because the windows changed%@. Arrange again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "対象のウインドウが変わったため中断しました%@。再度整列してください。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.keptInPlaceWhileAnother" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kept in place while another window is zoomed"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ズーム中のため位置を保持"
+          }
+        }
+      }
+    },
+    "arrangeOperation.largerThanRequestedBecauseOf" : {
+      "comment" : "Arguments: 1 = `Int(actual.width)`; 2 = `Int(actual.height)`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Larger than requested because of its minimum size (%@×%@)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最小サイズにより実寸が要求より大きい（%@×%@）"
+          }
+        }
+      }
+    },
+    "arrangeOperation.lazySpaceCantArrangeWindowsWithout" : {
+      "comment" : "Arguments: 1 = `AccessPane.name()`; 2 = `AccessPane.name()`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace can't arrange windows without the %@ permission. Turn on LazySpace in System Settings › Privacy & Security › %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」の許可がないため整列できません。システム設定 › プライバシーとセキュリティ › %@でLazySpaceをオンにしてください。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.macOSRejectedTheRequest" : {
+      "comment" : "Arguments: 1 = `why`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS rejected the request: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OSが要求を拒否: %@"
+          }
+        }
+      }
+    },
+    "arrangeOperation.maximumSizeConfirmedByRepeated" : {
+      "comment" : "Arguments: 1 = `Int(adjusted.width)`; 2 = `Int(adjusted.height)`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maximum size %@×%@ confirmed by repeated measurement; position within its area matches"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最大サイズ%@×%@を繰り返し実測。枠内の位置と一致"
+          }
+        }
+      }
+    },
+    "arrangeOperation.maximumSizeDoesntFillIts" : {
+      "comment" : "Arguments: 1 = `Int(request.width)`; 2 = `Int(request.height)`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maximum size %@×%@; doesn't fill its area"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最大サイズ%@×%@のため枠を埋めない"
+          }
+        }
+      }
+    },
+    "arrangeOperation.measuredMinimumSizeMatchedAfter" : {
+      "comment" : "Arguments: 1 = `Int(actual.width)`; 2 = `Int(actual.height)`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Measured minimum size %@×%@; matched after recalculation"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最小サイズ%@×%@を実測し、再計算で一致"
+          }
+        }
+      }
+    },
+    "arrangeOperation.movingItBackToIts" : {
+      "comment" : "Arguments: 1 = `why`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moving it back to its original position was rejected: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "元の位置への書き込みを拒否された: %@"
+          }
+        }
+      }
+    },
+    "arrangeOperation.noResponseWhileReturningIt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No response while returning it to its original position"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "元の位置へ戻す途中で応答がなかった"
+          }
+        }
+      }
+    },
+    "arrangeOperation.noWindowsToArrange" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No windows to arrange."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "整列するウインドウがありません。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.noWindowsToArrangeSee" : {
+      "comment" : "Arguments: 1 = `extra`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No windows to arrange%@. See the window list for excluded windows and reasons."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "整列するウインドウがありません%@。除外されたウインドウと理由は一覧で確認してください。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.notArrangedDidntReturnA" : {
+      "comment" : "Arguments: 1 = `apps`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not arranged: %@ didn't return a window list in time. Automatic arrangement waits for it."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@がウインドウの一覧を期限内に返さなかったため、整列していません。自動整列はその応答を待ちます。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.notMovedBecauseTheFixed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not moved because the fixed-size windows could not be placed"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "大きさが固定のウインドウを置けなかったため動かしていません"
+          }
+        }
+      }
+    },
+    "arrangeOperation.notPartOfThisAutomatic" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not part of this automatic arrangement; checked again next time"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この自動整列では除外。次の観測で判定します"
+          }
+        }
+      }
+    },
+    "arrangeOperation.notPossibleFoundBeforeMoving" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not possible; found before moving any window"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "配置を変える前に実行できないと判明"
+          }
+        }
+      }
+    },
+    "arrangeOperation.notRestoredAfterStopNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not returned to its original position because the operation stopped"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止したため元の位置に戻していません"
+          }
+        }
+      }
+    },
+    "arrangeOperation.notSentBecauseTheSame" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not sent because the same app didn't respond"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同じアプリが応答しなかったため発行しません"
+          }
+        }
+      }
+    },
+    "arrangeOperation.operationCanceled" : {
+      "comment" : "Arguments: 1 = `tail`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Operation canceled%@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "操作を取り消しました%@。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.overflowFloatReason" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Too large for the work area even at minimum size; kept in place as floating"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最小サイズでも作業領域に収まらないため、位置を保ってフローティングにしました"
+          }
+        }
+      }
+    },
+    "arrangeOperation.positionDoesntMatchTheRequest" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Position doesn't match the request"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "位置が要求と一致しない"
+          }
+        }
+      }
+    },
+    "arrangeOperation.recalculatedToMatchActualSizes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recalculated to match actual sizes"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "実寸に合わせて再計算しました"
+          }
+        }
+      }
+    },
+    "arrangeOperation.returnedToItsOriginalPosition" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Returned to its original position because it didn't fit"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "収まらないため元の位置に戻した"
+          }
+        }
+      }
+    },
+    "arrangeOperation.returningWindowsToTheirOriginal" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Returning windows to their original positions because they don't fit"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "収まらないため元の位置に戻しています"
+          }
+        }
+      }
+    },
+    "arrangeOperation.stoppedBecauseThePlanWould" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stopped because the plan would move a protected window"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保護中のウインドウを動かす計画のため中止"
+          }
+        }
+      }
+    },
+    "arrangeOperation.stoppingCheckingRequestsAlreadySent" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stopping: checking requests already sent"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止処理中: 発行済みの操作を確認しています"
+          }
+        }
+      }
+    },
+    "arrangeOperation.theAppDidntRespondIn" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The app didn't respond in time"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アプリが期限内に応答しなかった"
+          }
+        }
+      }
+    },
+    "arrangeOperation.theAppDidntRespondInTime" : {
+      "comment" : "Arguments: 1 = `Int(actual.width)`; 2 = `Int(actual.height)`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The app didn't respond in time (actual size %@×%@)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アプリが期限内に応答しなかった（実寸%@×%@）"
+          }
+        }
+      }
+    },
+    "arrangeOperation.theAppMadeItSmaller" : {
+      "comment" : "Arguments: 1 = `Int(actual.width)`; 2 = `Int(actual.height)`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The app made it smaller than requested (%@×%@)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アプリが要求より小さく補正した（%@×%@）"
+          }
+        }
+      }
+    },
+    "arrangeOperation.theFixedSizeWindowsCould" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The fixed-size windows could not be placed next to the arranged windows, so this change was not saved. LazySpace will try again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "大きさが固定のウインドウを整列したウインドウと並べられなかったため、この変更は保存していません。あらためて試します。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.theMinimumSizeOfIs" : {
+      "comment" : "Arguments: 1 = `name(id)`; 2 = `Int(required.width)`; 3 = `Int(required.height)`; 4 = `Int(available.width)`; 5 = `Int(available.height)`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The minimum size of %@ (%@×%@) is larger than the work area (%@×%@). Exclude that window."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@の最小サイズ%@×%@が領域%@×%@を超えています。そのウインドウを除外してください。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.theNewWindowCantJoin" : {
+      "comment" : "Arguments: 1 = `target.app`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The new window can't join the layout without moving the %@ window you're using, so it stays in place and waits."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@のウインドウ（操作中）を動かさずには配置に入れられないため、新しいウインドウは位置を保って待機させます。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.theWindowToAddIsnt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The window to add isn't eligible (it's temporary, or its type can't be determined). See the window list for excluded windows and reasons."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "追加するウインドウは整列対象ではありません（一時的なウインドウ、または種類を判定できないウインドウ）。除外されたウインドウと理由は一覧で確認してください。"
+          }
+        }
+      }
+    },
+    "arrangeOperation.unreadableSizeNote" : {
+      "comment" : "Arguments: 1 = `why`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't read the actual size: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "実寸を読めなかった: %@"
+          }
+        }
+      }
+    },
+    "arrangeOperation.width" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "width"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "幅"
+          }
+        }
+      }
+    },
+    "arrangeOperation.windowsWereNotArrangedBecause" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Windows were not arranged because the current Space can't be identified. Manual arrangement isn't available in this configuration."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在の操作スペースを確認できないため整列しません。この構成では手動の整列を利用できません。"
+          }
+        }
+      }
+    },
+    "closeOperation.closeWasRequestedButThe" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close was requested, but the window is still open. Check the app for a save prompt or similar dialog."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "閉じる操作を発行しましたが、ウインドウはまだあります。保存の確認などをアプリで確認してください。"
+          }
+        }
+      }
+    },
+    "closeOperation.couldntCloseWindow" : {
+      "comment" : "Arguments: 1 = `target`; 2 = `why`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't close window %@: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウ%@を閉じられません: %@"
+          }
+        }
+      }
+    },
+    "closeOperation.theAppForWindowDidnt" : {
+      "comment" : "Arguments: 1 = `target`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The app for window %@ didn't respond in time."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウ%@のアプリが期限内に応答しませんでした。"
+          }
+        }
+      }
+    },
+    "closeOperation.theWindowWasNotClosed" : {
+      "comment" : "Arguments: 1 = `AccessPane.name()`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The window was not closed because the %@ permission is missing."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」の許可がないため閉じません。"
+          }
+        }
+      }
+    },
+    "closeOperation.theWindowWasNotClosedBecause" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The window was not closed because it isn't a standard window in the current Space."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "対象は現在の操作スペースの通常のウインドウではないため閉じません。"
+          }
+        }
+      }
+    },
+    "closeOperation.theWindowWasNotClosedBecauseFocus" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The window was not closed because focus changed."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フォーカスが変わったため閉じません。"
+          }
+        }
+      }
+    },
+    "closeOperation.theWindowWasNotClosedBecausePause" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The window was not closed because pause, input, or the Space changed after the request."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "受付後に一時停止・入力・操作スペースの状態が変わったため閉じません。"
+          }
+        }
+      }
+    },
+    "closeOperation.windowClosed" : {
+      "comment" : "Arguments: 1 = `target`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Window %@ closed."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウ%@が閉じたことを確認しました。"
+          }
+        }
+      }
+    },
+    "closeOperation.windowIsAlreadyClosed" : {
+      "comment" : "Arguments: 1 = `target`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Window %@ is already closed."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウ%@は既に閉じられています。"
+          }
+        }
+      }
+    },
+    "focusOperation.changedAfterRequestMessage" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Focus was not moved because pause, input, or the Space changed after the request."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "受付後に一時停止・入力・操作スペースの状態が変わったためフォーカスを移しません。"
+          }
+        }
+      }
+    },
+    "focusOperation.couldntMoveFocus" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't move focus."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フォーカスを移せませんでした。"
+          }
+        }
+      }
+    },
+    "focusOperation.focusMoved" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Focus moved."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フォーカスを移しました。"
+          }
+        }
+      }
+    },
+    "focusOperation.focusNotReceivedNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The window did not receive focus."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウへフォーカスを移せませんでした。"
+          }
+        }
+      }
+    },
+    "focusOperation.focused" : {
+      "comment" : "Arguments: 1 = `window.app`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Focused %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@にフォーカスを移しました。"
+          }
+        }
+      }
+    },
+    "focusOperation.macOSRejectedTheRequest" : {
+      "comment" : "Arguments: 1 = `why`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS rejected the request: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OSが拒否: %@"
+          }
+        }
+      }
+    },
+    "focusOperation.noAccessMessage" : {
+      "comment" : "Arguments: 1 = `AccessPane.name()`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Can't move focus without the %@ permission."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」の許可がないためフォーカスを移せません。"
+          }
+        }
+      }
+    },
+    "focusOperation.notStandardWindowMessage" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The window isn't a standard window in the current Space."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "対象は現在の操作スペースの通常のウインドウではありません。"
+          }
+        }
+      }
+    },
+    "focusOperation.theWindowWasClosed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The window was closed"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "閉じられた"
+          }
+        }
+      }
+    },
+    "resultBuilder.notSentBecauseTheOperation" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not sent because the operation was interrupted"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "中断のため未発行"
+          }
+        }
+      }
+    },
+    "targetSelection.appIsHidden" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App is hidden"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "非表示のアプリ"
+          }
+        }
+      }
+    },
+    "targetSelection.appearsOnAllSpaces" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appears on all Spaces"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべての操作スペースに表示されるウインドウ"
+          }
+        }
+      }
+    },
+    "targetSelection.fixedSizeWindow" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fixed-size window"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "大きさが固定のウインドウ"
+          }
+        }
+      }
+    },
+    "targetSelection.fullScreenOrSplitView" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full screen or Split View"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フルスクリーンまたはSplit View"
+          }
+        }
+      }
+    },
+    "targetSelection.minimized" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimized"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最小化中"
+          }
+        }
+      }
+    },
+    "targetSelection.notAStandardWindow" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not a standard window"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通常のウインドウではない"
+          }
+        }
+      }
+    },
+    "targetSelection.onADisplayWithoutThe" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On a display without the menu bar"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メニューバーのないディスプレイにある"
+          }
+        }
+      }
+    },
+    "targetSelection.onAnotherSpace" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On another Space"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "別の操作スペースにある"
+          }
+        }
+      }
+    },
+    "targetSelection.sheet" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sheet"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "シート"
+          }
+        }
+      }
+    },
+    "targetSelection.spaceCantBeDetermined" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Space can't be determined"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所属する操作スペースを確認できない"
+          }
+        }
+      }
+    },
+    "targetSelection.toolPaletteOrFloatingPanel" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tool palette or floating panel"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ツールパレット・フローティングパネル"
+          }
+        }
+      }
+    },
+    "targetSelection.windowTypeCantBeDetermined" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Window type can't be determined"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウの種類を判定できない"
+          }
+        }
+      }
+    },
+    "windowSystem.movingAWindowWithoutResizing" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moving a window without resizing it is not supported here."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ここでは、大きさを変えずにウインドウを動かせません。"
+          }
+        }
+      }
+    },
+    "windowSystem.notSupported" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not supported"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未対応"
+          }
+        }
+      }
+    },
+    "windowSystem.theOperationWasInterruptedBefore" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The operation was interrupted before the next window change."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "次のウインドウ変更の前に操作が中断されました。"
+          }
+        }
+      }
+    }
   },
   "version" : "1.0"
 }

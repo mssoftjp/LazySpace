@@ -23,7 +23,7 @@ enum SettingsRules {
 
     static func numberError(range: ClosedRange<Double>) -> String {
         let lower = Int(range.lowerBound), upper = Int(range.upperBound)
-        return L("Enter a number from \(lower) to \(upper).", "\(lower)〜\(upper)の数値を入力してください。")
+        return L(.settingsRulesEnterANumberFromTo(String(lower), String(upper)))
     }
 
     static var modifierChoices: [(id: String, title: String, modifiers: Set<String>)] {
@@ -57,8 +57,8 @@ enum SettingsRules {
 
     static func appIdentifierMessage(_ app: String) -> String {
         if app.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            return L("Enter a bundle identifier.", "バンドル識別子を入力してください。")
+            return L(.settingsRulesEnterABundleIdentifier)
         }
-        return L("Enter a bundle identifier. A trailing * matches a prefix.", "バンドル識別子を入力してください。末尾の * は前方一致です。")
+        return L(.settingsRulesEnterABundleIdentifierA)
     }
 }

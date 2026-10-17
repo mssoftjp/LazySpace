@@ -38,48 +38,48 @@ enum UpdateEligibility {
 }
 
 enum UpdateCopy {
-    static func menuTitle(_ offer: UpdateOffer) -> String { L("Update LazySpace to \(offer.version)…", "LazySpace \(offer.version)にアップデート…") }
+    static func menuTitle(_ offer: UpdateOffer) -> String { L(.updatesMenuTitle(offer.version)) }
     /// Without a final period, for the `status` row.
-    static func available(_ offer: UpdateOffer) -> String { L("LazySpace \(offer.version) is available", "LazySpace \(offer.version)が利用できます") }
+    static func available(_ offer: UpdateOffer) -> String { L(.updatesAvailable(offer.version)) }
     static func notice(_ offer: UpdateOffer) -> String { available(offer) + L(".", "。") }
-    static var statusRow: String { L("Update", "アップデート") }
-    static var updateButton: String { L("Update…", "アップデート…") }
-    static var checkButton: String { L("Check for Updates…", "アップデートを確認…") }
-    static var automaticCheck: String { L("Automatically check for updates", "アップデートを自動的に確認") }
+    static var statusRow: String { L(.updatesStatusRow) }
+    static var updateButton: String { L(.updatesUpdateButton) }
+    static var checkButton: String { L(.updatesCheckButton) }
+    static var automaticCheck: String { L(.updatesAutomaticCheck) }
 
-    static var install: String { L("Install Update", "アップデートをインストール") }
-    static var later: String { L("Remind Me Later", "あとで通知") }
-    static var skip: String { L("Skip This Version", "このバージョンをスキップ") }
+    static var install: String { L(.updatesInstall) }
+    static var later: String { L(.updatesLater) }
+    static var skip: String { L(.updatesSkip) }
     static func askDetail(current: String) -> String {
-        L("You have version \(current). LazySpace quits and reopens to finish installing.", "使用中のバージョンは\(current)です。インストールすると、LazySpaceが再起動します。")
+        L(.updatesAskDetail(current))
     }
 
     static func title(_ step: UpdateStep) -> String {
         switch step {
-        case .checking: L("Checking for updates…", "アップデートを確認しています…")
-        case .downloading: L("Downloading the update…", "アップデートをダウンロードしています…")
-        case .preparing: L("Preparing to install…", "インストールの準備をしています…")
-        case .installing: L("Installing the update…", "アップデートをインストールしています…")
-        case .waitingToQuit: L("LazySpace needs to quit to install the update", "アップデートをインストールするには、LazySpaceを終了する必要があります")
+        case .checking: L(.updatesCheckingForUpdates)
+        case .downloading: L(.updatesDownloadingTheUpdate)
+        case .preparing: L(.updatesPreparingToInstall)
+        case .installing: L(.updatesInstallingTheUpdate)
+        case .waitingToQuit: L(.updatesLazySpaceNeedsToQuitTo)
         }
     }
 
     static func detail(_ step: UpdateStep) -> String {
         switch step {
-        case .installing: L("LazySpace reopens when it's done.", "完了するとLazySpaceが再起動します。")
-        case .waitingToQuit: L("The update is downloaded. LazySpace reopens after installing.", "アップデートはダウンロード済みです。インストール後にLazySpaceが再起動します。")
+        case .installing: L(.updatesLazySpaceReopensWhenItsDone)
+        case .waitingToQuit: L(.updatesTheUpdateIsDownloadedLazySpace)
         default: ""
         }
     }
 
-    static var upToDate: String { L("LazySpace is up to date", "LazySpaceは最新の状態です") }
-    static func newest(_ version: String) -> String { L("Version \(version) is the newest version.", "バージョン\(version)が最新のバージョンです。") }
-    static var checkFailed: String { L("Could not check for updates", "アップデートを確認できませんでした") }
-    static var installFailed: String { L("The update could not be installed", "アップデートをインストールできませんでした") }
+    static var upToDate: String { L(.updatesUpToDate) }
+    static func newest(_ version: String) -> String { L(.updatesNewest(version)) }
+    static var checkFailed: String { L(.updatesCheckFailed) }
+    static var installFailed: String { L(.updatesInstallFailed) }
 
-    static var cancel: String { L("Cancel", "キャンセル") }
-    static var quitAndInstall: String { L("Quit and Install", "終了してインストール") }
-    static var ok: String { L("OK", "OK") }
+    static var cancel: String { L(.settingsWindowCancel) }
+    static var quitAndInstall: String { L(.updatesQuitAndInstall) }
+    static var ok: String { L(.updatesOk) }
 }
 
 enum UpdateChoice: Equatable {
@@ -246,7 +246,7 @@ enum AboutCopy {
     static var repositoryTitle: String { (repository.host ?? "") + repository.path }
 
     static func version(short: String, build: String) -> String {
-        guard !build.isEmpty, build != short else { return L("Version \(short)", "バージョン\(short)") }
-        return L("Version \(short) (\(build))", "バージョン\(short)（\(build)）")
+        guard !build.isEmpty, build != short else { return L(.updatesVersion(short)) }
+        return L(.updatesVersionWithBuild(short, build))
     }
 }

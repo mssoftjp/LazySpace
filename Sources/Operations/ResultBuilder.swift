@@ -58,7 +58,7 @@ struct ResultBuilder {
             guard var r = reports[id] else { continue }
             if r.issued == 0 && r.status != .gone && r.status != .unchanged {
                 r.status = .unapplied
-                r.note = r.note ?? L("Not sent because the operation was interrupted", "中断のため未発行")
+                r.note = r.note ?? L(.resultBuilderNotSentBecauseTheOperation)
                 reports[id] = r
             }
         }

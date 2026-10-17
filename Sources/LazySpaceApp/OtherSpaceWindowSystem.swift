@@ -121,5 +121,5 @@ final class OtherSpaceWindowSystem: WindowSystem {
     func setWindowState(_ id: WindowID, _ attribute: WindowStateAttribute, value: Bool, timeout: TimeInterval, shouldContinue: @escaping () -> Bool) -> WriteResult { .rejected(Self.refusal) }
     func readWindowState(_ id: WindowID, _ attribute: WindowStateAttribute) -> Bool? { nil }
 
-    static let refusal = L("Not done on a Space other than the current one.", "今の操作スペース以外では行いません。")
+    static let refusal = L(.otherSpaceWindowSystemNotDoneOnASpace)
 }

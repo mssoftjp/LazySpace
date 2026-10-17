@@ -92,9 +92,9 @@ public final class FocusOperation {
             report.after = window.frame
             report.status = moved ? .verified : .mismatch
             if !moved { report.note = Self.focusNotReceivedNote }
-        case .gone: report.status = .gone; report.note = L("The window was closed", "閉じられた")
-        case .rejected(let why): report.status = .mismatch; report.note = L("macOS rejected the request: \(why)", "OSが拒否: \(why)")
-        case .timedOut: report.status = .mismatch; report.note = L("The app didn't respond in time", "アプリが期限内に応答しなかった")
+        case .gone: report.status = .gone; report.note = L(.focusOperationTheWindowWasClosed)
+        case .rejected(let why): report.status = .mismatch; report.note = L(.focusOperationMacOSRejectedTheRequest(why))
+        case .timedOut: report.status = .mismatch; report.note = L(.arrangeOperationTheAppDidntRespondIn)
         }
         builder.set(report)
         builder.verified = true
@@ -103,7 +103,7 @@ public final class FocusOperation {
             ? Self.focusNotReceivedNote
             : L("Couldn't move focus: \(report.note ?? "")", "フォーカスを移せませんでした: \(report.note ?? "")")
         return builder.finish(outcome: ok ? .complete : .partial, stopReason: ok ? nil : (result == .timedOut ? .appUnresponsive : nil),
-                              message: ok ? L("Focused \(window.app).", "\(window.app)にフォーカスを移しました。") : failure,
+                              message: ok ? L(.focusOperationFocused(window.app)) : failure,
                               finishedAt: now(), wallMs: elapsedMs())
     }
 
@@ -133,7 +133,7 @@ public final class FocusOperation {
         builder.timing.writeMs = now().timeIntervalSince(writeStart) * 1000
         guard result == .issued else {
             return builder.finish(outcome: .partial, stopReason: result == .timedOut ? .appUnresponsive : nil,
-                                  message: L("Couldn't move focus.", "フォーカスを移せませんでした。"), finishedAt: now(), wallMs: elapsedMs())
+                                  message: L(.focusOperationCouldntMoveFocus), finishedAt: now(), wallMs: elapsedMs())
         }
         // App switching is asynchronous, so an accepted request alone is not completion.
         let settleStart = now()
@@ -141,7 +141,7 @@ public final class FocusOperation {
         builder.timing.settleMs = now().timeIntervalSince(settleStart) * 1000
         builder.verified = true
         return builder.finish(outcome: moved ? .complete : .partial, stopReason: nil,
-                              message: moved ? L("Focus moved.", "フォーカスを移しました。") : Self.focusNotReceivedNote,
+                              message: moved ? L(.focusOperationFocusMoved) : Self.focusNotReceivedNote,
                               finishedAt: now(), wallMs: elapsedMs())
     }
 
@@ -153,17 +153,16 @@ public final class FocusOperation {
     }
 
     private static var noAccessMessage: String {
-        L("Can't move focus without the \(AccessPane.name()) permission.", "「\(AccessPane.name())」の許可がないためフォーカスを移せません。")
+        L(.focusOperationNoAccessMessage(AccessPane.name()))
     }
     private static var changedAfterRequestMessage: String {
-        L("Focus was not moved because pause, input, or the Space changed after the request.",
-          "受付後に一時停止・入力・操作スペースの状態が変わったためフォーカスを移しません。")
+        L(.focusOperationChangedAfterRequestMessage)
     }
     private static var notStandardWindowMessage: String {
-        L("The window isn't a standard window in the current Space.", "対象は現在の操作スペースの通常のウインドウではありません。")
+        L(.focusOperationNotStandardWindowMessage)
     }
     private static var focusNotReceivedNote: String {
-        L("The window did not receive focus.", "ウインドウへフォーカスを移せませんでした。")
+        L(.focusOperationFocusNotReceivedNote)
     }
 
     /// Returns as soon as focus moves. With a zero wait (tests), reads once.

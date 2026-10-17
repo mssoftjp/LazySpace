@@ -97,7 +97,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.delegate = self
         statusItem.menu = menu
 
-        if !ControlPort.startServer(handler: { [weak self] req in self?.handle(req) ?? ControlPort.Response(ok: false, message: L("LazySpace is not available.", "LazySpaceを利用できません。"), code: "internal-error") }) {
+        if !ControlPort.startServer(handler: { [weak self] req in self?.handle(req) ?? ControlPort.Response(ok: false, message: L(.appDelegateLazySpaceIsNotAvailable), code: "internal-error") }) {
             NSLog("LazySpace: CLI control port unavailable; check the owner and permissions of the application support directory.")
         }
         hotkeys = Hotkeys(bindings: HotkeyBinding.from(coordinator.config, mode: coordinator.mode)) { [weak self] action, source, pressedAt in
@@ -174,7 +174,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         case .arrange: coordinator.markFirstLaunchDone(); coordinator.arrange(source: source, pressedAt: pressedAt)
         case .integrate:
             // Nothing on screen; the reason stays in `lazyspace status` as the latest notice.
-            if coordinator.waiting.isEmpty { coordinator.noteRefusal(L("No windows are waiting.", "待機中のウインドウはありません。")); return }
+            if coordinator.waiting.isEmpty { coordinator.noteRefusal(L(.appDelegateNoWindowsAreWaiting)); return }
             if case .notApplicable = coordinator.integrateWaiting(source: source, pressedAt: pressedAt) { coordinator.noteRefusal(coordinator.notStartedMessage) }
         case .pauseResume:
             if coordinator.control.paused { coordinator.resume() } else { coordinator.pause() }
@@ -197,7 +197,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let mode = coordinator.mode
         _ = hotkeys.replace(HotkeyBinding.from(coordinator.config, mode: mode))
         syncCommandKeys()
-        if !hotkeys.failed.isEmpty { coordinator.noteRefusal(L("Could not register these shortcuts: \(hotkeys.failed.joined(separator: ", "))", "登録できなかったショートカット: \(hotkeys.failed.joined(separator: ", "))")) }
+        if !hotkeys.failed.isEmpty { coordinator.noteRefusal(L(.appDelegateCouldNotRegisterTheseShortcuts(hotkeys.failed.joined(separator: ", ")))) }
         refreshStatusItem()
     }
 
@@ -398,14 +398,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let sameWindow = observed != nil && box.menuTarget == observed
         item.isEnabled = canSend && sameWindow && destination != observed?.spaceID
         if observed == nil {
-            item.toolTip = L("Select the window you want to send. This menu updates when it becomes available.",
-                             "送りたいウインドウを選んでください。確認できると、このメニューから選べるようになります。")
+            item.toolTip = L(.appDelegateSelectTheWindowYouWant)
         } else if !sameWindow {
-            item.toolTip = L("The selected window changed. Open the menu again.", "対象のウインドウが変わりました。メニューを開き直してください。")
+            item.toolTip = L(.appDelegateTheSelectedWindowChangedOpen)
         } else if !canSend {
             item.toolTip = coordinator.control.paused
-                ? L("Resume LazySpace to send this window.", "LazySpaceを再開すると、このウインドウを送れます。")
-                : L("This becomes available when the current operation finishes and access is available.", "現在の処理が終わり、操作に必要な許可があると選べるようになります。")
+                ? L(.appDelegateResumeLazySpaceToSendThis)
+                : L(.appDelegateThisBecomesAvailableWhenThe)
         } else { item.toolTip = nil }
     }
 
@@ -464,7 +463,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func modeMenuItem(status s: AppStatus) -> NSMenuItem {
-        let modeMenu = NSMenu(title: L("Mode", "モード"))
+        let modeMenu = NSMenu(title: L(.appDelegateMode))
         modeMenu.autoenablesItems = false
         for name in s.modes {
             let binding = HotkeyBinding.from(coordinator.config, mode: s.mode).first { $0.action == .mode(name) }
@@ -488,7 +487,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if let type = NSApp.currentEvent?.type, type == .rightMouseDown || type == .rightMouseUp, case .space(let destination) = box.command {
             let command = EditCommand.sendToSpace(destination).following(coordinator.config.followMovedWindow)
             guard let target = box.menuTarget else {
-                let why = L("Could not find the focused window. Select the window to send, then try again.", "フォーカス中のウインドウを確認できません。送りたいウインドウを選んでから操作してください。")
+                let why = L(.appDelegateCouldNotFindTheFocused)
                 coordinator.noteRefusal(L("“\(command.label)”: \(why)", "「\(command.label)」: \(why)"))
                 return
             }
@@ -506,7 +505,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func runEdit(_ command: EditCommand, source: String, pressedAt: Date = Date(), menuTarget: MenuWindowTarget? = nil) {
         switch coordinator.edit(command, source: source, pressedAt: pressedAt, menuTarget: menuTarget) {
         case .started: break
-        case .busy: coordinator.noteRefusal(L("Another operation is in progress, so “\(command.label)” was not accepted.", "処理中のため「\(command.label)」を受け付けませんでした"))
+        case .busy: coordinator.noteRefusal(L(.appDelegateAnotherOperationIsInProgress(command.label)))
         case .refused(let why, _): coordinator.noteRefusal(L("“\(command.label)”: \(why)", "「\(command.label)」: \(why)"))
         }
     }
@@ -594,7 +593,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             // The completion wait polls every 20 ms. Unfinished replies carry no status (building it reads settings and login items each time).
             if coordinator.resultPending(id: id) {
-                return ControlPort.Response(ok: true, message: L("In progress.", "処理中"), operationID: id, code: "pending")
+                return ControlPort.Response(ok: true, message: L(.appDelegateInProgress), operationID: id, code: "pending")
             }
             return ControlPort.Response(ok: false, message: "Unknown or expired operation ID.", operationID: id, code: "unknown-operation")
         case "settle.v2":
@@ -616,11 +615,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     self.storeObservation(ControlPort.Response(ok: true, message: "", status: self.coordinator.status(), inspection: inspection, spaces: spaces), id: id)
                 }
             }
-            return ControlPort.Response(ok: true, message: L("Reading windows…", "観測中"), operationID: id)
+            return ControlPort.Response(ok: true, message: L(.appDelegateReadingWindows), operationID: id)
         case "inspect-result":
-            guard let id = req.arg else { return ControlPort.Response(ok: false, message: L("Missing inspection ID.", "観測IDがありません"), code: "usage") }
+            guard let id = req.arg else { return ControlPort.Response(ok: false, message: L(.appDelegateMissingInspectionID), code: "usage") }
             if let response = inspectionResponses.removeValue(forKey: id) { inspectionOrder.removeAll { $0 == id }; return response }
-            return ControlPort.Response(ok: true, message: L("Reading windows…", "観測中"), operationID: id)
+            return ControlPort.Response(ok: true, message: L(.appDelegateReadingWindows), operationID: id)
         case "request-token.v3":
             switch receipts.reserve() {
             case .reserved(let id):
@@ -635,7 +634,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             guard !name.isEmpty else { return ControlPort.Response(ok: true, message: StatusMenuCopy.modeTitle(coordinator.mode), status: coordinator.status()) }
             switch coordinator.setMode(name, source: "cli") {
             case .changed: return ControlPort.Response(ok: true, message: StatusMenuCopy.modeTitle(name), status: coordinator.status())
-            case .unchanged: return ControlPort.Response(ok: true, message: L("Already in mode \(name).", "既にモード\(name)です"), status: coordinator.status())
+            case .unchanged: return ControlPort.Response(ok: true, message: L(.appDelegateAlreadyInMode(name)), status: coordinator.status())
             case .refused(let why): return ControlPort.Response(ok: false, message: why, status: coordinator.status(), code: "unknown-mode")
             }
         case "login-item":
@@ -643,7 +642,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             case "on", "true", "enable": coordinator.setLoginItem(true)
             case "off", "false", "disable": coordinator.setLoginItem(false)
             case "": break
-            default: return ControlPort.Response(ok: false, message: L("login-item takes on or off.", "login-itemにはonかoffを指定します"), status: coordinator.status(), code: "usage")
+            default: return ControlPort.Response(ok: false, message: L(.appDelegateLoginItemTakesOnOr), status: coordinator.status(), code: "usage")
             }
             let s = coordinator.status()
             return ControlPort.Response(ok: true, message: "\(MacItem.openAtLogin): \(s.loginItem)", status: s)
@@ -668,7 +667,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         case "quit":
             return Self.makeQuitResponse()
         default:
-            return ControlPort.Response(ok: false, message: L("Unknown command: \(req.cmd)", "不明なコマンド: \(req.cmd)"), code: "unknown-command")
+            return ControlPort.Response(ok: false, message: L(.appDelegateUnknownCommand(req.cmd)), code: "unknown-command")
         }
     }
 
@@ -728,11 +727,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             : coordinator.arrange(source: "agent", authorization: authorization)
         switch accepted {
         case .started(let id):
-            return .started(operationID: id, message: L("Accepted.", "受け付けました"))
+            return .started(operationID: id, message: L(.appDelegateAccepted))
         case .busy:
-            return .refused(MutationReceiptRegistry.Outcome(ok: false, code: "busy", message: L("Another operation is in progress; the request was not accepted.", "処理中のため受け付けません"), operationID: nil, result: nil))
+            return .refused(MutationReceiptRegistry.Outcome(ok: false, code: "busy", message: L(.appDelegateAnotherOperationIsInProgressThe), operationID: nil, result: nil))
         case .notApplicable:
-            return .refused(MutationReceiptRegistry.Outcome(ok: false, code: "not-started", message: L("This Space has no layout yet.", "この操作スペースにはまだレイアウトがありません"), operationID: nil, result: nil))
+            return .refused(MutationReceiptRegistry.Outcome(ok: false, code: "not-started", message: L(.appDelegateThisSpaceHasNoLayout), operationID: nil, result: nil))
         }
     }
 
@@ -741,7 +740,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         case .started(let id):
             return .started(operationID: id, message: message)
         case .busy:
-            return .refused(MutationReceiptRegistry.Outcome(ok: false, code: "busy", message: L("Another operation is in progress; the request was not accepted.", "処理中のため受け付けません"), operationID: nil, result: nil))
+            return .refused(MutationReceiptRegistry.Outcome(ok: false, code: "busy", message: L(.appDelegateAnotherOperationIsInProgressThe), operationID: nil, result: nil))
         case .refused(let why, let code):
             return .refused(MutationReceiptRegistry.Outcome(ok: false, code: code, message: why, operationID: nil, result: nil))
         }
@@ -750,8 +749,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// Quitting is not complete when requested; the unsaved-changes prompt can cancel it.
     static func makeQuitResponse(terminate: @escaping () -> Void = { NSApp.terminate(nil) }) -> ControlPort.Response {
         DispatchQueue.main.async(execute: terminate)
-        return ControlPort.Response(ok: true, message: L("Quit requested. Unsaved changes in Settings can cancel it.",
-                                                         "終了を要求しました。設定に未保存の変更があると、終了を取り消せます。"))
+        return ControlPort.Response(ok: true, message: L(.appDelegateQuitRequestedUnsavedChangesIn))
     }
 }
 
@@ -764,12 +762,10 @@ enum CLIHelp {
         // New Macs have no /usr/local/bin, and /usr/local belongs to root.
         let command = "sudo mkdir -p /usr/local/bin && sudo ln -s \"\(source)\" /usr/local/bin/lazyspace"
         let alert = NSAlert()
-        alert.messageText = L("Command-Line Setup", "コマンドラインの設定")
-        alert.informativeText = L(
-            "The same executable works as a command-line tool when it is called with the lowercase name lazyspace. Create a symbolic link in a folder on your PATH. This is not needed if you installed LazySpace with Homebrew Cask.\n\n\(command)\n\nExamples:\nlazyspace status\nlazyspace focus left\nlazyspace list-spaces\nlazyspace help",
-            "同じ実行ファイルを小文字のlazyspaceという名前で呼ぶとCLIとして動きます。PATHの通った場所にシンボリックリンクを置いてください（Homebrew Caskで入れた場合は不要）。\n\n\(command)\n\n例:\nlazyspace status\nlazyspace focus left\nlazyspace list-spaces\nlazyspace help")
-        alert.addButton(withTitle: L("Copy Command", "コマンドをコピー"))
-        alert.addButton(withTitle: L("Close", "閉じる"))
+        alert.messageText = L(.appDelegateCommandLineSetup)
+        alert.informativeText = L(.appDelegateTheSameExecutableWorksAs(command))
+        alert.addButton(withTitle: L(.appDelegateCopyCommand))
+        alert.addButton(withTitle: L(.appDelegateClose))
         NSApp.activate(ignoringOtherApps: true)
         if alert.runModal() == .alertFirstButtonReturn {
             NSPasteboard.general.clearContents()

@@ -97,82 +97,59 @@ enum ActionPictogram: Equatable {
     var help: String {
         switch self {
         case .focus:
-            return L("Moves the focus to the neighboring window. Windows stay in place.",
-                     "隣のウインドウへフォーカスを移します。ウインドウは動きません。")
+            return L(.actionPictogramMovesTheFocusToThe)
         case .swap:
-            return L("The focused window trades places with its neighbor.",
-                     "フォーカス中のウインドウと隣のウインドウの位置を入れ替えます。")
+            return L(.actionPictogramTheFocusedWindowTradesPlaces)
         case .move:
-            return L("Moves the focused window one step in the layout. Other windows shift to make room.",
-                     "フォーカス中のウインドウをレイアウト内で1つ動かします。他のウインドウが詰めます。")
+            return L(.actionPictogramMovesTheFocusedWindowOne)
         case .join:
-            return L("Groups the focused window with its neighbor so they share one slot.",
-                     "フォーカス中のウインドウを隣とまとめ、1つの枠を分け合います。")
+            return L(.actionPictogramGroupsTheFocusedWindowWith)
         case .resize:
-            return L("Moves the edge between the focused window and its neighbor.",
-                     "フォーカス中のウインドウと隣の境目を動かします。")
+            return L(.actionPictogramMovesTheEdgeBetweenThe)
         case .smartGrow, .smartShrink:
-            return L("Makes the focused window larger / smaller along its split.",
-                     "分割の向きに沿って、フォーカス中のウインドウを大きく／小さくします。")
+            return L(.actionPictogramMakesTheFocusedWindowLarger)
         case .balance:
-            return L("Resets the layout’s split ratios to equal shares.",
-                     "レイアウトの分割比率を均等に戻します。")
+            return L(.actionPictogramResetsTheLayoutsSplitRatios)
         case .undo:
-            return L("Undoes the last layout change.", "直前のレイアウト変更を取り消します。")
+            return L(.actionPictogramUndoesTheLastLayoutChange)
         case .toggleSplit:
-            return L("Switches the split between side by side and stacked.",
-                     "左右の分割と上下の分割を切り替えます。")
+            return L(.actionPictogramSwitchesTheSplitBetweenSide)
         case .accordion:
-            return L("Switches the split between overlapping and tiled windows.",
-                     "分割内のウインドウを重ねて表示、または並べて表示します。")
+            return L(.actionPictogramSwitchesTheSplitBetweenOverlapping)
         case .arrange:
-            return L("Arranges this Space and starts tiling it.",
-                     "この操作スペースを整列し、タイル配置を始めます。")
+            return L(.actionPictogramArrangesThisSpaceAndStarts)
         case .integrate:
-            return L("Adds one waiting window to the layout.",
-                     "待機中のウインドウを1つレイアウトに加えます。")
+            return L(.actionPictogramAddsOneWaitingWindowTo)
         case .pause:
-            return L("Pauses or resumes arranging in every Space.",
-                     "すべての操作スペースの整列を一時停止・再開します。")
+            return L(.actionPictogramPausesOrResumesArrangingIn)
         case .reload:
-            return L("Reloads the configuration file. Windows don't move.",
-                     "設定ファイルを読み込み直します。ウインドウは動きません。")
+            return L(.actionPictogramReloadsTheConfigurationFileWindows)
         case .close:
-            return L("Closes the focused window.", "フォーカス中のウインドウを閉じます。")
+            return L(.actionPictogramClosesTheFocusedWindow)
         case .focusBack:
-            return L("Returns the focus to the previously focused window.",
-                     "直前にフォーカスしていたウインドウへ戻ります。")
+            return L(.actionPictogramReturnsTheFocusToThe)
         case .float:
-            return L("Takes the focused window out of the layout, or puts it back.",
-                     "フォーカス中のウインドウをレイアウトから外す、または戻します。")
+            return L(.actionPictogramTakesTheFocusedWindowOut)
         case .zoom:
-            return L("Fills the work area with the focused window, or restores the tiled layout.",
-                     "フォーカス中のウインドウを作業領域いっぱいに広げる、または整列した表示に戻します。")
+            return L(.actionPictogramFillsTheWorkAreaWith)
         case .fullscreen:
-            return L("Turns macOS full screen on or off for the focused window.",
-                     "フォーカス中のウインドウのmacOSフルスクリーンを切り替えます。")
+            return L(.actionPictogramTurnsMacOSFullScreenOn)
         case .minimize:
-            return L("Minimizes the focused window to the Dock.",
-                     "フォーカス中のウインドウをDockにしまいます。")
+            return L(.actionPictogramMinimizesTheFocusedWindowTo)
         case .switchSpace(let n):
-            return L("Shows \(Copy.desktop(n)). Windows stay where they are.",
-                     "\(Copy.desktop(n))を表示します。ウインドウは動きません。")
+            return L(.actionPictogramShowsWindowsStayWhereThey(Copy.desktop(n)))
         case .spaceNext, .spacePrev:
-            return L("Shows the next / previous Space.", "次／前の操作スペースを表示します。")
+            return L(.actionPictogramShowsTheNextPreviousSpace)
         case .spaceBack:
-            return L("Returns to the Space you used last.", "直前に使った操作スペースに戻ります。")
+            return L(.actionPictogramReturnsToTheSpaceYou)
         case .moveToSpace(let n):
-            return L("Moves the focused window to \(Copy.desktop(n)).",
-                     "フォーカス中のウインドウを\(Copy.desktop(n))へ送ります。")
+            return L(.actionPictogramMovesTheFocusedWindowTo(Copy.desktop(n)))
         case .moveToSpaceNext, .moveToSpacePrev:
-            return L("Moves the focused window to the next / previous Space.",
-                     "フォーカス中のウインドウを次／前の操作スペースへ送ります。")
+            return L(.actionPictogramMovesTheFocusedWindowToThe)
         case .placementBeside:
-            return L("New windows open next to the focused window.",
-                     "新しいウインドウはフォーカス中のウインドウの隣に入ります。")
+            return L(.actionPictogramNewWindowsOpenNextTo)
         case .placementEnd:
-            return L("New windows are added at the end of the layout.",
-                     "新しいウインドウはレイアウトの末尾に入ります。")
+            return L(.actionPictogramNewWindowsAreAddedAt)
         }
     }
 

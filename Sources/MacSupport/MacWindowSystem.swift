@@ -340,7 +340,7 @@ public final class MacWindowSystem: WindowSystem {
     }
 
     public func readFrame(_ id: WindowID) -> FrameRead {
-        guard let c = cached(id) else { return WindowList.exists(id.raw) ? .failed(L("The window has not been inspected yet.", "まだ確認していないウインドウです。")) : .gone }
+        guard let c = cached(id) else { return WindowList.exists(id.raw) ? .failed(L(.macWindowSystemTheWindowHasNotBeen)) : .gone }
         c.app.setMessagingTimeout(readTimeout)
         switch c.element.frame() {
         case .success(let f): return .frame(f)
@@ -356,7 +356,7 @@ public final class MacWindowSystem: WindowSystem {
     /// The only path for authorized writes.
     public func writeFrame(_ id: WindowID, frame: CGRect, timeout: TimeInterval, shouldContinue: @escaping () -> Bool) -> WriteResult {
         guard shouldContinue() else { return .interrupted }
-        guard let c = cached(id) else { return WindowList.exists(id.raw) ? .rejected(L("The window has not been inspected yet.", "まだ確認していないウインドウです。")) : .gone }
+        guard let c = cached(id) else { return WindowList.exists(id.raw) ? .rejected(L(.macWindowSystemTheWindowHasNotBeen)) : .gone }
         c.app.setMessagingTimeout(timeout)
         let current: CGRect
         switch c.element.frame() {
@@ -371,7 +371,7 @@ public final class MacWindowSystem: WindowSystem {
 
     public func writeFrame(_ id: WindowID, frame: CGRect, currentFrame: CGRect, timeout: TimeInterval, shouldContinue: @escaping () -> Bool) -> WriteResult {
         guard shouldContinue() else { return .interrupted }
-        guard let c = cached(id) else { return WindowList.exists(id.raw) ? .rejected(L("The window has not been inspected yet.", "まだ確認していないウインドウです。")) : .gone }
+        guard let c = cached(id) else { return WindowList.exists(id.raw) ? .rejected(L(.macWindowSystemTheWindowHasNotBeen)) : .gone }
         c.app.setMessagingTimeout(timeout)
         return AXFrameWriter.write(current: currentFrame, target: frame,
             enhancedUI: { self.suppressAXAnimations ? c.app.bool("AXEnhancedUserInterface") : nil },
@@ -412,8 +412,8 @@ public final class MacWindowSystem: WindowSystem {
             if let activated { DispatchQueue.main.async { activated(nil) } }
             return result
         }
-        guard let c = cached(id) else { return notActivated(WindowList.exists(id.raw) ? .rejected(L("The window has not been inspected yet.", "まだ確認していないウインドウです。")) : .gone) }
-        guard activateIf() else { return notActivated(.rejected(L("The operation was interrupted before the window was raised.", "ウインドウを前面にする前に操作が中断されました。"))) }
+        guard let c = cached(id) else { return notActivated(WindowList.exists(id.raw) ? .rejected(L(.macWindowSystemTheWindowHasNotBeen)) : .gone) }
+        guard activateIf() else { return notActivated(.rejected(L(.macWindowSystemTheOperationWasInterruptedBefore))) }
         c.app.setMessagingTimeout(timeout)
         let err = AXUIElementPerformAction(c.element.raw, kAXRaiseAction as CFString)
         if err == .invalidUIElement || !WindowList.exists(id.raw) { return notActivated(.gone) }
@@ -434,13 +434,13 @@ public final class MacWindowSystem: WindowSystem {
     /// Presses the close button. Called only from the user's key action. Writes no geometry.
     public func close(_ id: WindowID, timeout: TimeInterval, shouldContinue: @escaping () -> Bool) -> WriteResult {
         guard shouldContinue() else { return .interrupted }
-        guard let c = cached(id) else { return WindowList.exists(id.raw) ? .rejected(L("The window has not been inspected yet.", "まだ確認していないウインドウです。")) : .gone }
+        guard let c = cached(id) else { return WindowList.exists(id.raw) ? .rejected(L(.macWindowSystemTheWindowHasNotBeen)) : .gone }
         c.app.setMessagingTimeout(timeout)
         switch c.element.copyAttribute(kAXCloseButtonAttribute) {
         case .failure(let e):
             if e == .invalidElement || !WindowList.exists(id.raw) { return .gone }
             if e == .cannotComplete { return .timedOut }
-            return .rejected(L("The window has no close button: \(e.label)", "ウインドウに閉じるボタンがありません: \(e.label)"))
+            return .rejected(L(.macWindowSystemTheWindowHasNoClose(e.label)))
         case .success(let v):
             let button = unsafeBitCast(v, to: AXUIElement.self)
             guard shouldContinue() else { return .interrupted }
@@ -453,14 +453,14 @@ public final class MacWindowSystem: WindowSystem {
 
     public func toggleWindowState(_ id: WindowID, _ attribute: WindowStateAttribute, timeout: TimeInterval, shouldContinue: @escaping () -> Bool) -> WriteResult {
         guard shouldContinue() else { return .interrupted }
-        guard let c = cached(id) else { return WindowList.exists(id.raw) ? .rejected(L("The window has not been inspected yet.", "まだ確認していないウインドウです。")) : .gone }
+        guard let c = cached(id) else { return WindowList.exists(id.raw) ? .rejected(L(.macWindowSystemTheWindowHasNotBeen)) : .gone }
         c.app.setMessagingTimeout(timeout)
         let name = attribute == .fullscreen ? "AXFullScreen" : kAXMinimizedAttribute
         switch c.element.copyAttribute(name) {
         case .failure(let e):
             if e == .invalidElement || !WindowList.exists(id.raw) { return .gone }
             if e == .cannotComplete { return .timedOut }
-            return .rejected(L("Could not read the window attribute: \(e.label)", "ウインドウの属性を読めません: \(e.label)"))
+            return .rejected(L(.macWindowSystemCouldNotReadTheWindow(e.label)))
         case .success(let v):
             let now = (v as? NSNumber)?.boolValue ?? false
             guard shouldContinue() else { return .interrupted }
@@ -597,7 +597,7 @@ public final class MacWindowSystem: WindowSystem {
 
     /// Frame of a window on a Space other than the current one, using only elements observed on that Space; not read after the deadline.
     public func readFrame(inSpace id: WindowID, space: UInt64, deadline: Date) -> FrameRead {
-        guard let c = retained(id, on: space, deadline: deadline) else { return WindowList.exists(id.raw) ? .failed(L("The window can't be read on that Space.", "その操作スペースのウインドウを読めません。")) : .gone }
+        guard let c = retained(id, on: space, deadline: deadline) else { return WindowList.exists(id.raw) ? .failed(L(.macWindowSystemTheWindowCantBeRead)) : .gone }
         switch Self.frame(c, deadline: deadline) {
         case .success(let f): return .frame(f)
         case .failure(let e): return e == .invalidElement || !WindowList.exists(id.raw) ? .gone : .failed(e.label)
@@ -607,7 +607,7 @@ public final class MacWindowSystem: WindowSystem {
     /// Geometry write to a window on a Space other than the current one. Checks `shouldContinue` and the deadline before the frame read and each size -> position -> size request.
     /// Never touches app-wide attributes (AXEnhancedUserInterface), and never focuses, raises, or activates.
     public func writeFrame(inSpace id: WindowID, space: UInt64, frame target: CGRect, deadline: Date, shouldContinue: @escaping () -> Bool) -> WriteResult {
-        let stopped = WriteResult.rejected(L("Stopped because the Space, the window, input, or the time limit changed.", "操作スペース・ウインドウ・入力・時間の条件が変わったため中止しました。"))
+        let stopped = WriteResult.rejected(L(.macWindowSystemStoppedBecauseTheSpaceThe))
         guard shouldContinue() else { return stopped }
         guard let c = retained(id, on: space, deadline: deadline) else { return WindowList.exists(id.raw) ? stopped : .gone }
         guard shouldContinue() else { return stopped }
@@ -729,7 +729,7 @@ public final class MacWindowSystem: WindowSystem {
 
     /// Writes only the position (no size, activation, or focus), using the element retained by observation and checking `shouldContinue` right before writing.
     public func writePosition(_ id: WindowID, origin: CGPoint, timeout: TimeInterval, shouldContinue: @escaping () -> Bool) -> WriteResult {
-        guard let c = cached(id) else { return WindowList.exists(id.raw) ? .rejected(L("The window has not been inspected yet.", "まだ確認していないウインドウです。")) : .gone }
+        guard let c = cached(id) else { return WindowList.exists(id.raw) ? .rejected(L(.macWindowSystemTheWindowHasNotBeen)) : .gone }
         c.app.setMessagingTimeout(timeout)
         c.element.setMessagingTimeout(timeout)
         guard shouldContinue() else { return .interrupted }

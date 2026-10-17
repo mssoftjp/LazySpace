@@ -65,7 +65,6 @@ public enum DockShortcutFreshness: Equatable {
 
     /// The line shown in `lazyspace status` and Settings › Shortcuts (only for `preferencesNewer`).
     public static var message: String {
-        L("Keyboard shortcut preferences were saved after the Dock started. If a Mission Control shortcut does not respond, restarting the Dock (Terminal: killall Dock) or logging out and in may help.",
-          "Dockの起動後にキーボードショートカットの設定が保存されています。Mission Controlのショートカットが応答しないときは、Dockの再起動（ターミナルで`killall Dock`）かログアウトで直ることがあります。")
+        L(.dockShortcutFreshnessMessage)
     }
 }

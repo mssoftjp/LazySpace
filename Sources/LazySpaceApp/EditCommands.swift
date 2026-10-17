@@ -92,43 +92,43 @@ enum EditCommand: Equatable {
                 ? L("Stack Below \(neighbor(x))", "\(ja(x))のウインドウの下にまとめる")
                 : L("Place Beside \(neighbor(x))", "\(ja(x))のウインドウの右にまとめる")
         case .resize(let a, let v):
-            if a == .horizontal { return v >= 0 ? L("Increase Width", "幅を広げる") : L("Decrease Width", "幅を狭める") }
-            return v >= 0 ? L("Increase Height", "高さを増やす") : L("Decrease Height", "高さを減らす")
-        case .resizeSmart(let v): return v >= 0 ? L("Grow Along Split", "並び方向に広げる") : L("Shrink Along Split", "並び方向に縮める")
-        case .balance: return L("Equalize Split Ratios", "分割の割合を均等にする")
-        case .toggleOrientation: return L("Switch Horizontal / Vertical", "縦並び／横並びを切り替え")
-        case .toggleAccordion: return L("Switch Overlapping / Tiled", "重ねて表示／並べて表示")
-        case .toggleFloat: return L("Toggle Tiling for Window", "整列対象から外す／戻す")
-        case .toggleZoom: return L("Fill Work Area / Restore Layout", "作業領域いっぱいに表示／戻す")
-        case .focusBack: return L("Focus Previous Window", "直前のウインドウに戻る")
-        case .undo: return L("Undo Layout Change", "レイアウト変更を取り消す")
-        case .close: return L("Close Window", "ウインドウを閉じる")
+            if a == .horizontal { return v >= 0 ? L(.editCommandsIncreaseWidth) : L(.editCommandsDecreaseWidth) }
+            return v >= 0 ? L(.editCommandsIncreaseHeight) : L(.editCommandsDecreaseHeight)
+        case .resizeSmart(let v): return v >= 0 ? L(.editCommandsGrowAlongSplit) : L(.editCommandsShrinkAlongSplit)
+        case .balance: return L(.editCommandsEqualizeSplitRatios)
+        case .toggleOrientation: return L(.editCommandsSwitchHorizontalVertical)
+        case .toggleAccordion: return L(.editCommandsSwitchOverlappingTiled)
+        case .toggleFloat: return L(.editCommandsToggleTilingForWindow)
+        case .toggleZoom: return L(.editCommandsFillWorkAreaRestoreLayout)
+        case .focusBack: return L(.editCommandsFocusPreviousWindow)
+        case .undo: return L(.editCommandsUndoLayoutChange)
+        case .close: return L(.editCommandsCloseWindow)
         case .space(let t):
             switch t {
-            case .index(let n), .desktop(let n, _): return L("Switch to \(Copy.desktop(n))", "\(Copy.desktop(n))へ切り替え")
-            case .next: return L("Switch to Next Space", "次の操作スペースへ移動")
-            case .prev: return L("Switch to Previous Space", "前の操作スペースへ移動")
-            case .back: return L("Switch to Last Used Space", "直前の操作スペースへ移動")
-            case .id: return L("Switch to Space", "操作スペースへ移動")
+            case .index(let n), .desktop(let n, _): return L(.editCommandsSwitchTo(Copy.desktop(n)))
+            case .next: return L(.editCommandsSwitchToNextSpace)
+            case .prev: return L(.editCommandsSwitchToPreviousSpace)
+            case .back: return L(.editCommandsSwitchToLastUsedSpace)
+            case .id: return L(.editCommandsSwitchToSpace)
             }
         case .moveToSpace(let t):
             switch t {
-            case .index(let n), .desktop(let n, _): return L("Move Window to \(Copy.desktop(n)) and Follow", "ウインドウを\(Copy.desktop(n))へ移動して切り替え")
-            case .next: return L("Move Window to Next Space and Follow", "ウインドウを次の操作スペースへ移動して切り替え")
-            case .prev: return L("Move Window to Previous Space and Follow", "ウインドウを前の操作スペースへ移動して切り替え")
-            case .back: return L("Move Window to Last Used Space and Follow", "ウインドウを直前の操作スペースへ移動して切り替え")
-            case .id: return L("Move Window to Space and Follow", "ウインドウを操作スペースへ移動して切り替え")
+            case .index(let n), .desktop(let n, _): return L(.editCommandsMoveWindowToAndFollow(Copy.desktop(n)))
+            case .next: return L(.editCommandsMoveWindowToNextSpace)
+            case .prev: return L(.editCommandsMoveWindowToPreviousSpace)
+            case .back: return L(.editCommandsMoveWindowToLastUsed)
+            case .id: return L(.editCommandsMoveWindowToSpaceAnd)
             }
         case .sendToSpace(let t):
             switch t {
-            case .index(let n), .desktop(let n, _): return L("Send Window to \(Copy.desktop(n))", "ウインドウを\(Copy.desktop(n))へ送る")
-            case .next: return L("Send Window to Next Space", "ウインドウを次の操作スペースへ送る")
-            case .prev: return L("Send Window to Previous Space", "ウインドウを前の操作スペースへ送る")
-            case .back: return L("Send Window to Last Used Space", "ウインドウを直前の操作スペースへ送る")
-            case .id: return L("Send Window to Space", "ウインドウを操作スペースへ送る")
+            case .index(let n), .desktop(let n, _): return L(.editCommandsSendWindowTo(Copy.desktop(n)))
+            case .next: return L(.editCommandsSendWindowToNextSpace)
+            case .prev: return L(.editCommandsSendWindowToPreviousSpace)
+            case .back: return L(.editCommandsSendWindowToLastUsed)
+            case .id: return L(.editCommandsSendWindowToSpace)
             }
-        case .fullscreen: return L("Toggle Full Screen", "フルスクリーンを切り替え")
-        case .minimize: return L("Minimize Window", "ウインドウを最小化")
+        case .fullscreen: return L(.editCommandsToggleFullScreen)
+        case .minimize: return L(.editCommandsMinimizeWindow)
         }
     }
 
@@ -136,9 +136,9 @@ enum EditCommand: Equatable {
     func menuLabel(floating: Bool, zoomed: Bool) -> String {
         switch self {
         case .toggleFloat:
-            return floating ? L("Return Window to Tiling", "整列対象に戻す") : L("Remove Window from Tiling", "整列対象から外す")
+            return floating ? L(.editCommandsReturnWindowToTiling) : L(.editCommandsRemoveWindowFromTiling)
         case .toggleZoom:
-            return zoomed ? L("Restore Tiled Layout", "整列した表示に戻す") : L("Fill Work Area", "作業領域いっぱいに広げる")
+            return zoomed ? L(.editCommandsRestoreTiledLayout) : L(.editCommandsFillWorkArea)
         default: return label
         }
     }
@@ -214,32 +214,32 @@ enum StatusMenuCopy {
 
     static func availabilityTitle(_ s: AppStatus) -> String {
         switch s.availability {
-        case .needsSetup: return L("Setup Required", "初期設定が必要")
-        case .manualOnly: return L("Manual Arrangement Only", "手動整列のみ")
-        case .paused: return L("Paused in All Spaces", "すべての操作スペースで一時停止中")
+        case .needsSetup: return L(.cliSetupRequired)
+        case .manualOnly: return L(.cliManualArrangementOnly)
+        case .paused: return L(.editCommandsPausedInAllSpaces)
         case .automatic:
-            if s.currentSpaceAutoPaused { return L("Automatic Arrangement Off in This Space", "この操作スペースの自動整列はオフ") }
+            if s.currentSpaceAutoPaused { return L(.cliAutomaticArrangementOffInThis) }
             return s.currentSpaceManaged
-                ? L("Automatic Arrangement Active", "自動整列中")
-                : L("Automatic Arrangement Available (This Space Not Started)", "自動整列を利用可能（この操作スペースは未開始）")
+                ? L(.cliAutomaticArrangementActive)
+                : L(.editCommandsAutomaticArrangementAvailableThisSpace)
         }
     }
 
-    static var arrangeTitle: String { L("Arrange Now", "今すぐ整列") }
+    static var arrangeTitle: String { L(.editCommandsArrangeTitle) }
 
-    static var automaticSpaceTitle: String { L("Automatically Arrange This Space", "この操作スペースを自動整列") }
+    static var automaticSpaceTitle: String { L(.editCommandsAutomaticSpaceTitle) }
 
     static func globalPauseTitle(paused: Bool) -> String {
-        paused ? L("Resume LazySpace", "LazySpaceを再開") : L("Pause LazySpace", "LazySpaceを一時停止")
+        paused ? L(.editCommandsResumeLazySpace) : L(.editCommandsPauseLazySpace)
     }
 
-    static var editTitle: String { L("Edit Layout", "レイアウトを編集") }
-    static var moveWindowToSpaceTitle: String { L("Move Window to Space", "ウインドウを別の操作スペースへ") }
+    static var editTitle: String { L(.editCommandsEditTitle) }
+    static var moveWindowToSpaceTitle: String { L(.editCommandsMoveWindowToSpaceTitle) }
 
-    static func modeTitle(_ mode: String) -> String { L("Mode: \(mode)", "モード: \(mode)") }
-    static var settingsTitle: String { L("Settings…", "設定…") }
-    static var quitTitle: String { L("Quit LazySpace", "LazySpaceを終了") }
-    static var statusItemToolTip: String { L("Open LazySpace controls and status.", "LazySpaceの操作と状態を表示します。") }
+    static func modeTitle(_ mode: String) -> String { L(.editCommandsModeTitle(mode)) }
+    static var settingsTitle: String { L(.editCommandsSettingsTitle) }
+    static var quitTitle: String { L(.editCommandsQuitTitle) }
+    static var statusItemToolTip: String { L(.editCommandsStatusItemToolTip) }
 
     /// A top-level item; separators are not included.
     struct TopEntry: Equatable {
@@ -274,11 +274,11 @@ enum StatusMenuCopy {
         return items + utilities
     }
 
-    static var configErrorTitle: String { L("The Configuration File Could Not Be Applied…", "設定ファイルを適用できません…") }
-    static var accessibilityTitle: String { L("Allow LazySpace in \(AccessPane.name())…", "「\(AccessPane.name())」でLazySpaceを許可…") }
+    static var configErrorTitle: String { L(.editCommandsConfigErrorTitle) }
+    static var accessibilityTitle: String { L(.editCommandsAccessibilityTitle(AccessPane.name())) }
     static var emptySpace: String { "—" }
-    static var unknownSpaceContents: String { L("Windows unavailable", "ウインドウを確認できません") }
-    static var fullScreenNote: String { L("Full Screen", "フルスクリーン") }
+    static var unknownSpaceContents: String { L(.editCommandsUnknownSpaceContents) }
+    static var fullScreenNote: String { L(.cliFullScreen) }
 
     /// Width (in half-width units) of app names in an overview row, short enough that the menu stays under half the screen.
     static let appListWidth = 36
@@ -311,17 +311,17 @@ enum StatusMenuCopy {
         return names.joined(separator: ", ")
     }
 
-    static var spaceReorderNote: String { L("Desktop numbers follow recent use and can change.", "デスクトップの番号は使用状況で入れ替わります。") }
+    static var spaceReorderNote: String { L(.editCommandsSpaceReorderNote) }
 
     static func startHint(arrangeKey: String?) -> String {
         let title = arrangeTitle
-        if let arrangeKey { return L("\(arrangeKey) (or the menu item “\(title)”)", "\(arrangeKey)（またはメニュー「\(title)」）") }
-        return L("the menu item “\(title)”", "メニュー「\(title)」")
+        if let arrangeKey { return L(.editCommandsOrTheMenuItem(arrangeKey, title)) }
+        return L(.editCommandsTheMenuItem(title))
     }
 
     static func notStartedMessage(arrangeKey: String?) -> String {
         let hint = startHint(arrangeKey: arrangeKey)
-        return L("This Space has not started tiling yet. Use \(hint) to start.", "この操作スペースはまだ整列していません。\(hint)で始めてください。")
+        return L(.editCommandsThisSpaceHasNotStarted(hint))
     }
 
     /// Old operation results stay out of the menu: shown only for a managed Space or within the last 30 minutes.
@@ -333,8 +333,8 @@ enum StatusMenuCopy {
         return managed || now.timeIntervalSince(result.finishedAt) <= recentLimit
     }
 
-    static func resumeNotice() -> String { L("Resumed LazySpace.", "LazySpaceを再開しました。") }
-    static func pauseNotice() -> String { L("Paused LazySpace.", "LazySpaceを一時停止しました。") }
+    static func resumeNotice() -> String { L(.editCommandsResumeNotice) }
+    static func pauseNotice() -> String { L(.editCommandsPauseNotice) }
 
 
     static func offersIntegrate(waiting: Int) -> Bool { waiting > 0 }
@@ -342,13 +342,13 @@ enum StatusMenuCopy {
     /// One window per integration; the count is the total waiting.
     static func integrateTitle(waiting: Int) -> String {
         waiting > 1
-            ? L("Add One Waiting Window (\(waiting) Waiting)", "待機中のウインドウを1つ追加（\(waiting)つ待機中）")
-            : L("Add One Waiting Window", "待機中のウインドウを1つ追加")
+            ? L(.editCommandsAddOneWaitingWindowWaiting(waiting))
+            : L(.editCommandsAddOneWaitingWindow)
     }
 
     /// The everyday status line. No window numbers, even while zoomed.
     static func occupancyLine(waiting: Int, floatingCount: Int, zoomed: Bool) -> String {
-        var line = L("Waiting windows: \(waiting)", "待機中のウインドウ: \(waiting)")
+        var line = L(.editCommandsWaitingWindows(waiting))
         if floatingCount > 0 { line += L("  Floating: \(floatingCount)", "  フローティング: \(floatingCount)") }
         if zoomed { line += L("  Zoomed", "  ズーム中") }
         return line
@@ -422,17 +422,17 @@ enum StatusMenuCopy {
 
     static var editSections: [Section] {
         [
-            Section(title: L("Focus Window", "操作するウインドウ"), commands: [.focus(.left), .focus(.right), .focus(.up), .focus(.down), .focusBack]),
-            Section(title: L("Swap Positions", "位置を交換"), commands: [.swap(.left), .swap(.right), .swap(.up), .swap(.down)]),
-            Section(title: L("Reorder", "並べ替え"), commands: [.move(.left), .move(.right), .move(.up), .move(.down)]),
-            Section(title: L("Share Neighbor's Area", "隣の領域にまとめる"), commands: [.join(.left), .join(.right), .join(.up), .join(.down)]),
-            Section(title: L("Size and Layout", "サイズとレイアウト"), commands: [
+            Section(title: L(.editCommandsFocusWindow), commands: [.focus(.left), .focus(.right), .focus(.up), .focus(.down), .focusBack]),
+            Section(title: L(.editCommandsSwapPositions), commands: [.swap(.left), .swap(.right), .swap(.up), .swap(.down)]),
+            Section(title: L(.editCommandsReorder), commands: [.move(.left), .move(.right), .move(.up), .move(.down)]),
+            Section(title: L(.editCommandsShareNeighborsArea), commands: [.join(.left), .join(.right), .join(.up), .join(.down)]),
+            Section(title: L(.editCommandsSizeAndLayout), commands: [
                 .resize(.horizontal, 0.05), .resize(.horizontal, -0.05),
                 .resize(.vertical, 0.05), .resize(.vertical, -0.05),
                 .resizeSmart(0.05), .resizeSmart(-0.05),
                 .balance, .toggleOrientation, .toggleAccordion,
             ]),
-            Section(title: L("Window", "ウインドウ"), commands: [.toggleFloat, .toggleZoom, .undo, .close, .fullscreen, .minimize]),
+            Section(title: L(.editCommandsWindow), commands: [.toggleFloat, .toggleZoom, .undo, .close, .fullscreen, .minimize]),
         ]
     }
 }
@@ -564,13 +564,13 @@ struct HotkeyBinding: Equatable {
     var label: String {
         switch action {
         case .edit(let c): return c.label
-        case .arrange: return L("Arrange This Space", "この操作スペースを整列")
-        case .integrate: return L("Add One Waiting Window", "待機中のウインドウを1つ追加")
-        case .pauseResume: return L("Pause or Resume LazySpace", "LazySpaceを一時停止／再開")
-        case .reload: return L("Reload Configuration", "設定ファイルを再読み込み")
+        case .arrange: return L(.editCommandsArrangeThisSpace)
+        case .integrate: return L(.editCommandsAddOneWaitingWindow)
+        case .pauseResume: return L(.editCommandsPauseOrResumeLazySpace)
+        case .reload: return L(.editCommandsReloadConfiguration)
         case .mode(let m):
-            if m == Config.mainModeName { return L("Return to main Mode", "mainモードへ戻る") }
-            return L("Enter Mode \(m)", "モード\(m)へ")
+            if m == Config.mainModeName { return L(.editCommandsReturnToMainMode) }
+            return L(.editCommandsEnterMode(m))
         }
     }
 }

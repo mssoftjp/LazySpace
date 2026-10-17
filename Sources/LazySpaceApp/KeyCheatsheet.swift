@@ -45,12 +45,12 @@ final class KeyCheatsheet {
 
     // MARK: - Text and screen
 
-    static var brandTitle: String { L("LazySpace — Shortcuts", "LazySpace — ショートカット") }
+    static var brandTitle: String { L(.keyCheatsheetBrandTitle) }
 
     /// A short subtitle with the mode name, except for main.
     static func modeSubtitle(_ mode: String) -> String? {
         guard mode != Config.mainModeName else { return nil }
-        return L("Mode \(mode)", "モード\(mode)")
+        return L(.keyCheatsheetMode(mode))
     }
 
     /// In a menu-bar app, NSScreen.main is not necessarily the caller's screen.

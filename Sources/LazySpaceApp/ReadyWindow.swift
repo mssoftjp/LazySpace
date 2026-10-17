@@ -380,7 +380,7 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
         spaceHeading.stringValue = Self.spaceHeadingText
         refreshButton.title = Self.refreshTitle
         updatedLabel.stringValue = Self.updatedLabel(checking: checking, date: updatedAt)
-        let titles = ["app": L("App", "アプリ"), "eligibility": Self.verdictColumnTitle]
+        let titles = ["app": L(.cliApp), "eligibility": Self.verdictColumnTitle]
         for column in table.tableColumns {
             column.title = titles[column.identifier.rawValue] ?? column.title
         }
@@ -398,7 +398,7 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
         let result = readLive().status.lastResult
         guard let result, Self.showsPreviousOperation(result), let window else { return }
         DetailSheet.present(
-            title: L("Previous Operation", "前回の操作"),
+            title: L(.windowListPreviousOperation),
             body: Self.previousOperationText(result, name: AppNames.localized),
             choices: [DetailSheet.closeChoice],
             on: window) { _ in }

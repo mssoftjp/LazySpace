@@ -186,7 +186,7 @@ public enum WriteResult: Equatable {
     case timedOut
 
     public static var interrupted: WriteResult {
-        .rejected(L("The operation was interrupted before the next window change.", "次のウインドウ変更の前に操作が中断されました。"))
+        .rejected(L(.windowSystemTheOperationWasInterruptedBefore))
     }
 }
 
@@ -237,7 +237,7 @@ public enum WindowStateAttribute: Equatable {
 public extension WindowSystem {
     /// Refuses by default (the hidden-Space writer and test implementations do not write position alone).
     func writePosition(_ id: WindowID, origin: CGPoint, timeout: TimeInterval, shouldContinue: @escaping () -> Bool) -> WriteResult {
-        .rejected(L("Moving a window without resizing it is not supported here.", "ここでは、大きさを変えずにウインドウを動かせません。"))
+        .rejected(L(.windowSystemMovingAWindowWithoutResizing))
     }
     /// Probe callers without an operation can explicitly use these unscoped conveniences.
     /// Product operations pass their authorization to the required gated methods.
@@ -271,7 +271,7 @@ public extension WindowSystem {
     func membershipOf(_ id: WindowID) -> ObservedWindow.Membership? { nil }
     var axTrusted: Bool { true }
     var mouseButtonDown: Bool { false }
-    func toggleWindowState(_ id: WindowID, _ attribute: WindowStateAttribute, timeout: TimeInterval, shouldContinue: @escaping () -> Bool) -> WriteResult { .rejected(L("Not supported", "未対応")) }
-    func setWindowState(_ id: WindowID, _ attribute: WindowStateAttribute, value: Bool, timeout: TimeInterval, shouldContinue: @escaping () -> Bool) -> WriteResult { .rejected(L("Not supported", "未対応")) }
+    func toggleWindowState(_ id: WindowID, _ attribute: WindowStateAttribute, timeout: TimeInterval, shouldContinue: @escaping () -> Bool) -> WriteResult { .rejected(L(.windowSystemNotSupported)) }
+    func setWindowState(_ id: WindowID, _ attribute: WindowStateAttribute, value: Bool, timeout: TimeInterval, shouldContinue: @escaping () -> Bool) -> WriteResult { .rejected(L(.windowSystemNotSupported)) }
     func readWindowState(_ id: WindowID, _ attribute: WindowStateAttribute) -> Bool? { nil }
 }

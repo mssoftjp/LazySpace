@@ -650,16 +650,16 @@ final class Coordinator {
     }
 
     private func floatingHeldReason(display: String?) -> String {
-        if let display { return L("Floating. Press \(display) to return it to the layout.", "フローティング中。\(display)でレイアウトに戻せます") }
+        if let display { return L(.coordinatorFloatingPressToReturnIt(display)) }
         let item = EditCommand.toggleFloat.menuLabel(floating: true, zoomed: false)
-        return L("Floating. Choose “\(item)” to return it to the layout.", "フローティング中。「\(item)」でレイアウトに戻せます")
+        return L(.coordinatorFloatingChooseToReturnIt(item))
     }
 
     private func floatingEditRefusal() -> String {
         lock.lock(); let display = floatKeyDisplayLocked(); lock.unlock()
-        if let display { return L("The focused window is floating. Press \(display) to return it to the layout, then try again.", "フォーカス中のウインドウはフローティングです。\(display)でレイアウトに戻してから操作してください。") }
+        if let display { return L(.coordinatorTheFocusedWindowIsFloating(display)) }
         let item = EditCommand.toggleFloat.menuLabel(floating: true, zoomed: false)
-        return L("The focused window is floating. Choose “\(item)” to return it to the layout, then try again.", "フォーカス中のウインドウはフローティングです。「\(item)」でレイアウトに戻してから操作してください。")
+        return L(.coordinatorTheFocusedWindowIsFloatingChoose(item))
     }
 
     func noteRefusal(_ text: String) {
@@ -755,7 +755,7 @@ final class Coordinator {
     @discardableResult
     func reloadConfig(source: String) -> String {
         if source != "file" { ConfigFile(url: configURL).ensureExists() }
-        let unchanged = L("The configuration file has not changed.", "設定ファイルは変わっていません。")
+        let unchanged = L(.coordinatorTheConfigurationFileHasNot)
         if source == "file", !FileManager.default.fileExists(atPath: configURL.path),
            (try? FileManager.default.destinationOfSymbolicLink(atPath: configURL.path)) == nil { return unchanged }
         let text = try? String(contentsOf: configURL, encoding: .utf8)
@@ -764,7 +764,7 @@ final class Coordinator {
             if same { return unchanged }
         }
         guard let text else {
-            let message = L("Could not read the configuration file: \(configURL.path)", "設定ファイルを読めません: \(configURL.path)")
+            let message = L(.coordinatorConfigurationFileUnreadable(configURL.path))
             lock.lock(); configError = message; if source == "launch" { unappliedSinceLaunch = true }; lock.unlock()
             publishConfigStatus()
             return message
@@ -799,7 +799,7 @@ final class Coordinator {
             if modeGone { mode = Config.mainModeName }
             lock.unlock()
             var notes = loadNotes
-            if modeGone { notes.append(L("Mode \(previousMode) was removed from the configuration, so the main mode is active again.", "モード\(previousMode)は設定から消えたためmainに戻りました。")) }
+            if modeGone { notes.append(L(.coordinatorModeWasRemovedFromThe(previousMode))) }
             // Open at Login: register / unregister with the OS only when a value is written and differs from before (or at launch).
             if let wanted = loaded.startAtLogin, wanted != previous.startAtLogin || source == "launch" {
                 if let problem = LoginItem.set(wanted) { notes.append(problem) }
@@ -811,7 +811,7 @@ final class Coordinator {
                 if modeGone { self.onModeChange?(Config.mainModeName) }
                 self.onChange?()
             }
-            return ([L("Configuration loaded. No windows were moved.", "設定を読み込みました。ウインドウは動かしていません。")] + notes).joined(separator: "\n")
+            return ([L(.coordinatorConfigurationLoadedNoWindowsWere)] + notes).joined(separator: "\n")
         } catch let e as Config.LoadError {
             let message = L("The configuration has errors, so the last valid configuration is still in use:", "設定に誤りがあるため、直前の有効な設定を使っています:") + "\n" + e.problems.joined(separator: "\n")
             lock.lock(); configError = message; if source == "launch" { unappliedSinceLaunch = true }; lock.unlock()
@@ -819,7 +819,7 @@ final class Coordinator {
             DispatchQueue.main.async { self.onChange?() }
             return message
         } catch {
-            let message = L("Could not read the configuration: \(error)", "設定を読めません: \(error)")
+            let message = L(.coordinatorConfigurationUnreadable(String(describing: error)))
             lock.lock(); configError = message; if source == "launch" { unappliedSinceLaunch = true }; lock.unlock()
             publishConfigStatus()
             return message
@@ -844,7 +844,7 @@ final class Coordinator {
             _ = reloadConfig(source: source)
             lock.lock(); let failed = configError; lock.unlock()
             if failed != nil {
-                return L("The configuration was written but could not be loaded. Check the file.", "設定は書き込みましたが、読み込めませんでした。ファイルを確認してください。")
+                return L(.coordinatorTheConfigurationWasWrittenBut)
             }
             return nil
         }
@@ -866,7 +866,7 @@ final class Coordinator {
         guard known else {
             lock.unlock()
             let available = ([Config.mainModeName] + config.modes.keys.sorted()).joined(separator: ", ")
-            return .refused(L("Mode \(name) is not in the configuration. Available modes: \(available).", "モード\(name)は設定にありません（使えるモード: \(available)）。"))
+            return .refused(L(.coordinatorModeIsNotInThe(name, available)))
         }
         if mode == name { lock.unlock(); return .unchanged }
         mode = name
@@ -891,10 +891,8 @@ final class Coordinator {
         if let problem = LoginItem.set(enabled) { noteRefusal(problem) }
         else if let fixed = config.startAtLogin, fixed != enabled {
             noteRefusal(enabled
-                ? L("Turned on Open at Login. The configuration file sets start-at-login = \(fixed), so the next reload changes it back. Update the configuration file as well.",
-                    "「ログイン時に開く」をオンにしました。設定ファイルにstart-at-login = \(fixed)があるため、次の再読み込みで戻ります。設定ファイルも変更してください。")
-                : L("Turned off Open at Login. The configuration file sets start-at-login = \(fixed), so the next reload changes it back. Update the configuration file as well.",
-                    "「ログイン時に開く」をオフにしました。設定ファイルにstart-at-login = \(fixed)があるため、次の再読み込みで戻ります。設定ファイルも変更してください。"))
+                ? L(.coordinatorTurnedOnOpenAtLogin(String(describing: fixed)))
+                : L(.coordinatorTurnedOffOpenAtLogin(String(describing: fixed))))
         } else {
             DispatchQueue.main.async { self.onChange?() }
         }
@@ -975,23 +973,19 @@ final class Coordinator {
         var cause: AutoGateCause?
         var allowed: Bool { cause == nil }
         var reason: String {
-            cause.map(Self.reason(for:)) ?? L("Automatic arrangement is available. Use window rules to exclude apps.", "自動整列を利用できます。除外するアプリはルールで指定します。")
+            cause.map(Self.reason(for:)) ?? L(.coordinatorAutomaticArrangementIsAvailableUse)
         }
 
         static func reason(for cause: AutoGateCause) -> String {
             switch cause {
             case .inputUnobservable:
-                L("Automatic arrangement is off because input cannot be observed, so windows could move while you use them. Check the \(AccessPane.name()) permission.",
-                  "入力を観測できないため、自動整列を止めています。操作中のウインドウを動かさないためです。「\(AccessPane.name())」の許可を確認してください。")
+                L(.coordinatorAutomaticArrangementIsOffBecause(AccessPane.name()))
             case .configUnapplied:
-                L("Automatic arrangement is off because the configuration file could not be applied. It turns on when the file is fixed.",
-                  "設定ファイルを適用できないため、自動整列を止めています。ファイルを直すと使えるようになります。")
+                L(.coordinatorAutomaticArrangementIsOffBecauseThe)
             case .stageManager:
-                L("Automatic arrangement is off while \(MacItem.stageManager) is on. Turn off \(MacItem.stageManager) to use it.",
-                  "\(MacItem.stageManager)の使用中は、自動整列を止めています。使うには\(MacItem.stageManager)をオフにしてください。")
+                L(.coordinatorAutomaticArrangementIsOffWhile(MacItem.stageManager, MacItem.stageManager))
             case .sharedSpaces:
-                L("Automatic arrangement is off because more than one display is connected and Mission Control’s “\(MacItem.separateSpaces)” is off. Turn it on in System Settings › Desktop & Dock, then log out and back in.",
-                  "複数のディスプレイをつないでいて、Mission Controlの「\(MacItem.separateSpaces)」がオフのため、自動整列を止めています。システム設定 › デスクトップとDockでオンにしてから、ログアウトしてログインし直してください。")
+                L(.coordinatorAutomaticArrangementIsOffBecauseMore(MacItem.separateSpaces))
             }
         }
     }
@@ -1106,9 +1100,9 @@ final class Coordinator {
         let paused = control.paused
         let busy = isBusy
         var manual = true
-        var manualReason = L("Available", "利用できます")
-        if !trusted { manual = false; manualReason = L("The \(AccessPane.name()) permission is required.", "「\(AccessPane.name())」の許可が必要です") }
-        else if !spaceOK { manual = false; manualReason = L("This version of macOS does not report which Space a window is on.", "このmacOSではウインドウがどの操作スペースにあるかを確認できません") }
+        var manualReason = L(.coordinatorAvailable)
+        if !trusted { manual = false; manualReason = L(.coordinatorThePermissionIsRequired(AccessPane.name())) }
+        else if !spaceOK { manual = false; manualReason = L(.coordinatorThisVersionOfMacOSDoes) }
         let gate = autoGate()
         let autoOK = manual && gate.allowed
         let spaceKey = system.currentSpaceID().map(String.init) ?? "-"
@@ -1122,20 +1116,17 @@ final class Coordinator {
         if !manual { availability = .needsSetup; reason = manualReason }
         else if paused {
             availability = .paused
-            reason = L("Paused in all Spaces. Resuming does not itself move windows; automatic arrangement can continue afterward.",
-                       "すべての操作スペースで一時停止中です。再開の操作だけではウインドウは動きません。再開後は自動整列を続けられます。")
+            reason = L(.coordinatorPausedInAllSpacesResuming)
         }
         else if spacePaused {
             availability = .automatic
-            reason = L("Automatic arrangement is off in this Space. Manual arrangement is still available, and other Spaces continue.",
-                       "この操作スペースの自動整列はオフです。手動の整列は使えます。他の操作スペースは続きます。")
+            reason = L(.coordinatorAutomaticArrangementIsOffIn)
         }
         else if autoOK {
             availability = .automatic
-            if managed { reason = L("Automatic arrangement is active in this Space.", "この操作スペースは自動整列中です。") }
+            if managed { reason = L(.coordinatorAutomaticArrangementIsActiveIn) }
             else {
-                reason = L("Waiting to start. This Space starts tiling from an eligible focused window after you stay on it and input settles.",
-                           "開始待ちです。この操作スペースに留まり、入力が落ち着くと、フォーカス中の対象ウインドウから整列を始めます。")
+                reason = L(.coordinatorWaitingToStartThisSpace)
             }
         }
         else { availability = .manualOnly; reason = L("Manual arrangement only. ", "手動整列のみ。") + gate.reason }
@@ -1149,7 +1140,7 @@ final class Coordinator {
             trusted: trusted, spaceObservation: spaceOK,
             inputObservation: system.input.mode.rawValue,
             paused: paused, progress: progress,
-            progressText: busy ? (paused ? L("Pausing: checking windows that had started to move", "停止処理中: 動かし始めたウインドウを確認しています") : progressText) : "",
+            progressText: busy ? (paused ? L(.coordinatorPausingCheckingWindowsThatHad) : progressText) : "",
             waiting: (waitingBySpace[spaceKey] ?? []).sorted(),
             floating: state.floating[spaceKey] ?? [],
             zoomed: state.zoomed[spaceKey],
@@ -1456,7 +1447,7 @@ final class Coordinator {
         } else if let region { op.extraGate = region.gate }
         running = op.id
         runningKind = kind
-        progressText = L("Accepted", "受け付けました")
+        progressText = L(.coordinatorAccepted)
         lock.unlock()
         DispatchQueue.main.async { self.onChange?() }
         onOperationID?(op.id)
@@ -1464,7 +1455,7 @@ final class Coordinator {
         performOnOperationQueue { [self] in
             var result: OperationResult
             if kind == "auto-start", takeCensus(system.currentSpaceID()).frontWindow != automaticFront {
-                var cancelled = OperationResult.note(kind: kind, spaceID: system.currentSpaceID(), message: L("Not started because the front window changed.", "前面のウインドウが変わったため操作しません。"), ok: false)
+                var cancelled = OperationResult.note(kind: kind, spaceID: system.currentSpaceID(), message: L(.coordinatorNotStartedBecauseTheFront), ok: false)
                 cancelled.id = op.id
                 cancelled.stopReason = .cancelled
                 result = cancelled
@@ -1517,8 +1508,7 @@ final class Coordinator {
                 result.outcome = .interrupted
                 result.verified = false
                 result.stopReason = result.stopReason ?? .cancelled
-                result.message = L("The situation changed before the arrangement finished, so this change was not saved.",
-                                   "整列の途中で状況が変わったため、この変更は保存していません。")
+                result.message = L(.coordinatorTheSituationChangedBeforeThe)
             }
             if result.outcome == .complete, let layout = op.resultingLayout, let sid = result.spaceID {
                 let key = String(sid)
@@ -1582,7 +1572,7 @@ final class Coordinator {
                     state.layouts[key] = prior; lastPlans[key] = [:]
                     result.outcome = .complete
                     result.verified = true
-                    result.message = L("Window removed from tiling.", "ウインドウを整列対象から外しました。")
+                    result.message = L(.coordinatorWindowRemovedFromTiling)
                 }
             }
             lastFocusRefresh = .distantPast
@@ -1669,7 +1659,7 @@ final class Coordinator {
         var held: [WindowID: String] = [:]
         if let chosen {
             for id in missing where id != chosen {
-                held[id] = L("Add One Waiting Window adds one window at a time.", "この操作ではウインドウを1つだけ追加します")
+                held[id] = L(.coordinatorAddOneWaitingWindowAdds)
             }
         }
         return arrange(source: source, kind: "integrate-waiting", heldOut: held, ignoreZoom: true, adding: chosen.map { [$0] } ?? [], authorization: authorization, pressedAt: pressedAt)
@@ -1904,8 +1894,7 @@ final class Coordinator {
     func edit(_ command: EditCommand, source: String, pressedAt: Date? = nil, repeats: Int = 1, resultTicket: String? = nil, target: WindowID? = nil, authorization: OperationAuthorization? = nil, desiredState: Bool? = nil, timeline: OperationTimeline? = nil,
               resolved: ResolvedSpace? = nil, menuTarget: MenuWindowTarget? = nil) -> EditAccept {
         if let menuTarget, self.menuWindowTarget() != menuTarget {
-            return .refused(L("The selected window changed. Open the menu again for the window you want to send.",
-                              "対象のウインドウが変わりました。送りたいウインドウでメニューを開き直してください。"), code: "targets-changed")
+            return .refused(L(.coordinatorTheSelectedWindowChangedOpen), code: "targets-changed")
         }
         let timeline: OperationTimeline? = {
             switch command {
@@ -1928,7 +1917,7 @@ final class Coordinator {
             if control.paused {
                 // Space switches run even while paused. During stop handling (waiting to confirm issued operations), refuse as busy.
                 if case .space = command { return .busy }
-                return .refused(L("All Spaces are paused, so the layout was not changed. Resume LazySpace, then try again.", "すべての操作スペースが一時停止中のため編集しません。再開してから操作してください。"), code: "paused")
+                return .refused(L(.coordinatorAllSpacesArePausedSo), code: "paused")
             }
             guard UserWorkQueue.queuesWhileBusy(source) else { return .busy }
             if currentKind?.hasPrefix("auto-") == true { control.invalidate() }
@@ -1952,19 +1941,19 @@ final class Coordinator {
         }
         // Space switches do not touch windows, so they run even while paused.
         if case .space(let target) = command { return runSpaceSwitch(target, source: source, authorization: authorization, timeline: timeline, resolved: resolved) }
-        if control.paused { return .refused(L("All Spaces are paused, so the layout was not changed. Resume LazySpace, then try again.", "すべての操作スペースが一時停止中のため編集しません。再開してから操作してください。"), code: "paused") }
+        if control.paused { return .refused(L(.coordinatorAllSpacesArePausedSo), code: "paused") }
         // Edits that need no focused window, or no started Space.
         switch command {
         case .moveToSpace(let destination):
             // From the menu (with `follow-moved-window`), the window pinned when the menu opened, as for a send.
-            guard let focused = menuTarget?.window ?? target ?? frontWindowForEdit() else { return .refused(L("Could not find the focused window. Select the window to move, then try again.", "フォーカス中のウインドウを確認できません。移動したいウインドウを選んでから操作してください。"), code: "no-focused-window") }
+            guard let focused = menuTarget?.window ?? target ?? frontWindowForEdit() else { return .refused(L(.coordinatorCouldNotFindTheFocused), code: "no-focused-window") }
             return runMoveToSpace(focused, target: destination, source: source, authorization: authorization, timeline: timeline, resolved: resolved, menuTarget: menuTarget)
         case .sendToSpace(let destination):
             // Sending a background window with `--window-id` is not accepted (front window only, as with `move-to-space`).
-            guard let focused = menuTarget?.window ?? target ?? frontWindowForEdit() else { return .refused(L("Could not find the focused window. Select the window to send, then try again.", "フォーカス中のウインドウを確認できません。送りたいウインドウを選んでから操作してください。"), code: "no-focused-window") }
+            guard let focused = menuTarget?.window ?? target ?? frontWindowForEdit() else { return .refused(L(.appDelegateCouldNotFindTheFocused), code: "no-focused-window") }
             return runSendToSpace(focused, target: destination, source: source, authorization: authorization, timeline: timeline, resolved: resolved, menuTarget: menuTarget)
         case .fullscreen, .minimize:
-            guard let focused = target ?? frontWindowForEdit() else { return .refused(L("Could not find the focused window.", "フォーカス中のウインドウを確認できません。"), code: "no-focused-window") }
+            guard let focused = target ?? frontWindowForEdit() else { return .refused(L(.coordinatorCouldNotFindTheFocusedWindow), code: "no-focused-window") }
             return runWindowState(focused, command == .fullscreen ? .fullscreen : .minimized, source: source, authorization: authorization, desiredState: desiredState, requireFocus: target == nil)
         case .undo:
             // undo restores only the layout tree (structure and ratios), leaving floating, zoom, and waiting state alone.
@@ -1978,7 +1967,7 @@ final class Coordinator {
                 let pruned = candidate.removing(Set(candidate.windowIDs).subtracting(alive).union(floating))
                 if pruned.root != nil, pruned != layout { previous = pruned; break }
             }
-            guard let previous else { lock.unlock(); return .refused(L("There is no layout change to undo.", "取り消せるレイアウトの変更がありません。"), code: "nothing-to-undo") }
+            guard let previous else { lock.unlock(); return .refused(L(.coordinatorThereIsNoLayoutChange), code: "nothing-to-undo") }
             lock.unlock()
             return wrap(arrange(source: source, kind: command.kind, layoutOverride: previous, ignoreZoom: true,
                                 editState: EditState(floating: Array(floating), zoomed: zoomed, undoHistory: history), authorization: authorization, pressedAt: acceptedAt))
@@ -1991,26 +1980,26 @@ final class Coordinator {
             // (When the front app has no window, the head of the history is the target as is.)
             // The census also lists other displays' windows; one SkyLight puts only on other Spaces is skipped (unknown membership keeps it).
             let onThisSpace = { (id: WindowID) in current.flatMap { space in self.system.spacesOf(id).map { $0.isEmpty || $0.contains(space) } } ?? true }
-            guard let target = history.first(where: { $0 != census.frontWindow && census.windows[$0] != nil && onThisSpace($0) }) else { return .refused(L("There is no previously focused window in this Space.", "直前にフォーカスしていたウインドウがありません。"), code: "no-focus-history") }
+            guard let target = history.first(where: { $0 != census.frontWindow && census.windows[$0] != nil && onThisSpace($0) }) else { return .refused(L(.coordinatorThereIsNoPreviouslyFocused), code: "no-focus-history") }
             return runFocus(target, source: source, pressedAt: acceptedAt, authorization: authorization)
         default: break
         }
         guard let layout else { return .refused(notStartedMessage, code: "not-started") }
-        guard let focused = target ?? frontWindowForEdit() else { return .refused(L("Could not find the focused window. Select a tiled window, then try again.", "フォーカス中のウインドウを確認できません。整列対象のウインドウを選んでから操作してください。"), code: "no-focused-window") }
+        guard let focused = target ?? frontWindowForEdit() else { return .refused(L(.coordinatorCouldNotFindTheFocusedWindowSelect), code: "no-focused-window") }
 
         func requireManaged() -> CodedRefusal? {
             if floating.contains(focused) { return CodedRefusal(message: floatingEditRefusal(), code: "not-tiled") }
             if !layout.windowIDs.contains(focused) {
-                return CodedRefusal(message: L("The focused window is not in the layout. It is excluded or waiting.", "フォーカス中のウインドウはレイアウトに含まれていません（除外か待機中）。"), code: "not-tiled")
+                return CodedRefusal(message: L(.coordinatorTheFocusedWindowIsNot), code: "not-tiled")
             }
             return nil
         }
         func neighborFailure(_ d: Direction) -> String {
             switch d.rawValue {
-            case "left": return L("There is no window to the left.", "左に隣のウインドウがありません。")
-            case "right": return L("There is no window to the right.", "右に隣のウインドウがありません。")
-            case "up": return L("There is no window above.", "上に隣のウインドウがありません。")
-            default: return L("There is no window below.", "下に隣のウインドウがありません。")
+            case "left": return L(.coordinatorThereIsNoWindowTo)
+            case "right": return L(.coordinatorThereIsNoWindowToThe)
+            case "up": return L(.coordinatorThereIsNoWindowAbove)
+            default: return L(.coordinatorThereIsNoWindowBelow)
             }
         }
 
@@ -2023,7 +2012,7 @@ final class Coordinator {
                     let key = auth.spaceID.map(String.init) ?? "-"
                     let actual = command == .toggleFloat ? (self.state.floating[key] ?? []).contains(focused) : self.state.zoomed[key] == focused
                     self.lock.unlock()
-                    var result = OperationResult.note(kind: command.kind, spaceID: auth.spaceID, message: L("Already in the requested state.", "指定した状態です。"), ok: actual == desiredState)
+                    var result = OperationResult.note(kind: command.kind, spaceID: auth.spaceID, message: L(.coordinatorAlreadyInTheRequestedState), ok: actual == desiredState)
                     result.issued = 0
                     result.verified = actual == desiredState
                     return result
@@ -2043,7 +2032,7 @@ final class Coordinator {
             let maximums = knowledge.maximums(for: layout.windowIDs, workArea: workArea)
             let tileFocus = layout.windowIDs.contains(focused) ? focused : nil
             guard case .fits(let plan) = Planner.fit(layout, in: workArea, constraints: constraints, options: plannerOptions(forSpaceKey: spaceKey), maximums: maximums, focused: tileFocus) else {
-                return .refused(L("The layout could not be fitted to the work area.", "作業領域にレイアウトを配置できません。"), code: "layout-unavailable")
+                return .refused(L(.coordinatorTheLayoutCouldNotBe), code: "layout-unavailable")
             }
             let rects = plan.rects.merging(members) { tile, _ in tile }
             var cursor = focused
@@ -2080,37 +2069,37 @@ final class Coordinator {
             let transform: ArrangeOperation.Transform = { current, _ in LayoutEdit.resize(focused, axis: axis, by: delta, in: current) }
             return wrap(arrange(source: source, kind: command.kind, transform: transform,
                                 transformFailure: axis == .horizontal
-                                    ? L("The width cannot change because no window shares this row.", "横方向に分け合う隣がないため幅を変えられません。")
-                                    : L("The height cannot change because no window shares this column.", "縦方向に分け合う隣がないため高さを変えられません。"), ignoreZoom: true, authorization: authorization, pressedAt: acceptedAt))
+                                    ? L(.coordinatorTheWidthCannotChangeBecause)
+                                    : L(.coordinatorTheHeightCannotChangeBecause), ignoreZoom: true, authorization: authorization, pressedAt: acceptedAt))
 
         case .resizeSmart(let delta):
             if let why = requireManaged() { return why.accept }
-            guard let axis = layout.parentAxis(of: focused) else { return .refused(L("The share cannot change because there is only one window.", "ウインドウが1つだけのため割合を変えられません。"), code: "single-window") }
+            guard let axis = layout.parentAxis(of: focused) else { return .refused(L(.coordinatorTheShareCannotChangeBecause), code: "single-window") }
             let transform: ArrangeOperation.Transform = { current, _ in LayoutEdit.resize(focused, axis: axis, by: delta, in: current) }
-            return wrap(arrange(source: source, kind: command.kind, transform: transform, transformFailure: L("The share cannot change because no neighboring window shares the split.", "分け合う隣がないため割合を変えられません。"), ignoreZoom: true, authorization: authorization, pressedAt: acceptedAt))
+            return wrap(arrange(source: source, kind: command.kind, transform: transform, transformFailure: L(.coordinatorTheShareCannotChangeBecauseNo), ignoreZoom: true, authorization: authorization, pressedAt: acceptedAt))
 
         case .balance:
             let transform: ArrangeOperation.Transform = { current, _ in
                 let balanced = current.balanced()
                 return balanced == current ? nil : balanced
             }
-            return wrap(arrange(source: source, kind: command.kind, transform: transform, transformFailure: L("The layout is already balanced.", "割合は既に均等です。"), ignoreZoom: true, authorization: authorization, pressedAt: acceptedAt))
+            return wrap(arrange(source: source, kind: command.kind, transform: transform, transformFailure: L(.coordinatorTheLayoutIsAlreadyBalanced), ignoreZoom: true, authorization: authorization, pressedAt: acceptedAt))
 
         case .close:
             if floating.contains(focused) || layout.windowIDs.contains(focused) || waitingNow.contains(focused) {
                 return runClose(focused, source: source, authorization: authorization, requireFocus: target == nil)
             }
-            return .refused(L("The focused window is not tiled. Close it in the app with ⌘W.", "フォーカス中のウインドウは整列対象ではありません。アプリの⌘Wで閉じてください。"), code: "not-tiled")
+            return .refused(L(.coordinatorTheFocusedWindowIsNotTiled), code: "not-tiled")
 
         case .toggleOrientation:
             if let why = requireManaged() { return why.accept }
             let transform: ArrangeOperation.Transform = { current, _ in LayoutEdit.toggleOrientation(of: focused, in: current) }
-            return wrap(arrange(source: source, kind: command.kind, transform: transform, transformFailure: L("The split orientation cannot change because there is only one window.", "ウインドウが1つだけのため分割の向きを切り替えられません。"), ignoreZoom: true, authorization: authorization, pressedAt: acceptedAt))
+            return wrap(arrange(source: source, kind: command.kind, transform: transform, transformFailure: L(.coordinatorTheSplitOrientationCannotChange), ignoreZoom: true, authorization: authorization, pressedAt: acceptedAt))
 
         case .toggleAccordion:
             if let why = requireManaged() { return why.accept }
             let transform: ArrangeOperation.Transform = { current, _ in LayoutEdit.toggleAccordion(of: focused, in: current) }
-            return wrap(arrange(source: source, kind: command.kind, transform: transform, transformFailure: L("Accordion layout needs more than one window.", "ウインドウが1つだけのためアコーディオン表示に切り替えられません。"), ignoreZoom: true, authorization: authorization, pressedAt: acceptedAt))
+            return wrap(arrange(source: source, kind: command.kind, transform: transform, transformFailure: L(.coordinatorAccordionLayoutNeedsMoreThan), ignoreZoom: true, authorization: authorization, pressedAt: acceptedAt))
 
         case .toggleFloat:
             var list = Array(floating)
@@ -2137,7 +2126,7 @@ final class Coordinator {
                                 editState: EditState(floating: Array(floating), zoomed: turningOn ? focused : nil), authorization: authorization, pressedAt: acceptedAt))
 
         case .undo, .focusBack, .space, .moveToSpace, .sendToSpace, .fullscreen, .minimize:
-            return .refused(L("Internal error.", "内部エラー"), code: "internal-error") // handled above
+            return .refused(L(.coordinatorInternalError), code: "internal-error") // handled above
         }
     }
 
@@ -2151,13 +2140,13 @@ final class Coordinator {
     }
     private func resolveSpace(_ target: SpaceTarget, desktopsOnly: Bool = false) -> SpaceResolution {
         guard let listing = spaceListing(), let snapshot = listing.spaceSnapshot() else {
-            return .failure(CodedRefusal(message: L("Spaces cannot be used because Space detection is unavailable.", "操作スペースの観測が使えないため、操作スペースを扱えません。"), code: "space-unavailable"))
+            return .failure(CodedRefusal(message: L(.coordinatorSpacesCannotBeUsedBecause), code: "space-unavailable"))
         }
         // Order, uuids, display, and current Space from one read (so a reorder between reads never yields a mismatched set).
         let order = snapshot.order
         func resolved(_ id: UInt64) -> SpaceResolution {
             guard let holder = snapshot.holder(of: id) else {
-                return .failure(CodedRefusal(message: L("That Space is no longer available.", "その操作スペースは利用できません。"), code: "space-not-found"))
+                return .failure(CodedRefusal(message: L(.coordinatorThatSpaceIsNoLonger), code: "space-not-found"))
             }
             return .success(ResolvedSpace(id: id, uuid: snapshot.uuids?[id], display: holder.display, isDesktop: holder.desktops.contains(id),
                                           otherDisplay: holder.display != snapshot.display))
@@ -2196,18 +2185,18 @@ final class Coordinator {
             }
             return resolved(snapshot.desktops[n - 1])
         case .next:
-            guard let id = neighbor(1) else { return .failure(CodedRefusal(message: L("There is no Space to the right.", "右に操作スペースがありません。"), code: "space-not-found")) }
+            guard let id = neighbor(1) else { return .failure(CodedRefusal(message: L(.coordinatorThereIsNoSpaceTo), code: "space-not-found")) }
             return resolved(id)
         case .prev:
-            guard let id = neighbor(-1) else { return .failure(CodedRefusal(message: L("There is no Space to the left.", "左に操作スペースがありません。"), code: "space-not-found")) }
+            guard let id = neighbor(-1) else { return .failure(CodedRefusal(message: L(.coordinatorThereIsNoSpaceToThe), code: "space-not-found")) }
             return resolved(id)
         case .back:
             lock.lock(); let prev = previousSpaceID; lock.unlock()
-            guard let prev, snapshot.holder(of: prev) != nil else { return .failure(CodedRefusal(message: L("There is no previous Space to return to.", "直前にいた操作スペースがありません。"), code: "space-not-found")) }
+            guard let prev, snapshot.holder(of: prev) != nil else { return .failure(CodedRefusal(message: L(.coordinatorThereIsNoPreviousSpace), code: "space-not-found")) }
             return resolved(prev)
         case .id(let id):
             guard let holder = snapshot.holder(of: id), !desktopsOnly || holder.desktops.contains(id) else {
-                return .failure(CodedRefusal(message: L("That Space is no longer available.", "その操作スペースは利用できません。"), code: "space-not-found"))
+                return .failure(CodedRefusal(message: L(.coordinatorThatSpaceIsNoLonger), code: "space-not-found"))
             }
             return resolved(id)
         }
@@ -2226,22 +2215,21 @@ final class Coordinator {
     }
 
     private static var destinationChanged: String {
-        L("The destination Space changed after the request, so nothing was done.", "受け付けたあとで移動先の操作スペースが変わったため、何もしていません。")
+        L(.coordinatorDestinationChanged)
     }
 
     /// Without the direct move a send is refused. A shortcut or the menu names the setting that makes them follow; the command line names `--follow`.
     /// With the setting already on, only a send accepted before it was turned on gets here, and trying again follows.
     static func sendUnavailable(fromShortcutOrMenu: Bool, followSetting: Bool) -> String {
-        let reason = L("Sending a window without switching needs the direct move, which is not available on this macOS.", "切り替えずに送るには直接の移動が必要ですが、このmacOSでは使えません。")
+        let reason = L(.coordinatorSendingAWindowWithoutSwitching)
         let remedy: String
         if !fromShortcutOrMenu {
-            remedy = L("To move and follow the window, use move-to-space --follow.", "移動先へ追従してよければmove-to-space --followを使ってください。")
+            remedy = L(.coordinatorToMoveAndFollowThe)
         } else if followSetting {
-            remedy = L("Try again to move the window and switch to its Space.", "もう一度操作すると、ウインドウと一緒に切り替えます。")
+            remedy = L(.coordinatorTryAgainToMoveThe)
         } else {
             let title = SettingsCopy.followMovedWindowTitle
-            remedy = L("To move the window and switch with it, turn on “\(title)” in Settings › Shortcuts.",
-                       "ウインドウと一緒に切り替えるには、設定 › ショートカットの「\(title)」をオンにしてください。")
+            remedy = L(.coordinatorToMoveTheWindowAnd(title))
         }
         return reason + Copy.sentenceSeparator + remedy
     }
@@ -2288,9 +2276,9 @@ final class Coordinator {
     private func spaceLabel(_ id: UInt64, in list: [SpaceListItem]? = nil) -> String {
         if let item = (list ?? spaceList()).first(where: { $0.id == id }), let n = item.index {
             guard item.otherDisplay, let name = item.displayName else { return Copy.desktop(n) }
-            return L("\(Copy.desktop(n)) on \(name)", "\(name)の\(Copy.desktop(n))")
+            return L(.coordinatorSpaceOnDisplay(Copy.desktop(n), name))
         }
-        return spaceControl?.label(id) ?? L("Full Screen", "フルスクリーン")
+        return spaceControl?.label(id) ?? L(.cliFullScreen)
     }
 
     /// For Settings: reads 79 / 81 with the same function as at run time, sending no events. Unread without observation.
@@ -2311,10 +2299,8 @@ final class Coordinator {
                                                     "システム設定 › キーボード › キーボードショートカット… › Mission Controlの「\(left)」と「\(right)」を確認してください。")
         case .notMoved: text = L("Could not confirm that the window moved to the target Space. Check the \(AccessPane.name()) permission, input observation, Mission Control settings, and whether the top center of the window can be dragged.",
                                  "目標の操作スペースへのウインドウの移動を確認できませんでした。「\(AccessPane.name())」の許可・入力監視・Mission Controlの設定と、ウインドウの上端中央をドラッグできるかを確認してください。")
-        case .drifted(let to): text = L("After reaching the target Space, the current Space changed to \(spaceLabel(to)). The cause could not be determined.",
-                                        "目標の操作スペースを確認した後、現在の操作スペースが\(spaceLabel(to))に変わりました。切り替わった原因は確認できていません。")
-        case .movedElsewhere(let to): text = L("The window ended up on \(spaceLabel(to)), not the target Space. The cause could not be determined.",
-                                               "ウインドウは\(spaceLabel(to))にありました（目標とは別の操作スペース）。移動先が変わった原因は確認できていません。")
+        case .drifted(let to): text = L(.coordinatorAfterReachingTheTargetSpace(spaceLabel(to)))
+        case .movedElsewhere(let to): text = L(.coordinatorTheWindowEndedUpOn(spaceLabel(to)))
         case .notSwitched: text = L("The window moved to the target Space, but switching to that Space could not be confirmed.",
                                     "ウインドウは目標の操作スペースへ移りましたが、その操作スペースへの切り替えを確認できませんでした。")
         case .moveUnconfirmed: text = L("The move request was sent, but the window's Space did not change while LazySpace waited. No drag was attempted; the window may still move.",
@@ -2331,8 +2317,7 @@ final class Coordinator {
                                               "アプリを前面にしましたが、そのアプリが前面になったことを確認できなかったため、そこで止めました。LazySpaceが前面のまま残っていることがあります。")
         case .hotkeyUnconfirmed:
             let name = MacItem.switchToDesktop(nil)
-            text = L("LazySpace sent the macOS “\(name)” shortcut, but could not confirm the Space switch. Nothing else was tried because the switch may still happen.",
-                     "macOSの「\(name)」のショートカットを送りましたが、操作スペースの切り替えを確認できませんでした。遅れて切り替わることがあるため、ほかの方法は試していません。")
+            text = L(.coordinatorLazySpaceSentTheMacOSShortcut(name))
         case .steppingUnavailable(let issue): text = DesktopShortcuts.steppingText(issue)
         case .frontUnconfirmed: text = L("The window moved to the target Space and LazySpace switched there, but could not confirm focus on the moved window.",
                                          "ウインドウは目標の操作スペースへ移り、その操作スペースへも切り替えましたが、移動したウインドウへのフォーカスを確認できませんでした。")
@@ -2359,14 +2344,14 @@ final class Coordinator {
             }
         }
         let dest = resolved.id
-        if system.currentSpaceID() == dest { return .refused(L("You are already on that Space.", "既にその操作スペースにいます。"), code: "same-space") }
+        if system.currentSpaceID() == dest { return .refused(L(.coordinatorYouAreAlreadyOnThat), code: "same-space") }
         let switcher: SpaceSwitcher
         if let override = spaceSwitcherOverride { switcher = override }
         else if let sc = spaceControl { switcher = { sc.switchTo(spaceID: $0, plan: $1, shouldContinue: $2) } }
-        else { return .refused(L("Space detection is unavailable.", "操作スペースの観測が使えません。"), code: "space-unavailable") }
+        else { return .refused(L(.coordinatorSpaceDetectionIsUnavailable), code: "space-unavailable") }
         prestartPassThroughTap()
         let landing = SpaceLanding(dest: dest)
-        return runSimple(kind: "space", progress: L("Switching Spaces", "操作スペースを切り替えています"), source: source, allowPaused: true, authorization: authorization,
+        return runSimple(kind: "space", progress: L(.coordinatorSwitchingSpaces), source: source, allowPaused: true, authorization: authorization,
                          timeline: timeline, finalize: { [self] in finishSpaceBookkeeping(landing) }) { [self] authorization in
             let overview = takeOverview()
             let spaces = switchCandidateSpaces(to: dest)
@@ -2384,7 +2369,7 @@ final class Coordinator {
                 // Record the arrival (hooks, arrival). `finishSpaceBookkeeping` settles the visible Space and back target right before publishing.
                 noteSpaceTransition(to: dest)
                 landing.origin = result.fromSpace
-                return OperationResult.note(kind: "space", spaceID: dest, message: L("Switched to \(spaceLabel(dest)).", "\(spaceLabel(dest))へ切り替えました。"), ok: true)
+                return OperationResult.note(kind: "space", spaceID: dest, message: L(.coordinatorSwitchedTo(spaceLabel(dest))), ok: true)
             case .failure(let f):
                 return OperationResult.note(kind: "space", spaceID: dest, message: describe(f), ok: false)
             }
@@ -2567,9 +2552,9 @@ final class Coordinator {
         }
         let dest = resolved.id
         let current = system.currentSpaceID()
-        if current == dest { return .refused(L("The window is already on that Space.", "ウインドウは既にその操作スペースにあります。"), code: "same-space") }
+        if current == dest { return .refused(L(.coordinatorTheWindowIsAlreadyOn), code: "same-space") }
         let census = takeCensus(current)
-        guard let targetPID = census.windows[target] else { return .refused(L("The focused window is not on the current Space.", "フォーカス中のウインドウは現在の操作スペースにありません。"), code: "target-not-found") }
+        guard let targetPID = census.windows[target] else { return .refused(L(.coordinatorTheFocusedWindowIsNotOn), code: "target-not-found") }
         let mover: SpaceMover
         if let override = spaceMoverOverride { mover = override }
         else if let sc = spaceControl {
@@ -2579,17 +2564,17 @@ final class Coordinator {
                 sc.moveWindow(wid, frame: frame, toSpace: dest, arrows: arrowPolicy(), timeline: timeline, hooks: gates.hooks, shouldContinue: gates.shouldContinue)
             }
         }
-        else { return .refused(L("Space detection is unavailable.", "操作スペースの観測が使えません。"), code: "space-unavailable") }
+        else { return .refused(L(.coordinatorSpaceDetectionIsUnavailable), code: "space-unavailable") }
         prestartPassThroughTap()
         let landing = SpaceLanding(dest: dest)
         let sameTarget = { [self] in menuTarget.map { self.menuWindowTarget() == $0 } ?? (frontWindowForEdit() == target) }
-        return runSimple(kind: "move-to-space", progress: L("Moving the window to another Space", "ウインドウを別の操作スペースへ移動しています"), source: source, target: target,
+        return runSimple(kind: "move-to-space", progress: L(.coordinatorMovingTheWindowToAnother), source: source, target: target,
                          requireFocus: menuTarget == nil, authorization: authorization,
                          timeline: timeline, finalize: { [self] in finishSpaceBookkeeping(landing) }) { [self] authorization in
             guard case .frame(let frame) = system.readFrame(target), sameTarget(),
                   system.currentSpaceID() == authorization.spaceID,
                   authorization.interruptionReason(system: system, control: control) == nil else {
-                return OperationResult.note(kind: "move-to-space", spaceID: current, message: L("Not moved because the window or the pause state changed.", "ウインドウまたは停止状態が変わったため移動しません。"), ok: false)
+                return OperationResult.note(kind: "move-to-space", spaceID: current, message: L(.coordinatorNotMovedBecauseTheWindow), ok: false)
             }
             timeline?.mark("prepared")
             guard destinationStillValid(resolved), system.currentSpaceID() != dest else {
@@ -2617,21 +2602,18 @@ final class Coordinator {
                 // The window moved; input, Pause, a Space change, or a lost permission or input observation that ended the follow's watch cancels the rest (partial).
                 let interrupted = authorization.interruptionReason(system: system, control: control) != nil || system.currentSpaceID() != dest
                 if result.stoppedWhileWatching, !interrupted {
-                    var result = OperationResult.note(kind: "move-to-space", spaceID: dest, message: L("The window moved to \(spaceLabel(dest)), but the \(AccessPane.name()) permission or mouse and keyboard input observation became unavailable, so position correction and adding it to the layout were canceled.",
-                                                                                                     "ウインドウは\(spaceLabel(dest))へ移りましたが、「\(AccessPane.name())」の許可がなくなったか、マウスとキーボードの入力を観測できなくなったため、位置の補正とレイアウトへの追加を中止しました。"), ok: false)
+                    var result = OperationResult.note(kind: "move-to-space", spaceID: dest, message: L(.coordinatorTheWindowMovedToBut(spaceLabel(dest), AccessPane.name())), ok: false)
                     result.outcome = .partial
                     return result
                 }
                 guard !interrupted else {
-                    var result = OperationResult.note(kind: "move-to-space", spaceID: dest, message: L("After the window moved, input, pause state, or the current Space changed, so position correction and adding it to the layout were canceled.",
-                                                                                                     "ウインドウの移動後に入力・停止・操作スペースの状態が変わったため、位置の補正とレイアウトへの追加を中止しました。"), ok: false)
+                    var result = OperationResult.note(kind: "move-to-space", spaceID: dest, message: L(.coordinatorAfterTheWindowMovedInput), ok: false)
                     result.outcome = .partial
                     return result
                 }
                 if resolved.otherDisplay {
                     if fitted == false {
-                        var result = OperationResult.note(kind: "move-to-space", spaceID: dest, message: L("The window moved to \(spaceLabel(dest)), but moving it onto that display could not be confirmed.",
-                                                                                                         "ウインドウは\(spaceLabel(dest))へ移りましたが、そのディスプレイの上へ動かせたかは確認できませんでした。"), ok: false)
+                        var result = OperationResult.note(kind: "move-to-space", spaceID: dest, message: L(.coordinatorTheWindowMovedToButMoving(spaceLabel(dest))), ok: false)
                         result.outcome = .partial
                         return result
                     }
@@ -2640,7 +2622,7 @@ final class Coordinator {
                 else if case .frame(let after) = system.readFrame(target), after != frame, after.size == frame.size,
                    abs(after.origin.x - frame.origin.x) <= 20, abs(after.origin.y - frame.origin.y) <= 20 {
                     guard authorization.interruptionReason(system: system, control: control) == nil, system.currentSpaceID() == dest else {
-                        var result = OperationResult.note(kind: "move-to-space", spaceID: dest, message: L("Position correction after the move was canceled.", "移動後の位置の補正を中断しました。"), ok: false)
+                        var result = OperationResult.note(kind: "move-to-space", spaceID: dest, message: L(.coordinatorPositionCorrectionAfterTheMove), ok: false)
                         result.outcome = .partial
                         return result
                     }
@@ -2648,7 +2630,7 @@ final class Coordinator {
                         system.axTrusted && authorization.interruptionReason(system: system, control: control) == nil && system.currentSpaceID() == dest
                     }
                     guard write == .issued, case .frame(let actual) = system.readFrame(target), actual.matches(frame, tolerance: limits.tolerance) else {
-                        var result = OperationResult.note(kind: "move-to-space", spaceID: dest, message: L("The window moved to the Space, but its position correction could not be confirmed.", "操作スペースへの移動は確認しましたが、移動後の位置の補正は確認できませんでした。"), ok: false)
+                        var result = OperationResult.note(kind: "move-to-space", spaceID: dest, message: L(.coordinatorTheWindowMovedToThe), ok: false)
                         result.outcome = .partial
                         return result
                     }
@@ -2656,14 +2638,13 @@ final class Coordinator {
                 // Recheck input, pause, cancellation, and Space changes during position correction (writes and readback) or the frame read, before creating arrival handling and before reporting success.
                 // If it stops here, no arrival handling is created under the new cancellation generation and it is not success (the window is on the destination).
                 guard authorization.interruptionReason(system: system, control: control) == nil, system.currentSpaceID() == dest else {
-                    var result = OperationResult.note(kind: "move-to-space", spaceID: dest, message: L("The window moved to \(spaceLabel(dest)), but input, pause state, or the current Space changed before the move finished, so it was not added to the layout.",
-                                                                                                     "ウインドウは\(spaceLabel(dest))へ移りましたが、移動の終わりまでに入力・停止・操作スペースの状態が変わったため、レイアウトには加えていません。"), ok: false)
+                    var result = OperationResult.note(kind: "move-to-space", spaceID: dest, message: L(.coordinatorTheWindowMovedToButInput(spaceLabel(dest))), ok: false)
                     result.outcome = .partial
                     return result
                 }
                 // On the arrived Space, this window joins the layout without the arrival dwell, on the same operations queue as the tick.
                 expectArrival(of: target, on: dest)
-                return OperationResult.note(kind: "move-to-space", spaceID: dest, message: L("Moved the window to \(spaceLabel(dest)).", "ウインドウを\(spaceLabel(dest))へ移動しました"), ok: true)
+                return OperationResult.note(kind: "move-to-space", spaceID: dest, message: L(.coordinatorMovedTheWindowTo(spaceLabel(dest))), ok: true)
             case .failure(let f):
                 var result = OperationResult.note(kind: "move-to-space", spaceID: dest, message: describe(f), ok: false)
                 if departedTo != nil { result.outcome = .partial }
@@ -2688,17 +2669,17 @@ final class Coordinator {
         }
         let dest = resolved.id
         let current = system.currentSpaceID()
-        if current == dest { return .refused(L("The window is already on that Space.", "ウインドウは既にその操作スペースにあります。"), code: "same-space") }
+        if current == dest { return .refused(L(.coordinatorTheWindowIsAlreadyOn), code: "same-space") }
         let sender: SpaceSender
         if let override = spaceSenderOverride { sender = override }
         else if let sc = spaceControl { sender = { sc.sendWindow($0, toSpace: $1, timeline: timeline, beforeIssue: $2.beforeIssue, afterIssue: $2.afterIssue) } }
-        else { return .refused(L("Space detection is unavailable.", "操作スペースの観測が使えません。"), code: "space-unavailable") }
+        else { return .refused(L(.coordinatorSpaceDetectionIsUnavailable), code: "space-unavailable") }
         // Dragging instead would switch Spaces, so without the direct move it is refused.
         guard sendAvailableOverride ?? spaceControl?.canSendWithoutFollowing ?? true else {
             return .refused(Self.sendUnavailable(fromShortcutOrMenu: UserWorkQueue.queuesWhileBusy(source), followSetting: config.followMovedWindow), code: "send-unavailable")
         }
         let census = takeCensus(current)
-        guard let targetPID = census.windows[target] else { return .refused(L("The focused window is not on the current Space.", "フォーカス中のウインドウは現在の操作スペースにありません。"), code: "target-not-found") }
+        guard let targetPID = census.windows[target] else { return .refused(L(.coordinatorTheFocusedWindowIsNotOn), code: "target-not-found") }
         // The restore candidate comes from the front history before sending (unaffected by history updates after). The front app at acceptance is noted too
         // (if another app comes forward later without input, no restoration).
         let restore = current.flatMap { restoreCandidate(excluding: target, space: $0, census: census) }
@@ -2707,13 +2688,13 @@ final class Coordinator {
         let finalize = { [self] in
             if let observed = system.currentSpaceID(), observed != current { noteSpaceTransition(to: observed) }
         }
-        return runSimple(kind: "send-to-space", progress: L("Sending the window to another Space", "ウインドウを別の操作スペースへ送っています"), source: source, target: target,
+        return runSimple(kind: "send-to-space", progress: L(.coordinatorSendingTheWindowToAnother), source: source, target: target,
                          requireFocus: menuTarget == nil, authorization: authorization, timeline: timeline, finalize: finalize) { [self] authorization in
             // The menu sticks to the CG front window that decided availability; an old AX focus of the same app is not reused.
             let sameTarget = menuTarget.map { self.menuWindowTarget() == $0 } ?? (frontWindowForEdit() == target)
             guard sameTarget, system.currentSpaceID() == authorization.spaceID,
                   authorization.interruptionReason(system: system, control: control) == nil else {
-                return OperationResult.note(kind: "send-to-space", spaceID: current, message: L("Not sent because the window or the pause state changed.", "ウインドウまたは停止状態が変わったため送りません。"), ok: false)
+                return OperationResult.note(kind: "send-to-space", spaceID: current, message: L(.coordinatorNotSentBecauseTheWindow), ok: false)
             }
             guard destinationStillValid(resolved), system.currentSpaceID() != dest else {
                 return OperationResult.note(kind: "send-to-space", spaceID: current, message: Self.destinationChanged, ok: false)
@@ -2755,10 +2736,10 @@ final class Coordinator {
             // This includes a restoration not attempted because the source's display could not be read: focus is still there.
             if case .confirmed = outcome, resolved.otherDisplay, system.currentSpaceID() == dest, let name = labels.first(where: { $0.id == dest })?.displayName {
                 restoreNote = Copy.sentenceSeparator + (restore == nil
-                    ? L("Focus went with the window to \(name).", "フォーカスはウインドウとともに\(name)へ移りました。")
+                    ? L(.coordinatorFocusWentWithTheWindow(name))
                     : restored
-                    ? L("Focus then went to \(name).", "その後、フォーカスは\(name)へ移りました。")
-                    : L("The previous window was not brought forward, so focus stays on \(name).", "直前のウインドウは前面に戻していないため、フォーカスは\(name)に移ったままです。"))
+                    ? L(.coordinatorFocusThenWentTo(name))
+                    : L(.coordinatorThePreviousWindowWasNot(name)))
             }
             // The position note comes from the last observation after restoration (restoration may move the display to another Space). `finalize` records with the same observation right before publishing.
             // If macOS changed the Space without follow, only note what was observed (no revert).
@@ -2766,8 +2747,8 @@ final class Coordinator {
             let moved = spaceShown(insteadOf: source).map { shown in
                 let label = spaceLabel(shown.id, in: labels)
                 // With several displays, the display is named so it is not mistaken for the one the window went to.
-                return Copy.sentenceSeparator + (shown.displayName.map { L("\($0) then moved to \(label).", "その後、\($0)の表示が\(label)に移りました。") }
-                    ?? L("The display then moved to \(label).", "その後、表示が\(label)に移りました。"))
+                return Copy.sentenceSeparator + (shown.displayName.map { L(.coordinatorThenMovedTo($0, label)) }
+                    ?? L(.coordinatorTheDisplayThenMovedTo(label)))
             } ?? ""
             // With an uncertain result, stop layout writes to that window and reconcile by membership (no resend, no drag).
             switch outcome {
@@ -2913,16 +2894,16 @@ final class Coordinator {
     /// Toggles native full screen / minimize (one AX attribute). Leaving and rejoining the layout is picked up by the tick.
     private func runWindowState(_ target: WindowID, _ attribute: WindowStateAttribute, source: String, authorization: OperationAuthorization? = nil, desiredState: Bool? = nil, requireFocus: Bool = true) -> EditAccept {
         let kind = attribute == .fullscreen ? "edit:fullscreen" : "edit:minimize"
-        return runSimple(kind: kind, progress: attribute == .fullscreen ? L("Toggling full screen", "フルスクリーンを切り替えています") : L("Minimizing", "最小化しています"), source: source,
+        return runSimple(kind: kind, progress: attribute == .fullscreen ? L(.coordinatorTogglingFullScreen) : L(.coordinatorMinimizing), source: source,
                          target: target, allowFullscreen: attribute == .fullscreen, allowMinimized: attribute == .minimized && desiredState != nil, requireFocus: requireFocus, authorization: authorization) { [self] authorization in
             guard let before = system.readWindowState(target, attribute) else {
-                return OperationResult.note(kind: kind, spaceID: authorization.spaceID, message: L("Not changed because the window's current state could not be read.", "ウインドウの現在の状態を確認できないため操作しません。"), ok: false)
+                return OperationResult.note(kind: kind, spaceID: authorization.spaceID, message: L(.coordinatorNotChangedBecauseTheWindows), ok: false)
             }
             guard authorization.interruptionReason(system: system, control: control) == nil, system.currentSpaceID() == authorization.spaceID, (!requireFocus || frontWindowForEdit() == target) else {
-                return OperationResult.note(kind: kind, spaceID: authorization.spaceID, message: L("Not changed because the pause state, input, or the current Space changed.", "停止・入力・操作スペースの状態が変わったため操作しません。"), ok: false)
+                return OperationResult.note(kind: kind, spaceID: authorization.spaceID, message: L(.coordinatorNotChangedBecauseThePause), ok: false)
             }
             if desiredState == before {
-                var result = OperationResult.note(kind: kind, spaceID: authorization.spaceID, message: L("Already in the requested state.", "指定した状態です。"), ok: true)
+                var result = OperationResult.note(kind: kind, spaceID: authorization.spaceID, message: L(.coordinatorAlreadyInTheRequestedState), ok: true)
                 result.issued = 0
                 result.verified = true
                 return result
@@ -2947,15 +2928,15 @@ final class Coordinator {
                 let verified = after == expected
                 var result = OperationResult.note(kind: kind, spaceID: system.currentSpaceID(),
                     message: verified
-                        ? (attribute == .fullscreen ? L("Full screen toggled.", "フルスクリーンの切替を確認しました") : (expected ? L("Window minimized.", "最小化を確認しました") : L("Window restored.", "最小化の解除を確認しました")))
-                        : L("The app accepted the request, but the window's state change could not be confirmed.", "要求は受け付けましたが、ウインドウの状態変化を確認できませんでした。"), ok: true)
+                        ? (attribute == .fullscreen ? L(.coordinatorFullScreenToggled) : (expected ? L(.coordinatorWindowMinimized) : L(.coordinatorWindowRestored)))
+                        : L(.coordinatorTheAppAcceptedTheRequest), ok: true)
                 result.outcome = verified ? .complete : .partial
                 result.verified = verified
                 result.issued = 1
                 return result
-            case .gone: return OperationResult.note(kind: kind, spaceID: system.currentSpaceID(), message: L("The window could not be found.", "ウインドウが見つかりません。"), ok: false)
-            case .timedOut: return OperationResult.note(kind: kind, spaceID: system.currentSpaceID(), message: L("The app did not respond.", "アプリが応答しませんでした。"), ok: false)
-            case .rejected(let why): return OperationResult.note(kind: kind, spaceID: system.currentSpaceID(), message: L("The app rejected the request: \(why)", "アプリが受け付けませんでした: \(why)"), ok: false)
+            case .gone: return OperationResult.note(kind: kind, spaceID: system.currentSpaceID(), message: L(.coordinatorTheWindowCouldNotBe), ok: false)
+            case .timedOut: return OperationResult.note(kind: kind, spaceID: system.currentSpaceID(), message: L(.coordinatorTheAppDidNotRespond), ok: false)
+            case .rejected(let why): return OperationResult.note(kind: kind, spaceID: system.currentSpaceID(), message: L(.coordinatorTheAppRejectedTheRequest(why)), ok: false)
             }
         }
     }
@@ -3008,13 +2989,13 @@ final class Coordinator {
             let resultCandidate: OperationResult
             let focused = target == nil || !requireFocus ? nil : frontWindowForEdit()
             if !snap.trusted {
-                resultCandidate = refusal(.permissionLost, L("Not run because the \(AccessPane.name()) permission is not granted.", "「\(AccessPane.name())」の許可がないため操作しません。"))
+                resultCandidate = refusal(.permissionLost, L(.coordinatorNotRunBecauseThePermission(AccessPane.name())))
             } else if let reason = authorization.stopReason(system: system, control: control, snapshot: snap) {
-                resultCandidate = refusal(reason, L("Not run because the pause state, input, or the current Space changed after the request.", "受付後に停止・入力・操作スペースの状態が変わったため操作しません。"))
+                resultCandidate = refusal(reason, L(.coordinatorNotRunBecauseThePause))
             } else if let target, (requireFocus && focused != target) || !snap.windows.contains(where: {
                 $0.id == target && $0.membership == .current && ($0.kind == .standard || (allowFullscreen && $0.kind == .fullscreen) || (allowMinimized && $0.kind == .minimized))
             }) {
-                resultCandidate = refusal(.targetsChanged, L("Not run because the target window's Space, type, or focus changed.", "対象ウインドウの所属・種類・フォーカスが変わったため操作しません。"))
+                resultCandidate = refusal(.targetsChanged, L(.coordinatorNotRunBecauseTheTarget))
             } else {
                 resultCandidate = body(authorization)
             }
@@ -3044,7 +3025,7 @@ final class Coordinator {
         if running != nil { lock.unlock(); return .busy }
         let op = CloseOperation(system: system, control: control, target: target, limits: limits, authorization: authorization, requireFocus: requireFocus)
         running = op.id
-        progressText = L("Closing the window", "ウインドウを閉じています")
+        progressText = L(.coordinatorClosingTheWindow)
         lock.unlock()
         DispatchQueue.main.async { self.onChange?() }
         onOperationID?(op.id)
@@ -3068,7 +3049,7 @@ final class Coordinator {
         switch a {
         case .started(let id): return .started(id)
         case .busy: return .busy
-        case .notApplicable: return .refused(L("This Space has no layout.", "この操作スペースのレイアウトがありません。"), code: "not-started")
+        case .notApplicable: return .refused(L(.coordinatorThisSpaceHasNoLayout), code: "not-started")
         }
     }
 
@@ -3079,7 +3060,7 @@ final class Coordinator {
         let op = FocusOperation(system: system, control: control, limits: limits, target: target, pressedAt: pressedAt, authorization: authorization,
                                 regionDestination: regionDestination)
         running = op.id
-        progressText = L("Moving focus", "フォーカスを移しています")
+        progressText = L(.coordinatorMovingFocus)
         lock.unlock()
         DispatchQueue.main.async { self.onChange?() }
         onOperationID?(op.id)
@@ -3164,7 +3145,7 @@ final class Coordinator {
         lock.unlock()
         let currentSpace = system.currentSpaceID().map(String.init) ?? "-"
         if next.spaceKey != currentSpace {
-            noteQueuedRefusal(next.ticket, L("Not run because the current Space changed.", "操作スペースが変わったため実行しません"), timeline: next.timeline,
+            noteQueuedRefusal(next.ticket, L(.coordinatorNotRunBecauseTheCurrent), timeline: next.timeline,
                               spaceCommand: Self.isSpaceCommand(next.edit))
             drainUserQueue()
             return
@@ -3174,10 +3155,10 @@ final class Coordinator {
             switch accept {
             case .started(let id): bindTicket(next.ticket, to: id)
             case .busy:
-                noteQueuedRefusal(next.ticket, L("Not accepted because another operation is in progress.", "処理中のため受け付けません"))
+                noteQueuedRefusal(next.ticket, L(.coordinatorNotAcceptedBecauseAnotherOperation))
                 drainUserQueue()
             case .notApplicable:
-                noteQueuedRefusal(next.ticket, L("This Space has no layout.", "この操作スペースのレイアウトがありません。"))
+                noteQueuedRefusal(next.ticket, L(.coordinatorThisSpaceHasNoLayout))
                 drainUserQueue()
             }
             return
@@ -3185,8 +3166,7 @@ final class Coordinator {
         if let command = next.edit {
             if let request = next.menuRequest,
                request.inputCount != system.inputActivityCount || request.generation != control.cancellationGeneration {
-                noteQueuedRefusal(next.ticket, L("Not sent because input or the pause state changed while waiting.",
-                                                 "待っている間に入力または停止状態が変わったため送りません。"), timeline: next.timeline, spaceCommand: true)
+                noteQueuedRefusal(next.ticket, L(.coordinatorNotSentBecauseInputOr), timeline: next.timeline, spaceCommand: true)
                 drainUserQueue()
                 return
             }
@@ -3194,7 +3174,7 @@ final class Coordinator {
             switch accept {
             case .started(let id): bindTicket(next.ticket, to: id)
             case .busy:
-                noteQueuedRefusal(next.ticket, L("Not accepted because another operation is in progress.", "処理中のため受け付けません"), timeline: next.timeline,
+                noteQueuedRefusal(next.ticket, L(.coordinatorNotAcceptedBecauseAnotherOperation), timeline: next.timeline,
                                   spaceCommand: Self.isSpaceCommand(command))
                 drainUserQueue()
             case .refused(let why, _):
@@ -3245,7 +3225,7 @@ final class Coordinator {
         store.save(state)
         lock.unlock()
         for item in dropped {
-            noteQueuedRefusal(item.ticket, L("Not run because all Spaces were paused.", "すべての操作スペースを一時停止したため受け付けませんでした。"), timeline: item.timeline,
+            noteQueuedRefusal(item.ticket, L(.coordinatorNotRunBecauseAllSpaces), timeline: item.timeline,
                               spaceCommand: Self.isSpaceCommand(item.edit))
         }
         DispatchQueue.main.async { self.onChange?() }
@@ -3257,14 +3237,12 @@ final class Coordinator {
     func resume() -> String? {
         guard control.paused else { return nil }
         let authorization = OperationAuthorization(system: system, control: control, allowPaused: true)
-        let refusal = L("Could not confirm the current window layout. All Spaces remain paused. Try Resume again.",
-                        "現在のウインドウ配置を確認できないため、一時停止を続けています。もう一度再開してください。")
+        let refusal = L(.coordinatorCouldNotConfirmTheCurrent)
         func refuse(_ message: String = refusal) -> String { noteRefusal(message); return message }
         // For reasons resuming cannot fix, say what to do instead of suggesting to resume again.
         guard system.axTrusted else {
             let resume = StatusMenuCopy.globalPauseTitle(paused: true)
-            return refuse(L("All Spaces remain paused because LazySpace is not allowed in \(AccessPane.name()). Allow it, then choose \(resume).",
-                            "「\(AccessPane.name())」でLazySpaceが許可されていないため、一時停止を続けています。許可してから「\(resume)」を選んでください。"))
+            return refuse(L(.coordinatorAllSpacesRemainPausedBecause(AccessPane.name(), resume)))
         }
         guard let sid = authorization.spaceID else { return refuse() }
         let key = String(sid)
@@ -4372,7 +4350,7 @@ final class Coordinator {
             }
             record.departed = departed
             hiddenRefits[key] = record
-            let reason = L("Moved to another Space", "別の操作スペースへ移動した")
+            let reason = L(.coordinatorMovedToAnotherSpace)
             let accept = arrange(source: "auto", kind: "auto-refit-hidden", heldOut: Dictionary(uniqueKeysWithValues: departed.map { ($0, reason) }),
                                  otherSpace: (space, .hidden)) { [weak self] result in
                 self?.hiddenRefitFinished(key: key, departed: departed, result: result)
@@ -4455,7 +4433,7 @@ final class Coordinator {
                 guard let list = system.spacesOf(other), list.count == 1 else { return false }
                 return list[0] != record.space
             }
-            let reason = L("Moved to another Space", "別の操作スペースへ移動した")
+            let reason = L(.coordinatorMovedToAnotherSpace)
             let accept = arrange(source: "auto", kind: "auto-arrive-shown", heldOut: Dictionary(uniqueKeysWithValues: departed.map { ($0, reason) }), adding: [id],
                                  authorization: authorization.retargeted(to: record.space),
                                  otherSpace: (record.space, .shown(display: record.display))) { [weak self] result in
@@ -4681,7 +4659,7 @@ final class Coordinator {
             noteSpaceTransition(to: observed)
             if let origin = landing.origin, observed == landing.dest { lock.lock(); previousSpaceID = origin; lock.unlock() }
         }
-        _ = runSimple(kind: "auto-route", progress: L("Sending a new window to another Space", "新しいウインドウを別の操作スペースへ送っています"), source: "auto",
+        _ = runSimple(kind: "auto-route", progress: L(.coordinatorSendingANewWindowTo), source: "auto",
                       finalize: finalize) { [self] authorization in
             router.markSending(id)
             updateRoutingExcluded()
@@ -4698,18 +4676,17 @@ final class Coordinator {
                       authorization.interruptionReason(system: system, control: control) == nil else { return false }
                 return !onSource || system.currentSpaceID() == source
             }
-            let blocked = L("A new window was not sent yet because of the pause state, input, or a Space change; it is tried again for a moment.",
-                            "停止・入力・操作スペースの変化のため、新しいウインドウはまだ送っていません。しばらく試し直します。")
-            if configChanged() { return skipped(L("A new window was not sent because the settings changed.", "設定が変わったため、新しいウインドウを送りませんでした。")) }
+            let blocked = L(.coordinatorANewWindowWasNot)
+            if configChanged() { return skipped(L(.coordinatorANewWindowWasNotSent)) }
             guard gate() else { retry = true; return skipped(blocked) }
             // Identity (pid, launch time, lifetime) and whether the rule still matches; gates are rechecked after slow reads.
             guard WindowRouter.sameWindow(identity(of: id, pid: pid), saved),
                   let window = system.snapshot(limitingTo: [id]).windows.first(where: { $0.id == id }), window.pid == pid, window.kind == .standard,
                   window.membership == .current, TargetSelection.exclusionReason(window) == nil,
                   cfg.spaceRule(for: window.app, title: window.title)?.index == ruleIndex else {
-                return skipped(L("A new window was not sent because it no longer matched the rule.", "新しいウインドウがルールに合わなくなったため、送りませんでした。"))
+                return skipped(L(.coordinatorANewWindowWasNotSentBecause))
             }
-            if configChanged() { return skipped(L("A new window was not sent because the settings changed.", "設定が変わったため、新しいウインドウを送りませんでした。")) }
+            if configChanged() { return skipped(L(.coordinatorANewWindowWasNotSent)) }
             guard gate() else { retry = true; return skipped(blocked) }
             // Loading has confirmed that space rules have a number.
             guard let desktop = rule.space else { return skipped("") }
@@ -4717,12 +4694,12 @@ final class Coordinator {
             let resolved: ResolvedSpace
             switch resolveSpace(target) {
             case .failure(let why):
-                return skipped(L("A Space rule for \(AppNames.localized(window.app)) did not send a window: \(why.message)", "\(AppNames.localized(window.app))の操作スペースのルールはウインドウを送りませんでした: \(why.message)"))
+                return skipped(L(.coordinatorASpaceRuleForDid(AppNames.localized(window.app), why.message)))
             case .success(let value): resolved = value
             }
-            guard resolved.id != source else { return skipped(L("The window is already on the rule's Space.", "ウインドウはすでにルールの操作スペースにあります。")) }
+            guard resolved.id != source else { return skipped(L(.coordinatorTheWindowIsAlreadyOnThe)) }
             guard !router.isPaused(space: source, rule: ruleIndex, now: routingClock()) else {
-                return skipped(L("This rule is paused on this Space for a minute because the app kept opening new windows after they were sent.", "送ったあとにアプリが新しいウインドウを開き続けたため、この操作スペースではこのルールを1分止めています。"))
+                return skipped(L(.coordinatorThisRuleIsPausedOn))
             }
             guard destinationStillValid(resolved) else { return skipped(Self.destinationChanged) }
             let dest = resolved.id
@@ -4763,7 +4740,7 @@ final class Coordinator {
                 let after = system.currentSpaceID()
                 let followed = rule.follow && !followFailed && after == dest
                 let moved = after != nil && after != source && !followed ? Copy.sentenceSeparator + L("The display then moved to \(spaceLabel(after!)).", "その後、表示が\(spaceLabel(after!))に移りました。") : ""
-                let sent = L("Sent a new \(AppNames.localized(window.app)) window to \(spaceLabel(dest)).", "新しい\(AppNames.localized(window.app))のウインドウを\(spaceLabel(dest))へ送りました。")
+                let sent = L(.coordinatorSentANewWindowTo(AppNames.localized(window.app), spaceLabel(dest)))
                 if followFailed {
                     var result = OperationResult.note(kind: "auto-route", spaceID: source, message: sent + Copy.sentenceSeparator + L("Switching to that Space could not be confirmed.", "その操作スペースへの切り替えは確認できませんでした。") + moved + looping, ok: false)
                     result.outcome = .partial
@@ -5297,9 +5274,9 @@ final class Coordinator {
 
     /// The region line of `lazyspace status`. Call under lock.
     private func dialogRegionStatusLocked(spaceKey: String) -> String {
-        guard config.placeDialogsBeside else { return L("Off", "オフ") }
-        if system.stageManagerOn { return L("On, not in use while \(MacItem.stageManager) is on", "オン（\(MacItem.stageManager)の使用中は使いません）") }
-        guard let region = state.dialogRegions?[spaceKey], !region.members.isEmpty else { return L("On", "オン") }
+        guard config.placeDialogsBeside else { return L(.coordinatorOff) }
+        if system.stageManagerOn { return L(.coordinatorOnNotInUseWhile(MacItem.stageManager)) }
+        guard let region = state.dialogRegions?[spaceKey], !region.members.isEmpty else { return L(.coordinatorDialogRegionOn) }
         let width = Int(region.thickness.rounded())
         let count = region.members.count
         let windows = count == 1 ? "1 window" : "\(count) windows"

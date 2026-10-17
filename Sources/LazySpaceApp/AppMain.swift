@@ -23,8 +23,7 @@ public enum AppMain {
             Copy.apply(setting: config.language)
         }
 
-        let notRunningMessage = L("Could not communicate with LazySpace. Start the app or check the operation result before retrying.",
-                                  "LazySpaceと通信できません。アプリの起動状態、または操作結果を確認してから再試行してください。")
+        let notRunningMessage = L(.appMainCouldNotCommunicateWithLazySpace)
 
         func fail(_ message: String, code: String, operationID: String? = nil, exitCode: Int32 = 1) -> Never {
             if argv.contains("--json") {
@@ -47,8 +46,7 @@ public enum AppMain {
             case .invocation(let invocation):
                 let instanceLockHeld = ControlCredential.instanceLockIsHeld(root: StateStore.defaultRoot)
                 let unavailable = instanceLockHeld
-                    ? L("LazySpace appears to be running, but CLI communication is unavailable. Check the LazySpace Application Support folder permissions or try again after startup.",
-                        "LazySpaceは起動中のようですが、CLIから通信できません。LazySpaceのApplication Supportフォルダのアクセス権を確認するか、起動完了後に再試行してください。")
+                    ? L(.appMainLazySpaceAppearsToBeRunning)
                     : notRunningMessage
                 let output = CLI.execute(invocation,
                                          send: { request, timeout in ControlPort.send(request, timeout: timeout) },

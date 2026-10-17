@@ -6,12 +6,12 @@ enum SettingsPane: String, CaseIterable {
 
     var title: String {
         switch self {
-        case .general: return L("General", "一般")
-        case .layout: return L("Arrangement", "整列")
-        case .keys: return L("Shortcuts", "ショートカット")
-        case .apps: return L("Apps", "アプリ")
-        case .advanced: return L("Advanced", "詳細")
-        case .about: return L("About", "情報")
+        case .general: return L(.settingsPaneGeneral)
+        case .layout: return L(.settingsPaneArrangement)
+        case .keys: return L(.settingsPaneShortcuts)
+        case .apps: return L(.settingsPaneApps)
+        case .advanced: return L(.settingsPaneAdvanced)
+        case .about: return L(.settingsPaneAbout)
         }
     }
 

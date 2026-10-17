@@ -68,20 +68,18 @@ enum NotificationCopy {
 
     static func title(_ reason: AttentionReason) -> String {
         switch reason {
-        case .accessibility: L("Allow LazySpace in \(AccessPane.name())", "「\(AccessPane.name())」でLazySpaceを許可")
-        case .configuration: L("The configuration file could not be applied", "設定ファイルを適用できません")
-        case .automaticArrangement: L("Automatic arrangement stopped", "自動整列を止めました")
+        case .accessibility: L(.notifierAllowLazySpaceIn(AccessPane.name()))
+        case .configuration: L(.notifierTheConfigurationFileCouldNot)
+        case .automaticArrangement: L(.notifierAutomaticArrangementStopped)
         }
     }
 
     static func body(_ reason: AttentionReason) -> String {
         switch reason {
         case .accessibility:
-            L("LazySpace stopped arranging windows because it is no longer allowed. Turn on LazySpace in Privacy & Security › \(AccessPane.name()).",
-              "許可がオフになったため、LazySpaceはウインドウの整列を止めています。プライバシーとセキュリティ › \(AccessPane.name())でLazySpaceをオンにしてください。")
+            L(.notifierLazySpaceStoppedArrangingWindowsBecause(AccessPane.name()))
         case .configuration:
-            L("LazySpace keeps using the last valid configuration. Click to see the errors.",
-              "LazySpaceは直前の有効な設定を使い続けています。クリックすると誤りを確認できます。")
+            L(.notifierLazySpaceKeepsUsingTheLast)
         case .automaticArrangement(let cause): Coordinator.AutoGate.reason(for: cause)
         }
     }

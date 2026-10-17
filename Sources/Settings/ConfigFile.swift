@@ -65,20 +65,18 @@ public struct ConfigFile {
         do {
             try fm.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         } catch {
-            return .refused(L("Could not write the configuration file. Nothing was saved.", "設定ファイルを書けませんでした。保存していません。"))
+            return .refused(L(.configFileCouldNotWriteTheConfiguration))
         }
         switch read() {
         case .unreadable:
-            return .refused(L("The configuration file can't be read, so it was not replaced.", "設定ファイルを読めないため、置き換えていません。"))
+            return .refused(L(.configFileTheConfigurationFileCantBe))
         case .invalid:
-            return .refused(L("The configuration file has errors, so it was not replaced. Fix the file, then choose Reload.",
-                             "設定ファイルに誤りがあるため、置き換えていません。ファイルを直してから「再読み込み」を選んでください。"))
+            return .refused(L(.configFileTheConfigurationFileHasErrors))
         case .missing:
             return writePatched(draft, original: nil, text: Config.template, previous: Config())
         case .loaded(let text, let config):
             guard config == baseline else {
-                return .refused(L("The file changed. Choose Reload to load it. Nothing was saved.",
-                                 "ファイルが変更されています。「再読み込み」で読み込み直してください。保存していません。"))
+                return .refused(L(.configFileTheFileChangedChooseReload))
             }
             guard draft != config else { return .unchanged }
             return writePatched(draft, original: text, text: text, previous: config)
@@ -91,19 +89,18 @@ public struct ConfigFile {
         catch let error as ConfigDocument.Problem {
             return .refused(error.message)
         } catch {
-            return .refused(L("Settings can't update this file safely. Edit the file, then choose Reload. Nothing was saved.",
-                             "このファイルは安全に更新できません。ファイルを編集してから「再読み込み」を選んでください。保存していません。"))
+            return .refused(L(.configFileSettingsCantUpdateThisFile))
         }
         beforeSecondRead?()
         switch read() {
         case .loaded(let latest, _) where original != nil:
             guard Self.sameUTF8(latest, original!) else {
-                return .refused(L("The file changed while saving. Nothing was written.", "保存中にファイルが変更されたため、書き込んでいません。"))
+                return .refused(L(.configFileTheFileChangedWhileSaving))
             }
         case .missing where original == nil:
             break
         default:
-            return .refused(L("The file changed while saving. Nothing was written.", "保存中にファイルが変更されたため、書き込んでいません。"))
+            return .refused(L(.configFileTheFileChangedWhileSaving))
         }
         if let original, Self.sameUTF8(patched, original) { return .unchanged }
         let fm = FileManager.default
@@ -116,8 +113,7 @@ public struct ConfigFile {
             var isDirectory: ObjCBool = false
             let backupIsDirectory = fm.fileExists(atPath: backup.path, isDirectory: &isDirectory) && isDirectory.boolValue
             if backupPath == destinationPath || destinationPath.hasPrefix(backupPath + "/") || backupIsDirectory {
-                return .refused(L("The configuration file points to its backup file, so it was not replaced. Nothing was saved.",
-                                 "設定ファイルが控えのファイルを指しているため、置き換えていません。保存していません。"))
+                return .refused(L(.configFileTheConfigurationFilePointsTo))
             }
         }
         do {
@@ -127,7 +123,7 @@ public struct ConfigFile {
             }
             try patched.write(to: destination, atomically: true, encoding: .utf8)
         } catch {
-            return .refused(L("Could not write the configuration file. Nothing was saved.", "設定ファイルを書けませんでした。保存していません。"))
+            return .refused(L(.configFileCouldNotWriteTheConfiguration))
         }
         return .written
     }

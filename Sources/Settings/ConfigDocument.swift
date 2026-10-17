@@ -18,12 +18,10 @@ public enum ConfigDocument {
         let output = doc.text
         let loaded: Config
         do { loaded = try Config.load(toml: output) } catch {
-            throw problem(L("Settings could not keep this file's formatting while saving. Edit the file, then choose Reload. Nothing was saved.",
-                            "このファイルの体裁を保ったまま保存できません。ファイルを編集してから「再読み込み」を選んでください。保存していません。"))
+            throw problem(L(.configDocumentSettingsCouldNotKeepThis))
         }
         guard loaded == next else {
-            throw problem(L("Settings could not update every changed value without rewriting the file. Edit the file, then choose Reload. Nothing was saved.",
-                            "変更をファイルの形を保ったまま反映できません。ファイルを編集してから「再読み込み」を選んでください。保存していません。"))
+            throw problem(L(.configDocumentSettingsCouldNotUpdateEvery))
         }
         return output
     }
@@ -79,8 +77,7 @@ public enum ConfigDocument {
 
         func apply(from previous: Config, to next: Config) throws {
             if previous.modes != next.modes {
-                throw problem(L("Settings does not edit binding modes. Change those tables in the file, then choose Reload. Nothing was saved.",
-                                "設定画面ではバインディングモードを編集できません。モードの表はファイルで変更し、「再読み込み」を選んでください。保存していません。"))
+                throw problem(L(.configDocumentSettingsDoesNotEditBinding))
             }
             try applyScalars(from: previous, to: next)
             try applyGaps(from: previous, to: next)
@@ -140,8 +137,7 @@ public enum ConfigDocument {
             let outerChanged = previous.outerLeft != next.outerLeft || previous.outerTop != next.outerTop
                 || previous.outerRight != next.outerRight || previous.outerBottom != next.outerBottom
             if gaps.opaque && (gapChanged || outerChanged) {
-                throw problem(L("Settings can't update gaps written as an inline table. Edit the [gaps] table in the file, then choose Reload. Nothing was saved.",
-                                "隙間がインラインテーブルで書かれているため更新できません。ファイルの[gaps]を編集してから「再読み込み」を選んでください。保存していません。"))
+                throw problem(L(.configDocumentSettingsCantUpdateGapsWritten))
             }
             if gapChanged { try applyInnerGaps(gaps, previous, next) }
             if outerChanged { try applyOuterGaps(gaps, previous, next) }
@@ -214,8 +210,7 @@ public enum ConfigDocument {
             guard previous != next else { return }
             let blocks = blocks(named: name)
             guard blocks.count == previous.count else {
-                throw problem(L("Settings can't update \(label) entries written in this form. Edit them in the file, then choose Reload. Nothing was saved.",
-                                "\(label)がこの書き方だと更新できません。ファイルで編集してから「再読み込み」を選んでください。保存していません。"))
+                throw problem(L(.configDocumentSettingsCantUpdateEntriesWritten(label)))
             }
             let plan = Self.diff(previous, next)
             for step in plan.steps {
@@ -467,8 +462,7 @@ public enum ConfigDocument {
                     continue
                 }
                 guard let eq = TOML.topLevelEqualsIndex(code) else {
-                    throw problem(L("Settings can't update line \(index + 1) because it is not a single key and value. Edit the file, then choose Reload. Nothing was saved.",
-                                    "\(index + 1)行目は一つのキーと値ではないため更新できません。ファイルを編集してから「再読み込み」を選んでください。保存していません。"))
+                    throw problem(L(.configDocumentSettingsCantUpdateLineBecause(String(index + 1))))
                 }
                 let key = try TOML.parseKeyPath(String(code[..<eq]), line: index + 1)
                 assignments.append(Assignment(line: index, absolute: table + key, array: array, relative: key))
@@ -508,8 +502,7 @@ public enum ConfigDocument {
         private static func replacingValue(in line: String, with literal: String) throws -> String {
             let parts = TOML.codeAndComment(line)
             guard let eq = TOML.topLevelEqualsIndex(parts.code) else {
-                throw problem(L("Settings can't find a value to replace. Edit the file, then choose Reload. Nothing was saved.",
-                                "置き換える値が見つかりません。ファイルを編集してから「再読み込み」を選んでください。保存していません。"))
+                throw problem(L(.configDocumentSettingsCantFindAValue))
             }
             let after = parts.code.index(after: eq)
             let tail = parts.code[after...]
@@ -518,8 +511,7 @@ public enum ConfigDocument {
             let trailCount = rest.reversed().prefix(while: { $0 == " " || $0 == "\t" }).count
             let token = rest.dropLast(trailCount)
             guard !token.isEmpty else {
-                throw problem(L("Settings can't find a value to replace. Edit the file, then choose Reload. Nothing was saved.",
-                                "置き換える値が見つかりません。ファイルを編集してから「再読み込み」を選んでください。保存していません。"))
+                throw problem(L(.configDocumentSettingsCantFindAValue))
             }
             _ = try TOML.parseValue(String(token), line: 1)
             return String(parts.code[..<after]) + lead + literal + rest.suffix(trailCount) + parts.comment

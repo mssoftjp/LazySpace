@@ -33,13 +33,11 @@ enum NativeShortcutStatus {
         }
         if conflict || needsSetting {
             if conflict {
-                problems.append(L("Choose different keys in the list above, or change the matching macOS shortcut.",
-                                  "上の一覧で重複しているキーを別のキーに変更するか、macOS側の割り当てを変更してください。"))
+                problems.append(L(.nativeShortcutStatusChooseDifferentKeysInThe))
             }
             if needsSetting {
                 let leftName = MacItem.moveSpace(right: false), rightName = MacItem.moveSpace(right: true)
-                problems.append(L("Open Keyboard Settings, choose Keyboard Shortcuts… › Mission Control, then turn on “\(leftName)” and “\(rightName)” and assign keys to them.",
-                                  "「キーボード設定を開く…」を押し、「キーボードショートカット…」の「Mission Control」で、「\(leftName)」と「\(rightName)」をオンにしてキーを割り当ててください。"))
+                problems.append(L(.nativeShortcutStatusOpenKeyboardSettingsChooseKeyboard(leftName, rightName)))
             }
             return Warning(text: problems.joined(separator: "\n"), showsKeyboardSettings: true)
         }
@@ -70,19 +68,16 @@ enum NativeShortcutStatus {
         guard !shown.isEmpty else { return nil }
         let name = MacItem.moveSpace(right: right)
         if right {
-            return L("With these settings, \(shown) is assigned in LazySpace and to “\(name)”, so stepwise switching to the right won't work.",
-                     "この設定では、\(shown)がLazySpaceと「\(name)」の両方に割り当てられているため、操作スペースを右へ順に切り替えられません。")
+            return L(.nativeShortcutStatusWithTheseSettingsIsAssigned(shown, name))
         }
-        return L("With these settings, \(shown) is assigned in LazySpace and to “\(name)”, so stepwise switching to the left won't work.",
-                 "この設定では、\(shown)がLazySpaceと「\(name)」の両方に割り当てられているため、操作スペースを左へ順に切り替えられません。")
+        return L(.nativeShortcutStatusWithTheseSettingsIsAssignedIn(shown, name))
     }
 
     /// A saved conflicting key removed from the draft: current behavior still follows the saved settings until saved.
     private static func resolvedOnSaveText(_ keys: [Config.Key]) -> String? {
         let shown = displayList(keys)
         guard !shown.isEmpty else { return nil }
-        return L("Saving removes \(shown), so this conflict goes away.",
-                 "保存すると\(shown)は外れるので、この重複は解消します。")
+        return L(.nativeShortcutStatusSavingRemovesSoThisConflict(shown))
     }
 
     private static func pendingText(_ keys: [Config.Key], right: Bool) -> String? {
@@ -90,22 +85,20 @@ enum NativeShortcutStatus {
         guard !shown.isEmpty else { return nil }
         let name = MacItem.moveSpace(right: right)
         if right {
-            return L("\(shown) is also the macOS shortcut “\(name)”. After you save, stepwise switching to the right won't work.",
-                     "\(shown)はmacOSの「\(name)」と同じキーです。保存すると、操作スペースを右へ順に切り替えられなくなります。")
+            return L(.nativeShortcutStatusIsAlsoTheMacOSShortcut(shown, name))
         }
-        return L("\(shown) is also the macOS shortcut “\(name)”. After you save, stepwise switching to the left won't work.",
-                 "\(shown)はmacOSの「\(name)」と同じキーです。保存すると、操作スペースを左へ順に切り替えられなくなります。")
+        return L(.nativeShortcutStatusIsAlsoTheMacOSShortcutAfter(shown, name))
     }
 
     private static func unavailableText(_ shortcut: SystemSpaceShortcut, right: Bool) -> String {
         let name = MacItem.moveSpace(right: right)
         let consequence = right
-            ? L("Stepwise Space switching to the right won't work.", "操作スペースを右へ順に切り替えられません。")
-            : L("Stepwise Space switching to the left won't work.", "操作スペースを左へ順に切り替えられません。")
+            ? L(.nativeShortcutStatusStepwiseSpaceSwitchingToThe)
+            : L(.nativeShortcutStatusStepwiseSpaceSwitchingToTheLeft)
         let lead: String
         switch shortcut {
         case .disabled:
-            lead = L("“\(name)” is off in macOS.", "macOSの「\(name)」がオフです。")
+            lead = L(.nativeShortcutStatusIsOffInMacOS(name))
         case .unusable(let issue):
             lead = SpaceControl.refusalLead(issue, right: right)
         case .usable, .unread:
@@ -117,11 +110,9 @@ enum NativeShortcutStatus {
     private static func noResponseText(right: Bool) -> String {
         let name = MacItem.moveSpace(right: right)
         if right {
-            return L("macOS is not responding to “\(name)”, so stepwise Space switching to the right won't work.",
-                     "macOSが「\(name)」に応答しないため、操作スペースを右へ順に切り替えられません。")
+            return L(.nativeShortcutStatusMacOSIsNotRespondingTo(name))
         }
-        return L("macOS is not responding to “\(name)”, so stepwise Space switching to the left won't work.",
-                 "macOSが「\(name)」に応答しないため、操作スペースを左へ順に切り替えられません。")
+        return L(.nativeShortcutStatusMacOSIsNotRespondingToSo(name))
     }
 
     private static func displayList(_ keys: [Config.Key]) -> String {

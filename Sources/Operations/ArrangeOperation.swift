@@ -7,8 +7,7 @@ import LayoutCore
 public final class ArrangeOperation {
     /// Reason given when a window that does not fit even at minimum size is taken out of the tree in place.
     public static var overflowFloatReason: String {
-        L("Too large for the work area even at minimum size; kept in place as floating",
-          "最小サイズでも作業領域に収まらないため、位置を保ってフローティングにしました")
+        L(.arrangeOperationOverflowFloatReason)
     }
     /// Identifier for the overflowFloatReason exclusion; compared instead of the display text.
     public static let overflowFloatCode = Exclusion.Code.overflowFloat
@@ -175,8 +174,7 @@ public final class ArrangeOperation {
     private func placementAbortedResult(_ builder: inout ResultBuilder, started: () -> Double) -> OperationResult {
         let wroteNothing = placementOutcomes.values.allSatisfy { $0 == .skipped }
         return builder.finish(outcome: wroteNothing ? .nothingToDo : .partial, stopReason: nil,
-                       message: L("The fixed-size windows could not be placed next to the arranged windows, so this change was not saved. LazySpace will try again.",
-                                  "大きさが固定のウインドウを整列したウインドウと並べられなかったため、この変更は保存していません。あらためて試します。"),
+                       message: L(.arrangeOperationTheFixedSizeWindowsCould),
                        finishedAt: now(), wallMs: started())
     }
 
@@ -246,14 +244,14 @@ public final class ArrangeOperation {
         let t0 = clock.now
         func elapsedMs() -> Double { (clock.now - t0).milliseconds }
 
-        progress?(L("Checking windows", "対象を確認しています"))
+        progress?(L(.arrangeOperationCheckingWindows))
         let observeStart = clock.now
         let snapshot = system.snapshot(limitingTo: observedWindows)
         var inspection = TargetSelection.inspect(snapshot, now: startedAt, appRule: appRule, heldOut: heldOut.merging(heldOutAtExecution) { first, _ in first })
         if let allowedWindows {
             let deferred = inspection.targets.filter { !allowedWindows.contains($0.id) }
             inspection.targets.removeAll { !allowedWindows.contains($0.id) }
-            let reason = L("Not part of this automatic arrangement; checked again next time", "この自動整列では除外。次の観測で判定します")
+            let reason = L(.arrangeOperationNotPartOfThisAutomatic)
             inspection.excluded.append(contentsOf: deferred.map { Exclusion(window: $0, reason: reason) })
         }
         var builder = ResultBuilder(id: id, startedAt: startedAt, snapshot: snapshot, inspection: inspection, limits: limits, kind: kind)
@@ -263,15 +261,13 @@ public final class ArrangeOperation {
         guard snapshot.trusted else {
             return builder.finish(
                 outcome: .notPossible, stopReason: .permissionLost,
-                message: L("LazySpace can't arrange windows without the \(AccessPane.name()) permission. Turn on LazySpace in System Settings › Privacy & Security › \(AccessPane.name()).",
-                           "「\(AccessPane.name())」の許可がないため整列できません。システム設定 › プライバシーとセキュリティ › \(AccessPane.name())でLazySpaceをオンにしてください。"),
+                message: L(.arrangeOperationLazySpaceCantArrangeWindowsWithout(AccessPane.name(), AccessPane.name())),
                 finishedAt: now(), wallMs: elapsedMs())
         }
         guard snapshot.spaceObservationAvailable, snapshot.spaceID != nil else {
             return builder.finish(
                 outcome: .notPossible, stopReason: nil,
-                message: L("Windows were not arranged because the current Space can't be identified. Manual arrangement isn't available in this configuration.",
-                           "現在の操作スペースを確認できないため整列しません。この構成では手動の整列を利用できません。"),
+                message: L(.arrangeOperationWindowsWereNotArrangedBecause),
                 finishedAt: now(), wallMs: elapsedMs())
         }
         if let reason = gate(snapshot: snapshot) {
@@ -285,8 +281,7 @@ public final class ArrangeOperation {
             let apps = snapshot.unobservedApps.map(displayName).joined(separator: L(", ", "、"))
             return builder.finish(
                 outcome: .nothingToDo, stopReason: .appUnresponsive,
-                message: L("Not arranged: \(apps) didn't return a window list in time. Automatic arrangement waits for it.",
-                           "\(apps)がウインドウの一覧を期限内に返さなかったため、整列していません。自動整列はその応答を待ちます。"),
+                message: L(.arrangeOperationNotArrangedDidntReturnA(apps)),
                 finishedAt: now(), wallMs: elapsedMs())
         }
         guard !inspection.targets.isEmpty else {
@@ -313,9 +308,8 @@ public final class ArrangeOperation {
                 let note = dialogPlacementMessage()
                 let apps = snapshot.unobservedApps.map(displayName).joined(separator: L(", ", "、"))
                 let none = reclaiming
-                    ? L("\(apps) didn't return a window list in time, so its windows were left where they are.",
-                        "\(apps)がウインドウの一覧を期限内に返さなかったため、そのウインドウはそのままにしています。")
-                    : L("No windows to arrange.", "整列するウインドウがありません。")
+                    ? L(.arrangeOperationDidntReturnAWindowList(apps))
+                    : L(.arrangeOperationNoWindowsToArrange)
                 return builder.finish(outcome: .complete, stopReason: nil,
                                       message: note.isEmpty ? none : note,
                                       finishedAt: now(), wallMs: elapsedMs())
@@ -324,8 +318,7 @@ public final class ArrangeOperation {
             let extra = snapshot.unobservedApps.isEmpty ? "" : L(" (\(apps) did not return a window list)", "（\(apps)はウインドウの一覧を返しませんでした）")
             return builder.finish(
                 outcome: .nothingToDo, stopReason: snapshot.unobservedApps.isEmpty ? nil : .appUnresponsive,
-                message: L("No windows to arrange\(extra). See the window list for excluded windows and reasons.",
-                           "整列するウインドウがありません\(extra)。除外されたウインドウと理由は一覧で確認してください。"),
+                message: L(.arrangeOperationNoWindowsToArrangeSee(extra)),
                 finishedAt: now(), wallMs: elapsedMs())
         }
         // If none of the integration triggers (layer-0 windows seen in CGWindowList) is a standard window, this operation has no basis.
@@ -334,12 +327,11 @@ public final class ArrangeOperation {
         if !adding.isEmpty, !inspection.targets.contains(where: { adding.contains($0.id) }) {
             return builder.finish(
                 outcome: .nothingToDo, stopReason: snapshot.unobservedApps.isEmpty ? nil : .appUnresponsive,
-                message: L("The window to add isn't eligible (it's temporary, or its type can't be determined). See the window list for excluded windows and reasons.",
-                           "追加するウインドウは整列対象ではありません（一時的なウインドウ、または種類を判定できないウインドウ）。除外されたウインドウと理由は一覧で確認してください。"),
+                message: L(.arrangeOperationTheWindowToAddIsnt),
                 finishedAt: now(), wallMs: elapsedMs())
         }
 
-        progress?(L("Calculating layout", "配置を計算しています"))
+        progress?(L(.arrangeOperationCalculatingLayout))
         // The reservation does not fit the current work area (moved to a smaller screen, larger gaps): drop the region instead of silently ignoring it.
         if options.reservationIgnored(in: snapshot.workArea) { _ = dropRegion() }
         let focused = system.focusedWindowID()
@@ -390,7 +382,7 @@ public final class ArrangeOperation {
             let baseRects: [WindowID: CGRect]
             if case .fits(let p) = Planner.fit(baseLayout, in: snapshot.workArea, constraints: constraints, options: options, maximums: initialMaximums(ids, workArea: snapshot.workArea), focused: focused) { baseRects = p.rects } else { baseRects = [:] }
             guard let edited = transform(baseLayout, baseRects) else {
-                builder.markAllUnapplied(note: L("Edit not possible", "編集できません"))
+                builder.markAllUnapplied(note: L(.arrangeOperationEditNotPossible))
                 return builder.finish(outcome: .notPossible, stopReason: nil, message: transformFailure, finishedAt: now(), wallMs: elapsedMs())
             }
             // Do not let the edit revive IDs that closed, moved to another Space, or became rule-excluded between acceptance and observation.
@@ -461,7 +453,7 @@ public final class ArrangeOperation {
         switch planOutcome {
         case .fits(let p): plan = p
         case .unfit(let u):
-            builder.markAllUnapplied(note: L("Not possible; found before moving any window", "配置を変える前に実行できないと判明"))
+            builder.markAllUnapplied(note: L(.arrangeOperationNotPossibleFoundBeforeMoving))
             let prefix = kind.hasPrefix("edit:") ? L("The windows don't fit with this edit. ", "この編集ではウインドウが収まりません。") : ""
             return builder.finish(
                 outcome: .notPossible, stopReason: nil,
@@ -473,7 +465,7 @@ public final class ArrangeOperation {
         if let zoomed, ids.contains(zoomed) {
             let others = inspection.targets.filter { $0.id != zoomed }
             inspection.targets.removeAll { $0.id != zoomed }
-            inspection.excluded.append(contentsOf: others.map { Exclusion(window: $0, reason: L("Kept in place while another window is zoomed", "ズーム中のため位置を保持")) })
+            inspection.excluded.append(contentsOf: others.map { Exclusion(window: $0, reason: L(.arrangeOperationKeptInPlaceWhileAnother)) })
             let keptTiming = builder.timing
             builder = ResultBuilder(id: id, startedAt: startedAt, snapshot: snapshot, inspection: inspection, limits: limits, kind: kind)
             builder.timing = keptTiming
@@ -489,7 +481,7 @@ public final class ArrangeOperation {
         }
         func protectionResult(_ target: ObservedWindow) -> OperationResult {
             if builder.issued == 0 {
-                builder.markAllUnapplied(note: L("Stopped because the plan would move a protected window", "保護中のウインドウを動かす計画のため中止"))
+                builder.markAllUnapplied(note: L(.arrangeOperationStoppedBecauseThePlanWould))
             } else if let reason = restoreOriginalFrames(&builder) {
                 builder.markPendingUnapplied()
                 return builder.finish(outcome: .interrupted, stopReason: reason, message: Self.interruptMessage(reason, builder: builder), finishedAt: now(), wallMs: elapsedMs())
@@ -497,8 +489,7 @@ public final class ArrangeOperation {
                 builder.markPendingUnapplied()
             }
             return builder.finish(outcome: builder.issued == 0 || builder.rolledBack ? .notPossible : .partial, stopReason: nil,
-                                  message: L("The new window can't join the layout without moving the \(target.app) window you're using, so it stays in place and waits.",
-                                             "\(target.app)のウインドウ（操作中）を動かさずには配置に入れられないため、新しいウインドウは位置を保って待機させます。"),
+                                  message: L(.arrangeOperationTheNewWindowCantJoin(target.app)),
                                   finishedAt: now(), wallMs: elapsedMs())
         }
         if let conflict = protectedConflict(plan.rects) { return protectionResult(conflict) }
@@ -513,7 +504,7 @@ public final class ArrangeOperation {
                 builder.markAllUnapplied(note: Self.changedAfterRequestMessage)
                 return builder.finish(outcome: .interrupted, stopReason: reason, message: Self.interruptMessage(reason, builder: builder), finishedAt: now(), wallMs: elapsedMs())
             case .aborted:
-                builder.markAllUnapplied(note: L("Not moved because the fixed-size windows could not be placed", "大きさが固定のウインドウを置けなかったため動かしていません"))
+                builder.markAllUnapplied(note: L(.arrangeOperationNotMovedBecauseTheFixed))
                 return placementAbortedResult(&builder, started: elapsedMs)
             case .done: break
             }
@@ -532,7 +523,7 @@ public final class ArrangeOperation {
 
         builder.timing.planMs = (clock.now - planStart).milliseconds
         applyLoop: while true {
-            progress?(retries == 0 ? L("Applying layout", "適用しています") : L("Recalculated to match actual sizes", "実寸に合わせて再計算しました"))
+            progress?(retries == 0 ? L(.arrangeOperationApplyingLayout) : L(.arrangeOperationRecalculatedToMatchActualSizes))
             // The first try requests frames larger than learned maximums; recalculations use the maximums.
             let maximums = (probeMaximums && applyIteration == 0) ? [:] : knowledge.maximums(for: ids, workArea: snapshot.workArea)
             applyIteration += 1
@@ -547,14 +538,13 @@ public final class ArrangeOperation {
                 var report = builder.report(for: target.id)
                 report.planned = request
                 if maximums[target.id] != nil, request != planned {
-                    report.setNote(L("Maximum size \(Int(request.width))×\(Int(request.height)); doesn't fill its area",
-                                     "最大サイズ\(Int(request.width))×\(Int(request.height))のため枠を埋めない"), .maximumSizeCap)
+                    report.setNote(L(.arrangeOperationMaximumSizeDoesntFillIts(String(Int(request.width)), String(Int(request.height)))), .maximumSizeCap)
                 }
                 if report.status == .gone { builder.set(report); continue }
                 if unresponsiveApps.contains(target.app) {
                     if report.issued == 0 {
                         report.status = .unapplied
-                        report.setNote(L("Not sent because the same app didn't respond", "同じアプリが応答しなかったため発行しません"))
+                        report.setNote(L(.arrangeOperationNotSentBecauseTheSame))
                     }
                     builder.set(report)
                     continue
@@ -574,7 +564,7 @@ public final class ArrangeOperation {
                     continue
                 case .failed(let why):
                     report.status = .unapplied
-                    report.setNote(L("Couldn't read the window's frame: \(why)", "読取失敗: \(why)"))
+                    report.setNote(L(.arrangeOperationCouldntReadTheWindowsFrame(why)))
                     builder.set(report)
                     continue
                 case .frame(let current):
@@ -624,10 +614,10 @@ public final class ArrangeOperation {
                 case .rejected(let why):
                     attemptedThisRound.insert(target.id)
                     report.status = .mismatch
-                    report.setNote(L("macOS rejected the request: \(why)", "OSが要求を拒否: \(why)"))
+                    report.setNote(L(.arrangeOperationMacOSRejectedTheRequest(why)))
                 case .timedOut:
                     report.status = .mismatch
-                    report.setNote(L("The app didn't respond in time", "アプリが期限内に応答しなかった"))
+                    report.setNote(L(.arrangeOperationTheAppDidntRespondIn))
                     unresponsiveApps.insert(target.app)
                     timedOut.insert(target.id)
                 }
@@ -661,7 +651,7 @@ public final class ArrangeOperation {
             if gate(snapshot: snapshot) != nil { settledFrames.removeAll() }
 
             // Read the actual positions and sizes back.
-            progress?(L("Checking actual sizes", "実寸を確認しています"))
+            progress?(L(.arrangeOperationCheckingActualSizes))
             var mismatched: [WindowID] = []
             var learned = false
             var needsRedistribute = false
@@ -694,14 +684,12 @@ public final class ArrangeOperation {
                     if actual.matches(request, tolerance: limits.tolerance) {
                         if report.status != .unchanged { report.status = .verified }
                         if report.noteKind == .minimumSizePushback {
-                            report.setNote(L("Measured minimum size \(Int(actual.width))×\(Int(actual.height)); matched after recalculation",
-                                             "最小サイズ\(Int(actual.width))×\(Int(actual.height))を実測し、再計算で一致"), .minimumSizeMeasured)
+                            report.setNote(L(.arrangeOperationMeasuredMinimumSizeMatchedAfter(String(Int(actual.width)), String(Int(actual.height)))), .minimumSizeMeasured)
                         }
                     } else if timedOut.contains(target.id) || unresponsiveApps.contains(target.app) {
                         // The request was not processed, so the actual size is no evidence of constraints.
                         report.status = .mismatch
-                        report.setNote(L("The app didn't respond in time (actual size \(Int(actual.width))×\(Int(actual.height)))",
-                                         "アプリが期限内に応答しなかった（実寸\(Int(actual.width))×\(Int(actual.height))）"))
+                        report.setNote(L(.arrangeOperationTheAppDidntRespondInTime(String(Int(actual.width)), String(Int(actual.height)))))
                         mismatched.append(target.id)
                     } else {
                         report.status = .mismatch
@@ -711,8 +699,7 @@ public final class ArrangeOperation {
                         if pushed {
                             learned = true
                             knowledge.recordPushback(id: target.id, requested: request, actual: actual, spaceID: snapshot.spaceID, workArea: snapshot.workArea, tolerance: limits.tolerance, bundle: target.app, subrole: target.subrole)
-                            report.setNote(L("Larger than requested because of its minimum size (\(Int(actual.width))×\(Int(actual.height)))",
-                                             "最小サイズにより実寸が要求より大きい（\(Int(actual.width))×\(Int(actual.height))）"), .minimumSizePushback)
+                            report.setNote(L(.arrangeOperationLargerThanRequestedBecauseOf(String(Int(actual.width)), String(Int(actual.height)))), .minimumSizePushback)
                         }
                         if pulled {
                             learned = true
@@ -747,8 +734,7 @@ public final class ArrangeOperation {
                                 // A size clipped at the screen edge at the pre-move position is not a constraint of the window.
                                 pullbacks[target.id] = nil
                             }
-                            let smaller = L("The app made it smaller than requested (\(Int(actual.width))×\(Int(actual.height)))",
-                                            "アプリが要求より小さく補正した（\(Int(actual.width))×\(Int(actual.height))）")
+                            let smaller = L(.arrangeOperationTheAppMadeItSmaller(String(Int(actual.width)), String(Int(actual.height))))
                             report.setNote((pushed ? report.note! + L(". ", "。") : "") + smaller, pushed ? .minimumSizePushback : nil)
                             // When a fixed size has been confirmed repeatedly and the position within the frame also matches, no further write is needed.
                             if let maximum = knowledge.maximums(for: [target.id], workArea: snapshot.workArea)[target.id] {
@@ -756,8 +742,7 @@ public final class ArrangeOperation {
                                 if actual.matches(adjusted, tolerance: limits.tolerance) {
                                     report.planned = adjusted
                                     report.status = .verified
-                                    report.setNote(L("Maximum size \(Int(adjusted.width))×\(Int(adjusted.height)) confirmed by repeated measurement; position within its area matches",
-                                                     "最大サイズ\(Int(adjusted.width))×\(Int(adjusted.height))を繰り返し実測。枠内の位置と一致"), .maximumSizeConfirmed)
+                                    report.setNote(L(.arrangeOperationMaximumSizeConfirmedByRepeated(String(Int(adjusted.width)), String(Int(adjusted.height)))), .maximumSizeConfirmed)
                                     mismatched.removeAll { $0 == target.id }
                                     // While the frame is wider than the maximum, a recalculation that gives the excess to a resizable neighbor is still pending.
                                     // While zoomed, other windows do not move.
@@ -769,7 +754,7 @@ public final class ArrangeOperation {
                             }
                         }
                         if !pushed && !pulled {
-                            report.note = report.note ?? L("Position doesn't match the request", "位置が要求と一致しない")
+                            report.note = report.note ?? L(.arrangeOperationPositionDoesntMatchTheRequest)
                         }
                     }
                 }
@@ -832,7 +817,7 @@ public final class ArrangeOperation {
             }
         }
         if stop == nil, builder.unfitNote != nil, builder.issued > 0, kind.hasPrefix("edit:") {
-            progress?(L("Returning windows to their original positions because they don't fit", "収まらないため元の位置に戻しています"))
+            progress?(L(.arrangeOperationReturningWindowsToTheirOriginal))
             if let reason = restoreOriginalFrames(&builder) {
                 stop = reason
             }
@@ -841,7 +826,7 @@ public final class ArrangeOperation {
 
         if let stop {
             // Stop handling: no new requests, but windows already sent are read back and confirmed.
-            progress?(L("Stopping: checking requests already sent", "停止処理中: 発行済みの操作を確認しています"))
+            progress?(L(.arrangeOperationStoppingCheckingRequestsAlreadySent))
             for target in inspection.targets {
                 var report = builder.report(for: target.id)
                 if report.noteKind == .notRestoredAfterStop { continue }
@@ -853,8 +838,7 @@ public final class ArrangeOperation {
                     report.after = actual
                     report.status = actual.matches(request, tolerance: limits.tolerance) ? .verified : .mismatch
                     if report.status == .mismatch {
-                        report.note = report.note ?? L("Didn't match the request when interrupted (\(Int(actual.width))×\(Int(actual.height)))",
-                                                       "中断時点で要求と一致していない（\(Int(actual.width))×\(Int(actual.height))）")
+                        report.note = report.note ?? L(.arrangeOperationDidntMatchTheRequestWhen(String(Int(actual.width)), String(Int(actual.height))))
                     }
                 }
                 builder.set(report)
@@ -971,12 +955,11 @@ public final class ArrangeOperation {
                     report.after = actual
                     if frameRestored(actual, to: original) {
                         report.status = .unapplied
-                        report.setNote(L("Returned to its original position because it didn't fit", "収まらないため元の位置に戻した"), .restoredOriginal)
+                        report.setNote(L(.arrangeOperationReturnedToItsOriginalPosition), .restoredOriginal)
                         restored += 1
                     } else {
                         report.status = .mismatch
-                        report.setNote(L("Couldn't return to its original position (\(Int(actual.width))×\(Int(actual.height)))",
-                                         "元の位置に戻せなかった（\(Int(actual.width))×\(Int(actual.height))）"), .restoreFailed)
+                        report.setNote(L(.arrangeOperationCouldntReturnToItsOriginal(String(Int(actual.width)), String(Int(actual.height)))), .restoreFailed)
                         failed += 1
                     }
                 case .gone:
@@ -985,7 +968,7 @@ public final class ArrangeOperation {
                     failed += 1
                 case .failed(let why):
                     report.status = .mismatch
-                    report.setNote(L("Couldn't read the actual size after returning it: \(why)", "戻したあと実寸を読めなかった: \(why)"))
+                    report.setNote(L(.arrangeOperationCouldntReadTheActualSize(why)))
                     failed += 1
                 }
             case .gone:
@@ -994,11 +977,11 @@ public final class ArrangeOperation {
                 failed += 1
             case .rejected(let why):
                 report.status = .mismatch
-                report.setNote(L("Moving it back to its original position was rejected: \(why)", "元の位置への書き込みを拒否された: \(why)"), .restoreFailed)
+                report.setNote(L(.arrangeOperationMovingItBackToIts(why)), .restoreFailed)
                 failed += 1
             case .timedOut:
                 report.status = .mismatch
-                report.setNote(L("No response while returning it to its original position", "元の位置へ戻す途中で応答がなかった"), .restoreFailed)
+                report.setNote(L(.arrangeOperationNoResponseWhileReturningIt), .restoreFailed)
                 failed += 1
             }
             builder.set(report)
@@ -1155,14 +1138,13 @@ public final class ArrangeOperation {
         }
         switch u.cause {
         case .splitOverflow(let axis, let required, let available, let members):
-            let axisName = axis == .horizontal ? L("width", "幅") : L("height", "高さ")
+            let axisName = axis == .horizontal ? L(.arrangeOperationWidth) : L(.arrangeOperationHeight)
             let names = members.map(name).joined(separator: ", ")
             let subject = members.count == 1 ? "1 window doesn't" : "\(members.count) windows don't"
             return L("\(subject) fit in the work area (\(axisName) needed: \(Int(required)); available: \(Int(available))). Close or exclude a window, then arrange again. Windows: \(names).",
                      "\(members.count)つのウインドウが作業領域に収まりません（必要な\(axisName)\(Int(required)) > 利用可能\(Int(available))）。ウインドウを閉じるか除外してから、再度整列してください。対象: \(names)。")
         case .windowLargerThanArea(let id, let required, let available):
-            return L("The minimum size of \(name(id)) (\(Int(required.width))×\(Int(required.height))) is larger than the work area (\(Int(available.width))×\(Int(available.height))). Exclude that window.",
-                     "\(name(id))の最小サイズ\(Int(required.width))×\(Int(required.height))が領域\(Int(available.width))×\(Int(available.height))を超えています。そのウインドウを除外してください。")
+            return L(.arrangeOperationTheMinimumSizeOfIs(name(id), String(Int(required.width)), String(Int(required.height)), String(Int(available.width)), String(Int(available.height))))
         }
     }
 
@@ -1173,24 +1155,19 @@ public final class ArrangeOperation {
                      "（\(applied)つは確認済み、\(unapplied)つは未適用。位置は現在のまま保ちます）")
         switch reason {
         case .paused:
-            return L("Interrupted because arrangement was paused\(tail). Resume, then arrange again.",
-                     "一時停止したため中断しました\(tail)。再開してから再度整列してください。")
+            return L(.arrangeOperationInterruptedBecauseArrangementWasPaused(tail))
         case .userInput:
-            return L("Interrupted because input was detected\(tail). Arrange again once input settles.",
-                     "操作中の入力を検知したため中断しました\(tail)。操作が落ち着いてから再度整列してください。")
+            return L(.arrangeOperationInterruptedBecauseInputWasDetected(tail))
         case .spaceChanged:
-            return L("Interrupted because the Space changed\(tail). Return to the original Space, then arrange again.",
-                     "操作スペースが切り替わったため中断しました\(tail)。元の操作スペースに戻ってから再度整列してください。")
+            return L(.arrangeOperationInterruptedBecauseTheSpaceChanged(tail))
         case .permissionLost:
-            return L("Interrupted because the \(AccessPane.name()) permission was lost\(tail). Check it in System Settings.",
-                     "「\(AccessPane.name())」の許可が失われたため中断しました\(tail)。システム設定で許可を確認してください。")
+            return L(.arrangeOperationInterruptedBecauseThePermissionWas(AccessPane.name(), tail))
         case .cancelled:
-            return L("Operation canceled\(tail).", "操作を取り消しました\(tail)。")
+            return L(.arrangeOperationOperationCanceled(tail))
         case .targetsChanged:
-            return L("Interrupted because the windows changed\(tail). Arrange again.",
-                     "対象のウインドウが変わったため中断しました\(tail)。再度整列してください。")
+            return L(.arrangeOperationInterruptedBecauseTheWindowsChanged(tail))
         case .appUnresponsive:
-            return L("Interrupted because an app didn't respond\(tail).", "アプリが応答しないため中断しました\(tail)。")
+            return L(.arrangeOperationInterruptedBecauseAnAppDidnt(tail))
         }
     }
 
@@ -1200,13 +1177,13 @@ public final class ArrangeOperation {
         var reasons: [String] = []
         if !unresponsive.isEmpty {
             let apps = unresponsive.sorted().map(displayName).joined(separator: ", ")
-            reasons.append(L("\(apps) didn't respond in time.", "\(apps)が期限内に応答しませんでした。"))
+            reasons.append(L(.arrangeOperationDidntRespondInTime(apps)))
         }
         if let unfit = builder.unfitNote { reasons.append(unfit) }
         let pushed = mismatched.filter { $0.noteKind?.isMinimumSize == true }
         if !pushed.isEmpty && builder.unfitNote == nil {
             let apps = pushed.map { displayName($0.app) }.joined(separator: ", ")
-            reasons.append(L("\(apps) became larger than requested because of minimum size.", "\(apps)が最小サイズのため要求より大きくなりました。"))
+            reasons.append(L(.arrangeOperationBecameLargerThanRequestedBecause(apps)))
         }
         let head = L("Partially applied: \(mismatched.count) of \(windowCount(total)) did not match the layout.",
                      "\(total)つのうち\(mismatched.count)つのウインドウがレイアウトどおりになりませんでした。")
@@ -1223,14 +1200,13 @@ public final class ArrangeOperation {
     // MARK: - Shared copy
 
     static var changedAfterRequestMessage: String {
-        L("Windows were not arranged because pause, input, or the Space changed after the request. Try again if needed.",
-          "受付後に一時停止・入力・操作スペースの状態が変わったため整列しません。必要なら改めて操作してください。")
+        L(.arrangeOperationChangedAfterRequestMessage)
     }
-    static var closedDuringOperationNote: String { L("Closed during the operation", "操作中に閉じられた") }
-    static var closedBeforeCheckNote: String { L("Closed before it could be checked", "確認時に閉じられていた") }
-    static var closedWhileRestoringNote: String { L("Closed while being returned to its original position", "戻す途中で閉じられた") }
+    static var closedDuringOperationNote: String { L(.arrangeOperationClosedDuringOperationNote) }
+    static var closedBeforeCheckNote: String { L(.arrangeOperationClosedBeforeCheckNote) }
+    static var closedWhileRestoringNote: String { L(.arrangeOperationClosedWhileRestoringNote) }
     static var notRestoredAfterStopNote: String {
-        L("Not returned to its original position because the operation stopped", "停止したため元の位置に戻していません")
+        L(.arrangeOperationNotRestoredAfterStopNote)
     }
-    static func unreadableSizeNote(_ why: String) -> String { L("Couldn't read the actual size: \(why)", "実寸を読めなかった: \(why)") }
+    static func unreadableSizeNote(_ why: String) -> String { L(.arrangeOperationUnreadableSizeNote(why)) }
 }

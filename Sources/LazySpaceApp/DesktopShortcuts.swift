@@ -151,7 +151,7 @@ enum DesktopShortcuts {
     /// The `lazyspace status` line. `global` is why it is unused on the whole display (several displays, rearranging, unreadable order, unknown Dock).
     static func statusLine(global: DesktopShortcutBlock?, states: [(desktop: Int, state: State)]) -> String {
         if let global { return L("Not used", "使っていません") + " — " + reason(global) }
-        guard !states.isEmpty else { return L("Not used — no ordinary Desktops were found", "使っていません — 通常のデスクトップがありません") }
+        guard !states.isEmpty else { return L(.desktopShortcutsNotUsedNoOrdinaryDesktops) }
         var parts: [String] = []
         func numbers(_ wanted: (State) -> Bool) -> [Int] { states.filter { wanted($0.state) }.map(\.desktop) }
         let working = numbers { $0 == .working }
@@ -160,14 +160,13 @@ enum DesktopShortcuts {
         if !unverified.isEmpty { parts.append(L("on but not yet confirmed for ", "設定あり・未確認: ") + ranges(unverified)) }
         let paused = numbers { $0 == .paused }
         if !paused.isEmpty {
-            parts.append(L("paused for \(ranges(paused)) (macOS did not respond; \(pausedAdvice))",
-                           "一時停止中: \(ranges(paused))（応答なし。\(pausedAdvice)）"))
+            parts.append(L(.desktopShortcutsPausedForMacOSDidNot(ranges(paused), pausedAdvice)))
         }
         var blocks: [DesktopShortcutBlock] = []
         for case (_, .ineligible(let block)) in states where !blocks.contains(block) { blocks.append(block) }
         for block in blocks {
             let list = numbers { $0 == .ineligible(block) }
-            parts.append(L("not used for \(ranges(list)) (\(reason(block)))", "対象外: \(ranges(list))（\(reason(block))）"))
+            parts.append(L(.desktopShortcutsNotUsedFor(ranges(list), reason(block))))
         }
         let text = parts.joined(separator: L("; ", "、"))
         return text.prefix(1).uppercased() + text.dropFirst()
@@ -189,21 +188,21 @@ enum DesktopShortcuts {
 
     static func arrowStatusText(_ state: State) -> String {
         switch state {
-        case .working: return L("in use", "使用中")
-        case .unverified: return L("on but not yet confirmed", "設定あり・未確認")
-        case .paused: return L("paused (macOS did not respond; \(pausedAdvice))", "一時停止中（応答なし。\(pausedAdvice)）")
-        case .ineligible(let block): return L("not used (\(reason(block)))", "対象外（\(reason(block))）")
+        case .working: return L(.desktopShortcutsInUse)
+        case .unverified: return L(.desktopShortcutsOnButNotYetConfirmed)
+        case .paused: return L(.desktopShortcutsPausedMacOSDidNotRespond(pausedAdvice))
+        case .ineligible(let block): return L(.desktopShortcutsNotUsed(reason(block)))
         }
     }
 
     /// The status advice for a paused shortcut; the same remedy as `logOutAdvice`, never restarting the Dock.
     static var pausedAdvice: String {
-        L("logging out of your Mac and back in may help", "Macからログアウトしてログインし直すと、使えるようになることがあります")
+        L(.desktopShortcutsPausedAdvice)
     }
 
     /// Guidance when macOS does not respond to the left/right shortcuts (Settings and operation results). Never recommends restarting the Dock.
     static var logOutAdvice: String {
-        L("Logging out of your Mac and back in may resolve this.", "Macからログアウトしてログインし直すと、解決することがあります。")
+        L(.desktopShortcutsLogOutAdvice)
     }
 
     /// Text when macOS did not respond to stepping, it is suppressed, or there is no tap.
@@ -217,8 +216,7 @@ enum DesktopShortcuts {
             return L("LazySpace is not using “\(name)” for now because macOS did not respond to it earlier.",
                      "以前macOSが「\(name)」に応答しなかったため、いまは使っていません。") + Copy.sentenceSeparator + logOutAdvice
         case .noTap:
-            return L("LazySpace could not prepare to check whether macOS responds to its Space shortcuts, so it did not send them.",
-                     "macOSが操作スペースのショートカットに応答するかを確かめる準備ができなかったため、送っていません。")
+            return L(.desktopShortcutsLazySpaceCouldNotPrepareTo)
         case .configuration(let text):
             return text
         }
@@ -226,15 +224,15 @@ enum DesktopShortcuts {
 
     static func reason(_ block: DesktopShortcutBlock) -> String {
         switch block {
-        case .multipleDisplays: return L("more than one display", "ディスプレイが複数")
-        case .reordersByRecentUse: return L("Spaces are rearranged by most recent use", "最新の使用状況に基づく並べ替えがオン")
-        case .notOrdinaryDesktop: return L("the order of Spaces could not be read", "操作スペースの並びを読めない")
-        case .dockUnknown: return L("the Dock could not be found", "Dockを確認できない")
-        case .unread: return L("shortcut could not be read", "ショートカットを読み取れない")
-        case .off: return L("shortcut off", "ショートカットがオフ")
-        case .unusable: return L("shortcut cannot be sent", "送れないショートカット")
-        case .conflict: return L("same as a LazySpace shortcut", "LazySpaceのショートカットと重複")
-        case .suppressed: return L("macOS did not respond", "応答なし")
+        case .multipleDisplays: return L(.desktopShortcutsMoreThanOneDisplay)
+        case .reordersByRecentUse: return L(.desktopShortcutsSpacesAreRearrangedByMost)
+        case .notOrdinaryDesktop: return L(.desktopShortcutsTheOrderOfSpacesCould)
+        case .dockUnknown: return L(.desktopShortcutsTheDockCouldNotBe)
+        case .unread: return L(.desktopShortcutsShortcutCouldNotBeRead)
+        case .off: return L(.desktopShortcutsShortcutOff)
+        case .unusable: return L(.desktopShortcutsShortcutCannotBeSent)
+        case .conflict: return L(.desktopShortcutsSameAsALazySpaceShortcut)
+        case .suppressed: return L(.desktopShortcutsMacOSDidNotRespond)
         }
     }
 

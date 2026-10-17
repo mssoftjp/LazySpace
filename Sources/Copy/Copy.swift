@@ -53,41 +53,41 @@ public enum Copy {
 public enum AccessPane {
     public static func name(osMajor: Int = ProcessInfo.processInfo.operatingSystemVersion.majorVersion) -> String {
         osMajor >= 27
-            ? L("Device Control and Data Access", "デバイスの制御とデータへのアクセス")
-            : L("Accessibility", "アクセシビリティ")
+            ? L(.copyDeviceControlAndDataAccess)
+            : L(.copyAccessibility)
     }
 }
 
 /// macOS item names as shown in macOS 27.0, without quotes.
 public enum MacItem {
     public static func moveSpace(right: Bool) -> String {
-        right ? L("Move right a Space", "右の操作スペースに移動") : L("Move left a Space", "左の操作スペースに移動")
+        right ? L(.copyMoveRightASpace) : L(.copyMoveLeftASpace)
     }
 
     /// "Switch to Desktop N"; N stays when the number is unknown.
     public static func switchToDesktop(_ desktop: Int?) -> String {
         let number = desktop.map(String.init) ?? "N"
-        return L("Switch to Desktop \(number)", "デスクトップ\(number)へ切り替え")
+        return L(.copySwitchToDesktop(number))
     }
 
-    public static var stageManager: String { L("Stage Manager", "ステージマネージャ") }
+    public static var stageManager: String { L(.copyStageManager) }
 
     /// The login item switch. LazySpace's own setting uses the same words.
-    public static var openAtLogin: String { L("Open at Login", "ログイン時に開く") }
+    public static var openAtLogin: String { L(.copyOpenAtLogin) }
 
     /// System Settings › General pane, renamed from "Login Items" in macOS 15.
     public static func loginItems(osMajor: Int = ProcessInfo.processInfo.operatingSystemVersion.majorVersion) -> String {
-        osMajor >= 15 ? L("Login Items & Extensions", "ログイン項目と機能拡張") : L("Login Items", "ログイン項目")
+        osMajor >= 15 ? L(.copyLoginItemsExtensions) : L(.copyLoginItems)
     }
 
     /// The Mission Control option.
-    public static var separateSpaces: String { L("Displays have separate Spaces", "ディスプレイごとに個別の操作スペース") }
+    public static var separateSpaces: String { L(.copySeparateSpaces) }
 }
 
 extension Copy {
     /// Name of a numbered desktop, as Mission Control shows it.
     public static func desktop(_ number: Int) -> String {
-        L("Desktop \(number)", "デスクトップ\(number)")
+        L(.copyDesktop(String(number)))
     }
 
     /// Separator for sentences joined at run time: a space in English, nothing in Japanese.

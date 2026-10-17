@@ -39,11 +39,11 @@ extension ReadyWindowController {
     static func exclusionText(_ exclusion: Exclusion) -> String {
         switch exclusion.window.membership {
         case .allSpaces:
-            return L("Excluded: on all Spaces", "対象外：すべての操作スペースに表示")
+            return L(.windowListExcludedOnAllSpaces)
         case .current where exclusion.window.kind == .dialog:
-            return L("Excluded: fixed-size window", "対象外：大きさが固定のウインドウ")
+            return L(.windowListExcludedFixedSizeWindow)
         default:
-            return L("Excluded: \(exclusion.reason)", "対象外：\(exclusion.reason)")
+            return L(.windowListExcluded(exclusion.reason))
         }
     }
 
@@ -64,30 +64,24 @@ extension ReadyWindowController {
     static func remediationChoices(_ status: AppStatus) -> [DetailSheet.Choice] {
         var choices = [DetailSheet.closeChoice]
         if !status.trusted {
-            choices.append(DetailSheet.Choice(kind: .openGeneralSettings, title: L("Open General Settings", "設定の「一般」を開く")))
+            choices.append(DetailSheet.Choice(kind: .openGeneralSettings, title: L(.windowListOpenGeneralSettings)))
         } else if status.inputObservation == InputMonitor.Mode.unavailable.rawValue {
-            choices.append(DetailSheet.Choice(kind: .openSettings, title: L("Open \(AccessPane.name()) Settings", "「\(AccessPane.name())」の設定を開く")))
+            choices.append(DetailSheet.Choice(kind: .openSettings, title: L(.windowListOpenAppSettings(AccessPane.name()))))
         } else if status.configError != nil {
-            choices.append(DetailSheet.Choice(kind: .openGeneralSettings, title: L("Open Settings", "設定を開く")))
+            choices.append(DetailSheet.Choice(kind: .openGeneralSettings, title: L(.windowListOpenSettings)))
         }
         return choices
     }
 
     static func remediationDetail(_ status: AppStatus) -> String {
         if !status.trusted {
-            return L(
-                "The \(AccessPane.name()) permission is required to read windows. Open General Settings and click Open System Settings….",
-                "ウインドウを読むには「\(AccessPane.name())」の許可が必要です。設定の「一般」で「システム設定を開く…」をクリックしてください。")
+            return L(.windowListThePermissionIsRequiredTo(AccessPane.name()))
         }
         if !status.spaceObservation || !status.manualAvailable {
-            return L(
-                "The current Space can't be detected. This version of macOS does not tell LazySpace which Space is active, so windows in this Space can't be listed.",
-                "現在の操作スペースを確認できません。このmacOSでは現在の操作スペースが分からないため、この操作スペースのウインドウを一覧できません。")
+            return L(.windowListTheCurrentSpaceCantBe)
         }
         if status.inputObservation == InputMonitor.Mode.unavailable.rawValue {
-            return L(
-                "Input observation is unavailable, so automatic arrangement stays off. Open \(AccessPane.name()) settings and allow LazySpace.",
-                "入力を観測できないため、自動整列はオフのままです。「\(AccessPane.name())」でLazySpaceを許可してください。")
+            return L(.windowListInputObservationIsUnavailableSo(AccessPane.name()))
         }
         return status.autoReason
     }
@@ -112,16 +106,16 @@ extension ReadyWindowController {
 
     static func previousOperationText(_ result: OperationResult, name: (String) -> String = { $0 }, time: (Date) -> String = shortDateTime) -> String {
         var lines = [
-            L("Finished: \(time(result.finishedAt))", "完了: \(time(result.finishedAt))"),
+            L(.windowListFinished(time(result.finishedAt))),
             recordedSpaceLine(result.spaceID),
             outcomeTitle(result),
         ]
         let message = resultBody(result, name: name)
         if !message.isEmpty { lines.append(message) }
         if result.targets.isEmpty {
-            lines.append(L("Targets: not recorded", "対象: 記録なし"))
+            lines.append(L(.windowListTargetsNotRecorded))
         } else {
-            lines.append(L("Recorded targets", "記録された対象"))
+            lines.append(L(.windowListRecordedTargets))
             for target in result.targets {
                 lines.append("\(shownApp(target.app, name: name)) — \(statusText(target))")
             }
@@ -130,14 +124,14 @@ extension ReadyWindowController {
     }
 
     static func recordedSpaceLine(_ spaceID: UInt64?) -> String {
-        guard let spaceID else { return L("Recorded Space ID: not recorded", "記録された操作スペースID: 記録なし") }
-        return L("Recorded Space ID: \(spaceID)", "記録された操作スペースID: \(spaceID)")
+        guard let spaceID else { return L(.windowListRecordedSpaceIDNotRecorded) }
+        return L(.windowListRecordedSpaceID(String(spaceID)))
     }
 
     static func updatedLabel(checking: Bool, date: Date?) -> String {
-        if checking { return L("Checking…", "確認中…") }
+        if checking { return L(.windowListChecking) }
         guard let date else { return "" }
-        return L("Updated \(shortTime(date))", "\(shortTime(date))更新")
+        return L(.windowListUpdated(shortTime(date)))
     }
 
     static func shortTime(_ date: Date) -> String {
@@ -154,34 +148,34 @@ extension ReadyWindowController {
         return formatter.string(from: date)
     }
 
-    static var spaceHeadingText: String { L("This Space", "この操作スペース") }
-    static var refreshTitle: String { L("Refresh", "更新") }
-    static var previousTitle: String { L("Previous Operation…", "前回の操作…") }
-    static var fixTitle: String { L("Show Fix…", "対処を確認…") }
-    static var remediationSheetTitle: String { L("Resolve Arrangement Issue", "整列の問題を解決") }
-    static var eligibleVerdict: String { L("Eligible", "整列対象") }
-    static var accessibilityShort: String { L("The \(AccessPane.name()) permission is required.", "「\(AccessPane.name())」の許可が必要です。") }
-    static var spaceShort: String { L("The current Space can't be detected.", "現在の操作スペースを確認できません。") }
-    static var inputShort: String { L("Input observation is unavailable.", "入力の観測が利用できません。") }
-    static var noWindowsText: String { L("No windows in this Space.", "この操作スペースにウインドウはありません。") }
+    static var spaceHeadingText: String { L(.cliThisSpace) }
+    static var refreshTitle: String { L(.windowListRefreshTitle) }
+    static var previousTitle: String { L(.windowListPreviousTitle) }
+    static var fixTitle: String { L(.windowListFixTitle) }
+    static var remediationSheetTitle: String { L(.windowListRemediationSheetTitle) }
+    static var eligibleVerdict: String { L(.windowListEligibleVerdict) }
+    static var accessibilityShort: String { L(.windowListAccessibilityShort(AccessPane.name())) }
+    static var spaceShort: String { L(.windowListSpaceShort) }
+    static var inputShort: String { L(.windowListInputShort) }
+    static var noWindowsText: String { L(.windowListNoWindowsText) }
     static var windowsUnavailableText: String {
-        L("The \(AccessPane.name()) permission is required to read windows.", "ウインドウを読むには「\(AccessPane.name())」の許可が必要です。")
+        L(.windowListWindowsUnavailableText(AccessPane.name()))
     }
     static var unknownSpaceText: String {
-        L("The current Space can't be determined, so its windows can't be listed.", "現在の操作スペースを確認できないため、ウインドウを一覧できません。")
+        L(.windowListUnknownSpaceText)
     }
     static var mismatchText: String {
-        L("The window list did not match this Space.", "ウインドウ一覧がこの操作スペースと一致しませんでした。")
+        L(.windowListMismatchText)
     }
-    static var noResponseShort: String { L("No Response", "応答なし") }
+    static var noResponseShort: String { L(.windowListNoResponseShort) }
 
     static func outcomeTitle(_ result: OperationResult) -> String {
         switch result.outcome {
-        case .complete: return L("Completed", "完了")
-        case .partial: return L("Partially Applied", "一部のみ適用")
-        case .interrupted: return L("Interrupted", "中断")
-        case .notPossible: return L("Could Not Complete", "完了できませんでした")
-        case .nothingToDo: return L("Nothing to Do", "することはありません")
+        case .complete: return L(.windowListCompleted)
+        case .partial: return L(.windowListPartiallyApplied)
+        case .interrupted: return L(.windowListInterrupted)
+        case .notPossible: return L(.windowListCouldNotComplete)
+        case .nothingToDo: return L(.windowListNothingToDo)
         }
     }
 
@@ -211,13 +205,13 @@ extension ReadyWindowController {
         readableMessage(result.message, apps: result.targets.map(\.app) + result.unobservedApps, name: name)
     }
 
-    static var windowTitle: String { L("LazySpace — Windows", "LazySpace — ウインドウの確認") }
-    static var menuTitle: String { L("Check Windows…", "ウインドウを確認…") }
+    static var windowTitle: String { L(.windowListWindowTitle) }
+    static var menuTitle: String { L(.windowListMenuTitle) }
 
-    static var verdictColumnTitle: String { L("Eligibility", "整列対象") }
-    static var waitingVerdict: String { L("Waiting to Join", "待機中") }
+    static var verdictColumnTitle: String { L(.windowListVerdictColumnTitle) }
+    static var waitingVerdict: String { L(.windowListWaitingVerdict) }
     static var noResponseVerdict: String {
-        L("No Response: Could not read this app's windows before the timeout.", "応答なし: 期限内にこのアプリのウインドウを読み取れませんでした。")
+        L(.windowListNoResponseVerdict)
     }
 
     static func statusText(_ target: TargetReport) -> String {
@@ -226,11 +220,11 @@ extension ReadyWindowController {
             return L("\(title): \(note)", "\(title): \(note)")
         }
         switch target.status {
-        case .verified: return L("Applied", "適用済み")
-        case .unchanged: return L("Already in Place", "変更不要")
-        case .mismatch: return withNote(L("Does Not Match the Layout", "レイアウトと不一致"))
-        case .unapplied: return withNote(L("Not Applied", "未適用"))
-        case .gone: return L("Window Closed", "閉じられました")
+        case .verified: return L(.windowListApplied)
+        case .unchanged: return L(.windowListAlreadyInPlace)
+        case .mismatch: return withNote(L(.windowListDoesNotMatchTheLayout))
+        case .unapplied: return withNote(L(.windowListNotApplied))
+        case .gone: return L(.windowListWindowClosed)
         }
     }
 }

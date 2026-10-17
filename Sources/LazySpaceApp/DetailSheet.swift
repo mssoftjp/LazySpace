@@ -14,7 +14,7 @@ enum DetailSheet {
         var title: String
     }
 
-    static var closeChoice: Choice { Choice(kind: .close, title: L("Close", "閉じる")) }
+    static var closeChoice: Choice { Choice(kind: .close, title: L(.appDelegateClose)) }
 
     static func response(for index: Int) -> NSApplication.ModalResponse {
         NSApplication.ModalResponse(rawValue: NSApplication.ModalResponse.alertFirstButtonReturn.rawValue + index)

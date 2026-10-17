@@ -222,7 +222,7 @@ final class ShortcutValueCell: NSTableCellView {
     func setAssignment(display: String?, recording: Bool) {
         self.recording = recording
         shown = display ?? ""
-        valueLabel.stringValue = recording && shown.isEmpty ? L("Type Shortcut", "キーを入力") : shown
+        valueLabel.stringValue = recording && shown.isEmpty ? L(.settingsControlsTypeShortcut) : shown
         applyRecordingColors()
         setAccessibilityLabel(accessibilityLabel())
         setAccessibilityValue(accessibilityValue())
@@ -277,35 +277,35 @@ final class ShortcutValueCell: NSTableCellView {
     override func accessibilityLabel() -> String? { actionLabel }
     override func accessibilityHelp() -> String? {
         if recording {
-            return L("Recording a shortcut. Press Esc to cancel.", "ショートカットを記録しています。Escでキャンセルします。")
+            return L(.settingsControlsRecordingAShortcutPressEsc)
         }
-        return L("Double-click or press Return to change this shortcut.", "ダブルクリックかReturnでショートカットを変更します。")
+        return L(.settingsControlsDoubleClickOrPressReturn)
     }
     override func accessibilityValue() -> Any? {
-        if recording { return shown.isEmpty ? L("Type Shortcut", "キーを入力") : shown }
-        return shown.isEmpty ? L("Unassigned", "なし") : shown
+        if recording { return shown.isEmpty ? L(.settingsControlsTypeShortcut) : shown }
+        return shown.isEmpty ? L(.settingsControlsUnassigned) : shown
     }
     override func accessibilityCustomActions() -> [NSAccessibilityCustomAction] {
         var actions: [NSAccessibilityCustomAction] = []
         if recording {
-            actions.append(NSAccessibilityCustomAction(name: L("Cancel Recording", "記録をキャンセル")) { [weak self] in
+            actions.append(NSAccessibilityCustomAction(name: L(.settingsControlsCancelRecording)) { [weak self] in
                 self?.onCancel?()
                 return true
             })
         } else {
-            actions.append(NSAccessibilityCustomAction(name: L("Change Shortcut", "ショートカットを変更")) { [weak self] in
+            actions.append(NSAccessibilityCustomAction(name: L(.settingsControlsChangeShortcut)) { [weak self] in
                 self?.onChange?()
                 return true
             })
         }
         if canRemove {
-            actions.append(NSAccessibilityCustomAction(name: L("Remove Shortcut", "割り当てを解除")) { [weak self] in
+            actions.append(NSAccessibilityCustomAction(name: L(.settingsControlsRemoveShortcut)) { [weak self] in
                 self?.onRemove?()
                 return true
             })
         }
         if canRestore {
-            actions.append(NSAccessibilityCustomAction(name: L("Restore Default", "デフォルトに戻す")) { [weak self] in
+            actions.append(NSAccessibilityCustomAction(name: L(.settingsControlsRestoreDefault)) { [weak self] in
                 self?.onRestore?()
                 return true
             })

@@ -6,7 +6,7 @@ public enum DirectionPattern: String, Equatable {
     case hjkl
     case arrows
 
-    public var title: String { self == .hjkl ? "HJKL" : L("Arrows", "矢印") }
+    public var title: String { self == .hjkl ? "HJKL" : L(.keyLayoutArrows) }
 
     var letters: [String] {
         self == .hjkl ? ["h", "j", "k", "l"] : ["left", "down", "up", "right"]
@@ -19,11 +19,11 @@ public enum DirectionGroup: String, CaseIterable, Equatable {
 
     public var title: String {
         switch self {
-        case .focus: return L("Focus", "フォーカス")
-        case .swap: return L("Swap", "交換")
-        case .move: return L("Move", "移動")
-        case .join: return L("Join", "グループ化")
-        case .resize: return L("Resize", "サイズ変更")
+        case .focus: return L(.keyLayoutFocus)
+        case .swap: return L(.keyLayoutSwap)
+        case .move: return L(.keyLayoutMove)
+        case .join: return L(.keyLayoutJoin)
+        case .resize: return L(.keyLayoutResize)
         }
     }
 
@@ -62,7 +62,7 @@ public enum DirectionGroup: String, CaseIterable, Equatable {
             return mods.isEmpty ? matched.pattern.title : mods + matched.pattern.title
         }
         let shown = commands.compactMap { table[$0]?.display }
-        return shown.isEmpty ? "—" : L("Custom", "個別設定")
+        return shown.isEmpty ? "—" : L(.keyLayoutCustom)
     }
 
     /// Keys the standard template gives this group; empty if none.
@@ -115,11 +115,11 @@ public enum ShortcutSection: String, CaseIterable, Equatable {
 
     public var title: String {
         switch self {
-        case .window: return L("Windows", "ウインドウ")
-        case .actions: return L("Actions", "操作")
-        case .spaces: return L("Spaces", "操作スペース")
-        case .stepwise: return L("Numbered Desktop Switching", "番号でデスクトップを切り替える")
-        case .adjacentAssigned: return L("Next/Previous Space in LazySpace", "LazySpaceの次／前の操作スペースへ移動")
+        case .window: return L(.keyLayoutWindows)
+        case .actions: return L(.keyLayoutActions)
+        case .spaces: return L(.keyLayoutSpaces)
+        case .stepwise: return L(.keyLayoutNumberedDesktopSwitching)
+        case .adjacentAssigned: return L(.keyLayoutNextPreviousSpaceInLazySpace)
         }
     }
 
@@ -130,9 +130,9 @@ public enum ShortcutSection: String, CaseIterable, Equatable {
         switch self {
         case .spaces:
             return follow
-                ? L("Moves the window and switches to that Space.", "ウインドウを移動し、その操作スペースに切り替えます。")
-                : L("Sends the window and stays on the current Space.", "ウインドウだけを送り、今の操作スペースに留まります。")
-        case .adjacentAssigned: return L("Still active. macOS has the same actions in Mission Control shortcuts.", "今も有効です。macOSのMission Controlにも同じ操作があります。")
+                ? L(.keyLayoutMovesTheWindowAndSwitches)
+                : L(.keyLayoutSendsTheWindowAndStays)
+        case .adjacentAssigned: return L(.keyLayoutStillActiveMacOSHasThe)
         case .window, .actions, .stepwise: return ""
         }
     }
@@ -248,20 +248,20 @@ public enum ShortcutConflicts {
     public static func messages(for key: Config.Key, systemHotkeys: [SystemHotkey], optionGlyph: String?) -> [String] {
         var lines: [String] = []
         if key.modifiers == ["alt"], ["left", "right", "b", "f"].contains(key.key) {
-            lines.append(L("If Terminal uses Option as the Meta key, this conflicts with moving by word.", "TerminalでOptionをメタキーにしていると、単語単位の移動と重なります。"))
+            lines.append(L(.keyLayoutIfTerminalUsesOptionAs))
         }
         if key.modifiers == ["alt"], let optionGlyph, !optionGlyph.isEmpty, let shown = Self.optionTypingSymbol(key) {
             let glyph = optionGlyph.lowercased()
             let plain = Config.Key(modifiers: [], key: key.key).display.lowercased()
             if glyph != plain && glyph != key.key.lowercased() {
-                lines.append(L("With this keyboard layout, ⌥\(shown) types “\(optionGlyph)”.", "このキーボード配列では⌥\(shown)は「\(optionGlyph)」を入力します。"))
+                lines.append(L(.keyLayoutWithThisKeyboardLayoutTypes(shown, optionGlyph)))
             }
         }
         if let hit = systemHotkeys.first(where: { $0.keyCode == key.keyCode && $0.modifiers == key.modifiers }) {
             if let name = hit.name, !name.isEmpty {
-                lines.append(L("Conflicts with the macOS shortcut “\(name)”.", "macOSの「\(name)」と重なります。"))
+                lines.append(L(.keyLayoutConflictsWithTheMacOSShortcut(name)))
             } else {
-                lines.append(L("Conflicts with a macOS shortcut.", "macOSのショートカットと重なります。"))
+                lines.append(L(.keyLayoutConflictsWithAMacOSShortcut))
             }
         }
         return lines

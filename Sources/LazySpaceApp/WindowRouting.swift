@@ -61,8 +61,7 @@ struct SendHold: Equatable {
 
     /// Reason shown in the window list and for layout exclusion.
     static var reason: String {
-        L("Send to another Space not confirmed yet; LazySpace leaves this window alone until its Space is known.",
-          "別の操作スペースへの送出を確認中です。所属が分かるまで、このウインドウには書き込みません。")
+        L(.windowRoutingReason)
     }
 }
 
@@ -291,8 +290,8 @@ extension WindowRouter.Phase {
     /// Reason shown in the window list and for layout exclusion.
     var reason: String {
         switch self {
-        case .classifying: return L("Just opened; checking whether a Space rule sends it to another Space.", "開いたばかりです。操作スペースのルールで別の操作スペースへ送るかを確かめています。")
-        case .ready, .sending: return L("Being sent to another Space by a rule.", "ルールで別の操作スペースへ送っています。")
+        case .classifying: return L(.windowRoutingJustOpenedCheckingWhetherA)
+        case .ready, .sending: return L(.windowRoutingBeingSentToAnotherSpace)
         case .seen, .consumed: return ""
         }
     }

@@ -16,12 +16,11 @@ enum LoginItem {
 
         var text: String {
             switch self {
-            case .enabled: return L("On", "オン")
-            case .disabled: return L("Off", "オフ")
-            case .requiresApproval: return L("Approval required in System Settings › General › \(MacItem.loginItems()). Allow LazySpace there to turn it on.",
-                                             "システム設定 › 一般 › \(MacItem.loginItems())でLazySpaceを許可すると有効になります")
-            case .notFound: return L("Off", "オフ")
-            case .unavailable(let why): return L("Unavailable: \(why)", "利用できません: \(why)")
+            case .enabled: return L(.coordinatorDialogRegionOn)
+            case .disabled: return L(.coordinatorOff)
+            case .requiresApproval: return L(.integrationApprovalRequiredInSystemSettings(MacItem.loginItems()))
+            case .notFound: return L(.coordinatorOff)
+            case .unavailable(let why): return L(.integrationUnavailable(why))
             }
         }
     }
@@ -30,20 +29,20 @@ enum LoginItem {
     static var isBundled: Bool { Bundle.main.bundleURL.pathExtension == "app" && Bundle.main.bundleIdentifier != nil }
 
     static func state() -> State {
-        guard isBundled else { return .unavailable(L("Available only when LazySpace runs from LazySpace.app.", "アプリ束（LazySpace.app）から起動した時だけ使えます")) }
+        guard isBundled else { return .unavailable(L(.integrationAvailableOnlyWhenLazySpaceRuns)) }
         switch SMAppService.mainApp.status {
         case .enabled: return .enabled
         case .requiresApproval: return .requiresApproval
         case .notFound: return .notFound
         case .notRegistered: return .disabled
-        @unknown default: return .unavailable(L("Unknown state", "不明な状態"))
+        @unknown default: return .unavailable(L(.integrationUnknownState))
         }
     }
 
     /// Registers or unregisters; returns the reason on failure.
     @discardableResult
     static func set(_ enabled: Bool) -> String? {
-        guard isBundled else { return L("Open at Login can be set only when LazySpace runs from LazySpace.app.", "「ログイン時に開く」はアプリ束（LazySpace.app）から起動した時だけ設定できます") }
+        guard isBundled else { return L(.integrationOpenAtLoginCanBe) }
         do {
             if enabled {
                 if SMAppService.mainApp.status != .enabled { try SMAppService.mainApp.register() }
@@ -53,8 +52,8 @@ enum LoginItem {
             return nil
         } catch {
             return enabled
-                ? L("Could not turn on Open at Login: \(error.localizedDescription)", "「ログイン時に開く」をオンにできません: \(error.localizedDescription)")
-                : L("Could not turn off Open at Login: \(error.localizedDescription)", "「ログイン時に開く」をオフにできません: \(error.localizedDescription)")
+                ? L(.integrationCouldNotTurnOnOpen(error.localizedDescription))
+                : L(.integrationCouldNotTurnOffOpen(error.localizedDescription))
         }
     }
 
@@ -98,8 +97,7 @@ enum HookRunner {
         posix_spawnattr_setpgroup(&attributes, 0)
         // Without it the command would borrow LazySpace's permissions, so it does not run at all.
         guard disclaim(&attributes) else {
-            onProblem(L("Could not start hook \(label): macOS cannot run it apart from LazySpace's permissions.",
-                        "フック\(label)を起動できません: LazySpaceの許可から切り離して実行できません。"))
+            onProblem(L(.integrationCouldNotStartHookMacOS(label)))
             return nil
         }
         var actions: posix_spawn_file_actions_t?
@@ -116,14 +114,14 @@ enum HookRunner {
         let error = posix_spawn(&pid, path, &actions, &attributes, cArguments, cEnvironment)
         guard error == 0 else {
             let reason = String(cString: strerror(error))
-            onProblem(L("Could not start hook \(label): \(reason)", "フック\(label)を起動できません: \(reason)"))
+            onProblem(L(.integrationCouldNotStartHook(label, reason)))
             return nil
         }
         whenExited(pid) { status in
             // A normal exit keeps its code in the second byte; otherwise the low bits are the signal, as Process reports it.
             let code = status & 0x7f == 0 ? (status >> 8) & 0xff : status & 0x7f
             guard code != 0 else { return }
-            onProblem(L("Hook \(label) exited with status \(code).", "フック\(label)が終了コード\(code)で終わりました。"))
+            onProblem(L(.integrationHookExitedWithStatus(label, String(code))))
         }
         return pid
     }

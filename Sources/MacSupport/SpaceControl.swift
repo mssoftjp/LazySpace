@@ -579,7 +579,7 @@ public final class SpaceControl {
 
     private func switchToBody(spaceID target: UInt64, plan: SwitchPlan, shouldContinue: @escaping () -> Bool) -> Swift.Result<Result, Failure> {
         let t0 = now()
-        guard let active = spaces.activeSpace() else { return .failure(.unavailable(L("Could not determine the current Space.", "現在の操作スペースを確認できません。"))) }
+        guard let active = spaces.activeSpace() else { return .failure(.unavailable(L(.spaceControlCouldNotDetermineTheCurrent))) }
         // Do not start from a Space other than the authorized source.
         if let source = plan.source, active != source { return .failure(.interrupted) }
         if active == target { return .failure(.alreadyThere) }
@@ -587,7 +587,7 @@ public final class SpaceControl {
         let steps = stepPlan(from: active, to: target)
         guard steps != nil || record(of: target) != nil else { return .failure(.noSuchSpace) }
         let baseline = inputCount()
-        guard inputAvailable() else { return .failure(.unavailable(L("Mouse and keyboard input observation is unavailable, so LazySpace will not continue.", "マウスとキーボードの入力を観測できないため、操作しません。"))) }
+        guard inputAvailable() else { return .failure(.unavailable(L(.spaceControlMouseAndKeyboardInputObservation))) }
         // This one baseline decides interruption across candidate search, activation, settle waits, and stepping.
         let canContinue = { self.inputAvailable() && shouldContinue() && self.inputCount() == baseline }
         let gates = Gates(canContinue: canContinue)
@@ -868,7 +868,7 @@ public final class SpaceControl {
             // Arrival observed. After the wait, check the final authorization, input, and arrival (keys are released).
             settleFor(settle.desktopHotkey)
             guard gates.canContinue() else { return .failed(.interrupted) }
-            guard let final = spaces.activeSpace() else { return .failed(.unavailable(L("Could not confirm the Space after switching.", "切り替え後の操作スペースを確認できません。"))) }
+            guard let final = spaces.activeSpace() else { return .failed(.unavailable(L(.spaceControlCouldNotConfirmTheSpace))) }
             if final != target { return .failed(.drifted(to: final)) }
             plan.report(.arrived)
             return .switched(Result(fromSpace: active, toSpace: target, steps: 0, wallMs: now().timeIntervalSince(t0) * 1000))
@@ -890,8 +890,8 @@ public final class SpaceControl {
     private static func steppingFailure(_ reason: HotkeyStopped) -> Failure {
         switch reason {
         case .interrupted, .unexpectedSpace: return .interrupted
-        case .unconfirmed, .compromised: return .timedOut(L("Could not confirm the Space switch.", "操作スペースの切り替えを確認できませんでした。"))
-        case .activeUnreadable: return .unavailable(L("Could not confirm the Space after switching.", "切り替え後の操作スペースを確認できません。"))
+        case .unconfirmed, .compromised: return .timedOut(L(.spaceControlCouldNotConfirmTheSpaceSwitch))
+        case .activeUnreadable: return .unavailable(L(.spaceControlCouldNotConfirmTheSpace))
         }
     }
 
@@ -943,7 +943,7 @@ public final class SpaceControl {
 
     /// Text for a shortcut setting problem found after the route started: setting name and reason, and that the rest of the moves were not sent.
     private func remainingText(_ issue: ShortcutIssue, right: Bool) -> String {
-        let settings = L("System Settings › Keyboard › Keyboard Shortcuts… › Mission Control", "システム設定 › キーボード › キーボードショートカット… › Mission Control")
+        let settings = L(.spaceControlSystemSettingsKeyboardKeyboardShortcuts)
         return Self.lead(issue, right: right) + Copy.sentenceSeparator + L("The remaining steps were not sent. \(settings).", "残りの移動は送っていません。\(settings)。")
     }
 
@@ -951,10 +951,8 @@ public final class SpaceControl {
     private func changedText(right: Bool, sent: Bool) -> String {
         let name = MacItem.moveSpace(right: right)
         return sent
-            ? L("The Mission Control shortcut “\(name)” or the Dock changed while LazySpace was switching. The remaining steps were not sent.",
-                "切り替えの途中でMission Controlのショートカット「\(name)」またはDockが変わりました。残りの移動は送っていません。")
-            : L("The Mission Control shortcut “\(name)” or the Dock changed before LazySpace started switching. Nothing was sent.",
-                "切り替えを始める前にMission Controlのショートカット「\(name)」またはDockが変わりました。何も送信していません。")
+            ? L(.spaceControlTheMissionControlShortcutOr(name))
+            : L(.spaceControlTheMissionControlShortcutOrThe(name))
     }
 
     /// Failure when stepping becomes "not sent" midway (the caller decides whether to replan for an order change). It is after the preflight, so setting problems
@@ -1037,7 +1035,7 @@ public final class SpaceControl {
         // Arrival of the last step observed. After the wait, check the final authorization, input, and arrival.
         settleFor(settle.arrowFinal)
         guard gates.canContinue() else { return .failure(.interrupted) }
-        guard let final = spaces.activeSpace() else { return .failure(.unavailable(L("Could not confirm the Space after switching.", "切り替え後の操作スペースを確認できません。"))) }
+        guard let final = spaces.activeSpace() else { return .failure(.unavailable(L(.spaceControlCouldNotConfirmTheSpace))) }
         if final != target { return .failure(.drifted(to: final)) }
         return .success(Result(fromSpace: origin, toSpace: target, steps: sent, wallMs: now().timeIntervalSince(t0) * 1000))
     }
@@ -1046,8 +1044,8 @@ public final class SpaceControl {
     public func label(_ id: UInt64) -> String {
         let order = orderedSpaces()
         if let n = SpaceObserver.desktopNumbers(order)[id] { return Copy.desktop(n) }
-        if order.first(where: { $0.id == id })?.type == 4 { return L("Full Screen", "フルスクリーン") }
-        return L("Space \(id)", "操作スペース\(id)")
+        if order.first(where: { $0.id == id })?.type == 4 { return L(.spaceControlFullScreen) }
+        return L(.spaceControlSpace(String(id)))
     }
 
     // MARK: - Moving
@@ -1083,20 +1081,20 @@ public final class SpaceControl {
         // Take the input baseline first (input during the slow reads below also prevents issuing).
         let baseline = inputCount()
         guard let direct, let move = direct.move else {
-            return .notIssued(.unavailable(L("Sending a window without switching needs the direct move, which this macOS does not offer.", "切り替えずに送るには直接の移動が必要ですが、このmacOSでは使えません。")))
+            return .notIssued(.unavailable(L(.spaceControlSendingAWindowWithoutSwitching)))
         }
-        guard let active = spaces.activeSpace() else { return .notIssued(.unavailable(L("Could not determine the current Space.", "現在の操作スペースを確認できません。"))) }
+        guard let active = spaces.activeSpace() else { return .notIssued(.unavailable(L(.spaceControlCouldNotDetermineTheCurrent))) }
         if active == target { return .notIssued(.alreadyThere) }
         // The direct move is only for standard Desktops (type 0); full screen and others are unverified.
         guard let entry = record(of: target) else { return .notIssued(.noSuchSpace) }
-        guard entry.type == 0 else { return .notIssued(.unavailable(L("A window can be sent only to an ordinary desktop.", "ウインドウを送れるのは通常のデスクトップだけです。"))) }
-        guard spaces.spaces(for: wid) == [active] else { return .notIssued(.unavailable(L("The window moved to a different Space.", "ウインドウの所属する操作スペースが変わりました。"))) }
-        guard inputAvailable() else { return .notIssued(.unavailable(L("Mouse and keyboard input observation is unavailable, so LazySpace will not continue.", "マウスとキーボードの入力を観測できないため、操作しません。"))) }
+        guard entry.type == 0 else { return .notIssued(.unavailable(L(.spaceControlAWindowCanBeSent))) }
+        guard spaces.spaces(for: wid) == [active] else { return .notIssued(.unavailable(L(.spaceControlTheWindowMovedToA))) }
+        guard inputAvailable() else { return .notIssued(.unavailable(L(.spaceControlMouseAndKeyboardInputObservation))) }
         let inputQuiet = { self.inputAvailable() && self.inputCount() == baseline }
         let canContinue = { inputQuiet() && afterIssue() }
         // Right before issuing, the cheap gates and the current Space once more.
         guard inputQuiet(), beforeIssue(), spaces.activeSpace() == active else { return .notIssued(.interrupted) }
-        guard move(wid, target) else { return .notIssued(.unavailable(L("The window could not be moved directly.", "ウインドウを直接移動できませんでした。"))) }
+        guard move(wid, target) else { return .notIssued(.unavailable(L(.spaceControlTheWindowCouldNotBe))) }
         trace("moveIssued")
         var membership = spaces.spaces(for: wid)
         let deadline = now().addingTimeInterval(1.0)
@@ -1142,19 +1140,19 @@ public final class SpaceControl {
     private func moveWindowBody(_ wid: CGWindowID, frame: CGRect, toSpace target: UInt64, follow: HotkeyPlan?, arrows: ArrowPolicy?,
                                 hooks: MoveHooks, shouldContinue: @escaping () -> Bool) -> Swift.Result<Result, Failure> {
         let t0 = now()
-        guard let active = spaces.activeSpace() else { return .failure(.unavailable(L("Could not determine the current Space.", "現在の操作スペースを確認できません。"))) }
+        guard let active = spaces.activeSpace() else { return .failure(.unavailable(L(.spaceControlCouldNotDetermineTheCurrent))) }
         if active == target { return .failure(.alreadyThere) }
         // nil steps: the target is on another display, reachable only by the direct move.
         let steps = stepPlan(from: active, to: target)
         guard steps != nil || record(of: target)?.type == 0 else { return .failure(.noSuchSpace) }
         guard frame.width.isFinite, frame.height.isFinite, frame.minX.isFinite, frame.minY.isFinite,
-              frame.width >= 40, frame.height >= 20 else { return .failure(.unavailable(L("Could not read the window's position and size.", "ウインドウの位置とサイズを確認できません。"))) }
+              frame.width >= 40, frame.height >= 20 else { return .failure(.unavailable(L(.spaceControlCouldNotReadTheWindows))) }
         // Do not grab sticky windows or windows that moved to another Space after acceptance.
-        guard spaces.spaces(for: wid) == [active] else { return .failure(.unavailable(L("The window moved to a different Space.", "ウインドウの所属する操作スペースが変わりました。"))) }
+        guard spaces.spaces(for: wid) == [active] else { return .failure(.unavailable(L(.spaceControlTheWindowMovedToA))) }
 
         // Interruption conditions are the same on both paths: input observation available, caller authorization holds, no user input.
         let baseline = inputCount()
-        guard inputAvailable() else { return .failure(.unavailable(L("Mouse and keyboard input observation is unavailable, so LazySpace will not continue.", "マウスとキーボードの入力を観測できないため、操作しません。"))) }
+        guard inputAvailable() else { return .failure(.unavailable(L(.spaceControlMouseAndKeyboardInputObservation))) }
         let canContinue = { self.inputAvailable() && shouldContinue() && self.inputCount() == baseline }
         let gates = Gates(canContinue: canContinue)
 
@@ -1221,7 +1219,7 @@ public final class SpaceControl {
             while now() < deadline {
                 try requireContinuation(canContinue)
                 if spaces.spaces(for: wid) == [target] {
-                    guard let final = spaces.activeSpace() else { return .failure(.unavailable(L("Could not confirm the Space after moving the window.", "移動後の操作スペースを確認できません。"))) }
+                    guard let final = spaces.activeSpace() else { return .failure(.unavailable(L(.spaceControlCouldNotConfirmTheSpaceAfter))) }
                     guard final == target else { return .failure(.drifted(to: final)) }
                     return .success(Result(fromSpace: active, toSpace: target, steps: steps.count, wallMs: now().timeIntervalSince(t0) * 1000))
                 }
@@ -1462,7 +1460,7 @@ public final class SpaceControl {
     private func finishDirectSwitch(_ target: UInt64, from active: UInt64, startedAt t0: Date, canContinue: () -> Bool) -> DirectOutcome {
         settleFor(settle.directArrival)
         guard canContinue() else { return .failed(.interrupted) }
-        guard let final = spaces.activeSpace() else { return .failed(.unavailable(L("Could not confirm the Space after switching.", "切り替え後の操作スペースを確認できません。"))) }
+        guard let final = spaces.activeSpace() else { return .failed(.unavailable(L(.spaceControlCouldNotConfirmTheSpace))) }
         if final != target { return .failed(.drifted(to: final)) }
         return .done(Result(fromSpace: active, toSpace: target, steps: 0, wallMs: now().timeIntervalSince(t0) * 1000))
     }
@@ -1785,9 +1783,9 @@ public final class SpaceControl {
 
     /// `active` is the display name from `label`; nil means unread. `window` nil means a switch, so no window sentence. An empty array means unread.
     static func formatPlace(active: String?, window: [String]?) -> String {
-        let space = active ?? L("unknown", "不明")
+        let space = active ?? L(.spaceControlUnknown)
         guard let window else { return Copy.sentenceSeparator + L("Current Space: \(space).", "現在の操作スペースは\(space)。") }
-        let owned = window.isEmpty ? L("unknown", "不明") : window.joined(separator: ", ")
+        let owned = window.isEmpty ? L(.spaceControlUnknown) : window.joined(separator: ", ")
         return Copy.sentenceSeparator + L("Current Space: \(space). Window: \(owned).", "現在の操作スペースは\(space)。ウインドウの所属は\(owned)。")
     }
 
@@ -1929,9 +1927,8 @@ public final class SpaceControl {
     }
 
     private func refused(_ issue: ShortcutIssue, right: Bool) -> Failure {
-        let settings = L("System Settings › Keyboard › Keyboard Shortcuts… › Mission Control",
-                         "システム設定 › キーボード › キーボードショートカット… › Mission Control")
-        let tail = L("Nothing was sent. \(settings).", "何も送信していません。\(settings)。")
+        let settings = L(.spaceControlSystemSettingsKeyboardKeyboardShortcuts)
+        let tail = L(.spaceControlNothingWasSent(settings))
         return .unavailable(Self.lead(issue, right: right) + Copy.sentenceSeparator + tail)
     }
 
@@ -1939,33 +1936,33 @@ public final class SpaceControl {
         let name = MacItem.moveSpace(right: right)
         switch issue {
         case .unread:
-            return L("Could not read the Mission Control shortcut “\(name)”.", "Mission Controlのショートカット「\(name)」を読み取れませんでした。")
+            return L(.spaceControlCouldNotReadTheMission(name))
         case .disabled:
-            return L("The Mission Control shortcut “\(name)” is off.", "Mission Controlのショートカット「\(name)」はオフです。")
+            return L(.spaceControlTheMissionControlShortcutIs(name))
         case .unassigned:
-            return L("The Mission Control shortcut “\(name)” has no key assigned.", "Mission Controlのショートカット「\(name)」にはキーが割り当てられていません。")
+            return L(.spaceControlTheMissionControlShortcutHas(name))
         case .invalidKey:
-            return L("The key for the Mission Control shortcut “\(name)” cannot be sent.", "Mission Controlのショートカット「\(name)」のキーは送信できません。")
+            return L(.spaceControlTheKeyForTheMission(name))
         case .modifierOnly:
-            return L("The Mission Control shortcut “\(name)” is a modifier key alone.", "Mission Controlのショートカット「\(name)」が修飾キーだけです。")
+            return L(.spaceControlTheMissionControlShortcutIsA(name))
         case .shiftOnly:
-            return L("The Mission Control shortcut “\(name)” uses Shift without Control, Option, or Command.", "Mission Controlのショートカット「\(name)」はShiftだけで、Control・Option・Commandがありません。")
+            return L(.spaceControlTheMissionControlShortcutUses(name))
         case .needsModifier:
-            return L("The Mission Control shortcut “\(name)” does not include Control, Option, or Command.", "Mission Controlのショートカット「\(name)」にControl・Option・Commandがありません。")
+            return L(.spaceControlTheMissionControlShortcutDoes(name))
         case .capsLock:
-            return L("The Mission Control shortcut “\(name)” includes Caps Lock.", "Mission Controlのショートカット「\(name)」にCaps Lockが含まれています。")
+            return L(.spaceControlTheMissionControlShortcutIncludes(name))
         case .unknownFlags:
-            return L("The Mission Control shortcut “\(name)” includes flags LazySpace does not recognize.", "Mission Controlのショートカット「\(name)」に、扱えないフラグが含まれています。")
+            return L(.spaceControlTheMissionControlShortcutIncludesFlags(name))
         case .fnOnOtherKey:
-            return L("The Mission Control shortcut “\(name)” uses Fn on a key other than an arrow.", "Mission Controlのショートカット「\(name)」は矢印以外のキーにFnが付いています。")
+            return L(.spaceControlTheMissionControlShortcutUsesFn(name))
         case .functionKey:
-            return L("The Mission Control shortcut “\(name)” uses a function key, which is not sent.", "Mission Controlのショートカット「\(name)」はファンクションキーのため送信しません。")
+            return L(.spaceControlTheMissionControlShortcutUsesA(name))
         case .mediaKey:
-            return L("The Mission Control shortcut “\(name)” uses a media key, which is not sent.", "Mission Controlのショートカット「\(name)」はメディアキーのため送信しません。")
+            return L(.spaceControlTheMissionControlShortcutUsesAMedia(name))
         case .extendedKey:
-            return L("The Mission Control shortcut “\(name)” uses an extended key, which is not sent.", "Mission Controlのショートカット「\(name)」は拡張キーのため送信しません。")
+            return L(.spaceControlTheMissionControlShortcutUsesAn(name))
         case .conflict:
-            return L("The Mission Control shortcut “\(name)” matches a LazySpace shortcut.", "Mission Controlのショートカット「\(name)」がLazySpaceのショートカットと重なっています。")
+            return L(.spaceControlTheMissionControlShortcutMatches(name))
         }
     }
 
@@ -2014,7 +2011,7 @@ public final class SpaceControl {
 
     private func key(_ code: CGKeyCode, down: Bool, flags: CGEventFlags) throws -> CGEvent {
         guard let event = CGEvent(keyboardEventSource: source, virtualKey: code, keyDown: down) else {
-            throw Failure.unavailable(L("Could not create the keyboard event.", "キーボードイベントを作れませんでした。"))
+            throw Failure.unavailable(L(.spaceControlCouldNotCreateTheKeyboard))
         }
         event.flags = flags
         return event

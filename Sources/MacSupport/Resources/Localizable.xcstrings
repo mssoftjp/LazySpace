@@ -1,7 +1,689 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-
+    "dockShortcutFreshness.message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keyboard shortcut preferences were saved after the Dock started. If a Mission Control shortcut does not respond, restarting the Dock (Terminal: killall Dock) or logging out and in may help."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dockの起動後にキーボードショートカットの設定が保存されています。Mission Controlのショートカットが応答しないときは、Dockの再起動（ターミナルで`killall Dock`）かログアウトで直ることがあります。"
+          }
+        }
+      }
+    },
+    "macWindowSystem.couldNotReadTheWindow" : {
+      "comment" : "Arguments: 1 = `e.label`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not read the window attribute: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウの属性を読めません: %@"
+          }
+        }
+      }
+    },
+    "macWindowSystem.stoppedBecauseTheSpaceThe" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stopped because the Space, the window, input, or the time limit changed."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "操作スペース・ウインドウ・入力・時間の条件が変わったため中止しました。"
+          }
+        }
+      }
+    },
+    "macWindowSystem.theOperationWasInterruptedBefore" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The operation was interrupted before the window was raised."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウを前面にする前に操作が中断されました。"
+          }
+        }
+      }
+    },
+    "macWindowSystem.theWindowCantBeRead" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The window can't be read on that Space."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "その操作スペースのウインドウを読めません。"
+          }
+        }
+      }
+    },
+    "macWindowSystem.theWindowHasNoClose" : {
+      "comment" : "Arguments: 1 = `e.label`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The window has no close button: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウに閉じるボタンがありません: %@"
+          }
+        }
+      }
+    },
+    "macWindowSystem.theWindowHasNotBeen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The window has not been inspected yet."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "まだ確認していないウインドウです。"
+          }
+        }
+      }
+    },
+    "spaceControl.aWindowCanBeSent" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A window can be sent only to an ordinary desktop."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウを送れるのは通常のデスクトップだけです。"
+          }
+        }
+      }
+    },
+    "spaceControl.couldNotConfirmTheSpace" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not confirm the Space after switching."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切り替え後の操作スペースを確認できません。"
+          }
+        }
+      }
+    },
+    "spaceControl.couldNotConfirmTheSpaceAfter" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not confirm the Space after moving the window."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移動後の操作スペースを確認できません。"
+          }
+        }
+      }
+    },
+    "spaceControl.couldNotConfirmTheSpaceSwitch" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not confirm the Space switch."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "操作スペースの切り替えを確認できませんでした。"
+          }
+        }
+      }
+    },
+    "spaceControl.couldNotCreateTheKeyboard" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not create the keyboard event."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "キーボードイベントを作れませんでした。"
+          }
+        }
+      }
+    },
+    "spaceControl.couldNotDetermineTheCurrent" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not determine the current Space."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在の操作スペースを確認できません。"
+          }
+        }
+      }
+    },
+    "spaceControl.couldNotReadTheMission" : {
+      "comment" : "Arguments: 1 = `name`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not read the Mission Control shortcut “%@”."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Controlのショートカット「%@」を読み取れませんでした。"
+          }
+        }
+      }
+    },
+    "spaceControl.couldNotReadTheWindows" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not read the window's position and size."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウの位置とサイズを確認できません。"
+          }
+        }
+      }
+    },
+    "spaceControl.fullScreen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full Screen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フルスクリーン"
+          }
+        }
+      }
+    },
+    "spaceControl.mouseAndKeyboardInputObservation" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mouse and keyboard input observation is unavailable, so LazySpace will not continue."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "マウスとキーボードの入力を観測できないため、操作しません。"
+          }
+        }
+      }
+    },
+    "spaceControl.nothingWasSent" : {
+      "comment" : "Arguments: 1 = `settings`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing was sent. %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "何も送信していません。%@。"
+          }
+        }
+      }
+    },
+    "spaceControl.sendingAWindowWithoutSwitching" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sending a window without switching needs the direct move, which this macOS does not offer."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切り替えずに送るには直接の移動が必要ですが、このmacOSでは使えません。"
+          }
+        }
+      }
+    },
+    "spaceControl.space" : {
+      "comment" : "Arguments: 1 = `id`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Space %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "操作スペース%@"
+          }
+        }
+      }
+    },
+    "spaceControl.systemSettingsKeyboardKeyboardShortcuts" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System Settings › Keyboard › Keyboard Shortcuts… › Mission Control"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "システム設定 › キーボード › キーボードショートカット… › Mission Control"
+          }
+        }
+      }
+    },
+    "spaceControl.theKeyForTheMission" : {
+      "comment" : "Arguments: 1 = `name`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The key for the Mission Control shortcut “%@” cannot be sent."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Controlのショートカット「%@」のキーは送信できません。"
+          }
+        }
+      }
+    },
+    "spaceControl.theMissionControlShortcutDoes" : {
+      "comment" : "Arguments: 1 = `name`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Mission Control shortcut “%@” does not include Control, Option, or Command."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Controlのショートカット「%@」にControl・Option・Commandがありません。"
+          }
+        }
+      }
+    },
+    "spaceControl.theMissionControlShortcutHas" : {
+      "comment" : "Arguments: 1 = `name`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Mission Control shortcut “%@” has no key assigned."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Controlのショートカット「%@」にはキーが割り当てられていません。"
+          }
+        }
+      }
+    },
+    "spaceControl.theMissionControlShortcutIncludes" : {
+      "comment" : "Arguments: 1 = `name`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Mission Control shortcut “%@” includes Caps Lock."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Controlのショートカット「%@」にCaps Lockが含まれています。"
+          }
+        }
+      }
+    },
+    "spaceControl.theMissionControlShortcutIncludesFlags" : {
+      "comment" : "Arguments: 1 = `name`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Mission Control shortcut “%@” includes flags LazySpace does not recognize."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Controlのショートカット「%@」に、扱えないフラグが含まれています。"
+          }
+        }
+      }
+    },
+    "spaceControl.theMissionControlShortcutIs" : {
+      "comment" : "Arguments: 1 = `name`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Mission Control shortcut “%@” is off."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Controlのショートカット「%@」はオフです。"
+          }
+        }
+      }
+    },
+    "spaceControl.theMissionControlShortcutIsA" : {
+      "comment" : "Arguments: 1 = `name`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Mission Control shortcut “%@” is a modifier key alone."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Controlのショートカット「%@」が修飾キーだけです。"
+          }
+        }
+      }
+    },
+    "spaceControl.theMissionControlShortcutMatches" : {
+      "comment" : "Arguments: 1 = `name`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Mission Control shortcut “%@” matches a LazySpace shortcut."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Controlのショートカット「%@」がLazySpaceのショートカットと重なっています。"
+          }
+        }
+      }
+    },
+    "spaceControl.theMissionControlShortcutOr" : {
+      "comment" : "Arguments: 1 = `name`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Mission Control shortcut “%@” or the Dock changed while LazySpace was switching. The remaining steps were not sent."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切り替えの途中でMission Controlのショートカット「%@」またはDockが変わりました。残りの移動は送っていません。"
+          }
+        }
+      }
+    },
+    "spaceControl.theMissionControlShortcutOrThe" : {
+      "comment" : "Arguments: 1 = `name`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Mission Control shortcut “%@” or the Dock changed before LazySpace started switching. Nothing was sent."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切り替えを始める前にMission Controlのショートカット「%@」またはDockが変わりました。何も送信していません。"
+          }
+        }
+      }
+    },
+    "spaceControl.theMissionControlShortcutUses" : {
+      "comment" : "Arguments: 1 = `name`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Mission Control shortcut “%@” uses Shift without Control, Option, or Command."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Controlのショートカット「%@」はShiftだけで、Control・Option・Commandがありません。"
+          }
+        }
+      }
+    },
+    "spaceControl.theMissionControlShortcutUsesA" : {
+      "comment" : "Arguments: 1 = `name`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Mission Control shortcut “%@” uses a function key, which is not sent."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Controlのショートカット「%@」はファンクションキーのため送信しません。"
+          }
+        }
+      }
+    },
+    "spaceControl.theMissionControlShortcutUsesAMedia" : {
+      "comment" : "Arguments: 1 = `name`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Mission Control shortcut “%@” uses a media key, which is not sent."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Controlのショートカット「%@」はメディアキーのため送信しません。"
+          }
+        }
+      }
+    },
+    "spaceControl.theMissionControlShortcutUsesAn" : {
+      "comment" : "Arguments: 1 = `name`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Mission Control shortcut “%@” uses an extended key, which is not sent."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Controlのショートカット「%@」は拡張キーのため送信しません。"
+          }
+        }
+      }
+    },
+    "spaceControl.theMissionControlShortcutUsesFn" : {
+      "comment" : "Arguments: 1 = `name`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Mission Control shortcut “%@” uses Fn on a key other than an arrow."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Controlのショートカット「%@」は矢印以外のキーにFnが付いています。"
+          }
+        }
+      }
+    },
+    "spaceControl.theWindowCouldNotBe" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The window could not be moved directly."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウを直接移動できませんでした。"
+          }
+        }
+      }
+    },
+    "spaceControl.theWindowMovedToA" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The window moved to a different Space."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウの所属する操作スペースが変わりました。"
+          }
+        }
+      }
+    },
+    "spaceControl.unknown" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "unknown"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不明"
+          }
+        }
+      }
+    }
   },
   "version" : "1.0"
 }

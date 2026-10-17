@@ -6,50 +6,45 @@ import Settings
 
 /// Settings headings. Shows action names, never configuration command names.
 enum SettingsCopy {
-    static var keyColumns: [String] { [L("Action", "操作"), L("Shortcut", "ショートカット")] }
-    static var ruleAppColumn: String { L("App", "アプリ") }
-    static var ruleIdentifierColumn: String { L("Identifier", "識別子") }
-    static var manualRuleTitle: String { L("Enter Bundle Identifier…", "バンドル識別子を入力…") }
-    static var accessTitle: String { L("Access", "アクセス権") }
-    static var accessAllowed: String { L("Allowed in \(AccessPane.name())", "「\(AccessPane.name())」で許可されています") }
-    static var accessNotAllowed: String { L("Not allowed in \(AccessPane.name())", "「\(AccessPane.name())」で許可されていません") }
-    static var accessCaption: String { L("Used to read and arrange windows.", "ウインドウの読み取りと整列に使います。") }
-    static var accessButton: String { L("Open System Settings…", "システム設定を開く…") }
-    static var notificationsTitle: String { L("Notifications", "通知") }
-    static var notificationBox: String { L("Notify when LazySpace needs your attention", "対処が必要なときに通知") }
+    static var keyColumns: [String] { [L(.settingsWindowAction), L(.settingsWindowShortcut)] }
+    static var ruleAppColumn: String { L(.cliApp) }
+    static var ruleIdentifierColumn: String { L(.settingsWindowRuleIdentifierColumn) }
+    static var manualRuleTitle: String { L(.settingsWindowManualRuleTitle) }
+    static var accessTitle: String { L(.settingsWindowAccessTitle) }
+    static var accessAllowed: String { L(.settingsWindowAccessAllowed(AccessPane.name())) }
+    static var accessNotAllowed: String { L(.settingsWindowAccessNotAllowed(AccessPane.name())) }
+    static var accessCaption: String { L(.settingsWindowAccessCaption) }
+    static var accessButton: String { L(.settingsWindowAccessButton) }
+    static var notificationsTitle: String { L(.settingsWindowNotificationsTitle) }
+    static var notificationBox: String { L(.settingsWindowNotificationBox) }
     static var notificationCaption: String {
-        L("When arranging stops until you act, or a change to the configuration file can’t be applied. Choose how notifications appear in System Settings › Notifications.",
-          "対処するまで整列が止まるときや、設定ファイルの変更を適用できないときに通知します。表示のしかたはシステム設定 › 通知で選べます。")
+        L(.settingsWindowNotificationCaption)
     }
-    static var notificationsDenied: String { L("Notifications for LazySpace are turned off in System Settings.", "システム設定でLazySpaceの通知がオフになっています。") }
+    static var notificationsDenied: String { L(.settingsWindowNotificationsDenied) }
     static var notificationsNotAsked: String {
-        L("macOS did not ask whether LazySpace may send notifications. If you opened LazySpace from a temporary location, quit it and open it from the Applications folder.",
-          "macOSはLazySpaceが通知を送ってよいかを確認しませんでした。一時的な場所から開いている場合は、終了して「アプリケーション」フォルダから開き直してください。")
+        L(.settingsWindowNotificationsNotAsked)
     }
     static var accessHelp: String {
-        L("Turn on LazySpace in Privacy & Security › \(AccessPane.name()). If it’s already on but this doesn’t change, an older copy of the app may still be listed: select LazySpace, click the Remove button (−), then click Open System Settings… again.",
-          "プライバシーとセキュリティ › \(AccessPane.name())でLazySpaceをオンにしてください。オンなのにここが変わらない場合は、古いバージョンのアプリが登録されている可能性があります。LazySpaceを選択して削除ボタン（−）をクリックし、もう一度「システム設定を開く…」をクリックしてください。")
+        L(.settingsWindowAccessHelp(AccessPane.name()))
     }
     static func fileCaption() -> String {
-        L("File edits reload automatically. Saving a change here keeps a backup of the previous file.",
-          "ファイルの変更は自動で反映されます。ここで変更を保存すると、直前のファイルを控えに残します。")
+        L(.settingsWindowFileCaption)
     }
     static var externalChangeMessage: String {
-        L("The file changed. Choose Reload to load it. Nothing was saved.",
-          "ファイルが変更されています。「再読み込み」で読み込み直してください。保存していません。")
+        L(.settingsWindowExternalChangeMessage)
     }
-    static var configBannerMessage: String { L("The configuration file could not be applied.", "設定ファイルを適用できません。") }
+    static var configBannerMessage: String { L(.settingsWindowConfigBannerMessage) }
     /// `follow-moved-window`. Also quoted by the refusal that suggests turning it on.
     static var followMovedWindowTitle: String {
-        L("When moving a window to another Space, switch to that Space", "ウインドウを別の操作スペースに移動するときに、その操作スペースに切り替える")
+        L(.settingsWindowFollowMovedWindowTitle)
     }
-    static var configNotesMessage: String { L("The configuration loaded with notes.", "設定を読み込みました。注記があります。") }
-    static var showDetailsTitle: String { L("Show Details", "詳細を表示") }
-    static var tryAgainTitle: String { L("Try Again", "再試行") }
-    static var reloadTitle: String { L("Reload", "再読み込み") }
+    static var configNotesMessage: String { L(.settingsWindowConfigNotesMessage) }
+    static var showDetailsTitle: String { L(.settingsWindowShowDetailsTitle) }
+    static var tryAgainTitle: String { L(.settingsWindowTryAgainTitle) }
+    static var reloadTitle: String { L(.settingsWindowReloadTitle) }
     /// Language choices. Setting values are not translated; each language name is shown in that language.
     static var languageChoices: [(id: String, title: String)] {
-        [("system", L("System", "システムに合わせる"))] + Language.allCases.map { ($0.rawValue, $0.endonym) }
+        [("system", L(.settingsWindowSystem))] + Language.allCases.map { ($0.rawValue, $0.endonym) }
     }
 
     /// A name only for an exact match with a running app; nil for patterns and unknown identifiers.
@@ -422,7 +417,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         recoveryLabel.cell?.isScrollable = false
         recoveryLabel.lineBreakMode = .byWordWrapping
         recoveryLabel.preferredMaxLayoutWidth = 672
-        recoveryLabel.setAccessibilityLabel(L("Settings Recovery", "設定の復旧"))
+        recoveryLabel.setAccessibilityLabel(L(.settingsWindowSettingsRecovery))
         recoveryLabel.setContentCompressionResistancePriority(.required, for: .vertical)
         recoveryLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         retryButton.title = SettingsCopy.tryAgainTitle
@@ -800,7 +795,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         loginStatus.textColor = .secondaryLabelColor
         loginStatus.maximumNumberOfLines = 0
         loginStatus.cell?.wraps = true
-        loginSettingsButton.title = L("Open Login Items…", "ログイン項目を開く…")
+        loginSettingsButton.title = L(.settingsWindowOpenLoginItems)
         loginSettingsButton.target = self; loginSettingsButton.action = #selector(openLoginSettings)
         languagePopup.removeAllItems()
         for choice in SettingsCopy.languageChoices {
@@ -817,7 +812,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         form.addPlain(loginBox)
         loginStatusRow = form.addPlain(loginStatus)
         loginSettingsRow = form.addPlain(loginSettingsButton)
-        form.addLabeled(L("Language", "言語"), languagePopup)
+        form.addLabeled(L(.settingsWindowLanguage), languagePopup)
         notificationBox.title = SettingsCopy.notificationBox
         notificationBox.target = self; notificationBox.action = #selector(controlChanged)
         form.addLabeled(SettingsCopy.notificationsTitle, SettingsForm.checkboxColumn(
@@ -838,7 +833,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
 
     private func buildLayout() -> NSView {
         placementPopup.removeAllItems()
-        placementPopup.addItems(withTitles: [L("Beside the focused window", "フォーカス中のウインドウの隣"), L("At the end", "末尾")])
+        placementPopup.addItems(withTitles: [L(.settingsWindowBesideTheFocusedWindow), L(.settingsWindowAtTheEnd)])
         placementPopup.target = self; placementPopup.action = #selector(controlChanged)
         if !sizeConstraintsAdded {
             placementPreview.translatesAutoresizingMaskIntoConstraints = false
@@ -850,8 +845,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         placementPreview.setContentCompressionResistancePriority(.required, for: .horizontal)
         placementPreview.setContentCompressionResistancePriority(.required, for: .vertical)
         let placementRow = hstack([placementPopup, placementPreview], spacing: 8)
-        gapField.setAccessibilityLabel(L("Window spacing in points", "ウインドウの間隔（ポイント）"))
-        borderBox.title = L("Show around the focused window", "フォーカス中のウインドウに表示")
+        gapField.setAccessibilityLabel(L(.settingsWindowWindowSpacingInPoints))
+        borderBox.title = L(.settingsWindowShowAroundTheFocusedWindow)
         borderBox.target = self; borderBox.action = #selector(controlChanged)
         _ = number(borderWidthField)
         borderColorWell.target = self; borderColorWell.action = #selector(colorChanged)
@@ -860,22 +855,21 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
             borderColorWell.widthAnchor.constraint(equalToConstant: 44).isActive = true
             borderColorWell.heightAnchor.constraint(equalToConstant: 26).isActive = true
         }
-        borderWidthField.setAccessibilityLabel(L("Border width in points", "枠線の太さ（ポイント）"))
-        borderColorWell.setAccessibilityLabel(L("Border color", "枠線の色"))
+        borderWidthField.setAccessibilityLabel(L(.settingsWindowBorderWidthInPoints))
+        borderColorWell.setAccessibilityLabel(L(.settingsWindowBorderColor))
         let form = SettingsForm(labelWidth: SettingsPaneLayout.formLabelWidth)
-        dialogsBesideBox.title = L("Keep fixed-size windows next to arranged windows", "大きさが固定のウインドウを整列したウインドウと並べて表示")
+        dialogsBesideBox.title = L(.settingsWindowKeepFixedSizeWindowsNext)
         dialogsBesideBox.target = self; dialogsBesideBox.action = #selector(controlChanged)
         form.addPlain(SettingsForm.checkboxColumn(
             dialogsBesideBox,
-            explanation: L("Keeps windows like Calculator or alerts from being hidden behind other windows.",
-                           "計算機や警告などが、ほかのウインドウで隠れないように並べます。"),
+            explanation: L(.settingsWindowKeepsWindowsLikeCalculatorOr),
             columnWidth: form.controlColumnWidth
         ))
-        form.addLabeled(L("Window spacing", "ウインドウの間隔"), numberedControl(gapField, unit: L("pt (0–200)", "pt（0〜200）"), error: gapError))
-        form.addLabeled(L("Place new windows", "新しいウインドウの位置"), placementRow)
-        form.addLabeled(L("Border", "枠線"), borderBox)
-        borderWidthRow = form.addLabeled(L("Border width", "枠線の太さ"), numberedControl(borderWidthField, unit: L("pt (1–12)", "pt（1〜12）"), error: borderWidthError))
-        borderColorRow = form.addLabeled(L("Border color", "枠線の色"), borderColorWell)
+        form.addLabeled(L(.settingsWindowWindowSpacing), numberedControl(gapField, unit: L(.settingsWindowGapUnit), error: gapError))
+        form.addLabeled(L(.settingsWindowPlaceNewWindows), placementRow)
+        form.addLabeled(L(.settingsWindowBorder), borderBox)
+        borderWidthRow = form.addLabeled(L(.settingsWindowBorderWidth), numberedControl(borderWidthField, unit: L(.settingsWindowBorderWidthUnit), error: borderWidthError))
+        borderColorRow = form.addLabeled(L(.settingsWindowBorderColor), borderColorWell)
         borderWidthRow?.isHidden = true
         borderColorRow?.isHidden = true
         return SettingsPaneLayout.centered(form, width: SettingsForm.width)
@@ -944,11 +938,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
     }
 
     private func buildAdvanced() -> NSView {
-        SettingsPaneLayout.sections([SettingsPaneLayout.section(L("Configuration File", "設定ファイル"), [buildFile()])])
+        SettingsPaneLayout.sections([SettingsPaneLayout.section(L(.settingsWindowConfigurationFile), [buildFile()])])
     }
 
     private func buildKeys() -> NSView {
-        shortcutGuideBox.title = L("Show shortcuts when holding modifier keys", "修飾キーの長押しでショートカットを表示")
+        shortcutGuideBox.title = L(.settingsWindowShowShortcutsWhenHoldingModifier)
         shortcutGuideBox.target = self; shortcutGuideBox.action = #selector(controlChanged)
         followMovedWindowBox.title = SettingsCopy.followMovedWindowTitle
         followMovedWindowBox.target = self; followMovedWindowBox.action = #selector(controlChanged)
@@ -973,7 +967,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         shortcutContextMenu.autoenablesItems = false
         shortcutContextMenu.delegate = self
         keysTable.menu = shortcutContextMenu
-        keySearch.placeholderString = L("Search Actions", "操作を検索")
+        keySearch.placeholderString = L(.settingsWindowSearchActions)
         keySearch.target = self
         keySearch.action = #selector(searchKeys)
         keySearch.delegate = self
@@ -984,42 +978,40 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
             self.endRecording(.cancelShow)
         }
         keysTable.allowsEmptySelection = true
-        restoreMainButton.title = L("Restore Defaults", "デフォルトに戻す")
+        restoreMainButton.title = L(.settingsWindowRestoreDefaults)
         restoreMainButton.target = self; restoreMainButton.action = #selector(restoreMainShortcuts)
-        restoreMainButton.toolTip = L("Restore every shortcut in this list to its default.",
-                                      "この一覧のショートカットをすべてデフォルトに戻します。")
-        shortcutInstruction.stringValue = L("To change a shortcut, double-click it or press Return, then type the new keys. Delete removes it; Option-Delete restores its default; Esc cancels.",
-                                            "ショートカットを変更するには、ダブルクリックするかReturnを押して新しいキーを入力します。Deleteで解除、⌥Deleteでデフォルトに戻し、Escでキャンセルします。")
+        restoreMainButton.toolTip = L(.settingsWindowRestoreEveryShortcutInThis)
+        shortcutInstruction.stringValue = L(.settingsWindowToChangeAShortcutDouble)
         shortcutInstruction.font = .systemFont(ofSize: 11)
         shortcutInstruction.textColor = .secondaryLabelColor
         shortcutInstruction.maximumNumberOfLines = 0
         shortcutInstruction.cell?.wraps = true
-        messageDetailsButton.title = L("Details…", "詳細…")
+        messageDetailsButton.title = L(.settingsWindowDetails)
         messageDetailsButton.target = self
         messageDetailsButton.action = #selector(showShortcutMessageDetails)
         messageDetailsButton.bezelStyle = .inline
         messageDetailsButton.controlSize = .small
         messageDetailsButton.isHidden = true
-        messageDetailsButton.setAccessibilityLabel(L("Details…", "詳細…"))
+        messageDetailsButton.setAccessibilityLabel(L(.settingsWindowDetails))
         prepareMessage(recordingLabel)
-        recordingLabel.setAccessibilityLabel(L("Shortcut Message", "ショートカットの案内"))
+        recordingLabel.setAccessibilityLabel(L(.settingsWindowShortcutMessage))
         prepareMessage(nativeStatusLabel)
         nativeStatusLabel.textColor = .labelColor
-        nativeStatusLabel.setAccessibilityLabel(L("Space Switching Status", "操作スペース切り替えの状態"))
-        nativeStatusIcon.image = NSImage(systemSymbolName: "exclamationmark.triangle", accessibilityDescription: L("Warning", "警告"))
+        nativeStatusLabel.setAccessibilityLabel(L(.settingsWindowSpaceSwitchingStatus))
+        nativeStatusIcon.image = NSImage(systemSymbolName: "exclamationmark.triangle", accessibilityDescription: L(.settingsWindowWarning))
         nativeStatusIcon.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 13, weight: .regular)
         nativeStatusIcon.contentTintColor = .systemOrange
         nativeStatusIcon.setContentHuggingPriority(.required, for: .horizontal)
-        keyboardSettingsButton.title = L("Open Keyboard Settings…", "キーボード設定を開く…")
+        keyboardSettingsButton.title = L(.settingsWindowOpenKeyboardSettings)
         keyboardSettingsButton.target = self; keyboardSettingsButton.action = #selector(openKeyboardSettings)
-        keyboardSettingsHint.stringValue = L("Keyboard Shortcuts… › Mission Control", "キーボードショートカット… › Mission Control")
+        keyboardSettingsHint.stringValue = L(.settingsWindowKeyboardShortcutsMissionControl)
         keyboardSettingsHint.font = .systemFont(ofSize: 11)
         keyboardSettingsHint.textColor = .secondaryLabelColor
         modeNote.font = .systemFont(ofSize: 11)
         modeNote.textColor = .secondaryLabelColor
         modeNote.maximumNumberOfLines = 0
         modeNote.cell?.wraps = true
-        modeFileButton.title = L("Open File", "ファイルを開く")
+        modeFileButton.title = L(.settingsWindowOpenFile)
         modeFileButton.target = self; modeFileButton.action = #selector(openFile)
         modeFileButton.setContentHuggingPriority(.required, for: .horizontal)
         let modes = hstack([modeNote, modeFileButton])
@@ -1089,10 +1081,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         addRuleMenu.delegate = self
         configurePlusMinus(removeRuleButton, add: false)
         removeRuleButton.target = self; removeRuleButton.action = #selector(removeRuleAction)
-        describe(addRuleButton, name: L("Add App", "アプリを追加"), tip: L("Add an app whose windows stay out of the arrangement.", "整列しないアプリを追加します。"))
-        describe(removeRuleButton, name: L("Remove Selected Rule", "選択したルールを削除"), tip: L("Remove the selected rule.", "選択したルールを削除します。"))
-        rulesEmptyLabel.stringValue = L("No apps\nClick + to add one.",
-                                        "アプリはありません\n＋ で追加します。")
+        describe(addRuleButton, name: L(.settingsWindowAddApp), tip: L(.settingsWindowAddAnAppWhoseWindows))
+        describe(removeRuleButton, name: L(.settingsWindowRemoveSelectedRule), tip: L(.settingsWindowRemoveTheSelectedRule))
+        rulesEmptyLabel.stringValue = L(.settingsWindowNoAppsClickToAdd)
         rulesEmptyLabel.alignment = .center
         rulesEmptyLabel.maximumNumberOfLines = 3
         rulesEmptyLabel.font = .systemFont(ofSize: 12)
@@ -1104,7 +1095,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         ruleError.isHidden = true
         let host = overlay(rulesEmptyLabel, on: table)
         return SettingsPaneLayout.sections([
-            caption(L("Windows of these apps aren't arranged.", "これらのアプリのウインドウは整列しません。")),
+            caption(L(.settingsWindowWindowsOfTheseAppsArent)),
             host,
             ruleError,
             hstack([addRuleButton, removeRuleButton]),
@@ -1154,9 +1145,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
             pathLabel,
             caption(SettingsCopy.fileCaption()),
             hstack([
-                button(L("Open File", "ファイルを開く"), #selector(openFile)),
-                button(L("Show in Finder", "Finderで表示"), #selector(reveal)),
-                button(L("Command-Line Setup…", "コマンドラインの設定…"), #selector(showCLIHelp)),
+                button(L(.settingsWindowOpenFile), #selector(openFile)),
+                button(L(.settingsWindowShowInFinder), #selector(reveal)),
+                button(L(.settingsWindowCommandLineSetup), #selector(showCLIHelp)),
             ]),
             errorLabel,
         ], spacing: 12)
@@ -1447,7 +1438,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         retryButton.isHidden = !allowRetry
         retryButton.title = SettingsCopy.tryAgainTitle
         reloadButton.title = SettingsCopy.reloadTitle
-        recoveryLabel.setAccessibilityLabel(L("Settings Recovery", "設定の復旧"))
+        recoveryLabel.setAccessibilityLabel(L(.settingsWindowSettingsRecovery))
         let wasHidden = recoveryBanner.superview == nil
         if wasHidden {
             let index = paneStack.arrangedSubviews.firstIndex(of: configBanner).map { $0 + 1 } ?? 0
@@ -1657,7 +1648,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         loginStatusRow?.isHidden = true
         loginBox.isEnabled = true
         if state == .requiresApproval {
-            loginStatus.stringValue = L("Allow LazySpace in \(MacItem.loginItems()) to finish setup.", "「\(MacItem.loginItems())」でLazySpaceを許可すると有効になります。")
+            loginStatus.stringValue = L(.settingsWindowAllowLazySpaceInToFinish(MacItem.loginItems()))
             loginStatus.isHidden = false
             loginStatusRow?.isHidden = false
             loginSettingsButton.isHidden = false
@@ -1668,7 +1659,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
             loginStatus.isHidden = false
             loginStatusRow?.isHidden = false
         } else if let wanted = draft.startAtLogin, wanted != (state == .enabled), !needsAttention {
-            loginStatus.stringValue = L("The macOS login setting differs. Check \(MacItem.loginItems()).", "macOSのログイン設定と一致していません。「\(MacItem.loginItems())」を確認してください。")
+            loginStatus.stringValue = L(.settingsWindowTheMacOSLoginSettingDiffers(MacItem.loginItems()))
             loginStatus.isHidden = false
             loginStatusRow?.isHidden = false
             loginSettingsButton.isHidden = false
@@ -1904,7 +1895,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
     }
 
     private static func removedShortcut(_ label: String) -> String {
-        L("Removed the shortcut from “\(label)”.", "「\(label)」の割り当てを解除しました。")
+        L(.settingsWindowRemovedShortcut(label))
     }
 
     /// Resets only main's keys to defaults, leaving mode contents alone.
@@ -1920,11 +1911,10 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
             confirmed = confirmMainShortcutReset()
         } else {
             let alert = NSAlert()
-            alert.messageText = L("Restore all shortcuts to their defaults?", "すべてのショートカットをデフォルトに戻しますか？")
-            alert.informativeText = L("Every shortcut in this list returns to its default.",
-                                      "この一覧のショートカットをすべてデフォルトに戻します。")
-            alert.addButton(withTitle: L("Restore Defaults", "デフォルトに戻す"))
-            alert.addButton(withTitle: L("Cancel", "キャンセル"))
+            alert.messageText = L(.settingsWindowRestoreAllShortcutsToTheir)
+            alert.informativeText = L(.settingsWindowEveryShortcutInThisList)
+            alert.addButton(withTitle: L(.settingsWindowRestoreDefaults))
+            alert.addButton(withTitle: L(.settingsWindowCancel))
             confirmed = alert.runModal() == .alertFirstButtonReturn
         }
         if recordingTarget != nil { endRecording(.cancelShow, restoreTableFocus: false) }
@@ -1942,7 +1932,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         commandStatusSticky = false
         stickyFailureText = ""
         setShortcutMessage("", warning: false)
-        announce(L("Restored default shortcuts.", "ショートカットをデフォルトに戻しました。"))
+        announce(L(.settingsWindowRestoredDefaultShortcuts))
     }
 
     /// Entries kept through a reset: user-declared modes.
@@ -1972,8 +1962,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
             for owner in owners {
                 let entry = labelForCommand(name)
                 let defaultAction = labelForCommand(owner)
-                lines.append(L("\(key.display) is used by \(entry). It is also the default for \(defaultAction). Change the mode shortcut first.",
-                               "\(key.display)は「\(entry)」に使われています。「\(defaultAction)」のデフォルトでもあります。先にモードへ入るショートカットを変えてください。"))
+                lines.append(L(.settingsWindowIsUsedByItIs(key.display, entry, defaultAction)))
             }
         }
         return lines
@@ -2050,12 +2039,12 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         }
     }
 
-    private static var recordingCanceled: String { L("Recording canceled.", "記録をキャンセルしました。") }
+    private static var recordingCanceled: String { L(.settingsWindowRecordingCanceled) }
 
     private func applyDirection(_ group: DirectionGroup, modifiers: Set<String>, pattern: DirectionPattern) {
         let assigning = group.keys(modifiers: modifiers, pattern: pattern)
         if assigning.values.contains(where: { $0.modifiers.isEmpty && !$0.isFunctionKey }) {
-            setShortcutMessage(L("Shortcuts need a modifier key (⌥ ⇧ ⌃ ⌘), except function keys.", "修飾キー（⌥ ⇧ ⌃ ⌘）が必要です（Fキーを除く）。"), warning: true)
+            setShortcutMessage(L(.settingsWindowShortcutsNeedAModifierKey), warning: true)
             renderShortcuts()
             return
         }
@@ -2086,17 +2075,17 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         let (text, warning) = shortcutNotes(moves: moves, keys: keys)
         setShortcutMessage(text, warning: warning)
         if text.isEmpty {
-            announce(L("Applied the shortcuts.", "ショートカットを適用しました。"))
+            announce(L(.settingsWindowAppliedTheShortcuts))
         } else {
             announce(text)
         }
     }
 
-    private static var notApplied: String { L("Not applied.", "適用していません。") }
+    private static var notApplied: String { L(.settingsWindowNotApplied) }
 
     private func shortcutNotes(moves: [(Config.Key, String)], keys: [Config.Key]) -> (String, Bool) {
         var notes = moves.map { key, label in
-            L("\(key.display) moved from “\(label)”.", "\(key.display)は「\(label)」から移動しました。")
+            L(.settingsWindowMovedFrom(key.display, label))
         }
         notes += keys.flatMap {
             ShortcutConflicts.messages(for: $0, systemHotkeys: listedSystemHotkeys(), optionGlyph: KeyboardGlyph.optionOnlyCharacter(keyCode: $0.keyCode))
@@ -2138,8 +2127,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         updateShortcutButtons()
         let prompt = recordingPrompt(target)
         clearTransientShortcutStatus()
-        let spoken = L("Recording a shortcut for \(targetLabel(target)). \(prompt)",
-                       "\(targetLabel(target))のショートカットを記録しています。\(prompt)")
+        let spoken = L(.settingsWindowRecordingAShortcutFor(targetLabel(target), prompt))
         announce(spoken, on: recordingOwnerWindow)
         claimRecordingFocus()
     }
@@ -2359,8 +2347,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
     private func recordingPrompt(_ target: RecordingTarget?) -> String {
         switch target {
         case .command:
-            return L("Press a key — Esc cancels, Delete clears.",
-                     "キーを押してください — Escでキャンセル、Deleteで解除")
+            return L(.settingsWindowPressAKeyEscCancels)
         case nil:
             return ""
         }
@@ -2382,7 +2369,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         if flags.contains(.command) { mods.insert("cmd") }
         let bare = mods.isEmpty
         guard let name = Config.Key.keyCodes.first(where: { $0.value == UInt32(event.keyCode) })?.key else {
-            rejectRecording(L("This key can't be used in a shortcut. Press a different key.", "このキーは割り当てに使えません。別のキーを押してください。"), target: target)
+            rejectRecording(L(.settingsWindowThisKeyCantBeUsed), target: target)
             return nil
         }
         if name == "tab", bare || mods == ["shift"] {
@@ -2416,8 +2403,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
                 }
             }
             if !key.isFunctionKey {
-                rejectRecording(L("Shortcuts need a modifier key (⌥ ⇧ ⌃ ⌘), except function keys. Press another shortcut.",
-                                  "修飾キー（⌥ ⇧ ⌃ ⌘）が必要です（Fキーを除く）。もう一度押してください。"), target: target)
+                rejectRecording(L(.settingsWindowShortcutsNeedAModifierKeyExcept), target: target)
                 return nil
             }
         }
@@ -2436,9 +2422,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
             announce(message)
             return nil
         }
-        let assigned = L("Assigned \(key.display) to \(what).", "\(key.display)を「\(what)」に割り当てました。")
+        let assigned = L(.settingsWindowAssignedTo(key.display, what))
         let moves = released.map { label in
-            L("\(key.display) moved from “\(label)”.", "\(key.display)は「\(label)」から移動しました。")
+            L(.settingsWindowMovedFrom(key.display, label))
         }
         let warnings = ShortcutConflicts.messages(for: key, systemHotkeys: listedSystemHotkeys(), optionGlyph: KeyboardGlyph.optionOnlyCharacter(keyCode: key.keyCode))
         commandStatusSticky = false
@@ -2683,8 +2669,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         let fileModes = draft.modes.keys.sorted()
         modeRow?.isHidden = fileModes.isEmpty
         let list = fileModes.joined(separator: ", ")
-        modeNote.stringValue = fileModes.isEmpty ? "" : L("Modes in the configuration file (\(list)) aren't shown here. Edit them in the file.",
-                                                         "設定ファイルのモード（\(list)）はここには表示されません。ファイルで編集してください。")
+        modeNote.stringValue = fileModes.isEmpty ? "" : L(.settingsWindowModesInTheConfigurationFile(list))
     }
 
     private func announce(_ text: String, on owner: NSWindow? = nil) {
@@ -2743,15 +2728,15 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         switch selection {
         case .direction(let group):
             return (
-                L("Change \(group.title) Shortcuts…", "\(group.title)のショートカットを変更…"),
-                L("Remove \(group.title) Shortcuts", "\(group.title)の割り当てを解除"),
-                L("Restore \(group.title) Defaults", "\(group.title)をデフォルトに戻す")
+                L(.settingsWindowChangeShortcuts(group.title)),
+                L(.settingsWindowRemoveShortcuts(group.title)),
+                L(.settingsWindowRestoreGroupDefaults(group.title))
             )
         default:
             return (
-                L("Change Shortcut…", "ショートカットを変更…"),
-                L("Remove Shortcut", "割り当てを解除"),
-                L("Restore Default", "デフォルトに戻す")
+                L(.settingsWindowChangeShortcut),
+                L(.settingsControlsRemoveShortcut),
+                L(.settingsControlsRestoreDefault)
             )
         }
     }
@@ -2866,8 +2851,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
 
     @objc private func openKeyboardSettings() {
         if Self.openSystemKeyboardSettings() { return }
-        setShortcutMessage(L("Couldn't open Keyboard settings. In System Settings, choose Keyboard, then Keyboard Shortcuts… › Mission Control.",
-                             "キーボード設定を開けませんでした。システム設定 › キーボード › キーボードショートカット… › Mission Controlを開いてください。"), warning: true)
+        setShortcutMessage(L(.settingsWindowCouldntOpenKeyboardSettingsIn), warning: true)
     }
 
     // MARK: - Rules pane
@@ -2876,12 +2860,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         var app = sender.representedObject as? String
         if app == nil {
             let alert = NSAlert()
-            alert.messageText = L("Enter Bundle Identifier", "バンドル識別子を入力")
-            alert.informativeText = L("For example, com.apple.calculator. A trailing * matches a prefix, for example com.microsoft.*.",
-                                      "例: com.apple.calculator。末尾の * は前方一致です（例: com.microsoft.*）。")
+            alert.messageText = L(.settingsWindowEnterBundleIdentifier)
+            alert.informativeText = L(.settingsWindowForExampleComAppleCalculator)
             let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 280, height: 24))
             alert.accessoryView = field
-            alert.addButton(withTitle: L("Add", "追加")); alert.addButton(withTitle: L("Cancel", "キャンセル"))
+            alert.addButton(withTitle: L(.settingsWindowAdd)); alert.addButton(withTitle: L(.settingsWindowCancel))
             guard alert.runModal() == .alertFirstButtonReturn else { return }
             app = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         }
@@ -2958,7 +2941,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
             return
         }
         if draft.rules.enumerated().contains(where: { $0.offset != row && $0.element.app == app }) {
-            keepRuleEdit(row: row, text: field.stringValue, message: L("That app is already listed.", "そのアプリは既にあります。"))
+            keepRuleEdit(row: row, text: field.stringValue, message: L(.settingsWindowThatAppIsAlreadyListed))
             return
         }
         var next = draft
@@ -3094,7 +3077,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         } else {
             modifiers.selectItem(at: 0)
         }
-        modifiers.setAccessibilityLabel(L("\(group.title) modifier keys", "\(group.title)の修飾キー"))
+        modifiers.setAccessibilityLabel(L(.settingsWindowModifierKeys(group.title)))
         modifiers.target = self
         modifiers.action = #selector(directionControlChanged(_:))
         modifiers.menu?.delegate = self
@@ -3109,7 +3092,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         let pattern = NSPopUpButton()
         pattern.tag = 2
         if matched == nil {
-            let custom = NSMenuItem(title: L("Custom", "個別設定"), action: nil, keyEquivalent: "")
+            let custom = NSMenuItem(title: L(.settingsWindowCustom), action: nil, keyEquivalent: "")
             custom.representedObject = "custom"
             pattern.menu?.addItem(custom)
         }
@@ -3123,7 +3106,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         } else {
             pattern.selectItem(at: 0)
         }
-        pattern.setAccessibilityLabel(L("\(group.title) keys", "\(group.title)のキー"))
+        pattern.setAccessibilityLabel(L(.settingsWindowKeys(group.title)))
         pattern.target = self
         pattern.action = #selector(directionControlChanged(_:))
         pattern.menu?.delegate = self
@@ -3185,19 +3168,18 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
             if id == "name" { return ruleNameCell(rule.app) }
             var badges = [ruleAppCell(rule.app, row: row)]
             if rule.action == .float {
-                let floating = caption(L("Floating", "フローティング"))
-                floating.toolTip = L("Set in the configuration file. The window keeps its position.", "設定ファイルで指定。位置を保ちます。")
+                let floating = caption(L(.settingsWindowFloating))
+                floating.toolTip = L(.settingsWindowSetInTheConfigurationFile)
                 badges.append(floating)
             }
             if rule.action == .space {
                 let target = rule.space.map(Copy.desktop) ?? "?"
-                let send = caption(rule.follow ? L("Opens on \(target), follows", "\(target)で開いて切り替え") : L("Opens on \(target)", "\(target)で開く"))
-                send.toolTip = L("Set in the configuration file. New windows of this app are sent to \(target) when they open; the window is still tiled there.",
-                                 "設定ファイルで指定。このアプリの新しいウインドウを、開いたときに\(target)へ送ります（そこでは通常どおり整列します）。")
+                let send = caption(rule.follow ? L(.settingsWindowOpensOnFollows(target)) : L(.settingsWindowOpensOn(target)))
+                send.toolTip = L(.settingsWindowSetInTheConfigurationFileNew(target))
                 badges.append(send)
             }
             if !rule.title.isEmpty {
-                let filter = caption(L("Title condition", "タイトル条件あり"))
+                let filter = caption(L(.settingsWindowTitleCondition))
                 filter.toolTip = rule.title
                 badges.append(filter)
             }
@@ -3263,17 +3245,17 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
     private func presentLeaveAlert() -> LeaveChoice {
         let alert = NSAlert()
         if pending != nil {
-            alert.messageText = L("A change could not be saved", "変更を保存できませんでした")
-            alert.informativeText = L("Try Again writes this change. Discard loads the file and drops it.", "再試行でこの変更を書き込みます。破棄するとファイルを読み込み、この変更を捨てます。")
+            alert.messageText = L(.settingsWindowAChangeCouldNotBe)
+            alert.informativeText = L(.settingsWindowTryAgainWritesThisChange)
             alert.addButton(withTitle: SettingsCopy.tryAgainTitle)
-            alert.addButton(withTitle: L("Discard", "破棄"))
-            alert.addButton(withTitle: L("Cancel", "キャンセル"))
+            alert.addButton(withTitle: L(.settingsWindowDiscard))
+            alert.addButton(withTitle: L(.settingsWindowCancel))
         } else {
-            alert.messageText = L("A value needs to be corrected", "修正が必要な値があります")
-            alert.informativeText = L("Review returns to the value. Discard restores the last saved value.", "確認でその値に戻ります。破棄すると最後に保存した値に戻します。")
-            alert.addButton(withTitle: L("Review", "確認"))
-            alert.addButton(withTitle: L("Discard", "破棄"))
-            alert.addButton(withTitle: L("Cancel", "キャンセル"))
+            alert.messageText = L(.settingsWindowAValueNeedsToBe)
+            alert.informativeText = L(.settingsWindowReviewReturnsToTheValue)
+            alert.addButton(withTitle: L(.settingsWindowReview))
+            alert.addButton(withTitle: L(.settingsWindowDiscard))
+            alert.addButton(withTitle: L(.settingsWindowCancel))
         }
         switch alert.runModal() {
         case .alertFirstButtonReturn: return .retry

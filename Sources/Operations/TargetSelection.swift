@@ -39,22 +39,22 @@ public enum TargetSelection {
 
     public static func exclusionReason(_ w: ObservedWindow) -> String? {
         switch w.membership {
-        case .unknown: return L("Space can't be determined", "所属する操作スペースを確認できない")
-        case .other: return L("On another Space", "別の操作スペースにある")
-        case .otherDisplay: return L("On a display without the menu bar", "メニューバーのないディスプレイにある")
-        case .allSpaces: return L("Appears on all Spaces", "すべての操作スペースに表示されるウインドウ")
+        case .unknown: return L(.targetSelectionSpaceCantBeDetermined)
+        case .other: return L(.targetSelectionOnAnotherSpace)
+        case .otherDisplay: return L(.targetSelectionOnADisplayWithoutThe)
+        case .allSpaces: return L(.targetSelectionAppearsOnAllSpaces)
         case .current: break
         }
         switch w.kind {
         case .standard: return nil
-        case .dialog: return L("Fixed-size window", "大きさが固定のウインドウ")
-        case .sheet: return L("Sheet", "シート")
-        case .palette: return L("Tool palette or floating panel", "ツールパレット・フローティングパネル")
-        case .minimized: return L("Minimized", "最小化中")
-        case .hiddenApp: return L("App is hidden", "非表示のアプリ")
-        case .fullscreen: return L("Full screen or Split View", "フルスクリーンまたはSplit View")
-        case .nonNormalLayer: return L("Not a standard window", "通常のウインドウではない")
-        case .unknownRole: return L("Window type can't be determined", "ウインドウの種類を判定できない")
+        case .dialog: return L(.targetSelectionFixedSizeWindow)
+        case .sheet: return L(.targetSelectionSheet)
+        case .palette: return L(.targetSelectionToolPaletteOrFloatingPanel)
+        case .minimized: return L(.targetSelectionMinimized)
+        case .hiddenApp: return L(.targetSelectionAppIsHidden)
+        case .fullscreen: return L(.targetSelectionFullScreenOrSplitView)
+        case .nonNormalLayer: return L(.targetSelectionNotAStandardWindow)
+        case .unknownRole: return L(.targetSelectionWindowTypeCantBeDetermined)
         }
     }
 }

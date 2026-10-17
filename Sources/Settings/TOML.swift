@@ -7,7 +7,7 @@ public enum TOML {
     public struct ParseError: Error, Equatable, CustomStringConvertible {
         public var line: Int
         public var message: String
-        public var description: String { L("Line \(line): \(message)", "\(line)行目: \(message)") }
+        public var description: String { L(.tomlDescription(String(line), message)) }
     }
 
     public static func parse(_ text: String) throws -> [String: Any] {
@@ -20,20 +20,20 @@ public enum TOML {
             let line = stripComment(rawLine).trimmingCharacters(in: .whitespaces)
             if line.isEmpty { continue }
             if line.hasPrefix("[[") {
-                guard line.hasSuffix("]]") else { throw ParseError(line: lineNo, message: L("Missing closing ]] for the array table.", "配列テーブルを閉じる]]がありません。")) }
+                guard line.hasSuffix("]]") else { throw ParseError(line: lineNo, message: L(.tomlMissingArrayTableClose)) }
                 currentPath = try parseKeyPath(String(line.dropFirst(2).dropLast(2)), line: lineNo)
                 currentIsArrayTable = true
                 try appendArrayTable(&root, path: currentPath, line: lineNo)
                 continue
             }
             if line.hasPrefix("[") {
-                guard line.hasSuffix("]") else { throw ParseError(line: lineNo, message: L("Missing closing ] for the table.", "テーブルを閉じる]がありません。")) }
+                guard line.hasSuffix("]") else { throw ParseError(line: lineNo, message: L(.tomlMissingTableClose)) }
                 currentPath = try parseKeyPath(String(line.dropFirst().dropLast()), line: lineNo)
                 currentIsArrayTable = false
                 try ensureTable(&root, path: currentPath, line: lineNo)
                 continue
             }
-            guard let eq = topLevelEqualsIndex(line) else { throw ParseError(line: lineNo, message: L("Expected key = value.", "key = valueの形ではありません。")) }
+            guard let eq = topLevelEqualsIndex(line) else { throw ParseError(line: lineNo, message: L(.tomlExpectedKeyValue)) }
             let keyText = String(line[..<eq]).trimmingCharacters(in: .whitespaces)
             let valueText = String(line[line.index(after: eq)...]).trimmingCharacters(in: .whitespaces)
             let keyPath = try parseKeyPath(keyText, line: lineNo)
@@ -47,10 +47,10 @@ public enum TOML {
 
     private static func ensureTable(_ root: inout [String: Any], path: [String], line: Int) throws {
         // `[name]` after `[[name]]` would otherwise reopen the last element of the array of tables.
-        guard let last = path.last else { throw ParseError(line: line, message: L("The table name is empty.", "テーブル名が空です。")) }
+        guard let last = path.last else { throw ParseError(line: line, message: L(.tomlTheTableNameIsEmpty)) }
         root = try withTable(root, path: Array(path.dropLast()), line: line) { parent in
-            if parent[last] is [[String: Any]] { throw ParseError(line: line, message: L("\(last) is an array table; write [[\(last)]].", "\(last)は配列テーブルです。[[\(last)]]と書いてください。")) }
-            if parent[last] != nil, parent[last] as? [String: Any] == nil { throw ParseError(line: line, message: L("\(last) is not a table.", "\(last)はテーブルではありません。")) }
+            if parent[last] is [[String: Any]] { throw ParseError(line: line, message: L(.tomlIsAnArrayTableWrite(last, last))) }
+            if parent[last] != nil, parent[last] as? [String: Any] == nil { throw ParseError(line: line, message: L(.tomlIsNotATable(last))) }
             var p = parent
             p[last] = parent[last] ?? [String: Any]()
             return p
@@ -58,11 +58,11 @@ public enum TOML {
     }
 
     private static func appendArrayTable(_ root: inout [String: Any], path: [String], line: Int) throws {
-        guard let last = path.last else { throw ParseError(line: line, message: L("The table name is empty.", "テーブル名が空です。")) }
+        guard let last = path.last else { throw ParseError(line: line, message: L(.tomlTheTableNameIsEmpty)) }
         root = try withTable(root, path: Array(path.dropLast()), line: line) { parent in
             var p = parent
             var arr = (p[last] as? [[String: Any]]) ?? []
-            if p[last] != nil, p[last] as? [[String: Any]] == nil { throw ParseError(line: line, message: L("\(last) is not an array table.", "\(last)は配列テーブルではありません。")) }
+            if p[last] != nil, p[last] as? [[String: Any]] == nil { throw ParseError(line: line, message: L(.tomlIsNotAnArrayTable(last))) }
             arr.append([:])
             p[last] = arr
             return p
@@ -74,7 +74,7 @@ public enum TOML {
         guard let first = path.first else { return try f(root) }
         var r = root
         if let arr = r[first] as? [[String: Any]] {
-            guard var last = arr.last else { throw ParseError(line: line, message: L("The array table \(first) is empty.", "配列テーブル\(first)が空です。")) }
+            guard var last = arr.last else { throw ParseError(line: line, message: L(.tomlTheArrayTableIsEmpty(first))) }
             last = try withTable(last, path: Array(path.dropFirst()), line: line, f)
             var copy = arr
             copy[copy.count - 1] = last
@@ -82,7 +82,7 @@ public enum TOML {
             return r
         }
         let child = (r[first] as? [String: Any]) ?? [:]
-        if r[first] != nil, r[first] as? [String: Any] == nil { throw ParseError(line: line, message: L("\(first) is not a table.", "\(first)はテーブルではありません。")) }
+        if r[first] != nil, r[first] as? [String: Any] == nil { throw ParseError(line: line, message: L(.tomlIsNotATable(first))) }
         r[first] = try withTable(child, path: Array(path.dropFirst()), line: line, f)
         return r
     }
@@ -98,7 +98,7 @@ public enum TOML {
     private static func setKey(_ table: inout [String: Any], keyPath: [String], value: Any, line: Int) throws {
         guard let first = keyPath.first else { return }
         if keyPath.count == 1 {
-            if table[first] != nil { throw ParseError(line: line, message: L("Duplicate key: \(first).", "\(first)が重複しています。")) }
+            if table[first] != nil { throw ParseError(line: line, message: L(.tomlDuplicateKey(first))) }
             table[first] = value
             return
         }
@@ -159,9 +159,9 @@ public enum TOML {
                 current.append(ch)
             }
         }
-        guard inQuote == nil else { throw ParseError(line: line, message: L("Missing closing quote.", "閉じる引用符がありません。")) }
+        guard inQuote == nil else { throw ParseError(line: line, message: L(.tomlMissingClosingQuote)) }
         parts.append(current.trimmingCharacters(in: .whitespaces))
-        if parts.contains(where: \.isEmpty) { throw ParseError(line: line, message: L("The key name is empty.", "キー名が空です。")) }
+        if parts.contains(where: \.isEmpty) { throw ParseError(line: line, message: L(.tomlTheKeyNameIsEmpty)) }
         return parts
     }
 
@@ -169,7 +169,7 @@ public enum TOML {
         var scanner = Scanner(text: text, line: line)
         let v = try scanner.value()
         scanner.skipSpaces()
-        guard scanner.atEnd else { throw ParseError(line: line, message: L("Unexpected text after the value: \(scanner.rest)", "値の後に余分な文字があります: \(scanner.rest)")) }
+        guard scanner.atEnd else { throw ParseError(line: line, message: L(.tomlUnexpectedTextAfterTheValue(scanner.rest))) }
         return v
     }
 
@@ -184,7 +184,7 @@ public enum TOML {
 
         mutating func value() throws -> Any {
             skipSpaces()
-            guard !atEnd else { throw TOML.ParseError(line: line, message: L("Missing value.", "値がありません。")) }
+            guard !atEnd else { throw TOML.ParseError(line: line, message: L(.tomlMissingValue)) }
             switch chars[i] {
             case "\"", "'": return try string()
             case "[": return try array()
@@ -212,18 +212,18 @@ public enum TOML {
                     case "u", "U":
                         let count = e == "u" ? 4 : 8
                         guard i + count <= chars.count, let code = UInt32(String(chars[i..<(i + count)]), radix: 16), let scalar = Unicode.Scalar(code) else {
-                            throw TOML.ParseError(line: line, message: L("Invalid \\\(e) escape.", "\\\(e)のエスケープが正しくありません。"))
+                            throw TOML.ParseError(line: line, message: L(.tomlInvalidEscape(String(describing: e))))
                         }
                         i += count
                         out.unicodeScalars.append(scalar)
                     default:
-                        throw TOML.ParseError(line: line, message: L("Unsupported escape \\\(e).", "\\\(e)は使えないエスケープです。"))
+                        throw TOML.ParseError(line: line, message: L(.tomlUnsupportedEscape(String(describing: e))))
                     }
                 } else {
                     out.append(ch)
                 }
             }
-            throw TOML.ParseError(line: line, message: L("Missing closing quote.", "閉じる引用符がありません。"))
+            throw TOML.ParseError(line: line, message: L(.tomlMissingClosingQuote))
         }
 
         mutating func array() throws -> [Any] {
@@ -231,14 +231,14 @@ public enum TOML {
             var out: [Any] = []
             while true {
                 skipSpaces()
-                guard !atEnd else { throw TOML.ParseError(line: line, message: L("Missing closing ] for the array.", "配列を閉じる]がありません。")) }
+                guard !atEnd else { throw TOML.ParseError(line: line, message: L(.tomlMissingArrayClose)) }
                 if chars[i] == "]" { i += 1; return out }
                 out.append(try value())
                 skipSpaces()
-                guard !atEnd else { throw TOML.ParseError(line: line, message: L("Missing closing ] for the array.", "配列を閉じる]がありません。")) }
+                guard !atEnd else { throw TOML.ParseError(line: line, message: L(.tomlMissingArrayClose)) }
                 if chars[i] == "," { i += 1; continue }
                 if chars[i] == "]" { i += 1; return out }
-                throw TOML.ParseError(line: line, message: L("Array items must be separated by commas.", "配列の区切りが正しくありません。"))
+                throw TOML.ParseError(line: line, message: L(.tomlArrayItemsMustBeSeparated))
             }
         }
 
@@ -247,11 +247,11 @@ public enum TOML {
             var out: [String: Any] = [:]
             while true {
                 skipSpaces()
-                guard !atEnd else { throw TOML.ParseError(line: line, message: L("Missing closing } for the inline table.", "インラインテーブルを閉じる } がありません。")) }
+                guard !atEnd else { throw TOML.ParseError(line: line, message: L(.tomlMissingClosingForTheInline)) }
                 if chars[i] == "}" { i += 1; return out }
                 var key = ""
                 while !atEnd, chars[i] != "=" { key.append(chars[i]); i += 1 }
-                guard !atEnd else { throw TOML.ParseError(line: line, message: L("Missing = after a key in the inline table.", "インラインテーブルのキーの後に = がありません。")) }
+                guard !atEnd else { throw TOML.ParseError(line: line, message: L(.tomlMissingAfterAKeyIn)) }
                 i += 1
                 let path = try TOML.parseKeyPath(key, line: line)
                 let v = try value()
@@ -261,7 +261,7 @@ public enum TOML {
                 skipSpaces()
                 if !atEnd, chars[i] == "," { i += 1; continue }
                 if !atEnd, chars[i] == "}" { continue }
-                throw TOML.ParseError(line: line, message: L("Inline table items must be separated by commas.", "インラインテーブルの区切りが正しくありません。"))
+                throw TOML.ParseError(line: line, message: L(.tomlInlineTableItemsMustBe))
             }
         }
 
@@ -273,7 +273,7 @@ public enum TOML {
             let cleaned = token.replacingOccurrences(of: "_", with: "")
             if let n = Int(cleaned) { return n }
             if let d = Double(cleaned) { return d }
-            throw TOML.ParseError(line: line, message: L("Could not read the value: \(token)", "値を解釈できません: \(token)"))
+            throw TOML.ParseError(line: line, message: L(.tomlCouldNotReadTheValue(token)))
         }
     }
 }

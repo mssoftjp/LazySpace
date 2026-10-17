@@ -1,7 +1,1754 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-
+    "config.andUseTheSameShortcut" : {
+      "comment" : "Arguments: 1 = `label`; 2 = `name`; 3 = `other`; 4 = `key.display`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: %@ and %@ use the same shortcut %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: %@と%@が同じショートカット%@を使っています。"
+          }
+        }
+      }
+    },
+    "config.boolProblem" : {
+      "comment" : "Arguments: 1 = `key`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ must be true or false."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@はtrueかfalseで指定してください。"
+          }
+        }
+      }
+    },
+    "config.couldNotReadExampleAlt" : {
+      "comment" : "Arguments: 1 = `label`; 2 = `name`; 3 = `text`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@.%@: could not read %@. Example: alt-shift-h."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@.%@: %@を解釈できません（例: alt-shift-h）。"
+          }
+        }
+      }
+    },
+    "config.doNotDeclareModeMain" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Do not declare mode.main. Put main-mode shortcuts in [keys]."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.mainは宣言しないでください。mainモードのショートカットは[keys]に書きます。"
+          }
+        }
+      }
+    },
+    "config.excludedByRule" : {
+      "comment" : "Arguments: 1 = `rule.app`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Excluded by rule (%@)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ルールで除外（%@）"
+          }
+        }
+      }
+    },
+    "config.excludedByRuleTitle" : {
+      "comment" : "Arguments: 1 = `rule.app`; 2 = `rule.title`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Excluded by rule (%@, title /%@/)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ルールで除外（%@、タイトル /%@/）"
+          }
+        }
+      }
+    },
+    "config.floatingByRuleItsPosition" : {
+      "comment" : "Arguments: 1 = `rule.app`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Floating by rule (%@). Its position is kept."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ルールでフローティング（%@）。位置を保ちます。"
+          }
+        }
+      }
+    },
+    "config.floatingByRuleTitleIts" : {
+      "comment" : "Arguments: 1 = `rule.app`; 2 = `rule.title`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Floating by rule (%@, title /%@/). Its position is kept."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ルールでフローティング（%@、タイトル /%@/）。位置を保ちます。"
+          }
+        }
+      }
+    },
+    "config.focusBorderColorMustBe" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border.color must be \"#RRGGBB\" or \"#RRGGBBAA\"."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border.colorは \"#RRGGBB\" か \"#RRGGBBAA\" で指定してください。"
+          }
+        }
+      }
+    },
+    "config.focusBorderMustBeWritten" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border must be written as a [focus-border] table."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-borderは[focus-border]テーブルで書いてください。"
+          }
+        }
+      }
+    },
+    "config.focusBorderWidthMustBe" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border.width must be a number from 1 to 12."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border.widthは1〜12の数値で指定してください。"
+          }
+        }
+      }
+    },
+    "config.gapsMustBeWrittenAs" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gaps must be written as a [gaps] table."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gapsは[gaps]テーブルで書いてください。"
+          }
+        }
+      }
+    },
+    "config.keysNeedsAModifierKey" : {
+      "comment" : "Arguments: 1 = `name`; 2 = `key.display`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "keys.%@: %@ needs a modifier key in the main mode because a single key would capture normal typing. Single keys are allowed for function keys or inside a mode."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "keys.%@: mainモードでは修飾キーなしの%@は通常の入力を横取りするため使えません。Fキーかモード内なら使えます。"
+          }
+        }
+      }
+    },
+    "config.languageMustBeSystemEn" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "language must be \"system\", \"en\", or \"ja\"."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "languageは \"system\"、\"en\"、\"ja\" のいずれかで指定してください。"
+          }
+        }
+      }
+    },
+    "config.modeHasNoShortcutsAdd" : {
+      "comment" : "Arguments: 1 = `name`; 2 = `name`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@ has no shortcuts. Add [mode.%@.keys]."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@にショートカットがありません。[mode.%@.keys]を書いてください。"
+          }
+        }
+      }
+    },
+    "config.modeIsNotDeclaredAdd" : {
+      "comment" : "Arguments: 1 = `label`; 2 = `m`; 3 = `m`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: mode %@ is not declared. Add [mode.%@]."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: モード%@が宣言されていません。[mode.%@]を書いてください。"
+          }
+        }
+      }
+    },
+    "config.modeMustBeATable" : {
+      "comment" : "Arguments: 1 = `name`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@ must be a table."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@はテーブルで書いてください。"
+          }
+        }
+      }
+    },
+    "config.modeMustBeWrittenAs" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode must be written as [mode.<name>] tables."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "modeは[mode.<名前>]のテーブルで書いてください。"
+          }
+        }
+      }
+    },
+    "config.modeUnknownSetting" : {
+      "comment" : "Arguments: 1 = `name`; 2 = `k`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@: unknown setting %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@: 不明な項目%@。"
+          }
+        }
+      }
+    },
+    "config.modeUseLettersNumbersHyphens" : {
+      "comment" : "Arguments: 1 = `name`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@: use letters, numbers, hyphens, or underscores in mode names."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@: モード名には文字・数字・ハイフン・アンダースコアを使えます。"
+          }
+        }
+      }
+    },
+    "config.mustBeANumber" : {
+      "comment" : "Arguments: 1 = `key`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ must be a number."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@は数値で指定してください。"
+          }
+        }
+      }
+    },
+    "config.mustBeAString" : {
+      "comment" : "Arguments: 1 = `label`; 2 = `name`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@.%@ must be a string."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@.%@は文字列で指定してください。"
+          }
+        }
+      }
+    },
+    "config.mustBeATable" : {
+      "comment" : "Arguments: 1 = `label`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ must be a table."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@はテーブルで書いてください。"
+          }
+        }
+      }
+    },
+    "config.mustBeAnArrayOf" : {
+      "comment" : "Arguments: 1 = `key`; 2 = `example`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ must be an array of strings, for example %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@は文字列の配列で指定してください（例: %@）。"
+          }
+        }
+      }
+    },
+    "config.mustBeBetweenAnd" : {
+      "comment" : "Arguments: 1 = `key`; 2 = `lo`; 3 = `hi`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ must be between %@ and %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@は%@〜%@の範囲で指定してください。"
+          }
+        }
+      }
+    },
+    "config.mustBeWidthHeightEach" : {
+      "comment" : "Arguments: 1 = `key`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ must be [width, height], each from 0 to 100000 points."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@は[幅, 高さ]（それぞれ0〜100000 pt）で指定してください。"
+          }
+        }
+      }
+    },
+    "config.newWindowPlacementMustBe" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "new-window-placement must be \"beside-focused\" or \"end\"."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "new-window-placementは \"beside-focused\" か \"end\" で指定してください。"
+          }
+        }
+      }
+    },
+    "config.notificationsMustBeWrittenAs" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "notifications must be written as a [notifications] table."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "notificationsは[notifications]テーブルで書いてください。"
+          }
+        }
+      }
+    },
+    "config.ruleActionMustBeIgnore" : {
+      "comment" : "Arguments: 1 = `i`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: action must be ignore, float, or space."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: actionはignore・float・spaceのどれかで指定してください。"
+          }
+        }
+      }
+    },
+    "config.ruleActionSpaceNeedsSpace" : {
+      "comment" : "Arguments: 1 = `i`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: action = \"space\" needs space = <number> (1 to 99)."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: action = \"space\" にはspace = <番号>（1〜99）が必要です。"
+          }
+        }
+      }
+    },
+    "config.ruleAppIsRequired" : {
+      "comment" : "Arguments: 1 = `i`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: app is required."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: appが必要です。"
+          }
+        }
+      }
+    },
+    "config.ruleAppMustBeA" : {
+      "comment" : "Arguments: 1 = `i`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: app must be a bundle identifier, or a prefix ending in *."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: appはバンドルIDか、*で終わる前方一致で指定してください。"
+          }
+        }
+      }
+    },
+    "config.ruleFollowMustBeTrue" : {
+      "comment" : "Arguments: 1 = `i`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: follow must be true or false."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: followはtrueかfalseで指定してください。"
+          }
+        }
+      }
+    },
+    "config.ruleMustBeWrittenAs" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule must be written as [[rule]] array tables."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ruleは[[rule]]の配列テーブルで書いてください。"
+          }
+        }
+      }
+    },
+    "config.ruleSpaceAndFollowAre" : {
+      "comment" : "Arguments: 1 = `i`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: space and follow are only for action = \"space\"."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: spaceとfollowはaction = \"space\" のときだけ使えます。"
+          }
+        }
+      }
+    },
+    "config.ruleSpaceMustBeA" : {
+      "comment" : "Arguments: 1 = `i`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: space must be a desktop number from 1 to 99."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: spaceは1〜99のデスクトップ番号で指定してください。"
+          }
+        }
+      }
+    },
+    "config.ruleTitleIsNotA" : {
+      "comment" : "Arguments: 1 = `i`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: title is not a valid regular expression."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: titleの正規表現を解釈できません。"
+          }
+        }
+      }
+    },
+    "config.ruleTitleMustBeA" : {
+      "comment" : "Arguments: 1 = `i`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: title must be a non-empty regular expression."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: titleは空でない正規表現で指定してください。"
+          }
+        }
+      }
+    },
+    "config.ruleUnknownSetting" : {
+      "comment" : "Arguments: 1 = `i`; 2 = `k`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: unknown setting %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: 不明な項目%@。"
+          }
+        }
+      }
+    },
+    "config.unknownCommand" : {
+      "comment" : "Arguments: 1 = `label`; 2 = `name`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: unknown command %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: 不明なコマンド%@。"
+          }
+        }
+      }
+    },
+    "config.unknownSetting" : {
+      "comment" : "Arguments: 1 = `k`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unknown setting: %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不明な設定: %@。"
+          }
+        }
+      }
+    },
+    "config.unknownSettingInFocusBorder" : {
+      "comment" : "Arguments: 1 = `k`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unknown setting in focus-border: %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-borderの不明な項目: %@。"
+          }
+        }
+      }
+    },
+    "config.unknownSettingInGaps" : {
+      "comment" : "Arguments: 1 = `k`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unknown setting in gaps: %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gapsの不明な項目: %@。"
+          }
+        }
+      }
+    },
+    "config.unknownSettingInNotifications" : {
+      "comment" : "Arguments: 1 = `k`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unknown setting in notifications: %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "notificationsの不明な項目: %@。"
+          }
+        }
+      }
+    },
+    "config.valuesInGapsMustBe" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Values in gaps must be numbers from 0 to 200."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gapsの余白は0〜200の数値で指定してください。"
+          }
+        }
+      }
+    },
+    "configDocument.settingsCantFindAValue" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings can't find a value to replace. Edit the file, then choose Reload. Nothing was saved."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "置き換える値が見つかりません。ファイルを編集してから「再読み込み」を選んでください。保存していません。"
+          }
+        }
+      }
+    },
+    "configDocument.settingsCantUpdateEntriesWritten" : {
+      "comment" : "Arguments: 1 = `label`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings can't update %@ entries written in this form. Edit them in the file, then choose Reload. Nothing was saved."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@がこの書き方だと更新できません。ファイルで編集してから「再読み込み」を選んでください。保存していません。"
+          }
+        }
+      }
+    },
+    "configDocument.settingsCantUpdateGapsWritten" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings can't update gaps written as an inline table. Edit the [gaps] table in the file, then choose Reload. Nothing was saved."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隙間がインラインテーブルで書かれているため更新できません。ファイルの[gaps]を編集してから「再読み込み」を選んでください。保存していません。"
+          }
+        }
+      }
+    },
+    "configDocument.settingsCantUpdateLineBecause" : {
+      "comment" : "Arguments: 1 = `index + 1`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings can't update line %@ because it is not a single key and value. Edit the file, then choose Reload. Nothing was saved."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@行目は一つのキーと値ではないため更新できません。ファイルを編集してから「再読み込み」を選んでください。保存していません。"
+          }
+        }
+      }
+    },
+    "configDocument.settingsCouldNotKeepThis" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings could not keep this file's formatting while saving. Edit the file, then choose Reload. Nothing was saved."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このファイルの体裁を保ったまま保存できません。ファイルを編集してから「再読み込み」を選んでください。保存していません。"
+          }
+        }
+      }
+    },
+    "configDocument.settingsCouldNotUpdateEvery" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings could not update every changed value without rewriting the file. Edit the file, then choose Reload. Nothing was saved."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "変更をファイルの形を保ったまま反映できません。ファイルを編集してから「再読み込み」を選んでください。保存していません。"
+          }
+        }
+      }
+    },
+    "configDocument.settingsDoesNotEditBinding" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings does not edit binding modes. Change those tables in the file, then choose Reload. Nothing was saved."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定画面ではバインディングモードを編集できません。モードの表はファイルで変更し、「再読み込み」を選んでください。保存していません。"
+          }
+        }
+      }
+    },
+    "configFile.couldNotWriteTheConfiguration" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not write the configuration file. Nothing was saved."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定ファイルを書けませんでした。保存していません。"
+          }
+        }
+      }
+    },
+    "configFile.settingsCantUpdateThisFile" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings can't update this file safely. Edit the file, then choose Reload. Nothing was saved."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このファイルは安全に更新できません。ファイルを編集してから「再読み込み」を選んでください。保存していません。"
+          }
+        }
+      }
+    },
+    "configFile.theConfigurationFileCantBe" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The configuration file can't be read, so it was not replaced."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定ファイルを読めないため、置き換えていません。"
+          }
+        }
+      }
+    },
+    "configFile.theConfigurationFileHasErrors" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The configuration file has errors, so it was not replaced. Fix the file, then choose Reload."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定ファイルに誤りがあるため、置き換えていません。ファイルを直してから「再読み込み」を選んでください。"
+          }
+        }
+      }
+    },
+    "configFile.theConfigurationFilePointsTo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The configuration file points to its backup file, so it was not replaced. Nothing was saved."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定ファイルが控えのファイルを指しているため、置き換えていません。保存していません。"
+          }
+        }
+      }
+    },
+    "configFile.theFileChangedChooseReload" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The file changed. Choose Reload to load it. Nothing was saved."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ファイルが変更されています。「再読み込み」で読み込み直してください。保存していません。"
+          }
+        }
+      }
+    },
+    "configFile.theFileChangedWhileSaving" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The file changed while saving. Nothing was written."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存中にファイルが変更されたため、書き込んでいません。"
+          }
+        }
+      }
+    },
+    "keyLayout.actions" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actions"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "操作"
+          }
+        }
+      }
+    },
+    "keyLayout.arrows" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrows"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "矢印"
+          }
+        }
+      }
+    },
+    "keyLayout.conflictsWithAMacOSShortcut" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conflicts with a macOS shortcut."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOSのショートカットと重なります。"
+          }
+        }
+      }
+    },
+    "keyLayout.conflictsWithTheMacOSShortcut" : {
+      "comment" : "Arguments: 1 = `name`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conflicts with the macOS shortcut “%@”."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOSの「%@」と重なります。"
+          }
+        }
+      }
+    },
+    "keyLayout.custom" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Custom"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "個別設定"
+          }
+        }
+      }
+    },
+    "keyLayout.focus" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Focus"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フォーカス"
+          }
+        }
+      }
+    },
+    "keyLayout.ifTerminalUsesOptionAs" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "If Terminal uses Option as the Meta key, this conflicts with moving by word."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TerminalでOptionをメタキーにしていると、単語単位の移動と重なります。"
+          }
+        }
+      }
+    },
+    "keyLayout.join" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Join"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "グループ化"
+          }
+        }
+      }
+    },
+    "keyLayout.move" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移動"
+          }
+        }
+      }
+    },
+    "keyLayout.movesTheWindowAndSwitches" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moves the window and switches to that Space."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウを移動し、その操作スペースに切り替えます。"
+          }
+        }
+      }
+    },
+    "keyLayout.nextPreviousSpaceInLazySpace" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next/Previous Space in LazySpace"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpaceの次／前の操作スペースへ移動"
+          }
+        }
+      }
+    },
+    "keyLayout.numberedDesktopSwitching" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Numbered Desktop Switching"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "番号でデスクトップを切り替える"
+          }
+        }
+      }
+    },
+    "keyLayout.resize" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resize"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "サイズ変更"
+          }
+        }
+      }
+    },
+    "keyLayout.sendsTheWindowAndStays" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sends the window and stays on the current Space."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウだけを送り、今の操作スペースに留まります。"
+          }
+        }
+      }
+    },
+    "keyLayout.spaces" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spaces"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "操作スペース"
+          }
+        }
+      }
+    },
+    "keyLayout.stillActiveMacOSHasThe" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Still active. macOS has the same actions in Mission Control shortcuts."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今も有効です。macOSのMission Controlにも同じ操作があります。"
+          }
+        }
+      }
+    },
+    "keyLayout.swap" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swap"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "交換"
+          }
+        }
+      }
+    },
+    "keyLayout.windows" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Windows"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウ"
+          }
+        }
+      }
+    },
+    "keyLayout.withThisKeyboardLayoutTypes" : {
+      "comment" : "Arguments: 1 = `shown`; 2 = `optionGlyph`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With this keyboard layout, ⌥%@ types “%@”."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このキーボード配列では⌥%@は「%@」を入力します。"
+          }
+        }
+      }
+    },
+    "toml.arrayItemsMustBeSeparated" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Array items must be separated by commas."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "配列の区切りが正しくありません。"
+          }
+        }
+      }
+    },
+    "toml.couldNotReadTheValue" : {
+      "comment" : "Arguments: 1 = `token`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not read the value: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "値を解釈できません: %@"
+          }
+        }
+      }
+    },
+    "toml.description" : {
+      "comment" : "Arguments: 1 = `line`; 2 = `message`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Line %@: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@行目: %@"
+          }
+        }
+      }
+    },
+    "toml.duplicateKey" : {
+      "comment" : "Arguments: 1 = `first`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicate key: %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@が重複しています。"
+          }
+        }
+      }
+    },
+    "toml.expectedKeyValue" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expected key = value."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "key = valueの形ではありません。"
+          }
+        }
+      }
+    },
+    "toml.inlineTableItemsMustBe" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inline table items must be separated by commas."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "インラインテーブルの区切りが正しくありません。"
+          }
+        }
+      }
+    },
+    "toml.invalidEscape" : {
+      "comment" : "Arguments: 1 = `e`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invalid \\%@ escape."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\\%@のエスケープが正しくありません。"
+          }
+        }
+      }
+    },
+    "toml.isAnArrayTableWrite" : {
+      "comment" : "Arguments: 1 = `last`; 2 = `last`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ is an array table; write [[%@]]."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@は配列テーブルです。[[%@]]と書いてください。"
+          }
+        }
+      }
+    },
+    "toml.isNotATable" : {
+      "comment" : "Arguments: 1 = `last`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ is not a table."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@はテーブルではありません。"
+          }
+        }
+      }
+    },
+    "toml.isNotAnArrayTable" : {
+      "comment" : "Arguments: 1 = `last`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ is not an array table."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@は配列テーブルではありません。"
+          }
+        }
+      }
+    },
+    "toml.missingAfterAKeyIn" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Missing = after a key in the inline table."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "インラインテーブルのキーの後に = がありません。"
+          }
+        }
+      }
+    },
+    "toml.missingArrayClose" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Missing closing ] for the array."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "配列を閉じる]がありません。"
+          }
+        }
+      }
+    },
+    "toml.missingArrayTableClose" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Missing closing ]] for the array table."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "配列テーブルを閉じる]]がありません。"
+          }
+        }
+      }
+    },
+    "toml.missingClosingForTheInline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Missing closing } for the inline table."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "インラインテーブルを閉じる } がありません。"
+          }
+        }
+      }
+    },
+    "toml.missingClosingQuote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Missing closing quote."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "閉じる引用符がありません。"
+          }
+        }
+      }
+    },
+    "toml.missingTableClose" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Missing closing ] for the table."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "テーブルを閉じる]がありません。"
+          }
+        }
+      }
+    },
+    "toml.missingValue" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Missing value."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "値がありません。"
+          }
+        }
+      }
+    },
+    "toml.theArrayTableIsEmpty" : {
+      "comment" : "Arguments: 1 = `first`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The array table %@ is empty."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "配列テーブル%@が空です。"
+          }
+        }
+      }
+    },
+    "toml.theKeyNameIsEmpty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The key name is empty."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "キー名が空です。"
+          }
+        }
+      }
+    },
+    "toml.theTableNameIsEmpty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The table name is empty."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "テーブル名が空です。"
+          }
+        }
+      }
+    },
+    "toml.unexpectedTextAfterTheValue" : {
+      "comment" : "Arguments: 1 = `scanner.rest`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unexpected text after the value: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "値の後に余分な文字があります: %@"
+          }
+        }
+      }
+    },
+    "toml.unsupportedEscape" : {
+      "comment" : "Arguments: 1 = `e`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unsupported escape \\%@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\\%@は使えないエスケープです。"
+          }
+        }
+      }
+    }
   },
   "version" : "1.0"
 }

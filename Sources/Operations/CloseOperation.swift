@@ -36,18 +36,17 @@ public final class CloseOperation {
                            finishedAt: Date(), wallMs: Date().timeIntervalSince(startedAt) * 1000)
         }
         guard snapshot.trusted else {
-            return finish(.notPossible, .permissionLost, L("The window was not closed because the \(AccessPane.name()) permission is missing.", "「\(AccessPane.name())」の許可がないため閉じません。"))
+            return finish(.notPossible, .permissionLost, L(.closeOperationTheWindowWasNotClosed(AccessPane.name())))
         }
         guard !inspection.targets.isEmpty else {
-            return finish(.notPossible, .targetsChanged, L("The window was not closed because it isn't a standard window in the current Space.", "対象は現在の操作スペースの通常のウインドウではないため閉じません。"))
+            return finish(.notPossible, .targetsChanged, L(.closeOperationTheWindowWasNotClosedBecause))
         }
         let focused = system.focusedWindowID()
         if let reason = authorization.stopReason(system: system, control: control, snapshot: snapshot) {
-            return finish(.notPossible, reason, L("The window was not closed because pause, input, or the Space changed after the request.",
-                                                  "受付後に一時停止・入力・操作スペースの状態が変わったため閉じません。"))
+            return finish(.notPossible, reason, L(.closeOperationTheWindowWasNotClosedBecausePause))
         }
         guard !requireFocus || focused == target else {
-            return finish(.notPossible, .targetsChanged, L("The window was not closed because focus changed.", "フォーカスが変わったため閉じません。"))
+            return finish(.notPossible, .targetsChanged, L(.closeOperationTheWindowWasNotClosedBecauseFocus))
         }
 
         let write = system.close(target, timeout: limits.perAppTimeout) { [self] in
@@ -67,24 +66,23 @@ public final class CloseOperation {
                 report.status = .gone
                 builder.verified = true
                 outcome = .complete
-                message = L("Window \(target) closed.", "ウインドウ\(target)が閉じたことを確認しました。")
+                message = L(.closeOperationWindowClosed(String(describing: target)))
             } else {
                 report.status = .mismatch
-                message = L("Close was requested, but the window is still open. Check the app for a save prompt or similar dialog.",
-                            "閉じる操作を発行しましたが、ウインドウはまだあります。保存の確認などをアプリで確認してください。")
+                message = L(.closeOperationCloseWasRequestedButThe)
             }
         case .gone:
             report.status = .gone
             builder.verified = true
             outcome = .nothingToDo
-            message = L("Window \(target) is already closed.", "ウインドウ\(target)は既に閉じられています。")
+            message = L(.closeOperationWindowIsAlreadyClosed(String(describing: target)))
         case .rejected(let why):
             report.status = .mismatch
-            message = L("Couldn't close window \(target): \(why)", "ウインドウ\(target)を閉じられません: \(why)")
+            message = L(.closeOperationCouldntCloseWindow(String(describing: target), why))
         case .timedOut:
             report.status = .mismatch
             reason = .appUnresponsive
-            message = L("The app for window \(target) didn't respond in time.", "ウインドウ\(target)のアプリが期限内に応答しませんでした。")
+            message = L(.closeOperationTheAppForWindowDidnt(String(describing: target)))
         }
         report.note = message
         builder.set(report)

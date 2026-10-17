@@ -273,33 +273,33 @@ public struct Config: Equatable, Codable {
         do { table = try TOML.parse(text) } catch let e as TOML.ParseError { throw LoadError(problems: [e.description]) }
         var c = Config()
         var problems: [String] = []
-        func boolProblem(_ key: String) -> String { L("\(key) must be true or false.", "\(key)はtrueかfalseで指定してください。") }
+        func boolProblem(_ key: String) -> String { L(.configBoolProblem(key)) }
         let known: Set<String> = ["gap", "gaps", "preferred-minimum", "unknown-floor", "quiet-interval", "per-app-timeout", "rule", "keys", "mode", "start-at-login", "exec-on-space-change", "exec-on-mode-change", "exec-on-window-sent", "new-window-placement", "focus-after-close", "accordion-padding", "focus-border", "notifications", "language", "show-shortcut-guide", "place-dialogs-beside", "follow-moved-window"]
-        for k in table.keys where !known.contains(k) { problems.append(L("Unknown setting: \(k).", "不明な設定: \(k)。")) }
+        for k in table.keys where !known.contains(k) { problems.append(L(.configUnknownSetting(k))) }
 
         func number(_ key: String, _ range: ClosedRange<Double>) -> Double? {
             guard let v = table[key] else { return nil }
-            guard let d = (v as? Double) ?? (v as? Int).map(Double.init) else { problems.append(L("\(key) must be a number.", "\(key)は数値で指定してください。")); return nil }
-            guard d.isFinite, range.contains(d) else { let lo = Config.number(range.lowerBound), hi = Config.number(range.upperBound); problems.append(L("\(key) must be between \(lo) and \(hi).", "\(key)は\(lo)〜\(hi)の範囲で指定してください。")); return nil }
+            guard let d = (v as? Double) ?? (v as? Int).map(Double.init) else { problems.append(L(.configMustBeANumber(key))); return nil }
+            guard d.isFinite, range.contains(d) else { let lo = Config.number(range.lowerBound), hi = Config.number(range.upperBound); problems.append(L(.configMustBeBetweenAnd(key, lo, hi))); return nil }
             return d
         }
         func size(_ key: String) -> CGSize? {
             guard let v = table[key] else { return nil }
             guard let arr = v as? [Any], arr.count == 2, let w = (arr[0] as? Double) ?? (arr[0] as? Int).map(Double.init), let h = (arr[1] as? Double) ?? (arr[1] as? Int).map(Double.init), w.isFinite, h.isFinite, (0...100_000).contains(w), (0...100_000).contains(h) else {
-                problems.append(L("\(key) must be [width, height], each from 0 to 100000 points.", "\(key)は[幅, 高さ]（それぞれ0〜100000 pt）で指定してください。")); return nil
+                problems.append(L(.configMustBeWidthHeightEach(key))); return nil
             }
             return CGSize(width: w, height: h)
         }
         if let v = number("gap", 0...200) { c.gap = v }
         if let v = number("accordion-padding", 0...200) { c.accordionPadding = v }
         if let gaps = table["gaps"] {
-            guard let t = gaps as? [String: Any] else { problems.append(L("gaps must be written as a [gaps] table.", "gapsは[gaps]テーブルで書いてください。")); throw LoadError(problems: problems) }
+            guard let t = gaps as? [String: Any] else { problems.append(L(.configGapsMustBeWrittenAs)); throw LoadError(problems: problems) }
             let gapKeys = ["inner-horizontal", "inner-vertical", "outer-left", "outer-top", "outer-right", "outer-bottom"]
-            for k in t.keys where !gapKeys.contains(k) { problems.append(L("Unknown setting in gaps: \(k).", "gapsの不明な項目: \(k)。")) }
+            for k in t.keys where !gapKeys.contains(k) { problems.append(L(.configUnknownSettingInGaps(k))) }
             func edge(_ value: Any?) -> Double? {
                 guard let value else { return nil }
                 guard let d = (value as? Double) ?? (value as? Int).map(Double.init), d.isFinite, (0...200).contains(d) else {
-                    problems.append(L("Values in gaps must be numbers from 0 to 200.", "gapsの余白は0〜200の数値で指定してください。"))
+                    problems.append(L(.configValuesInGapsMustBe))
                     return nil
                 }
                 return d
@@ -318,14 +318,14 @@ public struct Config: Equatable, Codable {
         if let v = number("per-app-timeout", 0.2...30) { c.perAppTimeout = v }
         if let v = table["new-window-placement"] {
             if let s = v as? String, let p = NewWindowPlacement(rawValue: s) { c.newWindowPlacement = p }
-            else { problems.append(L("new-window-placement must be \"beside-focused\" or \"end\".", "new-window-placementは \"beside-focused\" か \"end\" で指定してください。")) }
+            else { problems.append(L(.configNewWindowPlacementMustBe)) }
         }
         if let v = table["focus-after-close"] {
             if let b = v as? Bool { c.focusAfterClose = b } else { problems.append(boolProblem("focus-after-close")) }
         }
         if let v = table["language"] {
             if let s = v as? String, languageValues.contains(s) { c.language = s }
-            else { problems.append(L("language must be \"system\", \"en\", or \"ja\".", "languageは \"system\"、\"en\"、\"ja\" のいずれかで指定してください。")) }
+            else { problems.append(L(.configLanguageMustBeSystemEn)) }
         }
         if let v = table["place-dialogs-beside"] {
             if let b = v as? Bool { c.placeDialogsBeside = b } else { problems.append(boolProblem("place-dialogs-beside")) }
@@ -337,59 +337,59 @@ public struct Config: Equatable, Codable {
             if let b = v as? Bool { c.showShortcutGuide = b } else { problems.append(boolProblem("show-shortcut-guide")) }
         }
         if let v = table["focus-border"] {
-            guard let t = v as? [String: Any] else { problems.append(L("focus-border must be written as a [focus-border] table.", "focus-borderは[focus-border]テーブルで書いてください。")); throw LoadError(problems: problems) }
-            for k in t.keys where !["enabled", "width", "color"].contains(k) { problems.append(L("Unknown setting in focus-border: \(k).", "focus-borderの不明な項目: \(k)。")) }
+            guard let t = v as? [String: Any] else { problems.append(L(.configFocusBorderMustBeWritten)); throw LoadError(problems: problems) }
+            for k in t.keys where !["enabled", "width", "color"].contains(k) { problems.append(L(.configUnknownSettingInFocusBorder(k))) }
             if let e = t["enabled"] {
                 if let b = e as? Bool { c.focusBorder.enabled = b } else { problems.append(boolProblem("focus-border.enabled")) }
             }
             if let w = t["width"] {
                 if let d = (w as? Double) ?? (w as? Int).map(Double.init), (1...12).contains(d) { c.focusBorder.width = d }
-                else { problems.append(L("focus-border.width must be a number from 1 to 12.", "focus-border.widthは1〜12の数値で指定してください。")) }
+                else { problems.append(L(.configFocusBorderWidthMustBe)) }
             }
             if let col = t["color"] {
                 if let s = col as? String, parseColor(s) != nil { c.focusBorder.color = s }
-                else { problems.append(L("focus-border.color must be \"#RRGGBB\" or \"#RRGGBBAA\".", "focus-border.colorは \"#RRGGBB\" か \"#RRGGBBAA\" で指定してください。")) }
+                else { problems.append(L(.configFocusBorderColorMustBe)) }
             }
         }
         if let v = table["notifications"] {
-            guard let t = v as? [String: Any] else { problems.append(L("notifications must be written as a [notifications] table.", "notificationsは[notifications]テーブルで書いてください。")); throw LoadError(problems: problems) }
-            for k in t.keys where k != "needs-attention" { problems.append(L("Unknown setting in notifications: \(k).", "notificationsの不明な項目: \(k)。")) }
+            guard let t = v as? [String: Any] else { problems.append(L(.configNotificationsMustBeWrittenAs)); throw LoadError(problems: problems) }
+            for k in t.keys where k != "needs-attention" { problems.append(L(.configUnknownSettingInNotifications(k))) }
             if let n = t["needs-attention"] {
                 if let b = n as? Bool { c.notifications.needsAttention = b } else { problems.append(boolProblem("notifications.needs-attention")) }
             }
         }
 
         if let rules = table["rule"] {
-            guard let list = rules as? [[String: Any]] else { problems.append(L("rule must be written as [[rule]] array tables.", "ruleは[[rule]]の配列テーブルで書いてください。")); throw LoadError(problems: problems) }
+            guard let list = rules as? [[String: Any]] else { problems.append(L(.configRuleMustBeWrittenAs)); throw LoadError(problems: problems) }
             for (i, r) in list.enumerated() {
-                guard let app = r["app"] as? String, !app.isEmpty else { problems.append(L("rule[\(i)]: app is required.", "rule[\(i)]: appが必要です。")); continue }
-                guard Rule.isValidApp(app) else { problems.append(L("rule[\(i)]: app must be a bundle identifier, or a prefix ending in *.", "rule[\(i)]: appはバンドルIDか、*で終わる前方一致で指定してください。")); continue }
-                guard let actionText = r["action"] as? String, let action = Rule.Action(rawValue: actionText) else { problems.append(L("rule[\(i)]: action must be ignore, float, or space.", "rule[\(i)]: actionはignore・float・spaceのどれかで指定してください。")); continue }
+                guard let app = r["app"] as? String, !app.isEmpty else { problems.append(L(.configRuleAppIsRequired(String(i)))); continue }
+                guard Rule.isValidApp(app) else { problems.append(L(.configRuleAppMustBeA(String(i)))); continue }
+                guard let actionText = r["action"] as? String, let action = Rule.Action(rawValue: actionText) else { problems.append(L(.configRuleActionMustBeIgnore(String(i)))); continue }
                 // Standard desktop number and follow.
                 var space: Int?
                 var follow = false
                 if action == .space {
                     switch r["space"] {
                     case let n as Int:
-                        guard (1...99).contains(n) else { problems.append(L("rule[\(i)]: space must be a desktop number from 1 to 99.", "rule[\(i)]: spaceは1〜99のデスクトップ番号で指定してください。")); continue }
+                        guard (1...99).contains(n) else { problems.append(L(.configRuleSpaceMustBeA(String(i)))); continue }
                         space = n
                     default:
-                        problems.append(L("rule[\(i)]: action = \"space\" needs space = <number> (1 to 99).", "rule[\(i)]: action = \"space\" にはspace = <番号>（1〜99）が必要です。")); continue
+                        problems.append(L(.configRuleActionSpaceNeedsSpace(String(i)))); continue
                     }
                     if let f = r["follow"] {
-                        guard let b = f as? Bool else { problems.append(L("rule[\(i)]: follow must be true or false.", "rule[\(i)]: followはtrueかfalseで指定してください。")); continue }
+                        guard let b = f as? Bool else { problems.append(L(.configRuleFollowMustBeTrue(String(i)))); continue }
                         follow = b
                     }
                 } else if r["space"] != nil || r["follow"] != nil {
-                    problems.append(L("rule[\(i)]: space and follow are only for action = \"space\".", "rule[\(i)]: spaceとfollowはaction = \"space\" のときだけ使えます。")); continue
+                    problems.append(L(.configRuleSpaceAndFollowAre(String(i)))); continue
                 }
                 var title = ""
                 if let pattern = r["title"] {
-                    guard let text = pattern as? String, !text.isEmpty else { problems.append(L("rule[\(i)]: title must be a non-empty regular expression.", "rule[\(i)]: titleは空でない正規表現で指定してください。")); continue }
-                    if (try? NSRegularExpression(pattern: text)) == nil { problems.append(L("rule[\(i)]: title is not a valid regular expression.", "rule[\(i)]: titleの正規表現を解釈できません。")); continue }
+                    guard let text = pattern as? String, !text.isEmpty else { problems.append(L(.configRuleTitleMustBeA(String(i)))); continue }
+                    if (try? NSRegularExpression(pattern: text)) == nil { problems.append(L(.configRuleTitleIsNotA(String(i)))); continue }
                     title = text
                 }
-                for k in r.keys where !["app", "action", "title", "space", "follow"].contains(k) { problems.append(L("rule[\(i)]: unknown setting \(k).", "rule[\(i)]: 不明な項目\(k)。")) }
+                for k in r.keys where !["app", "action", "title", "space", "follow"].contains(k) { problems.append(L(.configRuleUnknownSetting(String(i), k))) }
                 c.rules.append(Rule(app: app, action: action, title: title, space: space, follow: follow))
             }
         }
@@ -402,7 +402,7 @@ public struct Config: Equatable, Codable {
             let strings = arr.compactMap { $0 as? String }
             guard !arr.isEmpty, strings.count == arr.count, !strings[0].isEmpty else {
                 let example = "[\"/bin/sh\", \"-c\", \"sketchybar --trigger space_change\"]"
-                problems.append(L("\(key) must be an array of strings, for example \(example).", "\(key)は文字列の配列で指定してください（例: \(example)）。")); return nil
+                problems.append(L(.configMustBeAnArrayOf(key, example))); return nil
             }
             return strings
         }
@@ -413,11 +413,11 @@ public struct Config: Equatable, Codable {
         // Collect mode declarations first (to check mode-<name> references).
         var modeTables: [(String, [String: Any])] = []
         if let modes = table["mode"] {
-            guard let dict = modes as? [String: Any] else { problems.append(L("mode must be written as [mode.<name>] tables.", "modeは[mode.<名前>]のテーブルで書いてください。")); throw LoadError(problems: problems) }
+            guard let dict = modes as? [String: Any] else { problems.append(L(.configModeMustBeWrittenAs)); throw LoadError(problems: problems) }
             for (name, v) in dict.sorted(by: { $0.key < $1.key }) {
-                guard let md = v as? [String: Any] else { problems.append(L("mode.\(name) must be a table.", "mode.\(name)はテーブルで書いてください。")); continue }
-                if name == mainModeName { problems.append(L("Do not declare mode.main. Put main-mode shortcuts in [keys].", "mode.mainは宣言しないでください。mainモードのショートカットは[keys]に書きます。")); continue }
-                guard !name.isEmpty, name.allSatisfy({ $0.isLetter || $0.isNumber || $0 == "-" || $0 == "_" }) else { problems.append(L("mode.\(name): use letters, numbers, hyphens, or underscores in mode names.", "mode.\(name): モード名には文字・数字・ハイフン・アンダースコアを使えます。")); continue }
+                guard let md = v as? [String: Any] else { problems.append(L(.configModeMustBeATable(name))); continue }
+                if name == mainModeName { problems.append(L(.configDoNotDeclareModeMain)); continue }
+                guard !name.isEmpty, name.allSatisfy({ $0.isLetter || $0.isNumber || $0 == "-" || $0 == "_" }) else { problems.append(L(.configModeUseLettersNumbersHyphens(name))); continue }
                 modeTables.append((name, md))
                 c.modes[name] = Mode()
             }
@@ -425,18 +425,18 @@ public struct Config: Equatable, Codable {
         let validCommands = Set(c.allCommandNames)
 
         func loadKeys(_ value: Any, label: String, into keys: inout [String: Key]) {
-            guard let dict = value as? [String: Any] else { problems.append(L("\(label) must be a table.", "\(label)はテーブルで書いてください。")); return }
+            guard let dict = value as? [String: Any] else { problems.append(L(.configMustBeATable(label))); return }
             var written: Set<String> = []
             for (name, v) in dict {
                 written.insert(name)
                 guard validCommands.contains(name) else {
-                    if let m = modeName(fromCommand: name) { problems.append(L("\(label): mode \(m) is not declared. Add [mode.\(m)].", "\(label): モード\(m)が宣言されていません。[mode.\(m)]を書いてください。")) }
-                    else { problems.append(L("\(label): unknown command \(name).", "\(label): 不明なコマンド\(name)。")) }
+                    if let m = modeName(fromCommand: name) { problems.append(L(.configModeIsNotDeclaredAdd(label, m, m))) }
+                    else { problems.append(L(.configUnknownCommand(label, name))) }
                     continue
                 }
-                guard let text = v as? String else { problems.append(L("\(label).\(name) must be a string.", "\(label).\(name)は文字列で指定してください。")); continue }
+                guard let text = v as? String else { problems.append(L(.configMustBeAString(label, name))); continue }
                 if text.isEmpty || text == "none" { keys[name] = nil; continue }
-                guard let key = Key.parse(text) else { problems.append(L("\(label).\(name): could not read \(text). Example: alt-shift-h.", "\(label).\(name): \(text)を解釈できません（例: alt-shift-h）。")); continue }
+                guard let key = Key.parse(text) else { problems.append(L(.configCouldNotReadExampleAlt(label, name, text))); continue }
                 keys[name] = key
             }
             // Explicit assignments win over defaults; only conflicts between explicit ones are problems.
@@ -444,24 +444,24 @@ public struct Config: Equatable, Codable {
             for (name, key) in keys where !written.contains(name) && userKeys.contains(key) { keys[name] = nil }
             var seen: [Key: String] = [:]
             for (name, key) in keys.sorted(by: { $0.key < $1.key }) {
-                if let other = seen[key] { problems.append(L("\(label): \(name) and \(other) use the same shortcut \(key.display).", "\(label): \(name)と\(other)が同じショートカット\(key.display)を使っています。")) }
+                if let other = seen[key] { problems.append(L(.configAndUseTheSameShortcut(label, name, other, key.display))) }
                 seen[key] = name
             }
         }
         if let keys = table["keys"] { loadKeys(keys, label: "keys", into: &c.keys) }
         for (name, md) in modeTables {
             var mode = Mode()
-            for k in md.keys where k != "keys" && k != "return-to-main" { problems.append(L("mode.\(name): unknown setting \(k).", "mode.\(name): 不明な項目\(k)。")) }
+            for k in md.keys where k != "keys" && k != "return-to-main" { problems.append(L(.configModeUnknownSetting(name, k))) }
             if let r = md["return-to-main"] {
                 if let b = r as? Bool { mode.returnToMain = b } else { problems.append(boolProblem("mode.\(name).return-to-main")) }
             }
             if let keys = md["keys"] { loadKeys(keys, label: "mode.\(name).keys", into: &mode.keys) }
-            if mode.keys.isEmpty { problems.append(L("mode.\(name) has no shortcuts. Add [mode.\(name).keys].", "mode.\(name)にショートカットがありません。[mode.\(name).keys]を書いてください。")) }
+            if mode.keys.isEmpty { problems.append(L(.configModeHasNoShortcutsAdd(name, name))) }
             c.modes[name] = mode
         }
         // Keys without modifiers take over normal typing: main allows only F keys, the rest only in modes.
         for (name, key) in c.keys.sorted(by: { $0.key < $1.key }) where key.modifiers.isEmpty && !key.isFunctionKey {
-            problems.append(L("keys.\(name): \(key.display) needs a modifier key in the main mode because a single key would capture normal typing. Single keys are allowed for function keys or inside a mode.", "keys.\(name): mainモードでは修飾キーなしの\(key.display)は通常の入力を横取りするため使えません。Fキーかモード内なら使えます。"))
+            problems.append(L(.configKeysNeedsAModifierKey(name, key.display)))
         }
         if !problems.isEmpty { throw LoadError(problems: problems) }
         return c
@@ -501,12 +501,12 @@ public struct Config: Equatable, Codable {
         guard let rule = rule(for: bundleID, title: title) else { return nil }
         if rule.action == .ignore {
             return rule.title.isEmpty
-                ? L("Excluded by rule (\(rule.app))", "ルールで除外（\(rule.app)）")
-                : L("Excluded by rule (\(rule.app), title /\(rule.title)/)", "ルールで除外（\(rule.app)、タイトル /\(rule.title)/）")
+                ? L(.configExcludedByRule(rule.app))
+                : L(.configExcludedByRuleTitle(rule.app, rule.title))
         }
         return rule.title.isEmpty
-            ? L("Floating by rule (\(rule.app)). Its position is kept.", "ルールでフローティング（\(rule.app)）。位置を保ちます。")
-            : L("Floating by rule (\(rule.app), title /\(rule.title)/). Its position is kept.", "ルールでフローティング（\(rule.app)、タイトル /\(rule.title)/）。位置を保ちます。")
+            ? L(.configFloatingByRuleItsPosition(rule.app))
+            : L(.configFloatingByRuleTitleIts(rule.app, rule.title))
     }
 
 
