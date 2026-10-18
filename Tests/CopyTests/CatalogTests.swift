@@ -63,65 +63,93 @@ final class CatalogTests: XCTestCase {
         return out
     }
 
-    /// Arguments a value uses, as (argument number, kind). Plain specifiers count from 1 in order; `%#@name@` takes its substitution's number.
-    static func arguments(_ value: String, substitutions: [String: Any]) -> Set<String> {
-        var out: Set<String> = []
+    /// A format token: a plain specifier as "number:kind", a substitution's name, `%arg` (inside a substitution form), or a malformed one.
+    enum Token: Equatable {
+        case plain(String), substitution(String), arg, bad(String)
+    }
+
+    static let tokenPattern = try! NSRegularExpression(pattern: #"%(?:(\d+)\$)?(lld|llu|ld|lu|lf|d|u|f|@)|%#@([A-Za-z0-9_]+)@|%arg|%%|%"#)
+
+    /// Every format token of a text. Plain specifiers count from 1 in order unless positional.
+    static func tokens(_ text: String, inSubstitution: Bool = false) -> [Token] {
+        var out: [Token] = []
         var next = 0
-        let range = NSRange(value.startIndex..., in: value)
-        for match in specifierPattern.matches(in: value, range: range) {
-            let text = (value as NSString).substring(with: match.range)
-            if text == "%%" { continue }
-            if let nameRange = Range(match.range(at: 3), in: value) {
-                let substitution = substitutions[String(value[nameRange])] as? [String: Any] ?? [:]
-                let number = substitution["argNum"] as? Int ?? -1
-                out.insert("\(number):\(kind(substitution["formatSpecifier"] as? String ?? "?"))")
+        let ns = text as NSString
+        for match in tokenPattern.matches(in: text, range: NSRange(location: 0, length: ns.length)) {
+            let token = ns.substring(with: match.range)
+            if token == "%%" { continue }
+            if token == "%arg" { out.append(inSubstitution ? .arg : .bad(token)); continue }
+            if match.range(at: 3).location != NSNotFound { out.append(.substitution(ns.substring(with: match.range(at: 3)))); continue }
+            if match.range(at: 2).location != NSNotFound {
+                let number: Int
+                if match.range(at: 1).location != NSNotFound { number = Int(ns.substring(with: match.range(at: 1))) ?? -1 } else { next += 1; number = next }
+                out.append(.plain("\(number):\(kind(ns.substring(with: match.range(at: 2))))"))
                 continue
             }
-            let type = (value as NSString).substring(with: match.range(at: 2))
-            let number: Int
-            if let positional = Range(match.range(at: 1), in: value) { number = Int(value[positional]) ?? -1 } else { next += 1; number = next }
-            out.insert("\(number):\(kind(type))")
+            out.append(.bad(ns.substring(with: NSRange(location: match.range.location, length: min(4, ns.length - match.range.location)))))
         }
         return out
     }
 
-    /// Arguments a localization uses: those its text shows, and those that only choose a plural form (a substitution none of
-    /// whose forms shows `%arg`, such as "was" or "were"). A plural form may leave out its count, so the forms are combined.
-    static func argumentUse(of localization: [String: Any]) -> (shown: Set<String>, selectors: Set<String>) {
-        let substitutions = localization["substitutions"] as? [String: Any] ?? [:]
-        var values: [String] = []
-        if let value = (localization["stringUnit"] as? [String: Any])?["value"] as? String { values.append(value) }
-        if let plural = (localization["variations"] as? [String: Any])?["plural"] as? [String: Any] {
-            values += plural.values.compactMap { (($0 as? [String: Any])?["stringUnit"] as? [String: Any])?["value"] as? String }
-        }
-        var shown: Set<String> = [], selectors: Set<String> = []
-        for value in values {
-            // Plain specifiers; a substitution token reads as "-1:?" without its definition.
-            shown.formUnion(arguments(value, substitutions: [:]).filter { !$0.hasPrefix("-1:") })
-            for name in substitutionNames(value) {
+    /// Arguments a value uses, as "number:kind"; `%#@name@` takes its substitution's number.
+    static func arguments(_ value: String, substitutions: [String: Any]) -> Set<String> {
+        Set(tokens(value).compactMap { token in
+            switch token {
+            case .plain(let argument): return argument
+            case .substitution(let name):
                 let substitution = substitutions[name] as? [String: Any] ?? [:]
-                let argument = "\(substitution["argNum"] as? Int ?? -1):\(kind(substitution["formatSpecifier"] as? String ?? "?"))"
-                let forms = ((substitution["variations"] as? [String: Any])?["plural"] as? [String: Any] ?? [:]).values
-                let displayed = forms.contains { ((($0 as? [String: Any])?["stringUnit"] as? [String: Any])?["value"] as? String ?? "").contains("%arg") }
-                if displayed { shown.insert(argument) } else { selectors.insert(argument) }
+                return "\(substitution["argNum"] as? Int ?? -1):\(kind(substitution["formatSpecifier"] as? String ?? "?"))"
+            default: return nil
             }
-        }
-        return (shown, selectors.subtracting(shown))
+        })
     }
 
-    static func substitutionNames(_ value: String) -> [String] {
-        let range = NSRange(value.startIndex..., in: value)
-        return specifierPattern.matches(in: value, range: range).compactMap { Range($0.range(at: 3), in: value).map { String(value[$0]) } }
+    /// Arguments a localization uses: those its text shows (plain specifiers anywhere, including inside substitution forms, and
+    /// substitutions whose forms show `%arg`), those that only choose a plural form ("was" or "were"), and malformed tokens.
+    static func argumentUse(of localization: [String: Any]) -> (shown: Set<String>, selectors: Set<String>, bad: [String]) {
+        let substitutions = localization["substitutions"] as? [String: Any] ?? [:]
+        func value(_ form: Any) -> String { (((form as? [String: Any])?["stringUnit"] as? [String: Any])?["value"] as? String) ?? "" }
+        var values: [String] = []
+        if let text = (localization["stringUnit"] as? [String: Any])?["value"] as? String { values.append(text) }
+        if let plural = (localization["variations"] as? [String: Any])?["plural"] as? [String: Any] { values += plural.values.map(value) }
+        var shown: Set<String> = [], selectors: Set<String> = [], bad: [String] = []
+        for text in values {
+            for token in tokens(text) {
+                switch token {
+                case .plain(let argument): shown.insert(argument)
+                case .bad(let text): bad.append(text)
+                case .arg: break
+                case .substitution(let name):
+                    guard let substitution = substitutions[name] as? [String: Any] else { bad.append("%#@\(name)@ without a substitution"); continue }
+                    let argument = "\(substitution["argNum"] as? Int ?? -1):\(kind(substitution["formatSpecifier"] as? String ?? "?"))"
+                    let forms = ((substitution["variations"] as? [String: Any])?["plural"] as? [String: Any] ?? [:]).values.map(value)
+                    var displayed = false
+                    for form in forms {
+                        for inner in tokens(form, inSubstitution: true) {
+                            switch inner {
+                            case .arg: displayed = true
+                            case .plain(let argument): shown.insert(argument)
+                            case .bad(let text): bad.append(text)
+                            case .substitution(let nested): bad.append("%#@\(nested)@ inside a substitution")
+                            }
+                        }
+                    }
+                    if displayed { shown.insert(argument) } else { selectors.insert(argument) }
+                }
+            }
+        }
+        return (shown, selectors.subtracting(shown), bad)
     }
 
     /// What is wrong with a translation's arguments compared with English, or nil: every argument English shows must be shown,
-    /// and nothing English lacks may be used. A count English uses only to choose a plural form may be left out.
+    /// nothing English lacks may be used, and no token may be malformed. A count English uses only to choose a plural form may be left out.
     static func argumentProblem(english: [String: Any], other: [String: Any]) -> String? {
         let expected = argumentUse(of: english), actual = argumentUse(of: other)
         let missing = expected.shown.subtracting(actual.shown)
         let extra = actual.shown.union(actual.selectors).subtracting(expected.shown.union(expected.selectors))
-        guard !missing.isEmpty || !extra.isEmpty else { return nil }
+        guard !missing.isEmpty || !extra.isEmpty || !actual.bad.isEmpty else { return nil }
         return "shows \(actual.shown.sorted()) vs en \(expected.shown.sorted())" + (extra.isEmpty ? "" : ", extra \(extra.sorted())")
+            + (actual.bad.isEmpty ? "" : ", malformed \(actual.bad)")
     }
 
     static func kind(_ specifier: String) -> String {
@@ -293,6 +321,18 @@ final class CatalogTests: XCTestCase {
         var kept = hidden
         kept["substitutions"] = ["windows": ["argNum": 2, "formatSpecifier": "lld", "variations": ["plural": ["other": unit("%argつ")]]]]
         XCTAssertNil(Self.argumentProblem(english: shown, other: kept))
+    }
+
+    /// The same cases script/catalog/catalog.py selftest runs, so the tool and the tests agree.
+    func testSharedArgumentCases() throws {
+        let url = Self.root.appendingPathComponent("script/catalog/argument-cases.json")
+        let cases = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [[String: Any]])
+        XCTAssertGreaterThan(cases.count, 10)
+        for item in cases {
+            let english = try XCTUnwrap(item["english"] as? [String: Any]), other = try XCTUnwrap(item["other"] as? [String: Any])
+            let ok = try XCTUnwrap(item["ok"] as? Bool)
+            XCTAssertEqual(Self.argumentProblem(english: english, other: other) == nil, ok, item["name"] as? String ?? "")
+        }
     }
 
     func testArgumentsAreReadFromEveryKindOfValue() {

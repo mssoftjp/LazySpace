@@ -716,7 +716,8 @@ enum CLI {
 
     static func spacesText(_ overview: SpaceOverview) -> String {
         let idWidth = 8
-        let kindWidth = 14
+        // Wide enough for the language's heading and kinds; never narrower than 14, so English and Japanese keep their layout.
+        let kindWidth = max(14, ([L(.cliType)] + [0, 4, nil].map(spaceKindLabel)).map(displayWidth).max() ?? 0)
         // The last column's heading is not cut (it is wider than the numbers).
         var lines = ["     " + padded("ID", to: idWidth) + " " + padded(L(.cliType), to: kindWidth) + " " + L(.cliWindowCountHeading)]
         let numbers = SpaceObserver.desktopNumbers(overview.spaces.map { ($0.spaceID, $0.type) })

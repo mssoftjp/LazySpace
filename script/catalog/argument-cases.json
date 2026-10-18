@@ -1,0 +1,406 @@
+[
+ {
+  "name": "plain arguments in order",
+  "english": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "Sent %@ to %@."
+   }
+  },
+  "other": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "%@を%@へ送りました。"
+   }
+  },
+  "ok": true
+ },
+ {
+  "name": "positional reorder",
+  "english": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "Sent %@ to %@."
+   }
+  },
+  "other": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "%2$@へ%1$@を送りました。"
+   }
+  },
+  "ok": true
+ },
+ {
+  "name": "dropped argument",
+  "english": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "Sent %@ to %@."
+   }
+  },
+  "other": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "%@を送りました。"
+   }
+  },
+  "ok": false
+ },
+ {
+  "name": "extra argument",
+  "english": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "Sent %@."
+   }
+  },
+  "other": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "%1$@ %2$@"
+   }
+  },
+  "ok": false
+ },
+ {
+  "name": "type changed",
+  "english": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "%lld windows"
+   }
+  },
+  "other": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "%@ fenêtres"
+   }
+  },
+  "ok": false
+ },
+ {
+  "name": "selector may be left out",
+  "english": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "%1$@ %#@windows@ kept."
+   },
+   "substitutions": {
+    "windows": {
+     "argNum": 2,
+     "formatSpecifier": "lld",
+     "variations": {
+      "plural": {
+       "one": {
+        "stringUnit": {
+         "state": "translated",
+         "value": "was"
+        }
+       },
+       "other": {
+        "stringUnit": {
+         "state": "translated",
+         "value": "were"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "other": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "%1$@はそのままです。"
+   }
+  },
+  "ok": true
+ },
+ {
+  "name": "name may not be left out",
+  "english": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "%1$@ %#@windows@ kept."
+   },
+   "substitutions": {
+    "windows": {
+     "argNum": 2,
+     "formatSpecifier": "lld",
+     "variations": {
+      "plural": {
+       "one": {
+        "stringUnit": {
+         "state": "translated",
+         "value": "was"
+        }
+       },
+       "other": {
+        "stringUnit": {
+         "state": "translated",
+         "value": "were"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "other": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "そのままです。"
+   }
+  },
+  "ok": false
+ },
+ {
+  "name": "shown count may not be hidden",
+  "english": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "%1$@: %#@windows@."
+   },
+   "substitutions": {
+    "windows": {
+     "argNum": 2,
+     "formatSpecifier": "lld",
+     "variations": {
+      "plural": {
+       "one": {
+        "stringUnit": {
+         "state": "translated",
+         "value": "%arg window"
+        }
+       },
+       "other": {
+        "stringUnit": {
+         "state": "translated",
+         "value": "%arg windows"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "other": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "%1$@: %#@windows@"
+   },
+   "substitutions": {
+    "windows": {
+     "argNum": 2,
+     "formatSpecifier": "lld",
+     "variations": {
+      "plural": {
+       "other": {
+        "stringUnit": {
+         "state": "translated",
+         "value": "ウインドウ"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "ok": false
+ },
+ {
+  "name": "shown count kept in a substitution",
+  "english": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "%1$@: %#@windows@."
+   },
+   "substitutions": {
+    "windows": {
+     "argNum": 2,
+     "formatSpecifier": "lld",
+     "variations": {
+      "plural": {
+       "one": {
+        "stringUnit": {
+         "state": "translated",
+         "value": "%arg window"
+        }
+       },
+       "other": {
+        "stringUnit": {
+         "state": "translated",
+         "value": "%arg windows"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "other": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "%1$@: %#@windows@"
+   },
+   "substitutions": {
+    "windows": {
+     "argNum": 2,
+     "formatSpecifier": "lld",
+     "variations": {
+      "plural": {
+       "other": {
+        "stringUnit": {
+         "state": "translated",
+         "value": "%argつ"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "ok": true
+ },
+ {
+  "name": "shown count as a plain specifier",
+  "english": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "%1$@: %#@windows@."
+   },
+   "substitutions": {
+    "windows": {
+     "argNum": 2,
+     "formatSpecifier": "lld",
+     "variations": {
+      "plural": {
+       "one": {
+        "stringUnit": {
+         "state": "translated",
+         "value": "%arg window"
+        }
+       },
+       "other": {
+        "stringUnit": {
+         "state": "translated",
+         "value": "%arg windows"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "other": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "%1$@: %2$lldつ"
+   }
+  },
+  "ok": true
+ },
+ {
+  "name": "extra argument inside a substitution form",
+  "english": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "%1$@: %#@windows@."
+   },
+   "substitutions": {
+    "windows": {
+     "argNum": 2,
+     "formatSpecifier": "lld",
+     "variations": {
+      "plural": {
+       "one": {
+        "stringUnit": {
+         "state": "translated",
+         "value": "%arg window"
+        }
+       },
+       "other": {
+        "stringUnit": {
+         "state": "translated",
+         "value": "%arg windows"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "other": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "%1$@: %#@windows@"
+   },
+   "substitutions": {
+    "windows": {
+     "argNum": 2,
+     "formatSpecifier": "lld",
+     "variations": {
+      "plural": {
+       "other": {
+        "stringUnit": {
+         "state": "translated",
+         "value": "%argつ %9$@"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "ok": false
+ },
+ {
+  "name": "malformed token",
+  "english": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "%@ done"
+   }
+  },
+  "other": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "%@ fertig %q"
+   }
+  },
+  "ok": false
+ },
+ {
+  "name": "literal percent",
+  "english": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "100%% of %@"
+   }
+  },
+  "other": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "%@の100%%"
+   }
+  },
+  "ok": true
+ },
+ {
+  "name": "substitution without its definition",
+  "english": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "%@ done"
+   }
+  },
+  "other": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "%@ %#@missing@"
+   }
+  },
+  "ok": false
+ }
+]

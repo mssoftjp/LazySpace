@@ -66,19 +66,53 @@ final class CopyTests: XCTestCase {
         XCTAssertEqual(MacItem.switchToDesktop(nil), "デスクトップNへ切り替え")
     }
 
-    /// macOS item names match macOS's own shortcut table in every shipped language. The table is macOS 27's, read without privileges.
-    func testMacItemNamesMatchTheMacOSShortcutTable() throws {
-        let url = URL(fileURLWithPath: "/System/Library/ExtensionKit/Extensions/KeyboardSettings.appex/Contents/Resources/DefaultShortcutsTable.loctable")
-        guard ProcessInfo.processInfo.operatingSystemVersion.majorVersion == 27, let data = try? Data(contentsOf: url),
-              let table = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else {
-            throw XCTSkip("needs macOS 27's DefaultShortcutsTable.loctable")
-        }
+    static let glossary: [String: Any] = {
+        let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("script/catalog/glossary.json")
+        return (try? JSONSerialization.jsonObject(with: Data(contentsOf: url))) as? [String: Any] ?? [:]
+    }()
+
+    /// A value from one of macOS's own tables: a .loctable keyed by language, or the Dock's per-language .strings (`<lproj>`).
+    static func macOSValue(_ path: String, _ key: String, _ language: Language) -> String? {
+        let codes = glossary["tableCodes"] as? [String: String] ?? [:]
+        let code = codes[language.rawValue] ?? language.rawValue
+        guard let data = FileManager.default.contents(atPath: path.replacingOccurrences(of: "<lproj>", with: code)),
+              let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else { return nil }
+        return path.contains("<lproj>") ? plist[key] as? String : (plist[code] as? [String: Any])?[key] as? String
+    }
+
+    /// Every macOS name LazySpace writes reads as macOS 27 shows it, in every shipped language, compared with macOS's own
+    /// tables (not with a copy). The glossary's copy must match too, because translators and the wording tests use it.
+    func testMacOSNamesMatchMacOSInEveryLanguage() throws {
+        guard ProcessInfo.processInfo.operatingSystemVersion.majorVersion == 27 else { throw XCTSkip("the names are macOS 27's") }
+        let sources = try XCTUnwrap(Self.glossary["macosSources"] as? [String: [String]])
+        let names = try XCTUnwrap(Self.glossary["macosNames"] as? [String: [String: String]])
         for language in Language.allCases {
-            let names = try XCTUnwrap(table[language.rawValue] as? [String: Any], language.rawValue)
             Copy.language = language
-            XCTAssertEqual(MacItem.moveSpace(right: true), names["Move to next space"] as? String, language.rawValue)
-            XCTAssertEqual(MacItem.moveSpace(right: false), names["Move to previous space"] as? String, language.rawValue)
-            XCTAssertEqual(MacItem.switchToDesktop(3), names["Switch to Space 3"] as? String, language.rawValue)
+            func table(_ name: String) -> String? { sources[name].flatMap { Self.macOSValue($0[0], $0[1], language) } }
+            for name in sources.keys.sorted() {
+                XCTAssertNotNil(table(name), "\(language.rawValue): no macOS table for \(name)")
+                XCTAssertEqual(names[name]?[language.rawValue], table(name), "\(language.rawValue): glossary \(name)")
+            }
+            let lang = language.rawValue
+            XCTAssertEqual(MacItem.moveSpace(right: true), table("moveRightASpace"), lang)
+            XCTAssertEqual(MacItem.moveSpace(right: false), table("moveLeftASpace"), lang)
+            XCTAssertEqual(MacItem.stageManager, table("stageManager"), lang)
+            XCTAssertEqual(MacItem.openAtLogin, table("openAtLogin"), lang)
+            XCTAssertEqual(MacItem.loginItems(osMajor: 15), table("loginItemsExtensions"), lang)
+            XCTAssertEqual(MacItem.separateSpaces, table("separateSpaces"), lang)
+            XCTAssertEqual(AccessPane.name(osMajor: 27), table("deviceControlAndDataAccess"), lang)
+            XCTAssertEqual(AccessPane.name(osMajor: 26), table("accessibility"), lang)
+            for number in [1, 3, 10] {
+                XCTAssertEqual(Copy.desktop(number), table("desktop")?.replacingOccurrences(of: "%@", with: String(number)), lang)
+            }
+            // Korean writes (으)로 after any number, Apple's form after an unknown value; macOS's table varies it by the number.
+            let shortcuts = try XCTUnwrap(sources["switchToDesktop3"]?.first)
+            for number in 1...16 {
+                var expected = Self.macOSValue(shortcuts, "Switch to Space \(number)", language)
+                if language.rawValue == "ko" { expected = expected?.replacingOccurrences(of: #"(\d+)(으로|로)"#, with: "$1(으)로", options: .regularExpression) }
+                XCTAssertEqual(MacItem.switchToDesktop(number), expected, "\(lang) \(number)")
+            }
         }
     }
 

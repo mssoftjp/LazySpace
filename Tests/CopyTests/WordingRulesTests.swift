@@ -65,11 +65,68 @@ final class WordingRulesTests: XCTestCase {
     /// Catalog values, per language: Japanese values get the Japanese rules, and every value gets the rules for any language.
     func testCatalogValues() throws {
         let found = try Self.catalogValues().flatMap { language, text in
-            language == "ja" && text.text.contains(where: Self.isJapanese)
-                ? Self.violations(in: text, rules: Self.japaneseRules + [Self.w8] + Self.anyLanguageRules)
-                : Self.violations(in: text, rules: Self.anyLanguageRules)
+            var rules = Self.anyLanguageRules + Self.languageRules(language)
+            if language == "ja" && text.text.contains(where: Self.isJapanese) { rules += Self.japaneseRules + [Self.w8] }
+            return Self.violations(in: text, rules: rules)
         }
         report(found, kind: "catalog values")
+    }
+
+    /// A sentence that names a macOS item names it as that language's macOS does: when English contains "Mission Control"
+    /// or "System Settings", the translation contains that language's macOS name for it (script/catalog/glossary.json).
+    func testInlineMacOSNamesMatchMacOS() throws {
+        let names = try XCTUnwrap(Self.glossary["macosNames"] as? [String: [String: String]])
+        let inline = try XCTUnwrap(Self.glossary["inlineNames"] as? [String])
+        var found: [String] = []
+        for entry in try CatalogTests.entries() {
+            func text(_ language: String) -> String {
+                CatalogTests.forms(entry.localizations[language] as? [String: Any] ?? [:]).map { $0.unit["value"] as? String ?? "" }.joined(separator: "\n")
+            }
+            let english = text("en")
+            for name in inline {
+                guard let forms = names[name], let source = forms["en"], english.contains(source) else { continue }
+                for language in entry.localizations.keys.sorted() where language != "en" {
+                    if let required = forms[language], !text(language).contains(required) {
+                        found.append("\(entry.module) \(entry.key) [\(language)]: needs “\(required)”")
+                    }
+                }
+            }
+        }
+        XCTAssertEqual(found, [], "macOS names in sentences:\n" + found.joined(separator: "\n"))
+    }
+
+    /// Each language rule catches its case and passes the correct form.
+    func testLanguageRulesCatchTheirCases() {
+        func hits(_ text: String, _ language: String) -> [String] {
+            let scalars = Array(Self.withPlaceholders(text).unicodeScalars)
+            return Self.languageRules(language).filter { !$0.test(scalars).isEmpty }.map(\.id)
+        }
+        let nb = "\u{00A0}"
+        XCTAssertEqual(hits("Öffne „Fotos“.", "de"), [])
+        XCTAssertEqual(hits("Öffne “Fotos”.", "de"), ["WQ"])
+        XCTAssertEqual(hits("Déplacer d’un Space", "fr"), [], "an apostrophe is not a quote")
+        XCTAssertEqual(hits("Ouvrir «\(nb)%@\(nb)»", "fr"), [])
+        XCTAssertEqual(hits("Ouvrir « %@ »", "fr"), ["WF2"])
+        XCTAssertEqual(hits("Erreur\(nb): %@", "fr"), [])
+        XCTAssertEqual(hits("Erreur : %@", "fr"), ["WF1"])
+        XCTAssertEqual(hits("Erreur: %@", "fr"), ["WF1"])
+        XCTAssertEqual(hits("l'app", "fr"), ["WF3"])
+        XCTAssertEqual(hits("Einstellungen\(nb)…", "de"), [])
+        XCTAssertEqual(hits("Einstellungen…", "de"), ["WD1"])
+        XCTAssertEqual(hits("切换到桌面%@", "zh-Hans"), [])
+        XCTAssertEqual(hits("切换到 桌面", "zh-Hans"), [])
+        XCTAssertEqual(hits("切换到桌面 %@", "zh-Hans"), ["WZ1"])
+        XCTAssertEqual(hits("已整列, 完成", "zh-Hans"), ["WZ2"])
+        XCTAssertEqual(hits("切換至空間%@", "zh-Hant"), ["W10"])
+        XCTAssertEqual(hits("鍵盤快速鍵…", "zh-Hant"), ["WT"])
+        XCTAssertEqual(hits("“%@”", "zh-Hant"), ["WQ"])
+        XCTAssertEqual(hits("데스크탑 %@(으)로 전환", "ko"), [])
+        XCTAssertEqual(hits("‘%@’을(를) 종료", "ko"), [])
+        XCTAssertEqual(hits("‘%@’을 종료", "ko"), ["WK2"])
+        XCTAssertEqual(hits("%@로 이동", "ko"), ["WK2"])
+        XCTAssertEqual(hits("데스크탑%@", "ko"), ["WK1"])
+        XCTAssertEqual(hits("Escritorio %@", "es"), [])
+        XCTAssertEqual(hits("Space %@", "es"), ["W10"])
     }
 
     func testJapaneseDocuments() throws {
@@ -265,6 +322,126 @@ final class WordingRulesTests: XCTestCase {
             if plural, end < s.count, s[end] == "s" { end += 1 }
             return (i == 0 || !isLetter(s[i - 1])) && (end >= s.count || !isLetter(s[end]))
         }
+    }
+
+    // MARK: - Rules per language
+
+    static let glossary: [String: Any] = {
+        let url = root.appendingPathComponent("script/catalog/glossary.json")
+        return (try? JSONSerialization.jsonObject(with: Data(contentsOf: url))) as? [String: Any] ?? [:]
+    }()
+
+    /// Quotation marks; ’ between two letters is an apostrophe, and ASCII quotes are configuration syntax, so neither is checked.
+    static let quotationMarks: Set<Unicode.Scalar> = ["“", "”", "„", "«", "»", "「", "」", "‘", "’"]
+    static let noBreak: Set<Unicode.Scalar> = ["\u{00A0}", "\u{202F}"]
+
+    static func isHan(_ c: Unicode.Scalar) -> Bool {
+        switch c.value {
+        case 0x3000...0x303F, 0x3400...0x4DBF, 0x4E00...0x9FFF, 0xF900...0xFAFF, 0xFF00...0xFFEF: true
+        default: false
+        }
+    }
+
+    static func isHangul(_ c: Unicode.Scalar) -> Bool { (0xAC00...0xD7A3).contains(c.value) }
+
+    static func isWordLetter(_ c: Unicode.Scalar) -> Bool { CharacterSet.letters.contains(c) }
+
+    /// The rules for one language's catalog values. Each is backed by near-zero counterexamples in macOS's own strings.
+    static func languageRules(_ language: String) -> [Rule] {
+        let quotes = glossary["quotes"] as? [String: String] ?? [:]
+        let spaceWords = glossary["spaceWord"] as? [String: String] ?? [:]
+        let forbidden = (glossary["forbidden"] as? [String: [String]])?[language] ?? []
+        var rules: [Rule] = []
+        if let pair = quotes[language] {
+            let allowed = Set(pair.unicodeScalars)
+            // WQ: only the language's own quotation marks.
+            rules.append(Rule(id: "WQ") { s in
+                s.indices.filter { i in
+                    guard quotationMarks.contains(s[i]), !allowed.contains(s[i]) else { return false }
+                    let apostrophe = s[i] == "’" && i > 0 && i + 1 < s.count && isWordLetter(s[i - 1]) && isWordLetter(s[i + 1])
+                    return !apostrophe
+                }
+            })
+        }
+        if let word = spaceWords[language], language != "en", language != "ja" {
+            // W10 for the language's word for Space: followed by a number or an inserted value.
+            let w = Array(word.unicodeScalars)
+            rules.append(Rule(id: "W10") { s in
+                find(word, in: s).filter { i in
+                    var next = i + w.count
+                    if next < s.count, s[next] == " " { next += 1 }
+                    return next < s.count && (("0"..."9").contains(s[next]) || s[next] == placeholder)
+                }
+            })
+        }
+        if !forbidden.isEmpty {
+            // WT: a variant the glossary forbids in this language.
+            rules.append(Rule(id: "WT") { s in forbidden.flatMap { find($0, in: s) } })
+        }
+        switch language {
+        case "zh-Hans", "zh-Hant":
+            // WZ1: no half-width space between Chinese and a Latin letter, digit, or inserted value.
+            rules.append(Rule(id: "WZ1") { s in
+                s.indices.dropFirst().dropLast().filter { i in
+                    s[i] == " " && s[i + 1] != " " && s[i - 1] != " "
+                        && ((isHan(s[i - 1]) && isLatin(s[i + 1])) || (isLatin(s[i - 1]) && isHan(s[i + 1])))
+                }
+            })
+            // WZ2: full-width punctuation after Chinese.
+            rules.append(Rule(id: "WZ2") { s in
+                s.indices.dropFirst().filter { i in ",.:;?!".unicodeScalars.contains(s[i]) && isHan(s[i - 1]) }
+            })
+        case "ko":
+            // WK1: a space between Hangul and a following Latin letter, digit, or inserted value.
+            rules.append(Rule(id: "WK1") { s in
+                s.indices.dropLast().filter { i in isHangul(s[i]) && isLatin(s[i + 1]) }
+            })
+            // WK2: after an inserted value (or its closing quote), a particle that varies with the value's sound is written paired.
+            let paired = ["을(를)", "를(을)", "이(가)", "가(이)", "은(는)", "는(은)", "와(과)", "과(와)", "(으)로"].map { Array($0.unicodeScalars) }
+            let bare: [[Unicode.Scalar]] = ["으로", "을", "를", "이", "가", "은", "는", "와", "과", "로"].map { Array($0.unicodeScalars) }
+            rules.append(Rule(id: "WK2") { s in
+                s.indices.compactMap { i -> Int? in
+                    guard s[i] == placeholder else { return nil }
+                    var j = i + 1
+                    if j < s.count, s[j] == "’" { j += 1 }
+                    let rest = Array(s[j...])
+                    if paired.contains(where: { rest.starts(with: $0) }) { return nil }
+                    for particle in bare where rest.starts(with: particle) {
+                        let after = particle.count < rest.count ? rest[particle.count] : nil
+                        if after.map({ !isHangul($0) }) ?? true { return j }
+                    }
+                    return nil
+                }
+            })
+        case "fr":
+            // WF1: a no-break space before : ; ? ! after a word, an inserted value, or ».
+            rules.append(Rule(id: "WF1") { s in
+                s.indices.dropFirst().filter { i in
+                    guard ":;?!".unicodeScalars.contains(s[i]) else { return false }
+                    let before = s[i - 1]
+                    if noBreak.contains(before) { return false }
+                    if before == " " { return true }
+                    return isWordLetter(before) || before == placeholder || before == "»"
+                }
+            })
+            // WF2: no-break spaces inside « ».
+            rules.append(Rule(id: "WF2") { s in
+                s.indices.filter { i in
+                    (s[i] == "«" && !(i + 1 < s.count && noBreak.contains(s[i + 1])))
+                        || (s[i] == "»" && !(i > 0 && noBreak.contains(s[i - 1])))
+                }
+            })
+            // WF3: the typographic apostrophe.
+            rules.append(Rule(id: "WF3") { s in s.indices.filter { s[$0] == "'" } })
+        case "de":
+            // WD1: a no-break space before an ellipsis.
+            rules.append(Rule(id: "WD1") { s in
+                s.indices.filter { i in s[i] == "…" && i > 0 && !noBreak.contains(s[i - 1]) }
+            })
+        default:
+            break
+        }
+        return rules
     }
 
     // MARK: - Catalog values

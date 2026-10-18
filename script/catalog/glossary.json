@@ -1,0 +1,479 @@
+{
+  "about": "Terms per language for LazySpace's catalogs. macosNames are copied from macOS's own tables (catalog.py glossary); fixed entries are written by catalog.py fixed; terms and forbidden variants guide translators and are checked by WordingRulesTests.",
+  "fixed": {
+    "copy.clauseSeparator": {
+      "de": "; ",
+      "en": "; ",
+      "es": "; ",
+      "fr": " ; ",
+      "ja": "、",
+      "ko": ", ",
+      "pt-BR": "; ",
+      "zh-Hans": "；",
+      "zh-Hant": "；"
+    },
+    "copy.listSeparator": {
+      "de": ", ",
+      "en": ", ",
+      "es": ", ",
+      "fr": ", ",
+      "ja": "、",
+      "ko": ", ",
+      "pt-BR": ", ",
+      "zh-Hans": "、",
+      "zh-Hant": "、"
+    },
+    "copy.sentenceSeparator": {
+      "de": " ",
+      "en": " ",
+      "es": " ",
+      "fr": " ",
+      "ja": "",
+      "ko": " ",
+      "pt-BR": " ",
+      "zh-Hans": "",
+      "zh-Hant": ""
+    },
+    "loginItems": {
+      "de": "Anmeldeobjekte",
+      "en": "Login Items",
+      "es": "Ítems de inicio",
+      "fr": "Ouverture",
+      "ja": "ログイン項目",
+      "ko": "로그인 항목",
+      "pt-BR": "Itens de Início de Sessão",
+      "zh-Hans": "登录项",
+      "zh-Hant": "登入項目"
+    },
+    "settings.labelColon": {
+      "de": "%@:",
+      "en": "%@:",
+      "es": "%@:",
+      "fr": "%@ :",
+      "ja": "%@：",
+      "ko": "%@:",
+      "pt-BR": "%@:",
+      "zh-Hans": "%@：",
+      "zh-Hant": "%@："
+    }
+  },
+  "fixedNotes": {
+    "loginItems": "The pane's name before macOS 15. Not readable on macOS 27; taken from the current name without its second part."
+  },
+  "forbidden": {
+    "ko": [
+      "데스크톱",
+      "스페이스"
+    ],
+    "zh-Hans": [
+      "窗户",
+      "視窗",
+      "設定",
+      "顯示",
+      "切換",
+      "空間",
+      "鍵盤",
+      "登入",
+      "系統",
+      "應用",
+      "螢幕",
+      "⋯"
+    ],
+    "zh-Hant": [
+      "窗口",
+      "窗戶",
+      "设置",
+      "显示",
+      "切换",
+      "空间",
+      "键盘",
+      "登录",
+      "系统",
+      "应用",
+      "屏幕",
+      "…"
+    ]
+  },
+  "inlineNames": [
+    "missionControl",
+    "systemSettings",
+    "keyboardShortcuts",
+    "desktopAndDock",
+    "privacyAndSecurity",
+    "loginItemsExtensions",
+    "autoRearrange"
+  ],
+  "macosNames": {
+    "accessibility": {
+      "de": "Bedienungshilfen",
+      "en": "Accessibility",
+      "es": "Accesibilidad",
+      "fr": "Accessibilité",
+      "ja": "アクセシビリティ",
+      "ko": "손쉬운 사용",
+      "pt-BR": "Acessibilidade",
+      "zh-Hans": "无障碍",
+      "zh-Hant": "輔助使用"
+    },
+    "autoRearrange": {
+      "de": "Spaces automatisch anhand der letzten Verwendung ausrichten",
+      "en": "Automatically rearrange Spaces based on most recent use",
+      "es": "Reordenar Spaces automáticamente en función del uso más reciente",
+      "fr": "Réarranger automatiquement les Spaces en fonction de votre utilisation la plus récente",
+      "ja": "最新の使用状況に基づいて操作スペースを自動的に並べ替える",
+      "ko": "Spaces를 최근 사용 내역에 따라 자동으로 재정렬",
+      "pt-BR": "Reorganizar Spaces automaticamente com base no uso mais recente",
+      "zh-Hans": "根据最近使用情况自动重新排列空间",
+      "zh-Hant": "根據最近的使用情況自動重新排列空間"
+    },
+    "desktop": {
+      "de": "Schreibtisch %@",
+      "en": "Desktop %@",
+      "es": "Escritorio %@",
+      "fr": "Bureau %@",
+      "ja": "デスクトップ%@",
+      "ko": "데스크탑 %@",
+      "pt-BR": "Mesa %@",
+      "zh-Hans": "桌面%@",
+      "zh-Hant": "桌面%@"
+    },
+    "desktopAndDock": {
+      "de": "Schreibtisch & Dock",
+      "en": "Desktop & Dock",
+      "es": "Escritorio y Dock",
+      "fr": "Bureau et Dock",
+      "ja": "デスクトップとDock",
+      "ko": "데스크탑 및 Dock",
+      "pt-BR": "Mesa e Dock",
+      "zh-Hans": "桌面与程序坞",
+      "zh-Hant": "桌面與Dock"
+    },
+    "deviceControlAndDataAccess": {
+      "de": "Gerätesteuerung und Datenzugriff",
+      "en": "Device Control and Data Access",
+      "es": "Control de dispositivos y acceso a datos",
+      "fr": "Contrôle de l’appareil et accès aux données",
+      "ja": "デバイスの制御とデータへのアクセス",
+      "ko": "기기 제어 및 데이터 접근",
+      "pt-BR": "Controle do Dispositivo e Acesso a Dados",
+      "zh-Hans": "设备控制和数据访问",
+      "zh-Hant": "裝置控制和資料取用"
+    },
+    "general": {
+      "de": "Allgemein",
+      "en": "General",
+      "es": "General",
+      "fr": "Général",
+      "ja": "一般",
+      "ko": "일반",
+      "pt-BR": "Geral",
+      "zh-Hans": "通用",
+      "zh-Hant": "一般"
+    },
+    "keyboard": {
+      "de": "Tastatur",
+      "en": "Keyboard",
+      "es": "Teclado",
+      "fr": "Clavier",
+      "ja": "キーボード",
+      "ko": "키보드",
+      "pt-BR": "Teclado",
+      "zh-Hans": "键盘",
+      "zh-Hant": "鍵盤"
+    },
+    "keyboardShortcuts": {
+      "de": "Tastaturkurzbefehle …",
+      "en": "Keyboard Shortcuts…",
+      "es": "Atajos de teclado…",
+      "fr": "Raccourcis clavier…",
+      "ja": "キーボードショートカット…",
+      "ko": "키보드 단축키…",
+      "pt-BR": "Atalhos de Teclado…",
+      "zh-Hans": "键盘快捷键…",
+      "zh-Hant": "鍵盤快速鍵⋯"
+    },
+    "loginItemsExtensions": {
+      "de": "Anmeldeobjekte & Erweiterungen",
+      "en": "Login Items & Extensions",
+      "es": "Ítems de inicio y extensiones",
+      "fr": "Ouverture et extensions",
+      "ja": "ログイン項目と機能拡張",
+      "ko": "로그인 항목 및 확장 프로그램",
+      "pt-BR": "Itens de Início de Sessão e Extensões",
+      "zh-Hans": "登录项与扩展",
+      "zh-Hant": "登入項目與延伸功能"
+    },
+    "missionControl": {
+      "de": "Mission Control",
+      "en": "Mission Control",
+      "es": "Mission Control",
+      "fr": "Mission Control",
+      "ja": "Mission Control",
+      "ko": "Mission Control",
+      "pt-BR": "Mission Control",
+      "zh-Hans": "调度中心",
+      "zh-Hant": "指揮中心"
+    },
+    "moveLeftASpace": {
+      "de": "Einen Space nach links bewegen",
+      "en": "Move left a Space",
+      "es": "Ir al Space de la izquierda",
+      "fr": "Déplacer d’un Space vers la gauche",
+      "ja": "左の操作スペースに移動",
+      "ko": "왼쪽으로 Space 이동",
+      "pt-BR": "Mover para a esquerda um Space",
+      "zh-Hans": "向左移动一个空间",
+      "zh-Hant": "向左移動一個空間"
+    },
+    "moveRightASpace": {
+      "de": "Einen Space nach rechts bewegen",
+      "en": "Move right a Space",
+      "es": "Ir al Space de la derecha",
+      "fr": "Déplacer d’un Space vers la droite",
+      "ja": "右の操作スペースに移動",
+      "ko": "오른쪽으로 Space 이동",
+      "pt-BR": "Mover para a direita um Space",
+      "zh-Hans": "向右移动一个空间",
+      "zh-Hant": "向右移動一個空間"
+    },
+    "notifications": {
+      "de": "Mitteilungen",
+      "en": "Notifications",
+      "es": "Notificaciones",
+      "fr": "Notifications",
+      "ja": "通知",
+      "ko": "알림",
+      "pt-BR": "Notificações",
+      "zh-Hans": "通知",
+      "zh-Hant": "通知"
+    },
+    "openAtLogin": {
+      "de": "Bei der Anmeldung öffnen",
+      "en": "Open at Login",
+      "es": "Abrir al iniciar sesión",
+      "fr": "Ouvrir avec la session",
+      "ja": "ログイン時に開く",
+      "ko": "로그인 시 열기",
+      "pt-BR": "Abrir no Início da Sessão",
+      "zh-Hans": "登录时打开",
+      "zh-Hant": "在登入時打開"
+    },
+    "privacyAndSecurity": {
+      "de": "Datenschutz & Sicherheit",
+      "en": "Privacy & Security",
+      "es": "Privacidad y seguridad",
+      "fr": "Confidentialité et sécurité",
+      "ja": "プライバシーとセキュリティ",
+      "ko": "개인정보 보호 및 보안",
+      "pt-BR": "Privacidade e Segurança",
+      "zh-Hans": "隐私与安全",
+      "zh-Hant": "隱私權與安全性"
+    },
+    "separateSpaces": {
+      "de": "Monitore verwenden verschiedene Spaces",
+      "en": "Displays have separate Spaces",
+      "es": "Pantallas con Spaces separados",
+      "fr": "Les écrans disposent de Spaces distincts",
+      "ja": "ディスプレイごとに個別の操作スペース",
+      "ko": "각각의 Spaces가 있는 디스플레이",
+      "pt-BR": "As telas têm Spaces separados",
+      "zh-Hans": "显示器具有单独空间",
+      "zh-Hant": "顯示器有單獨空間"
+    },
+    "stageManager": {
+      "de": "Stage Manager",
+      "en": "Stage Manager",
+      "es": "Organizador visual",
+      "fr": "Stage Manager",
+      "ja": "ステージマネージャ",
+      "ko": "스테이지 매니저",
+      "pt-BR": "Organizador Visual",
+      "zh-Hans": "台前调度",
+      "zh-Hant": "幕前調度"
+    },
+    "switchToDesktop3": {
+      "de": "Zu Schreibtisch 3 wechseln",
+      "en": "Switch to Desktop 3",
+      "es": "Cambiar al escritorio 3",
+      "fr": "Passer au Bureau 3",
+      "ja": "デスクトップ3へ切り替え",
+      "ko": "데스크탑 3으로 전환",
+      "pt-BR": "Ir para a Mesa 3",
+      "zh-Hans": "切换到桌面3",
+      "zh-Hant": "切換至桌面3"
+    },
+    "systemSettings": {
+      "de": "Systemeinstellungen",
+      "en": "System Settings",
+      "es": "Ajustes del Sistema",
+      "fr": "Réglages Système",
+      "ja": "システム設定",
+      "ko": "시스템 설정",
+      "pt-BR": "Ajustes do Sistema",
+      "zh-Hans": "系统设置",
+      "zh-Hant": "系統設定"
+    }
+  },
+  "macosSources": {
+    "accessibility": [
+      "/System/Library/ExtensionKit/Extensions/LockScreen.appex/Contents/Resources/Localizable.loctable",
+      "Accessibility"
+    ],
+    "autoRearrange": [
+      "/System/Library/ExtensionKit/Extensions/DesktopSettings.appex/Contents/Resources/Localizable.loctable",
+      "Automatically rearrange Spaces based on most recent use"
+    ],
+    "desktop": [
+      "/System/Library/CoreServices/Dock.app/Contents/Resources/<lproj>.lproj/Localizable.strings",
+      "DesktopNum"
+    ],
+    "desktopAndDock": [
+      "/System/Applications/System Settings.app/Contents/Resources/Localizable.loctable",
+      "Desktop & Dock"
+    ],
+    "deviceControlAndDataAccess": [
+      "/System/Library/ExtensionKit/Extensions/SecurityPrivacyExtension.appex/Contents/Resources/Localizable.loctable",
+      "ACCESSIBILITY"
+    ],
+    "general": [
+      "/System/Applications/System Settings.app/Contents/Resources/Localizable.loctable",
+      "General"
+    ],
+    "keyboard": [
+      "/System/Applications/System Settings.app/Contents/Resources/Localizable.loctable",
+      "Keyboard"
+    ],
+    "keyboardShortcuts": [
+      "/System/Library/ExtensionKit/Extensions/KeyboardSettings.appex/Contents/Resources/Localizable.loctable",
+      "Keyboard Shortcuts…"
+    ],
+    "loginItemsExtensions": [
+      "/System/Library/ExtensionKit/Extensions/LoginItems.appex/Contents/Resources/Localizable.loctable",
+      "Login Items & Extensions"
+    ],
+    "missionControl": [
+      "/System/Library/ExtensionKit/Extensions/DesktopSettings.appex/Contents/Resources/Localizable.loctable",
+      "Mission Control"
+    ],
+    "moveLeftASpace": [
+      "/System/Library/ExtensionKit/Extensions/KeyboardSettings.appex/Contents/Resources/DefaultShortcutsTable.loctable",
+      "Move to previous space"
+    ],
+    "moveRightASpace": [
+      "/System/Library/ExtensionKit/Extensions/KeyboardSettings.appex/Contents/Resources/DefaultShortcutsTable.loctable",
+      "Move to next space"
+    ],
+    "notifications": [
+      "/System/Applications/System Settings.app/Contents/Resources/Localizable.loctable",
+      "Notifications"
+    ],
+    "openAtLogin": [
+      "/System/Library/ExtensionKit/Extensions/LoginItems.appex/Contents/Resources/Localizable.loctable",
+      "Open at Login"
+    ],
+    "privacyAndSecurity": [
+      "/System/Library/ExtensionKit/Extensions/SecurityPrivacyExtension.appex/Contents/Resources/InfoPlist.loctable",
+      "CFBundleDisplayName"
+    ],
+    "separateSpaces": [
+      "/System/Library/ExtensionKit/Extensions/DesktopSettings.appex/Contents/Resources/Localizable.loctable",
+      "Displays have separate Spaces"
+    ],
+    "stageManager": [
+      "/System/Library/ExtensionKit/Extensions/DesktopSettings.appex/Contents/Resources/Localizable.loctable",
+      "Stage Manager"
+    ],
+    "switchToDesktop3": [
+      "/System/Library/ExtensionKit/Extensions/KeyboardSettings.appex/Contents/Resources/DefaultShortcutsTable.loctable",
+      "Switch to Space 3"
+    ],
+    "systemSettings": [
+      "/System/Library/ExtensionKit/Extensions/TranslationAPIExtension.appex/Contents/Resources/Localizable.loctable",
+      "SYSTEM_SETTINGS"
+    ]
+  },
+  "quotes": {
+    "de": "„“",
+    "en": "“”",
+    "es": "“”",
+    "fr": "«»",
+    "ja": "「」",
+    "ko": "‘’",
+    "pt-BR": "“”",
+    "zh-Hans": "“”",
+    "zh-Hant": "「」"
+  },
+  "spaceWord": {
+    "de": "Space",
+    "en": "Space",
+    "es": "Space",
+    "fr": "Space",
+    "ja": "操作スペース",
+    "ko": "Space",
+    "pt-BR": "Space",
+    "zh-Hans": "空间",
+    "zh-Hant": "空間"
+  },
+  "tableCodes": {
+    "pt-BR": "pt_BR",
+    "zh-Hans": "zh_CN",
+    "zh-Hant": "zh_TW"
+  },
+  "terms": [
+    {
+      "de": "Fenster",
+      "en": "window",
+      "es": "ventana",
+      "fr": "fenêtre",
+      "ja": "ウインドウ",
+      "ko": "윈도우",
+      "pt-BR": "janela",
+      "zh-Hans": "窗口",
+      "zh-Hant": "視窗"
+    },
+    {
+      "de": "Vollbild",
+      "en": "full screen",
+      "es": "pantalla completa",
+      "fr": "plein écran",
+      "ja": "フルスクリーン",
+      "ko": "전체 화면",
+      "pt-BR": "tela cheia",
+      "zh-Hans": "全屏幕",
+      "zh-Hant": "全螢幕"
+    },
+    {
+      "de": "minimieren",
+      "en": "minimize",
+      "es": "minimizar",
+      "fr": "minimiser",
+      "ja": "しまう",
+      "ko": "최소화",
+      "pt-BR": "minimizar",
+      "zh-Hans": "最小化",
+      "zh-Hant": "縮到最小"
+    },
+    {
+      "de": "Beenden",
+      "en": "Quit",
+      "es": "Salir",
+      "fr": "Quitter",
+      "ja": "終了",
+      "ko": "종료",
+      "pt-BR": "Encerrar",
+      "zh-Hans": "退出",
+      "zh-Hant": "結束"
+    },
+    {
+      "de": "Einstellungen",
+      "en": "Settings",
+      "es": "Ajustes",
+      "fr": "Réglages",
+      "ja": "設定",
+      "ko": "설정",
+      "pt-BR": "Ajustes",
+      "zh-Hans": "设置",
+      "zh-Hant": "設定"
+    }
+  ]
+}
