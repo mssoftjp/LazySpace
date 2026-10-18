@@ -5,7 +5,7 @@ Run with python3 -I from anywhere:
   catalog.py glossary                      refresh the macOS names in glossary.json from this Mac's macOS 27 tables
   catalog.py fixed <lang>                  write the entries copied from macOS (MacItem names, desktops) and the separators
   catalog.py export <lang> [out]           write a work file for translating <lang> (default translations/<lang>.json)
-  catalog.py apply <lang> <file>...        validate a work file, then write only <lang> into the catalogs
+  catalog.py apply <lang> <file>... [--dry-run]   validate work files, then write only <lang> into the catalogs
   catalog.py verify --base <ref>           English and Japanese are unchanged since <ref>
   catalog.py stale --since <ref> [lang]    entries whose English changed since <ref> while a translation did not
   catalog.py status                        entries each language lacks
@@ -295,8 +295,8 @@ def only_target_changes(before, after, lang):
     return problems
 
 
-def write_language(lang, values):
-    """values: {(module, key): localization}. Validates against English, then writes only lang."""
+def write_language(lang, values, dry_run=False):
+    """values: {(module, key): localization}. Validates against English, then writes only lang (nothing with dry_run)."""
     if lang in SOURCES or lang not in PLURALS:
         sys.exit(f"catalog: refusing to write {lang!r}")
     before = {m: load(m) for m in MODULES}
@@ -324,6 +324,9 @@ def write_language(lang, values):
     if errors:
         print("\n".join(errors))
         sys.exit(f"catalog: {len(errors)} problems; nothing written")
+    if dry_run:
+        print(f"{len(values)} {lang} values valid (dry run, nothing written)")
+        return
     for module in MODULES:
         if after[module] != before[module]:
             save(module, after[module])
@@ -359,7 +362,7 @@ def export(lang, out):
             loc = entry["localizations"]
             en = plain(loc["en"])
             english_text = " ".join(texts(loc["en"]))
-            found = {t["en"]: t[lang] for t in terms if lang in t and re.search(r"\b" + re.escape(t["en"]) + r"\b", english_text, re.I)}
+            found = {t["concept"]: t[lang] for t in terms if lang in t and re.search(t["match"], english_text, re.I)}
             found.update({names["en"]: names[lang] for names in glossary["macosNames"].values() if names["en"] in english_text})
             rows[f"{module}/{key}"] = {
                 "comment": entry.get("comment"), "used": uses.get((module, symbol(key)), []), "en": en, "ja": plain(loc.get("ja")),
@@ -371,7 +374,7 @@ def export(lang, out):
     print(f"{len(rows)} entries -> {out}")
 
 
-def apply(lang, files):
+def apply(lang, files, dry_run=False):
     values = {}
     for file in files:
         for qualified, row in json.loads(Path(file).read_text(encoding="utf-8")).items():
@@ -386,7 +389,7 @@ def apply(lang, files):
                 values[(module, key)] = build(value, entry["localizations"]["en"])
             except ValueError as error:
                 sys.exit(f"catalog: {qualified}: {error}")
-    write_language(lang, values)
+    write_language(lang, values, dry_run)
 
 
 _cache = {}
@@ -492,7 +495,7 @@ def main(argv):
     elif command == "export":
         export(rest[0], rest[1] if len(rest) > 1 else str(ROOT / "translations" / f"{rest[0]}.json"))
     elif command == "apply":
-        apply(rest[0], rest[1:])
+        apply(rest[0], [r for r in rest[1:] if r != "--dry-run"], "--dry-run" in rest)
     elif command == "verify":
         verify(rest[rest.index("--base") + 1])
     elif command == "stale":
