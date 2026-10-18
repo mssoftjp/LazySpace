@@ -101,7 +101,8 @@
     "desktopAndDock",
     "privacyAndSecurity",
     "loginItemsExtensions",
-    "autoRearrange"
+    "autoRearrange",
+    "splitView"
   ],
   "macosNames": {
     "accessibility": {
@@ -280,6 +281,17 @@
       "zh-Hans": "显示器具有单独空间",
       "zh-Hant": "顯示器有單獨空間"
     },
+    "splitView": {
+      "de": "Split View",
+      "en": "Split View",
+      "es": "Split View",
+      "fr": "Split View",
+      "ja": "Split View",
+      "ko": "Split View",
+      "pt-BR": "Split View",
+      "zh-Hans": "分屏浏览",
+      "zh-Hant": "分割顯示"
+    },
     "stageManager": {
       "de": "Stage Manager",
       "en": "Stage Manager",
@@ -378,6 +390,11 @@
     "separateSpaces": [
       "/System/Library/ExtensionKit/Extensions/DesktopSettings.appex/Contents/Resources/Localizable.loctable",
       "Displays have separate Spaces"
+    ],
+    "splitView": [
+      "/System/Library/CoreServices/Dock.app/Contents/Resources/<lproj>.lproj/Localizable.strings",
+      "NOT_AVAILABLE_FULLSCREEN",
+      "within"
     ],
     "stageManager": [
       "/System/Library/ExtensionKit/Extensions/DesktopSettings.appex/Contents/Resources/Localizable.loctable",

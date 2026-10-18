@@ -1,6 +1,7 @@
 import AppKit
 import Copy
-import Operations
+import LayoutCore
+@testable import Operations
 import Settings
 import XCTest
 @testable import LazySpaceApp
@@ -210,6 +211,82 @@ final class TextFitTests: XCTestCase {
             let content = try XCTUnwrap(controller.window?.contentView)
             content.layoutSubtreeIfNeeded()
             found += Self.clippedText(in: content).map { "\(language.rawValue): \($0)" }
+        }
+        XCTAssertEqual(found, [], "text that does not fit:\n" + found.joined(separator: "\n"))
+    }
+
+    /// Every reason TargetSelection gives for leaving a window out, one row each. The longer reasons an arrangement
+    /// adds (already longer than the column in English) are cut with the full text in the tooltip.
+    static func everyExclusion() -> Inspection {
+        func window(_ id: UInt32, _ membership: ObservedWindow.Membership, _ kind: ObservedWindow.Kind) -> ObservedWindow {
+            ObservedWindow(id: WindowID(id), pid: 1, app: "com.apple.finder", frame: CGRect(x: 0, y: 25, width: 800, height: 600), membership: membership, kind: kind, detail: "")
+        }
+        let memberships: [ObservedWindow.Membership] = [.unknown, .other, .otherDisplay, .allSpaces]
+        let kinds: [ObservedWindow.Kind] = [.dialog, .sheet, .palette, .minimized, .hiddenApp, .fullscreen, .nonNormalLayer, .unknownRole]
+        let excluded = (memberships.map { (membership: $0, kind: ObservedWindow.Kind.standard) } + kinds.map { (membership: .current, kind: $0) })
+            .enumerated().map { index, item in
+                let w = window(UInt32(index + 2), item.membership, item.kind)
+                return Exclusion(window: w, reason: TargetSelection.exclusionReason(w) ?? "")
+            }
+        let snap = Snapshot(trusted: true, spaceID: 1, workArea: CGRect(x: 0, y: 25, width: 1440, height: 875), windows: [],
+                            spaceObservationAvailable: true, unobservedApps: ["com.example.slow"])
+        return Inspection(snapshot: snap, targets: [window(1, .current, .standard)], excluded: excluded, takenAt: Date(timeIntervalSince1970: 0))
+    }
+
+    func testEveryExclusionReasonFitsTheWindowListInEveryLanguage() throws {
+        var found: [String] = []
+        for language in Language.allCases {
+            Copy.language = language
+            let inspection = Self.everyExclusion()
+            XCTAssertFalse(inspection.excluded.contains { $0.reason.isEmpty })
+            let controller = TestWindows.inspector(loadInspection: { $0(inspection) }, readLive: { WindowInspectLive(
+                spaceID: 1, trusted: true, spaceObservationAvailable: true, waiting: [], status: self.coordinator.status(), firstLaunchDone: true) },
+                markReady: {}, openGeneralSettings: {}, openAccessSettings: {})
+            defer { controller.close() }
+            controller.showWindow(nil)
+            // At the default width, tall enough that every row has a view.
+            let window = try XCTUnwrap(controller.window)
+            window.setContentSize(NSSize(width: window.contentLayoutRect.width, height: 900))
+            let content = try XCTUnwrap(window.contentView)
+            content.layoutSubtreeIfNeeded()
+            XCTAssertEqual(controller.visibleRows().count, inspection.excluded.count + 2)
+            found += Self.clippedText(in: content).map { "\(language.rawValue): \($0)" }
+        }
+        XCTAssertEqual(found, [], "text that does not fit:\n" + found.joined(separator: "\n"))
+    }
+
+    /// While recording a shortcut that has no keys yet, the cell shows its prompt in the field-like box: at the default
+    /// width, and with the Action column dragged wide so the Shortcut column is at its minimum.
+    func testRecordingPromptFitsInEveryLanguage() throws {
+        var found: [String] = []
+        for language in Language.allCases {
+            for narrowest in [false, true] {
+                Copy.language = language
+                let controller = try settings()
+                defer { controller.window?.orderOut(nil) }
+                controller.show(pane: .keys)
+                let content = try XCTUnwrap(controller.window?.contentView)
+                content.layoutSubtreeIfNeeded()
+                let table = try XCTUnwrap(Self.descendants(content).compactMap { $0 as? NSTableView }
+                    .first { $0.tableColumn(withIdentifier: NSUserInterfaceItemIdentifier("key")) != nil })
+                let keyColumn = try XCTUnwrap(table.tableColumn(withIdentifier: NSUserInterfaceItemIdentifier("key")))
+                if narrowest {
+                    let label = try XCTUnwrap(table.tableColumn(withIdentifier: NSUserInterfaceItemIdentifier("label")))
+                    let visible = try XCTUnwrap(table.enclosingScrollView?.contentView.bounds.width)
+                    label.width = visible - keyColumn.minWidth - 2 * table.intercellSpacing.width
+                    table.sizeLastColumnToFit()
+                    content.layoutSubtreeIfNeeded()
+                    XCTAssertEqual(keyColumn.width, keyColumn.minWidth, accuracy: 1, language.rawValue)
+                }
+                let where_ = "\(language.rawValue)\(narrowest ? " narrowest" : "")"
+                let cell = try XCTUnwrap(Self.descendants(content).compactMap { $0 as? ShortcutValueCell }.first { $0.valueLabel.stringValue.isEmpty },
+                                         "\(where_): no unassigned shortcut on screen")
+                cell.onChange?()
+                content.layoutSubtreeIfNeeded()
+                XCTAssertTrue(cell.recording, where_)
+                XCTAssertEqual(cell.valueLabel.stringValue, L(.settingsControlsTypeShortcut), where_)
+                found += Self.clippedText(in: cell).map { "\(where_): \($0)" }
+            }
         }
         XCTAssertEqual(found, [], "text that does not fit:\n" + found.joined(separator: "\n"))
     }

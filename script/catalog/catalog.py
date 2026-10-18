@@ -190,12 +190,42 @@ def argument_use(localization):
     return shown, selectors - shown, bad
 
 
+def always_shown(localization):
+    """Arguments shown whichever plural form is chosen: by every top-level form, and through a substitution only when
+    every one of its forms shows them."""
+    subs = localization.get("substitutions", {})
+
+    def in_text(text):
+        out = set()
+        for kind, payload in tokens(text):
+            if kind == "plain":
+                out.add(payload)
+            elif kind == "substitution" and payload in subs:
+                s = subs[payload]
+                per_form = []
+                for form in (f["stringUnit"]["value"] for f in s["variations"]["plural"].values()):
+                    found = tokens(form, in_substitution=True)
+                    shown = {p for k, p in found if k == "plain"}
+                    if any(k == "arg" for k, _ in found):
+                        shown.add(f"{s['argNum']}:{KINDS.get(s['formatSpecifier'], '?')}")
+                    per_form.append(shown)
+                out |= set.intersection(*per_form) if per_form else set()
+        return out
+
+    readings = [f["stringUnit"]["value"] for f in localization.get("variations", {}).get("plural", {}).values()]
+    if "stringUnit" in localization:
+        readings.append(localization["stringUnit"]["value"])
+    return set.intersection(*map(in_text, readings)) if readings else set()
+
+
 def argument_problem(english, other):
     expected_shown, expected_selectors, _ = argument_use(english)
     shown, selectors, bad = argument_use(other)
     problems = [f"malformed {b!r}" for b in bad]
     if expected_shown - shown:
         problems.append(f"does not show {sorted(expected_shown - shown)}")
+    elif always_shown(english) - always_shown(other):
+        problems.append(f"a plural form does not show {sorted(always_shown(english) - always_shown(other))}")
     if (shown | selectors) - (expected_shown | expected_selectors):
         problems.append(f"uses arguments English lacks {sorted((shown | selectors) - (expected_shown | expected_selectors))}")
     return problems
@@ -254,9 +284,22 @@ def macos_value(name, lang):
     return table(path)[TABLE_CODE.get(lang, lang)][key]
 
 
-def dock_desktop(lang):
+# Names macOS writes only inside a Dock sentence: glossary id -> (Dock key, the name in each language). The glossary
+# refresh and the tests check that the sentence contains each one.
+DOCK_WITHIN = {
+    "splitView": ("NOT_AVAILABLE_FULLSCREEN", {
+        "en": "Split View", "de": "Split View", "es": "Split View", "fr": "Split\u00a0View", "ja": "Split View", "ko": "Split View",
+        "pt-BR": "Split View", "zh-Hans": "分屏浏览", "zh-Hant": "分割顯示"}),
+}
+
+
+def dock_string(lang, key):
     strings = plistlib.loads((DOCK / f"{TABLE_CODE.get(lang, lang)}.lproj" / "Localizable.strings").read_bytes())
-    return strings["DesktopNum"]
+    return strings[key]
+
+
+def dock_desktop(lang):
+    return dock_string(lang, "DesktopNum")
 
 
 def refresh_glossary():
@@ -265,10 +308,17 @@ def refresh_glossary():
     for name in MACOS_NAMES:
         names[name] = {lang: macos_value(name, lang) for lang in LANGUAGES}
     names["desktop"] = {lang: dock_desktop(lang) for lang in LANGUAGES}
+    for name, (key, forms) in DOCK_WITHIN.items():
+        missing = [lang for lang in LANGUAGES if forms[lang] not in dock_string(lang, key)]
+        if missing:
+            sys.exit(f"{name}: the Dock's {key} no longer contains the name in {missing}")
+        names[name] = {lang: forms[lang] for lang in LANGUAGES}
     glossary["macosNames"] = names
     # Where each name comes from, so the tests compare the catalogs with macOS itself rather than with this file.
     glossary["macosSources"] = {name: [str(path), key] for name, (path, key) in MACOS_NAMES.items()}
     glossary["macosSources"]["desktop"] = [str(DOCK / "<lproj>.lproj" / "Localizable.strings"), "DesktopNum"]
+    for name, (key, _) in DOCK_WITHIN.items():
+        glossary["macosSources"][name] = [str(DOCK / "<lproj>.lproj" / "Localizable.strings"), key, "within"]
     glossary["tableCodes"] = TABLE_CODE
     glossary_path().write_text(json.dumps(glossary, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(f"{len(names)} macOS names for {len(LANGUAGES)} languages")

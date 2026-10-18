@@ -5,16 +5,58 @@
       "comment" : "Arguments: 1 = `label`; 2 = `name`; 3 = `other`; 4 = `key.display`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: %@ und %@ verwenden denselben Kurzbefehl %@."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@: %@ and %@ use the same shortcut %@."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: %@ y %@ usan el mismo atajo %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ : %@ et %@ utilisent le même raccourci %@."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@: %@と%@が同じショートカット%@を使っています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: %@ 및 %@이(가) 같은 단축키 %@을(를) 사용합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: %@ e %@ usam o mesmo atalho %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@：%2$@和%3$@使用了相同的快捷键%4$@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@：%@和%@使用相同的快速鍵%@。"
           }
         }
       }
@@ -23,16 +65,58 @@
       "comment" : "Arguments: 1 = `key`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ muss true oder false sein."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ must be true or false."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ debe ser true o false."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ doit valoir true ou false."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@はtrueかfalseで指定してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) true 또는 false여야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ precisa ser true ou false."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@须为true或false。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@必須是true或false。"
           }
         }
       }
@@ -41,10 +125,28 @@
       "comment" : "Arguments: 1 = `label`; 2 = `name`; 3 = `text`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@.%@: %@ konnte nicht gelesen werden. Beispiel: alt-shift-h."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@.%@: could not read %@. Example: alt-shift-h."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@.%@: no se pudo leer %@. Ejemplo: alt-shift-h."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@.%@ : impossible de lire %@. Exemple : alt-shift-h."
           }
         },
         "ja" : {
@@ -52,22 +154,88 @@
             "state" : "translated",
             "value" : "%@.%@: %@を解釈できません（例: alt-shift-h）。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@.%@: %@을(를) 해석할 수 없습니다. 예: alt-shift-h."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@.%@: não foi possível ler %@. Exemplo: alt-shift-h."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@.%@：无法解析%@。示例：alt-shift-h。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@.%@：無法讀取%@。範例：alt-shift-h。"
+          }
         }
       }
     },
     "config.doNotDeclareModeMain" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deklariere mode.main nicht. Kurzbefehle des Hauptmodus gehören in [keys]."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Do not declare mode.main. Put main-mode shortcuts in [keys]."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No declares mode.main. Pon los atajos del modo main en [keys]."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne déclarez pas mode.main. Placez les raccourcis du mode principal dans [keys]."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "mode.mainは宣言しないでください。mainモードのショートカットは[keys]に書きます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.main은 선언하지 마십시오. main 모드 단축키는 [keys]에 넣으십시오."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não declare mode.main. Coloque os atalhos do modo main em [keys]."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请勿声明mode.main。请将main模式的快捷键放在[keys]中。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請勿宣告mode.main。請將main模式的快速鍵放在[keys]中。"
           }
         }
       }
@@ -76,16 +244,58 @@
       "comment" : "Arguments: 1 = `rule.app`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durch Regel ausgeschlossen (%@)"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Excluded by rule (%@)"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Excluida por una regla (%@)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exclue par une règle (%@)"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ルールで除外（%@）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "규칙에 의해 제외됨(%@)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Excluída por regra (%@)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已按规则排除（%@）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已依規則排除（%@）"
           }
         }
       }
@@ -94,16 +304,58 @@
       "comment" : "Arguments: 1 = `rule.app`; 2 = `rule.title`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durch Regel ausgeschlossen (%@, Titel /%@/)"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Excluded by rule (%@, title /%@/)"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Excluida por una regla (%@, título /%@/)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exclue par une règle (%@, titre /%@/)"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ルールで除外（%@、タイトル /%@/）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "규칙에 의해 제외됨(%@, 제목 /%@/)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Excluída por regra (%@, título /%@/)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已按规则排除（%@，标题/%@/）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已依規則排除（%@，標題/%@/）"
           }
         }
       }
@@ -112,16 +364,58 @@
       "comment" : "Arguments: 1 = `rule.app`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durch Regel schwebend (%@). Die Position bleibt erhalten."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Floating by rule (%@). Its position is kept."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flotante por una regla (%@). Conserva su posición."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flottante en raison d’une règle (%@). Sa position est conservée."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ルールでフローティング（%@）。位置を保ちます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "규칙에 의해 플로팅(%@). 위치가 유지됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flutuante por regra (%@). A posição é mantida."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已按规则设为浮动（%@）。窗口保持原位。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已依規則設為浮動（%@）。會保持其位置。"
           }
         }
       }
@@ -130,10 +424,28 @@
       "comment" : "Arguments: 1 = `rule.app`; 2 = `rule.title`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durch Regel schwebend (%@, Titel /%@/). Die Position bleibt erhalten."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Floating by rule (%@, title /%@/). Its position is kept."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flotante por una regla (%@, título /%@/). Conserva su posición."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flottante en raison d’une règle (%@, titre /%@/). Sa position est conservée."
           }
         },
         "ja" : {
@@ -141,16 +453,58 @@
             "state" : "translated",
             "value" : "ルールでフローティング（%@、タイトル /%@/）。位置を保ちます。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "규칙에 의해 플로팅(%@, 제목 /%@/). 위치가 유지됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flutuante por regra (%@, título /%@/). A posição é mantida."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已按规则设为浮动（%@，标题/%@/）。窗口保持原位。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已依規則設為浮動（%@，標題/%@/）。會保持其位置。"
+          }
         }
       }
     },
     "config.focusBorderColorMustBe" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border.color muss \"#RRGGBB\" oder \"#RRGGBBAA\" sein."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "focus-border.color must be \"#RRGGBB\" or \"#RRGGBBAA\"."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border.color debe ser \"#RRGGBB\" o \"#RRGGBBAA\"."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border.color doit valoir \"#RRGGBB\" ou \"#RRGGBBAA\"."
           }
         },
         "ja" : {
@@ -158,16 +512,58 @@
             "state" : "translated",
             "value" : "focus-border.colorは \"#RRGGBB\" か \"#RRGGBBAA\" で指定してください。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border.color는 \"#RRGGBB\" 또는 \"#RRGGBBAA\"여야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border.color precisa ser \"#RRGGBB\" ou \"#RRGGBBAA\"."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border.color须为\"#RRGGBB\"或\"#RRGGBBAA\"。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border.color必須是\"#RRGGBB\"或\"#RRGGBBAA\"。"
+          }
         }
       }
     },
     "config.focusBorderMustBeWritten" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border muss als Tabelle [focus-border] geschrieben werden."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "focus-border must be written as a [focus-border] table."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border debe escribirse como una tabla [focus-border]."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border doit être écrit sous forme de table [focus-border]."
           }
         },
         "ja" : {
@@ -175,16 +571,58 @@
             "state" : "translated",
             "value" : "focus-borderは[focus-border]テーブルで書いてください。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border는 [focus-border] 테이블로 작성해야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border precisa ser escrito como uma tabela [focus-border]."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border须写成[focus-border]表。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border必須寫成[focus-border]表格。"
+          }
         }
       }
     },
     "config.focusBorderWidthMustBe" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border.width muss eine Zahl von 1 bis 12 sein."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "focus-border.width must be a number from 1 to 12."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border.width debe ser un número de 1 a 12."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border.width doit être un nombre de 1 à 12."
           }
         },
         "ja" : {
@@ -192,22 +630,88 @@
             "state" : "translated",
             "value" : "focus-border.widthは1〜12の数値で指定してください。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border.width는 1에서 12 사이의 숫자여야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border.width precisa ser um número de 1 a 12."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border.width须为1到12之间的数字。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border.width必須是1到12的數字。"
+          }
         }
       }
     },
     "config.gapsMustBeWrittenAs" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gaps muss als Tabelle [gaps] geschrieben werden."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "gaps must be written as a [gaps] table."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gaps debe escribirse como una tabla [gaps]."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gaps doit être écrit sous forme de table [gaps]."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "gapsは[gaps]テーブルで書いてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gaps는 [gaps] 테이블로 작성해야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gaps precisa ser escrito como uma tabela [gaps]."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gaps须写成[gaps]表。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gaps必須寫成[gaps]表格。"
           }
         }
       }
@@ -216,16 +720,58 @@
       "comment" : "Arguments: 1 = `name`; 2 = `key.display`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "keys.%@: %@ braucht im Hauptmodus eine Sondertaste, weil eine einzelne Taste die normale Texteingabe abfangen würde. Einzelne Tasten sind für Funktionstasten oder innerhalb eines Modus erlaubt."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "keys.%@: %@ needs a modifier key in the main mode because a single key would capture normal typing. Single keys are allowed for function keys or inside a mode."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "keys.%@: %@ necesita una tecla modificadora en el modo main, porque una sola tecla capturaría la escritura normal. Se permiten teclas solas para las teclas de función o dentro de un modo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "keys.%@ : %@ nécessite une touche de modification dans le mode principal, car une touche seule capturerait la saisie normale. Les touches seules sont autorisées pour les touches de fonction ou dans un mode."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "keys.%@: mainモードでは修飾キーなしの%@は通常の入力を横取りするため使えません。Fキーかモード内なら使えます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "keys.%@: 단일 키는 일반 입력을 가로채므로 main 모드에서는 %@에 보조 키가 필요합니다. 단일 키는 기능 키이거나 모드 안에서만 사용할 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "keys.%@: %@ precisa de uma tecla modificadora no modo main, porque uma tecla sozinha capturaria a digitação normal. Teclas sozinhas são permitidas para teclas de função ou dentro de um modo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "keys.%1$@：在main模式中，%2$@需要修饰键，因为单个按键会拦截正常的键入。功能键或模式内可以使用单个按键。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "keys.%@：在main模式中，%@需要變更鍵，因為單一按鍵會攔截一般的輸入。功能鍵或模式內可以使用單一按鍵。"
           }
         }
       }
@@ -234,16 +780,58 @@
       "comment" : "Arguments: 1 = every allowed value but the last, quoted and joined by copy.listSeparator; 2 = the last allowed value, quoted.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "language muss %1$@ oder %2$@ sein."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "language must be %1$@, or %2$@."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "language debe ser %1$@ o %2$@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "language doit valoir %1$@ ou %2$@."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "languageは%1$@、%2$@のいずれかで指定してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "language에는 %1$@ 또는 %2$@ 중 하나를 지정해야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "language precisa ser %1$@ ou %2$@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "language须为%1$@或%2$@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "language必須是%1$@或%2$@。"
           }
         }
       }
@@ -252,16 +840,58 @@
       "comment" : "Arguments: 1 = `name`; 2 = `name`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@ hat keine Kurzbefehle. Füge [mode.%@.keys] hinzu."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "mode.%@ has no shortcuts. Add [mode.%@.keys]."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@ no tiene atajos. Añade [mode.%@.keys]."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@ n’a aucun raccourci. Ajoutez [mode.%@.keys]."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "mode.%@にショートカットがありません。[mode.%@.keys]を書いてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@에 단축키가 없습니다. [mode.%@.keys]를 추가하십시오."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@ não tem atalhos. Adicione [mode.%@.keys]."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%1$@没有快捷键。请添加[mode.%2$@.keys]。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@沒有快速鍵。請加入[mode.%@.keys]。"
           }
         }
       }
@@ -270,16 +900,58 @@
       "comment" : "Arguments: 1 = `label`; 2 = `m`; 3 = `m`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: Der Modus %@ ist nicht deklariert. Füge [mode.%@] hinzu."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@: mode %@ is not declared. Add [mode.%@]."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: el modo %@ no está declarado. Añade [mode.%@]."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ : le mode %@ n’est pas déclaré. Ajoutez [mode.%@]."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@: モード%@が宣言されていません。[mode.%@]を書いてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: %@ 모드가 선언되지 않았습니다. [mode.%@]을(를) 추가하십시오."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: o modo “%@” não está declarado. Adicione [mode.%@]."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@：未声明%2$@模式。请添加[mode.%3$@]。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@：未宣告模式%@。請加入[mode.%@]。"
           }
         }
       }
@@ -288,10 +960,28 @@
       "comment" : "Arguments: 1 = `name`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@ muss eine Tabelle sein."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "mode.%@ must be a table."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@ debe ser una tabla."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@ doit être une table."
           }
         },
         "ja" : {
@@ -299,22 +989,88 @@
             "state" : "translated",
             "value" : "mode.%@はテーブルで書いてください。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@은(는) 테이블이어야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@ precisa ser uma tabela."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@须为表。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@必須是表格。"
+          }
         }
       }
     },
     "config.modeMustBeWrittenAs" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode muss als Tabellen [mode.<Name>] geschrieben werden."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "mode must be written as [mode.<name>] tables."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode debe escribirse como tablas [mode.<nombre>]."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode doit être écrit sous forme de tables [mode.<nom>]."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "modeは[mode.<名前>]のテーブルで書いてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode는 [mode.<이름>] 테이블로 작성해야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode precisa ser escrito como tabelas [mode.<nome>]."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode须写成[mode.<名称>]表。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode必須寫成[mode.<名稱>]表格。"
           }
         }
       }
@@ -323,16 +1079,58 @@
       "comment" : "Arguments: 1 = `name`; 2 = `k`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@: Unbekannte Einstellung %@."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "mode.%@: unknown setting %@."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@: ajuste desconocido %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@ : réglage inconnu %@."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "mode.%@: 不明な項目%@。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@: 알 수 없는 설정 %@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@: ajuste desconhecido %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%1$@：未知设置%2$@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@：未知的設定%@。"
           }
         }
       }
@@ -341,16 +1139,58 @@
       "comment" : "Arguments: 1 = `name`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@: Verwende in Modusnamen Buchstaben, Ziffern, Bindestriche oder Unterstriche."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "mode.%@: use letters, numbers, hyphens, or underscores in mode names."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@: usa letras, números, guiones o guiones bajos en los nombres de modo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@ : les noms de mode ne peuvent contenir que des lettres, des chiffres, des traits d’union ou des traits de soulignement."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "mode.%@: モード名には文字・数字・ハイフン・アンダースコアを使えます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@: 모드 이름에는 문자, 숫자, 하이픈 또는 밑줄을 사용하십시오."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@: use letras, números, hifens ou sublinhados nos nomes de modo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@：模式名称只能使用字母、数字、连字符或下划线。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode.%@：模式名稱請使用字母、數字、連字號或底線。"
           }
         }
       }
@@ -359,16 +1199,58 @@
       "comment" : "Arguments: 1 = `key`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ muss eine Zahl sein."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ must be a number."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ debe ser un número."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ doit être un nombre."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@は数値で指定してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) 숫자여야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ precisa ser um número."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@须为数字。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@必須是數字。"
           }
         }
       }
@@ -377,16 +1259,58 @@
       "comment" : "Arguments: 1 = `label`; 2 = `name`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@.%@ muss ein String sein."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@.%@ must be a string."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@.%@ debe ser una cadena."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@.%@ doit être une chaîne."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@.%@は文字列で指定してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@.%@은(는) 문자열이어야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@.%@ precisa ser uma string."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@.%@须为字符串。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@.%@必須是字串。"
           }
         }
       }
@@ -395,16 +1319,58 @@
       "comment" : "Arguments: 1 = `label`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ muss eine Tabelle sein."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ must be a table."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ debe ser una tabla."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ doit être une table."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@はテーブルで書いてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) 테이블이어야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ precisa ser uma tabela."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@须为表。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@必須是表格。"
           }
         }
       }
@@ -413,16 +1379,58 @@
       "comment" : "Arguments: 1 = `key`; 2 = `example`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ muss ein Array aus Strings sein, zum Beispiel %@."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ must be an array of strings, for example %@."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ debe ser una matriz de cadenas, por ejemplo %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ doit être un tableau de chaînes, par exemple %@."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@は文字列の配列で指定してください（例: %@）。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) 문자열 배열이어야 합니다(예: %@)."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ precisa ser um array de strings, por exemplo %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@须为字符串数组，例如%@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@必須是字串陣列，例如%@。"
           }
         }
       }
@@ -431,16 +1439,58 @@
       "comment" : "Arguments: 1 = `key`; 2 = `lo`; 3 = `hi`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ muss zwischen %@ und %@ liegen."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ must be between %@ and %@."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ debe estar entre %@ y %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ doit être compris entre %@ et %@."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@は%@〜%@の範囲で指定してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) %@에서 %@ 사이여야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ precisa estar entre %@ e %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@须介于%@和%@之间。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@必須介於%@和%@之間。"
           }
         }
       }
@@ -449,10 +1499,28 @@
       "comment" : "Arguments: 1 = `key`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ muss [Breite, Höhe] sein, jeweils von 0 bis 100000 Punkt."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ must be [width, height], each from 0 to 100000 points."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ debe ser [ancho, alto], cada uno de 0 a 100000 puntos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ doit être [largeur, hauteur], chacune de 0 à 100000 points."
           }
         },
         "ja" : {
@@ -460,16 +1528,58 @@
             "state" : "translated",
             "value" : "%@は[幅, 高さ]（それぞれ0〜100000 pt）で指定してください。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) [너비, 높이] 형식이어야 하며, 각 값은 0에서 100000포인트 사이여야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ precisa ser [largura, altura], cada uma de 0 a 100000 pontos."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@须为[宽度, 高度]，每项为0到100000点。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@必須是[寬度, 高度]，兩者皆為0到100000點。"
+          }
         }
       }
     },
     "config.newWindowPlacementMustBe" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "new-window-placement muss \"beside-focused\" oder \"end\" sein."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "new-window-placement must be \"beside-focused\" or \"end\"."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "new-window-placement debe ser \"beside-focused\" o \"end\"."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "new-window-placement doit valoir \"beside-focused\" ou \"end\"."
           }
         },
         "ja" : {
@@ -477,22 +1587,88 @@
             "state" : "translated",
             "value" : "new-window-placementは \"beside-focused\" か \"end\" で指定してください。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "new-window-placement는 \"beside-focused\" 또는 \"end\"여야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "new-window-placement precisa ser \"beside-focused\" ou \"end\"."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "new-window-placement须为\"beside-focused\"或\"end\"。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "new-window-placement必須是\"beside-focused\"或\"end\"。"
+          }
         }
       }
     },
     "config.notificationsMustBeWrittenAs" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "notifications muss als Tabelle [notifications] geschrieben werden."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "notifications must be written as a [notifications] table."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "notifications debe escribirse como una tabla [notifications]."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "notifications doit être écrit sous forme de table [notifications]."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "notificationsは[notifications]テーブルで書いてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "notifications는 [notifications] 테이블로 작성해야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "notifications precisa ser escrito como uma tabela [notifications]."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "notifications须写成[notifications]表。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "notifications必須寫成[notifications]表格。"
           }
         }
       }
@@ -501,16 +1677,58 @@
       "comment" : "Arguments: 1 = `i`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: action muss ignore, float oder space sein."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "rule[%@]: action must be ignore, float, or space."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: action debe ser ignore, float o space."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@] : action doit valoir ignore, float ou space."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "rule[%@]: actionはignore・float・spaceのどれかで指定してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: action은 ignore, float 또는 space여야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: action precisa ser ignore, float ou space."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]：action须为ignore、float或space。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]：action必須是ignore、float或space。"
           }
         }
       }
@@ -519,16 +1737,58 @@
       "comment" : "Arguments: 1 = `i`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: action = \"space\" braucht space = <Nummer> (1 bis 99)."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "rule[%@]: action = \"space\" needs space = <number> (1 to 99)."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: action = \"space\" necesita space = <número> (de 1 a 99)."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@] : action = \"space\" nécessite space = <numéro> (1 à 99)."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "rule[%@]: action = \"space\" にはspace = <番号>（1〜99）が必要です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: action = \"space\"에는 space = <번호>(1–99)가 필요합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: action = \"space\" exige space = <número> (1 a 99)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]：action = \"space\"需要space = <编号>（1到99）。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]：action = \"space\"需要space = <編號>（1到99）。"
           }
         }
       }
@@ -537,16 +1797,58 @@
       "comment" : "Arguments: 1 = `i`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: app ist erforderlich."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "rule[%@]: app is required."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: app es obligatorio."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@] : app est obligatoire."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "rule[%@]: appが必要です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: app이 필요합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: app é obrigatório."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]：必须指定app。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]：必須指定app。"
           }
         }
       }
@@ -555,16 +1857,58 @@
       "comment" : "Arguments: 1 = `i`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: app muss eine Bundle-ID oder ein Präfix mit * am Ende sein."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "rule[%@]: app must be a bundle identifier, or a prefix ending in *."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: app debe ser un identificador de paquete o un prefijo terminado en *."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@] : app doit être un identifiant de bundle ou un préfixe se terminant par *."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "rule[%@]: appはバンドルIDか、*で終わる前方一致で指定してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: app은 번들 식별자이거나 *로 끝나는 접두사여야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: app precisa ser um identificador de pacote ou um prefixo terminado em *."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]：app须为捆绑包标识符，或以*结尾的前缀。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]：app必須是套件識別碼，或以*結尾的前綴。"
           }
         }
       }
@@ -573,10 +1917,28 @@
       "comment" : "Arguments: 1 = `i`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: follow muss true oder false sein."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "rule[%@]: follow must be true or false."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: follow debe ser true o false."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@] : follow doit valoir true ou false."
           }
         },
         "ja" : {
@@ -584,22 +1946,88 @@
             "state" : "translated",
             "value" : "rule[%@]: followはtrueかfalseで指定してください。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: follow는 true 또는 false여야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: follow precisa ser true ou false."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]：follow须为true或false。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]：follow必須是true或false。"
+          }
         }
       }
     },
     "config.ruleMustBeWrittenAs" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule muss als Array-Tabellen [[rule]] geschrieben werden."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "rule must be written as [[rule]] array tables."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule debe escribirse como tablas de matriz [[rule]]."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule doit être écrit sous forme de tableaux de tables [[rule]]."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ruleは[[rule]]の配列テーブルで書いてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule은 [[rule]] 배열 테이블로 작성해야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule precisa ser escrito como tabelas de array [[rule]]."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule须写成[[rule]]数组表。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule必須寫成[[rule]]陣列表格。"
           }
         }
       }
@@ -608,16 +2036,58 @@
       "comment" : "Arguments: 1 = `i`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: space und follow gibt es nur bei action = \"space\"."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "rule[%@]: space and follow are only for action = \"space\"."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: space y follow solo sirven con action = \"space\"."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@] : space et follow ne servent qu’avec action = \"space\"."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "rule[%@]: spaceとfollowはaction = \"space\" のときだけ使えます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: space와 follow는 action = \"space\"에서만 사용할 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: space e follow são só para action = \"space\"."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]：space和follow仅适用于action = \"space\"。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]：space和follow僅適用於action = \"space\"。"
           }
         }
       }
@@ -626,16 +2096,58 @@
       "comment" : "Arguments: 1 = `i`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: space muss eine Schreibtischnummer von 1 bis 99 sein."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "rule[%@]: space must be a desktop number from 1 to 99."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: space debe ser un número de escritorio de 1 a 99."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@] : space doit être un numéro de bureau de 1 à 99."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "rule[%@]: spaceは1〜99のデスクトップ番号で指定してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: space는 1에서 99 사이의 데스크탑 번호여야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: space precisa ser um número de mesa de 1 a 99."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]：space须为1到99之间的桌面编号。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]：space必須是1到99的桌面編號。"
           }
         }
       }
@@ -644,16 +2156,58 @@
       "comment" : "Arguments: 1 = `i`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: title ist kein gültiger regulärer Ausdruck."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "rule[%@]: title is not a valid regular expression."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: title no es una expresión regular válida."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@] : title n’est pas une expression régulière valide."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "rule[%@]: titleの正規表現を解釈できません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: title이 유효한 정규 표현식이 아닙니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: title não é uma expressão regular válida."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]：title不是有效的正则表达式。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]：title不是有效的正規表示式。"
           }
         }
       }
@@ -662,16 +2216,58 @@
       "comment" : "Arguments: 1 = `i`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: title muss ein nicht leerer regulärer Ausdruck sein."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "rule[%@]: title must be a non-empty regular expression."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: title debe ser una expresión regular no vacía."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@] : title doit être une expression régulière non vide."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "rule[%@]: titleは空でない正規表現で指定してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: title은 비어 있지 않은 정규 표현식이어야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: title precisa ser uma expressão regular não vazia."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]：title须为非空的正则表达式。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]：title必須是非空白的正規表示式。"
           }
         }
       }
@@ -680,16 +2276,58 @@
       "comment" : "Arguments: 1 = `i`; 2 = `k`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: Unbekannte Einstellung %@."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "rule[%@]: unknown setting %@."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: ajuste desconocido %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@] : réglage inconnu %@."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "rule[%@]: 不明な項目%@。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: 알 수 없는 설정 %@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]: ajuste desconhecido %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%1$@]：未知设置%2$@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rule[%@]：未知的設定%@。"
           }
         }
       }
@@ -698,16 +2336,58 @@
       "comment" : "Arguments: 1 = `label`; 2 = `name`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: Unbekannter Befehl %@."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@: unknown command %@."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: comando desconocido %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ : commande inconnue %@."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@: 不明なコマンド%@。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: 알 수 없는 명령어 %@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: comando desconhecido %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@：未知命令%2$@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@：未知的指令%@。"
           }
         }
       }
@@ -716,16 +2396,58 @@
       "comment" : "Arguments: 1 = `k`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unbekannte Einstellung: %@."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Unknown setting: %@."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajuste desconocido: %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglage inconnu : %@."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "不明な設定: %@。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "알 수 없는 설정: %@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajuste desconhecido: %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未知设置：%@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未知的設定：%@。"
           }
         }
       }
@@ -734,16 +2456,58 @@
       "comment" : "Arguments: 1 = `k`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unbekannte Einstellung in focus-border: %@."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Unknown setting in focus-border: %@."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajuste desconocido en focus-border: %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglage inconnu dans focus-border : %@."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "focus-borderの不明な項目: %@。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border의 알 수 없는 설정: %@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajuste desconhecido em focus-border: %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border中的未知设置：%@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "focus-border中有未知的設定：%@。"
           }
         }
       }
@@ -752,16 +2516,58 @@
       "comment" : "Arguments: 1 = `k`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unbekannte Einstellung in gaps: %@."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Unknown setting in gaps: %@."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajuste desconocido en gaps: %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglage inconnu dans gaps : %@."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "gapsの不明な項目: %@。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gaps의 알 수 없는 설정: %@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajuste desconhecido em gaps: %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gaps中的未知设置：%@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gaps中有未知的設定：%@。"
           }
         }
       }
@@ -770,10 +2576,28 @@
       "comment" : "Arguments: 1 = `k`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unbekannte Einstellung in notifications: %@."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Unknown setting in notifications: %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajuste desconocido en notifications: %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglage inconnu dans notifications : %@."
           }
         },
         "ja" : {
@@ -781,16 +2605,58 @@
             "state" : "translated",
             "value" : "notificationsの不明な項目: %@。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "notifications의 알 수 없는 설정: %@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajuste desconhecido em notifications: %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "notifications中的未知设置：%@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "notifications中有未知的設定：%@。"
+          }
         }
       }
     },
     "config.valuesInGapsMustBe" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Werte in gaps müssen Zahlen von 0 bis 200 sein."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Values in gaps must be numbers from 0 to 200."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los valores de gaps deben ser números de 0 a 200."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les valeurs de gaps doivent être des nombres de 0 à 200."
           }
         },
         "ja" : {
@@ -798,22 +2664,88 @@
             "state" : "translated",
             "value" : "gapsの余白は0〜200の数値で指定してください。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gaps의 값은 0에서 200 사이의 숫자여야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os valores em gaps precisam ser números de 0 a 200."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gaps中的值须为0到200之间的数字。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gaps中的值必須是0到200的數字。"
+          }
         }
       }
     },
     "configDocument.settingsCantFindAValue" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Einstellungen finden keinen Wert, der ersetzt werden kann. Bearbeite die Datei und wähle dann „Neu laden“. Es wurde nichts gesichert."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Settings can't find a value to replace. Edit the file, then choose Reload. Nothing was saved."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes no encuentra ningún valor que sustituir. Edita el archivo y luego elige “Volver a cargar”. No se guardó nada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les Réglages ne trouvent pas de valeur à remplacer. Modifiez le fichier, puis choisissez « Recharger ». Rien n’a été enregistré."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "置き換える値が見つかりません。ファイルを編集してから「再読み込み」を選んでください。保存していません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정에서 바꿀 값을 찾을 수 없습니다. 파일을 편집한 다음 ‘다시 로드’를 선택하십시오. 저장된 내용은 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os Ajustes não encontram um valor para substituir. Edite o arquivo e escolha “Recarregar”. Nada foi salvo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置窗口找不到要替换的值。请编辑文件，然后选择“重新载入”。未存储任何内容。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「設定」找不到要取代的值。請編輯檔案，然後選擇「重新載入」。未儲存任何內容。"
           }
         }
       }
@@ -822,10 +2754,28 @@
       "comment" : "Arguments: 1 = `label`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Einstellungen können Einträge für %@ in dieser Schreibweise nicht aktualisieren. Bearbeite sie in der Datei und wähle dann „Neu laden“. Es wurde nichts gesichert."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Settings can't update %@ entries written in this form. Edit them in the file, then choose Reload. Nothing was saved."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes no puede actualizar las entradas de %@ escritas de esta forma. Edítalas en el archivo y luego elige “Volver a cargar”. No se guardó nada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les Réglages ne peuvent pas mettre à jour des entrées %@ écrites sous cette forme. Modifiez-les dans le fichier, puis choisissez « Recharger ». Rien n’a été enregistré."
           }
         },
         "ja" : {
@@ -833,22 +2783,88 @@
             "state" : "translated",
             "value" : "%@がこの書き方だと更新できません。ファイルで編集してから「再読み込み」を選んでください。保存していません。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 형식으로 작성된 %@ 항목은 설정에서 업데이트할 수 없습니다. 파일에서 편집한 다음 ‘다시 로드’를 선택하십시오. 저장된 내용은 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os Ajustes não conseguem atualizar entradas de %@ escritas desta forma. Edite-as no arquivo e escolha “Recarregar”. Nada foi salvo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置窗口无法更新以此形式写入的%@条目。请在文件中编辑这些条目，然后选择“重新载入”。未存储任何内容。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「設定」無法更新以此形式寫入的%@項目。請在檔案中編輯，然後選擇「重新載入」。未儲存任何內容。"
+          }
         }
       }
     },
     "configDocument.settingsCantUpdateGapsWritten" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Einstellungen können gaps nicht aktualisieren, wenn es als Inline-Tabelle geschrieben ist. Bearbeite die Tabelle [gaps] in der Datei und wähle dann „Neu laden“. Es wurde nichts gesichert."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Settings can't update gaps written as an inline table. Edit the [gaps] table in the file, then choose Reload. Nothing was saved."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes no puede actualizar gaps escrito como tabla en línea. Edita la tabla [gaps] en el archivo y luego elige “Volver a cargar”. No se guardó nada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les Réglages ne peuvent pas mettre à jour gaps écrit sous forme de table en ligne. Modifiez la table [gaps] dans le fichier, puis choisissez « Recharger ». Rien n’a été enregistré."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "隙間がインラインテーブルで書かれているため更新できません。ファイルの[gaps]を編集してから「再読み込み」を選んでください。保存していません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "인라인 테이블로 작성된 gaps는 설정에서 업데이트할 수 없습니다. 파일에서 [gaps] 테이블을 편집한 다음 ‘다시 로드’를 선택하십시오. 저장된 내용은 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os Ajustes não conseguem atualizar gaps escrito como tabela inline. Edite a tabela [gaps] no arquivo e escolha “Recarregar”. Nada foi salvo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "gaps以内联表形式写入，设置窗口无法更新。请编辑文件中的[gaps]表，然后选择“重新载入”。未存储任何内容。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「設定」無法更新寫成行內表格的gaps。請編輯檔案中的[gaps]表格，然後選擇「重新載入」。未儲存任何內容。"
           }
         }
       }
@@ -857,10 +2873,28 @@
       "comment" : "Arguments: 1 = `index + 1`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Einstellungen können Zeile %@ nicht aktualisieren, weil sie nicht genau einen Schlüssel und einen Wert enthält. Bearbeite die Datei und wähle dann „Neu laden“. Es wurde nichts gesichert."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Settings can't update line %@ because it is not a single key and value. Edit the file, then choose Reload. Nothing was saved."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes no puede actualizar la línea %@ porque no es una sola clave con su valor. Edita el archivo y luego elige “Volver a cargar”. No se guardó nada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les Réglages ne peuvent pas mettre à jour la ligne %@, car elle ne contient pas une seule clé et une seule valeur. Modifiez le fichier, puis choisissez « Recharger ». Rien n’a été enregistré."
           }
         },
         "ja" : {
@@ -868,16 +2902,58 @@
             "state" : "translated",
             "value" : "%@行目は一つのキーと値ではないため更新できません。ファイルを編集してから「再読み込み」を選んでください。保存していません。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@번째 줄은 단일 키와 값이 아니므로 설정에서 업데이트할 수 없습니다. 파일을 편집한 다음 ‘다시 로드’를 선택하십시오. 저장된 내용은 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os Ajustes não conseguem atualizar a linha %@ porque ela não é uma única chave com valor. Edite o arquivo e escolha “Recarregar”. Nada foi salvo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第%@行不是单个键和值，因此设置窗口无法更新该行。请编辑文件，然后选择“重新载入”。未存储任何内容。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第%@行不是單一的鍵與值，因此「設定」無法更新。請編輯檔案，然後選擇「重新載入」。未儲存任何內容。"
+          }
         }
       }
     },
     "configDocument.settingsCouldNotKeepThis" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Einstellungen konnten die Formatierung dieser Datei beim Sichern nicht beibehalten. Bearbeite die Datei und wähle dann „Neu laden“. Es wurde nichts gesichert."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Settings could not keep this file's formatting while saving. Edit the file, then choose Reload. Nothing was saved."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes no pudo conservar el formato de este archivo al guardar. Edita el archivo y luego elige “Volver a cargar”. No se guardó nada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les Réglages n’ont pas pu conserver la mise en forme de ce fichier lors de l’enregistrement. Modifiez le fichier, puis choisissez « Recharger ». Rien n’a été enregistré."
           }
         },
         "ja" : {
@@ -885,16 +2961,58 @@
             "state" : "translated",
             "value" : "このファイルの体裁を保ったまま保存できません。ファイルを編集してから「再読み込み」を選んでください。保存していません。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장하는 동안 설정에서 이 파일의 서식을 유지할 수 없었습니다. 파일을 편집한 다음 ‘다시 로드’를 선택하십시오. 저장된 내용은 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os Ajustes não conseguiram manter a formatação deste arquivo ao salvar. Edite o arquivo e escolha “Recarregar”. Nada foi salvo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置窗口无法在存储时保留此文件的格式。请编辑文件，然后选择“重新载入”。未存储任何内容。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「設定」無法在儲存時保留此檔案的格式。請編輯檔案，然後選擇「重新載入」。未儲存任何內容。"
+          }
         }
       }
     },
     "configDocument.settingsCouldNotUpdateEvery" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Einstellungen konnten nicht alle geänderten Werte aktualisieren, ohne die Datei neu zu schreiben. Bearbeite die Datei und wähle dann „Neu laden“. Es wurde nichts gesichert."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Settings could not update every changed value without rewriting the file. Edit the file, then choose Reload. Nothing was saved."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes no pudo actualizar todos los valores cambiados sin reescribir el archivo. Edita el archivo y luego elige “Volver a cargar”. No se guardó nada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les Réglages n’ont pas pu mettre à jour toutes les valeurs modifiées sans réécrire le fichier. Modifiez le fichier, puis choisissez « Recharger ». Rien n’a été enregistré."
           }
         },
         "ja" : {
@@ -902,16 +3020,58 @@
             "state" : "translated",
             "value" : "変更をファイルの形を保ったまま反映できません。ファイルを編集してから「再読み込み」を選んでください。保存していません。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정에서 파일을 다시 작성하지 않고는 변경된 모든 값을 업데이트할 수 없었습니다. 파일을 편집한 다음 ‘다시 로드’를 선택하십시오. 저장된 내용은 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os Ajustes não conseguiram atualizar todos os valores alterados sem reescrever o arquivo. Edite o arquivo e escolha “Recarregar”. Nada foi salvo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置窗口无法在不重写文件的情况下更新所有已更改的值。请编辑文件，然后选择“重新载入”。未存储任何内容。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「設定」無法在不重寫檔案的情況下更新所有變更的值。請編輯檔案，然後選擇「重新載入」。未儲存任何內容。"
+          }
         }
       }
     },
     "configDocument.settingsDoesNotEditBinding" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Einstellungen bearbeiten keine Kurzbefehlmodi. Ändere diese Tabellen in der Datei und wähle dann „Neu laden“. Es wurde nichts gesichert."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Settings does not edit binding modes. Change those tables in the file, then choose Reload. Nothing was saved."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes no edita los modos de atajos. Cambia esas tablas en el archivo y luego elige “Volver a cargar”. No se guardó nada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les Réglages ne modifient pas les modes de raccourcis. Modifiez ces tables dans le fichier, puis choisissez « Recharger ». Rien n’a été enregistré."
           }
         },
         "ja" : {
@@ -919,16 +3079,58 @@
             "state" : "translated",
             "value" : "設定画面ではバインディングモードを編集できません。モードの表はファイルで変更し、「再読み込み」を選んでください。保存していません。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정에서는 단축키 모드를 편집하지 않습니다. 파일에서 해당 테이블을 변경한 다음 ‘다시 로드’를 선택하십시오. 저장된 내용은 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os Ajustes não editam modos de atalhos. Altere essas tabelas no arquivo e escolha “Recarregar”. Nada foi salvo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置窗口不编辑快捷键模式。请在文件中更改这些表，然后选择“重新载入”。未存储任何内容。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「設定」不會編輯快速鍵模式。請在檔案中更改這些表格，然後選擇「重新載入」。未儲存任何內容。"
+          }
         }
       }
     },
     "configFile.couldNotWriteTheConfiguration" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Konfigurationsdatei konnte nicht geschrieben werden. Es wurde nichts gesichert."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Could not write the configuration file. Nothing was saved."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo escribir el archivo de configuración. No se guardó nada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d’écrire le fichier de configuration. Rien n’a été enregistré."
           }
         },
         "ja" : {
@@ -936,16 +3138,58 @@
             "state" : "translated",
             "value" : "設定ファイルを書けませんでした。保存していません。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정 파일을 기록할 수 없었습니다. 저장된 내용은 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível gravar o arquivo de configuração. Nada foi salvo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法写入配置文件。未存储任何内容。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法寫入設定檔。未儲存任何內容。"
+          }
         }
       }
     },
     "configFile.settingsCantUpdateThisFile" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Einstellungen können diese Datei nicht sicher aktualisieren. Bearbeite die Datei und wähle dann „Neu laden“. Es wurde nichts gesichert."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Settings can't update this file safely. Edit the file, then choose Reload. Nothing was saved."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes no puede actualizar este archivo de forma segura. Edita el archivo y luego elige “Volver a cargar”. No se guardó nada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les Réglages ne peuvent pas mettre à jour ce fichier en toute sécurité. Modifiez le fichier, puis choisissez « Recharger ». Rien n’a été enregistré."
           }
         },
         "ja" : {
@@ -953,16 +3197,58 @@
             "state" : "translated",
             "value" : "このファイルは安全に更新できません。ファイルを編集してから「再読み込み」を選んでください。保存していません。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정에서 이 파일을 안전하게 업데이트할 수 없습니다. 파일을 편집한 다음 ‘다시 로드’를 선택하십시오. 저장된 내용은 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os Ajustes não conseguem atualizar este arquivo com segurança. Edite o arquivo e escolha “Recarregar”. Nada foi salvo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置窗口无法安全地更新此文件。请编辑文件，然后选择“重新载入”。未存储任何内容。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「設定」無法安全地更新此檔案。請編輯檔案，然後選擇「重新載入」。未儲存任何內容。"
+          }
         }
       }
     },
     "configFile.theConfigurationFileCantBe" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Konfigurationsdatei kann nicht gelesen werden, daher wurde sie nicht ersetzt."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The configuration file can't be read, so it was not replaced."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se puede leer el archivo de configuración, así que no se sustituyó."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fichier de configuration ne peut pas être lu ; il n’a donc pas été remplacé."
           }
         },
         "ja" : {
@@ -970,16 +3256,58 @@
             "state" : "translated",
             "value" : "設定ファイルを読めないため、置き換えていません。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정 파일을 읽을 수 없어 교체하지 않았습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O arquivo de configuração não pode ser lido, por isso não foi substituído."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取配置文件，因此未替换该文件。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法讀取設定檔，因此未取代。"
+          }
         }
       }
     },
     "configFile.theConfigurationFileHasErrors" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Konfigurationsdatei enthält Fehler, daher wurde sie nicht ersetzt. Korrigiere die Datei und wähle dann „Neu laden“."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The configuration file has errors, so it was not replaced. Fix the file, then choose Reload."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El archivo de configuración tiene errores, así que no se sustituyó. Corrige el archivo y luego elige “Volver a cargar”."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fichier de configuration contient des erreurs ; il n’a donc pas été remplacé. Corrigez le fichier, puis choisissez « Recharger »."
           }
         },
         "ja" : {
@@ -987,16 +3315,58 @@
             "state" : "translated",
             "value" : "設定ファイルに誤りがあるため、置き換えていません。ファイルを直してから「再読み込み」を選んでください。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정 파일에 오류가 있어 교체하지 않았습니다. 파일을 수정한 다음 ‘다시 로드’를 선택하십시오."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O arquivo de configuração tem erros, por isso não foi substituído. Corrija o arquivo e escolha “Recarregar”."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "配置文件有错误，因此未替换该文件。请修正文件，然后选择“重新载入”。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定檔有錯誤，因此未取代。請修正檔案，然後選擇「重新載入」。"
+          }
         }
       }
     },
     "configFile.theConfigurationFilePointsTo" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Konfigurationsdatei verweist auf ihre Sicherungskopie, daher wurde sie nicht ersetzt. Es wurde nichts gesichert."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The configuration file points to its backup file, so it was not replaced. Nothing was saved."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El archivo de configuración apunta a su archivo de copia de seguridad, así que no se sustituyó. No se guardó nada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fichier de configuration pointe vers son fichier de secours ; il n’a donc pas été remplacé. Rien n’a été enregistré."
           }
         },
         "ja" : {
@@ -1004,16 +3374,58 @@
             "state" : "translated",
             "value" : "設定ファイルが控えのファイルを指しているため、置き換えていません。保存していません。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정 파일이 백업 파일을 가리키고 있어 교체하지 않았습니다. 저장된 내용은 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O arquivo de configuração aponta para o próprio arquivo de backup, por isso não foi substituído. Nada foi salvo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "配置文件指向其备份文件，因此未替换该文件。未存储任何内容。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定檔指向其備份檔案，因此未取代。未儲存任何內容。"
+          }
         }
       }
     },
     "configFile.theFileChangedChooseReload" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Datei hat sich geändert. Wähle „Neu laden“, um sie zu laden. Es wurde nichts gesichert."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The file changed. Choose Reload to load it. Nothing was saved."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El archivo cambió. Elige “Volver a cargar” para cargarlo. No se guardó nada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fichier a changé. Choisissez « Recharger » pour le charger. Rien n’a été enregistré."
           }
         },
         "ja" : {
@@ -1021,16 +3433,58 @@
             "state" : "translated",
             "value" : "ファイルが変更されています。「再読み込み」で読み込み直してください。保存していません。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "파일이 변경되었습니다. 파일을 로드하려면 ‘다시 로드’를 선택하십시오. 저장된 내용은 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O arquivo mudou. Escolha “Recarregar” para carregá-lo. Nada foi salvo."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件已更改。请选择“重新载入”以载入文件。未存储任何内容。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "檔案已變更。請選擇「重新載入」以載入檔案。未儲存任何內容。"
+          }
         }
       }
     },
     "configFile.theFileChangedWhileSaving" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Datei hat sich beim Sichern geändert. Es wurde nichts geschrieben."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The file changed while saving. Nothing was written."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El archivo cambió mientras se guardaba. No se escribió nada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fichier a changé pendant l’enregistrement. Rien n’a été écrit."
           }
         },
         "ja" : {
@@ -1038,13 +3492,55 @@
             "state" : "translated",
             "value" : "保存中にファイルが変更されたため、書き込んでいません。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장하는 동안 파일이 변경되었습니다. 아무것도 기록하지 않았습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O arquivo mudou durante o salvamento. Nada foi gravado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "存储时文件发生了更改。未写入任何内容。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "儲存期間檔案已變更。未寫入任何內容。"
+          }
         }
       }
     },
     "keyLayout.actions" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktionen"
+          }
+        },
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acciones"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Actions"
@@ -1055,16 +3551,58 @@
             "state" : "translated",
             "value" : "操作"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "동작"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ações"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "操作"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動作"
+          }
         }
       }
     },
     "keyLayout.arrows" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pfeile"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Arrows"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flechas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flèches"
           }
         },
         "ja" : {
@@ -1072,22 +3610,88 @@
             "state" : "translated",
             "value" : "矢印"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "화살표"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "方向键"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "方向鍵"
+          }
         }
       }
     },
     "keyLayout.conflictsWithAMacOSShortcut" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kollidiert mit einem macOS-Kurzbefehl."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Conflicts with a macOS shortcut."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coincide con un atajo de macOS."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entre en conflit avec un raccourci macOS."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "macOSのショートカットと重なります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS 단축키와 충돌합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conflita com um atalho do macOS."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与macOS快捷键冲突。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "與macOS快速鍵衝突。"
           }
         }
       }
@@ -1096,10 +3700,28 @@
       "comment" : "Arguments: 1 = `name`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kollidiert mit dem macOS-Kurzbefehl „%@“."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Conflicts with the macOS shortcut “%@”."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coincide con el atajo “%@” de macOS."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entre en conflit avec le raccourci macOS « %@ »."
           }
         },
         "ja" : {
@@ -1107,16 +3729,58 @@
             "state" : "translated",
             "value" : "macOSの「%@」と重なります。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS의 ‘%@’ 단축키와 충돌합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conflita com o atalho “%@” do macOS."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与macOS快捷键“%@”冲突。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "與macOS的「%@」快速鍵衝突。"
+          }
         }
       }
     },
     "keyLayout.custom" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eigene"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Custom"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personalizado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personnalisé"
           }
         },
         "ja" : {
@@ -1124,16 +3788,58 @@
             "state" : "translated",
             "value" : "個別設定"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사용자화"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personalizado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自定义"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自訂"
+          }
         }
       }
     },
     "keyLayout.focus" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fokussieren"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Focus"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activer"
           }
         },
         "ja" : {
@@ -1141,16 +3847,58 @@
             "state" : "translated",
             "value" : "フォーカス"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "초점 이동"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foco"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移动焦点"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移動焦點"
+          }
         }
       }
     },
     "keyLayout.ifTerminalUsesOptionAs" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn Terminal die Option-Taste als Meta-Taste verwendet, kollidiert dies mit dem wortweisen Bewegen."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "If Terminal uses Option as the Meta key, this conflicts with moving by word."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si Terminal usa Opción como tecla Meta, esto coincide con el movimiento por palabras."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si Terminal utilise « Option » comme touche Meta, ce raccourci entre en conflit avec le déplacement par mot."
           }
         },
         "ja" : {
@@ -1158,16 +3906,58 @@
             "state" : "translated",
             "value" : "TerminalでOptionをメタキーにしていると、単語単位の移動と重なります。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "터미널에서 Option을 Meta 키로 사용하는 경우 단어 단위 이동과 충돌합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se o Terminal usar Option como tecla Meta, isto conflita com o movimento por palavra."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果“终端”将Option键用作Meta键，则会与按单词移动冲突。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果「終端機」將Option用作Meta鍵，此快速鍵會與逐字移動衝突。"
+          }
         }
       }
     },
     "keyLayout.join" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gruppieren"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Join"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agrupar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grouper"
           }
         },
         "ja" : {
@@ -1175,19 +3965,85 @@
             "state" : "translated",
             "value" : "グループ化"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그룹화"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agrupamento"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分组"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分組"
+          }
         }
       }
     },
     "keyLayout.move" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewegen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Move"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer"
+          }
+        },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移動"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이동"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Movimento"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移动"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "移動"
@@ -1198,10 +4054,28 @@
     "keyLayout.movesTheWindowAndSwitches" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bewegt das Fenster und wechselt zu diesem Space."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Moves the window and switches to that Space."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mueve la ventana y cambia a ese Space."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplace la fenêtre et passe à ce Space."
           }
         },
         "ja" : {
@@ -1209,16 +4083,58 @@
             "state" : "translated",
             "value" : "ウインドウを移動し、その操作スペースに切り替えます。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "윈도우를 이동하고 해당 Space로 전환합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move a janela e vai para esse Space."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移动窗口并切换到该空间。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移動視窗並切換至該空間。"
+          }
         }
       }
     },
     "keyLayout.nextPreviousSpaceInLazySpace" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nächster/Vorheriger Space in LazySpace"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Next/Previous Space in LazySpace"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Space siguiente/anterior en LazySpace"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Space suivant/précédent dans LazySpace"
           }
         },
         "ja" : {
@@ -1226,16 +4142,58 @@
             "state" : "translated",
             "value" : "LazySpaceの次／前の操作スペースへ移動"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace의 다음 / 이전 Space"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Space seguinte/anterior no LazySpace"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace中的下一个/上一个空间"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace中的下一個/上一個空間"
+          }
         }
       }
     },
     "keyLayout.numberedDesktopSwitching" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schreibtischwechsel per Nummer"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Numbered Desktop Switching"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambio a escritorios numerados"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changement de bureau par numéro"
           }
         },
         "ja" : {
@@ -1243,16 +4201,58 @@
             "state" : "translated",
             "value" : "番号でデスクトップを切り替える"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "번호로 데스크탑 전환"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mudança de mesa por número"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按编号切换桌面"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "依編號切換桌面"
+          }
         }
       }
     },
     "keyLayout.resize" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Größe ändern"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Resize"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar tamaño"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redimensionner"
           }
         },
         "ja" : {
@@ -1260,16 +4260,58 @@
             "state" : "translated",
             "value" : "サイズ変更"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "크기 조절"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamanho"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "调整大小"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "調整大小"
+          }
         }
       }
     },
     "keyLayout.sendsTheWindowAndStays" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sendet das Fenster und bleibt im aktuellen Space."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sends the window and stays on the current Space."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envía la ventana y se queda en el Space actual."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoie la fenêtre et reste sur le Space actuel."
           }
         },
         "ja" : {
@@ -1277,13 +4319,55 @@
             "state" : "translated",
             "value" : "ウインドウだけを送り、今の操作スペースに留まります。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "윈도우를 보내고 현재 Space에 머무릅니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envia a janela e permanece no Space atual."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移动窗口并停留在当前空间。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "傳送視窗並停留在目前的空間。"
+          }
         }
       }
     },
     "keyLayout.spaces" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spaces"
+          }
+        },
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spaces"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spaces"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Spaces"
@@ -1294,16 +4378,58 @@
             "state" : "translated",
             "value" : "操作スペース"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Space"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spaces"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "空间"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "空間"
+          }
         }
       }
     },
     "keyLayout.stillActiveMacOSHasThe" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weiterhin aktiv. macOS bietet dieselben Aktionen in den Mission Control-Kurzbefehlen."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Still active. macOS has the same actions in Mission Control shortcuts."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sigue activo. macOS tiene las mismas acciones en los atajos de Mission Control."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toujours actif. macOS propose les mêmes actions dans les raccourcis Mission Control."
           }
         },
         "ja" : {
@@ -1311,19 +4437,85 @@
             "state" : "translated",
             "value" : "今も有効です。macOSのMission Controlにも同じ操作があります。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "계속 활성화되어 있습니다. macOS의 Mission Control 단축키에도 같은 동작이 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continua ativo. O macOS tem as mesmas ações nos atalhos do Mission Control."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仍然有效。macOS的调度中心快捷键中也有相同的操作。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仍然有效。macOS的「指揮中心」快速鍵也有相同的動作。"
+          }
         }
       }
     },
     "keyLayout.swap" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tauschen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Swap"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intercambiar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permuter"
+          }
+        },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "交換"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "교환"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Troca"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "交换"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "交換"
@@ -1334,16 +4526,58 @@
     "keyLayout.windows" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fenster"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Windows"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ventanas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fenêtres"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ウインドウ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "윈도우"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Janelas"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "窗口"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "視窗"
           }
         }
       }
@@ -1352,10 +4586,28 @@
       "comment" : "Arguments: 1 = `shown`; 2 = `optionGlyph`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit dieser Tastaturbelegung gibt ⌥%@ „%@“ ein."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "With this keyboard layout, ⌥%@ types “%@”."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Con esta distribución de teclado, ⌥%@ escribe “%@”."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avec cette disposition de clavier, ⌥%@ saisit « %@ »."
           }
         },
         "ja" : {
@@ -1363,22 +4615,88 @@
             "state" : "translated",
             "value" : "このキーボード配列では⌥%@は「%@」を入力します。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 키보드 레이아웃에서는 ⌥%@ 키를 누르면 ‘%@’이(가) 입력됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Com este layout de teclado, ⌥%@ digita “%@”."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在此键盘布局下，⌥%1$@会输入“%2$@”。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用此鍵盤佈局時，⌥%@會輸入「%@」。"
+          }
         }
       }
     },
     "toml.arrayItemsMustBeSeparated" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Array-Elemente müssen durch Kommas getrennt sein."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Array items must be separated by commas."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los elementos de una matriz deben separarse con comas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les éléments d’un tableau doivent être séparés par des virgules."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "配列の区切りが正しくありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "배열 항목은 쉼표로 구분해야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os itens de um array precisam ser separados por vírgulas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "数组项须以逗号分隔。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "陣列項目必須以逗號分隔。"
           }
         }
       }
@@ -1387,16 +4705,58 @@
       "comment" : "Arguments: 1 = `token`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Wert konnte nicht gelesen werden: %@"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Could not read the value: %@"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo leer el valor: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de lire la valeur : %@"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "値を解釈できません: %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "값을 해석할 수 없습니다: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível ler o valor: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法解析值：%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法讀取值：%@"
           }
         }
       }
@@ -1405,16 +4765,58 @@
       "comment" : "Arguments: 1 = `line`; 2 = `message`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeile %@: %@"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Line %@: %@"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Línea %@: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ligne %@ : %@"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@行目: %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@번째 줄: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Linha %@: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第%1$@行：%2$@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第%@行：%@"
           }
         }
       }
@@ -1423,10 +4825,28 @@
       "comment" : "Arguments: 1 = `first`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doppelter Schlüssel: %@."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Duplicate key: %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clave duplicada: %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clé en double : %@."
           }
         },
         "ja" : {
@@ -1434,16 +4854,58 @@
             "state" : "translated",
             "value" : "%@が重複しています。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "중복된 키: %@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chave duplicada: %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重复的键：%@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重複的鍵：%@。"
+          }
         }
       }
     },
     "toml.expectedKeyValue" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "key = value erwartet."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Expected key = value."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se esperaba clave = valor."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Format key = value attendu."
           }
         },
         "ja" : {
@@ -1451,22 +4913,88 @@
             "state" : "translated",
             "value" : "key = valueの形ではありません。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "key = value 형식이 필요합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esperado chave = valor."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "应为key = value格式。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "格式應為key = value。"
+          }
         }
       }
     },
     "toml.inlineTableItemsMustBe" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elemente einer Inline-Tabelle müssen durch Kommas getrennt sein."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Inline table items must be separated by commas."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los elementos de una tabla en línea deben separarse con comas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les éléments d’une table en ligne doivent être séparés par des virgules."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "インラインテーブルの区切りが正しくありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "인라인 테이블 항목은 쉼표로 구분해야 합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os itens de uma tabela inline precisam ser separados por vírgulas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "内联表的项须以逗号分隔。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "行內表格的項目必須以逗號分隔。"
           }
         }
       }
@@ -1475,16 +5003,58 @@
       "comment" : "Arguments: 1 = `e`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ungültige Escape-Sequenz \\%@."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Invalid \\%@ escape."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Secuencia de escape \\%@ no válida."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échappement \\%@ non valide."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "\\%@のエスケープが正しくありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "잘못된 \\%@ 이스케이프입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escape \\%@ inválido."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无效的\\%@转义。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無效的跳脫序列\\%@。"
           }
         }
       }
@@ -1493,16 +5063,58 @@
       "comment" : "Arguments: 1 = `last`; 2 = `last`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ist eine Array-Tabelle; schreibe [[%@]]."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ is an array table; write [[%@]]."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ es una tabla de matriz; escribe [[%@]]."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ est un tableau de tables ; écrivez [[%@]]."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@は配列テーブルです。[[%@]]と書いてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) 배열 테이블입니다. [[%@]] 형식으로 작성하십시오."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ é uma tabela de array; escreva [[%@]]."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@是数组表；请写成[[%2$@]]。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@是陣列表格；請寫成[[%@]]。"
           }
         }
       }
@@ -1511,16 +5123,58 @@
       "comment" : "Arguments: 1 = `last`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ist keine Tabelle."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ is not a table."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no es una tabla."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ n’est pas une table."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@はテーブルではありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) 테이블이 아닙니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ não é uma tabela."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@不是表。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@不是表格。"
           }
         }
       }
@@ -1529,10 +5183,28 @@
       "comment" : "Arguments: 1 = `last`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ist keine Array-Tabelle."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ is not an array table."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no es una tabla de matriz."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ n’est pas un tableau de tables."
           }
         },
         "ja" : {
@@ -1540,16 +5212,58 @@
             "state" : "translated",
             "value" : "%@は配列テーブルではありません。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@은(는) 배열 테이블이 아닙니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ não é uma tabela de array."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@不是数组表。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@不是陣列表格。"
+          }
         }
       }
     },
     "toml.missingAfterAKeyIn" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In der Inline-Tabelle fehlt = nach einem Schlüssel."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Missing = after a key in the inline table."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falta = después de una clave en la tabla en línea."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "= manquant après une clé dans la table en ligne."
           }
         },
         "ja" : {
@@ -1557,16 +5271,58 @@
             "state" : "translated",
             "value" : "インラインテーブルのキーの後に = がありません。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "인라인 테이블의 키 뒤에 = 기호가 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falta = depois de uma chave na tabela inline."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "内联表中的键后面缺少=。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "行內表格中的鍵後面缺少=。"
+          }
         }
       }
     },
     "toml.missingArrayClose" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schließende ] für das Array fehlt."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Missing closing ] for the array."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falta el ] de cierre de la matriz."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "] fermant manquant pour le tableau."
           }
         },
         "ja" : {
@@ -1574,16 +5330,58 @@
             "state" : "translated",
             "value" : "配列を閉じる]がありません。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "배열을 닫는 ] 기호가 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falta o ] que fecha o array."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "数组缺少结尾的]。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "陣列缺少結尾的]。"
+          }
         }
       }
     },
     "toml.missingArrayTableClose" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schließende ]] für die Array-Tabelle fehlen."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Missing closing ]] for the array table."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falta el ]] de cierre de la tabla de matriz."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "]] fermant manquant pour le tableau de tables."
           }
         },
         "ja" : {
@@ -1591,16 +5389,58 @@
             "state" : "translated",
             "value" : "配列テーブルを閉じる]]がありません。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "배열 테이블을 닫는 ]] 기호가 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falta o ]] que fecha a tabela de array."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "数组表缺少结尾的]]。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "陣列表格缺少結尾的]]。"
+          }
         }
       }
     },
     "toml.missingClosingForTheInline" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schließende } für die Inline-Tabelle fehlt."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Missing closing } for the inline table."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falta la } de cierre de la tabla en línea."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "} fermant manquant pour la table en ligne."
           }
         },
         "ja" : {
@@ -1608,16 +5448,58 @@
             "state" : "translated",
             "value" : "インラインテーブルを閉じる } がありません。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "인라인 테이블을 닫는 } 기호가 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falta o } que fecha a tabela inline."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "内联表缺少结尾的}。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "行內表格缺少結尾的}。"
+          }
         }
       }
     },
     "toml.missingClosingQuote" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schließendes Anführungszeichen fehlt."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Missing closing quote."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faltan las comillas de cierre."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guillemet fermant manquant."
           }
         },
         "ja" : {
@@ -1625,16 +5507,58 @@
             "state" : "translated",
             "value" : "閉じる引用符がありません。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "닫는 따옴표가 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falta a aspa de fechamento."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "缺少结尾的引号。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "缺少結尾的引號。"
+          }
         }
       }
     },
     "toml.missingTableClose" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schließende ] für die Tabelle fehlt."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Missing closing ] for the table."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falta el ] de cierre de la tabla."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "] fermant manquant pour la table."
           }
         },
         "ja" : {
@@ -1642,22 +5566,88 @@
             "state" : "translated",
             "value" : "テーブルを閉じる]がありません。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "테이블을 닫는 ] 기호가 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falta o ] que fecha a tabela."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "表缺少结尾的]。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "表格缺少結尾的]。"
+          }
         }
       }
     },
     "toml.missingValue" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wert fehlt."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Missing value."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falta el valor."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valeur manquante."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "値がありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "값이 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falta o valor."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "缺少值。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "缺少值。"
           }
         }
       }
@@ -1666,10 +5656,28 @@
       "comment" : "Arguments: 1 = `first`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Array-Tabelle %@ ist leer."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The array table %@ is empty."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La tabla de matriz %@ está vacía."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le tableau de tables %@ est vide."
           }
         },
         "ja" : {
@@ -1677,16 +5685,58 @@
             "state" : "translated",
             "value" : "配列テーブル%@が空です。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "배열 테이블 %@이(가) 비어 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A tabela de array %@ está vazia."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "数组表%@为空。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "陣列表格%@是空的。"
+          }
         }
       }
     },
     "toml.theKeyNameIsEmpty" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Schlüsselname ist leer."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The key name is empty."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El nombre de la clave está vacío."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le nom de clé est vide."
           }
         },
         "ja" : {
@@ -1694,22 +5744,88 @@
             "state" : "translated",
             "value" : "キー名が空です。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "키 이름이 비어 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O nome da chave está vazio."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "键名为空。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "鍵名稱是空的。"
+          }
         }
       }
     },
     "toml.theTableNameIsEmpty" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Tabellenname ist leer."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The table name is empty."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El nombre de la tabla está vacío."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le nom de table est vide."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "テーブル名が空です。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "테이블 이름이 비어 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O nome da tabela está vazio."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "表名为空。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "表格名稱是空的。"
           }
         }
       }
@@ -1718,16 +5834,58 @@
       "comment" : "Arguments: 1 = `scanner.rest`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unerwarteter Text nach dem Wert: %@"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Unexpected text after the value: %@"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texto inesperado después del valor: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texte inattendu après la valeur : %@"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "値の後に余分な文字があります: %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "값 뒤에 예상치 못한 텍스트가 있습니다: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texto inesperado depois do valor: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "值后面有多余的文本：%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "值後面有多餘的文字：%@"
           }
         }
       }
@@ -1736,16 +5894,58 @@
       "comment" : "Arguments: 1 = `e`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht unterstützte Escape-Sequenz \\%@."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Unsupported escape \\%@."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Secuencia de escape no admitida: \\%@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échappement \\%@ non pris en charge."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "\\%@は使えないエスケープです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "지원되지 않는 이스케이프 \\%@입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escape \\%@ não compatível."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不支持的转义\\%@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不支援的跳脫序列\\%@。"
           }
         }
       }

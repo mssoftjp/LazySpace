@@ -1152,4 +1152,13 @@ final class ArrangeOperationTests: XCTestCase {
         XCTAssertEqual(back.targets, r.targets)
         XCTAssertEqual(back.message, r.message)
     }
+
+    /// Portuguese counts 0 as one, so the messages that can report 0 arranged windows carry their own zero form.
+    func testPortugueseReportsZeroArrangedWindowsInThePlural() {
+        let zero = [L(.arrangeOperationArranged(windows: 0), in: .brazilianPortuguese),
+                    L(.arrangeOperationArrangedUnobservedLeft(windows: 0, "Mail"), in: .brazilianPortuguese),
+                    L(.arrangeOperationArrangedUnobservedUnconfirmed(windows: 0, "Mail"), in: .brazilianPortuguese)]
+        for text in zero { XCTAssertTrue(text.contains("0 janelas"), text) }
+        XCTAssertTrue(L(.arrangeOperationArranged(windows: 1), in: .brazilianPortuguese).contains("1 janela "))
+    }
 }

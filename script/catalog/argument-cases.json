@@ -402,5 +402,165 @@
    }
   },
   "ok": false
+ },
+ {
+  "name": "a plural form drops the count",
+  "english": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "Arranged %#@windows@."
+   },
+   "substitutions": {
+    "windows": {
+     "argNum": 1,
+     "formatSpecifier": "lld",
+     "variations": {
+      "plural": {
+       "one": {
+        "stringUnit": {
+         "state": "translated",
+         "value": "%arg window"
+        }
+       },
+       "other": {
+        "stringUnit": {
+         "state": "translated",
+         "value": "%arg windows"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "other": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "%#@windows@ angeordnet."
+   },
+   "substitutions": {
+    "windows": {
+     "argNum": 1,
+     "formatSpecifier": "lld",
+     "variations": {
+      "plural": {
+       "one": {
+        "stringUnit": {
+         "state": "translated",
+         "value": "Fenster"
+        }
+       },
+       "other": {
+        "stringUnit": {
+         "state": "translated",
+         "value": "%arg Fenster"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "ok": false
+ },
+ {
+  "name": "every plural form shows the count",
+  "english": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "Arranged %#@windows@."
+   },
+   "substitutions": {
+    "windows": {
+     "argNum": 1,
+     "formatSpecifier": "lld",
+     "variations": {
+      "plural": {
+       "one": {
+        "stringUnit": {
+         "state": "translated",
+         "value": "%arg window"
+        }
+       },
+       "other": {
+        "stringUnit": {
+         "state": "translated",
+         "value": "%arg windows"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "other": {
+   "stringUnit": {
+    "state": "translated",
+    "value": "%#@windows@ angeordnet."
+   },
+   "substitutions": {
+    "windows": {
+     "argNum": 1,
+     "formatSpecifier": "lld",
+     "variations": {
+      "plural": {
+       "one": {
+        "stringUnit": {
+         "state": "translated",
+         "value": "%arg Fenster"
+        }
+       },
+       "other": {
+        "stringUnit": {
+         "state": "translated",
+         "value": "%arg Fenster"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "ok": true
+ },
+ {
+  "name": "a top-level plural form drops the count",
+  "english": {
+   "variations": {
+    "plural": {
+     "one": {
+      "stringUnit": {
+       "state": "translated",
+       "value": "%lld window"
+      }
+     },
+     "other": {
+      "stringUnit": {
+       "state": "translated",
+       "value": "%lld windows"
+      }
+     }
+    }
+   }
+  },
+  "other": {
+   "variations": {
+    "plural": {
+     "one": {
+      "stringUnit": {
+       "state": "translated",
+       "value": "une fenêtre"
+      }
+     },
+     "other": {
+      "stringUnit": {
+       "state": "translated",
+       "value": "%lld fenêtres"
+      }
+     }
+    }
+   }
+  },
+  "ok": false
  }
 ]

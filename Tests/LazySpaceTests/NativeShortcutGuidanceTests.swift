@@ -17,8 +17,9 @@ final class NativeShortcutGuidanceTests: XCTestCase {
         NativeShortcutStatus.warning(left: left ?? self.left, right: right ?? self.right, saved: saved, draft: draft ?? saved, paused: paused)
     }
 
+    /// English and Japanese, whose expected text these tests spell out.
     private func bothLanguages(_ body: (Language) throws -> Void) rethrows {
-        for language in Language.allCases {
+        for language in [Language.english, .japanese] {
             Copy.language = language
             try body(language)
         }

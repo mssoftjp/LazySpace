@@ -516,7 +516,7 @@ public struct Config: Equatable, Codable {
     /// Heading of the saved configuration file. Generated headings are English regardless of the display language.
     public static let defaultHeader = "# LazySpace configuration. Changes are reloaded automatically; run `lazyspace reload` to request a refresh."
 
-    /// `"en", or "ja"`: the shipped language codes for the template's comment.
+    /// `"en", "de", …, or "zh-Hant"`: the shipped language codes for the template's comment.
     static var languageCodeList: String {
         let codes = Language.allCases.map { "\"\($0.rawValue)\"" }
         return codes.count == 1 ? codes[0] : codes.dropLast().joined(separator: ", ") + ", or " + codes[codes.count - 1]

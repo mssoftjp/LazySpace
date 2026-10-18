@@ -138,7 +138,7 @@ You can change settings in the Settings window or in the file `~/.config/lazyspa
 
 | Setting | Default | Meaning |
 |---|---|---|
-| `language` | `"system"` | `"system"`, `"en"`, or `"ja"` |
+| `language` | `"system"` | `"system"`, `"en"`, `"de"`, `"es"`, `"fr"`, `"ja"`, `"ko"`, `"pt-BR"`, `"zh-Hans"`, or `"zh-Hant"` |
 | `gap` | `0` | Space between windows, 0–200 points (rounded to whole points). `[gaps]` sets `inner-horizontal`, `inner-vertical`, `outer-left`, `outer-top`, `outer-right`, and `outer-bottom` separately (each 0–200) |
 | `place-dialogs-beside` | `false` | After you switch away from a fixed-size window (such as Calculator or an alert), move it to a strip at the right or bottom edge; arranged windows use the rest |
 | `follow-moved-window` | `false` | After a shortcut or the menu moves a window to another Space, switch to that Space too. The command line is not affected |

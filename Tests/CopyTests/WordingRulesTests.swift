@@ -12,10 +12,13 @@ final class WordingRulesTests: XCTestCase {
         var description: String { "\(file):\(line): \(rule): \(text)" }
     }
 
-    /// Exceptions: exact match of file and string (interpolations as `\(…)`), always with a reason.
+    /// Exceptions: exact match of file and string (interpolations as `\(…)`), or of a catalog and key (every language),
+    /// always with a reason.
     static let exceptions: [(file: String, text: String, reason: String)] = [
-        ("Sources/MacSupport/Resources/Localizable.xcstrings", #"Space \(…)"#,
+        ("Sources/MacSupport/Resources/Localizable.xcstrings", "spaceControl.space",
          "Diagnostic fallback: identifies a Space without a desktop number by its ID (not a numbered desktop)."),
+        ("Sources/Settings/Resources/Localizable.xcstrings", "config.mustBeWidthHeightEach",
+         "Shows the TOML array `[width, height]`, whose comma stays ASCII in every language."),
     ]
 
     static let sourceModules = ["Copy", "LayoutCore", "Operations", "Settings", "MacSupport", "LazySpaceApp", "LazySpace"]
@@ -127,6 +130,7 @@ final class WordingRulesTests: XCTestCase {
         XCTAssertEqual(hits("데스크탑%@", "ko"), ["WK1"])
         XCTAssertEqual(hits("Escritorio %@", "es"), [])
         XCTAssertEqual(hits("Space %@", "es"), ["W10"])
+        XCTAssertEqual(hits("LazySpace %@ ist verfügbar", "de"), [])
     }
 
     func testJapaneseDocuments() throws {
@@ -238,6 +242,8 @@ final class WordingRulesTests: XCTestCase {
         /// Line of each character (to point at the violating line in multiline strings).
         var lines: [Int]
         var text: [Unicode.Scalar]
+        /// The catalog key, for catalog values.
+        var key: String? = nil
         var display: String {
             String(String.UnicodeScalarView(text)).replacingOccurrences(of: String(Character(placeholder)), with: #"\(…)"#)
         }
@@ -290,7 +296,7 @@ final class WordingRulesTests: XCTestCase {
 
     static func violations(in text: Text, rules: [Rule]) -> [Violation] {
         let display = text.display
-        if exceptions.contains(where: { $0.file == text.file && $0.text == display }) { return [] }
+        if exceptions.contains(where: { $0.file == text.file && ($0.text == display || $0.text == text.key) }) { return [] }
         return rules.flatMap { rule in
             rule.test(text.text).map { Violation(file: text.file, line: text.lines.isEmpty ? text.line : text.lines[min($0, text.lines.count - 1)], rule: rule.id, text: display) }
         }
@@ -364,10 +370,12 @@ final class WordingRulesTests: XCTestCase {
             })
         }
         if let word = spaceWords[language], language != "en", language != "ja" {
-            // W10 for the language's word for Space: followed by a number or an inserted value.
+            // W10 for the language's word for Space: followed by a number or an inserted value. A Latin word starts a word
+            // ("LazySpace 1.2" is not one).
             let w = Array(word.unicodeScalars)
             rules.append(Rule(id: "W10") { s in
                 find(word, in: s).filter { i in
+                    guard i == 0 || !isLetter(w[0]) || !isLetter(s[i - 1]) else { return false }
                     var next = i + w.count
                     if next < s.count, s[next] == " " { next += 1 }
                     return next < s.count && (("0"..."9").contains(s[next]) || s[next] == placeholder)
@@ -457,7 +465,7 @@ final class WordingRulesTests: XCTestCase {
                 for (language, localization) in entry.localizations.sorted(by: { $0.key < $1.key }) {
                     for (_, unit) in CatalogTests.forms(localization as? [String: Any] ?? [:]) {
                         let value = withPlaceholders(unit["value"] as? String ?? "")
-                        out.append((language, Text(file: path, line: line, lines: [], text: Array(value.unicodeScalars))))
+                        out.append((language, Text(file: path, line: line, lines: [], text: Array(value.unicodeScalars), key: entry.key)))
                     }
                 }
             }

@@ -4,16 +4,58 @@
     "dockShortcutFreshness.message" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Einstellungen der Tastaturkurzbefehle wurden nach dem Start des Docks gesichert. Wenn ein Mission Control-Kurzbefehl nicht reagiert, kann ein Neustart des Docks (Terminal: killall Dock) oder ein Ab- und Anmelden helfen."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Keyboard shortcut preferences were saved after the Dock started. If a Mission Control shortcut does not respond, restarting the Dock (Terminal: killall Dock) or logging out and in may help."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los ajustes de atajos de teclado se guardaron después de que se iniciara el Dock. Si un atajo de Mission Control no responde, puede ayudar reiniciar el Dock (Terminal: killall Dock) o cerrar la sesión y volver a iniciarla."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les préférences des raccourcis clavier ont été enregistrées après le démarrage du Dock. Si un raccourci Mission Control ne répond pas, redémarrer le Dock (Terminal : killall Dock) ou fermer puis rouvrir la session peut aider."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dockの起動後にキーボードショートカットの設定が保存されています。Mission Controlのショートカットが応答しないときは、Dockの再起動（ターミナルで`killall Dock`）かログアウトで直ることがあります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dock이 시작된 후 키보드 단축키 설정이 저장되었습니다. Mission Control 단축키가 응답하지 않으면 Dock을 재시작하거나(터미널: killall Dock) 로그아웃했다가 다시 로그인하면 해결될 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As preferências de atalhos de teclado foram salvas depois que o Dock foi iniciado. Se um atalho do Mission Control não responder, reiniciar o Dock (Terminal: killall Dock) ou encerrar a sessão e iniciá-la de novo pode ajudar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "键盘快捷键偏好设置是在程序坞启动后存储的。如果某个调度中心快捷键没有响应，重新启动程序坞（在“终端”中运行killall Dock）或退出登录后重新登录可能会有帮助。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "鍵盤快速鍵偏好設定是在Dock啟動後儲存的。若「指揮中心」快速鍵沒有回應，重新啟動Dock（在「終端機」中執行killall Dock）或登出再重新登入可能會有幫助。"
           }
         }
       }
@@ -22,10 +64,28 @@
       "comment" : "Arguments: 1 = `e.label`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Fensterattribut konnte nicht gelesen werden: %@"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Could not read the window attribute: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo leer el atributo de la ventana: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de lire l’attribut de la fenêtre : %@"
           }
         },
         "ja" : {
@@ -33,16 +93,58 @@
             "state" : "translated",
             "value" : "ウインドウの属性を読めません: %@"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "윈도우 속성을 읽을 수 없습니다: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível ler o atributo da janela: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取窗口属性：%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法讀取視窗屬性：%@"
+          }
         }
       }
     },
     "macWindowSystem.stoppedBecauseTheSpaceThe" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestoppt, weil sich der Space, das Fenster, eine Eingabe oder das Zeitlimit geändert hat."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Stopped because the Space, the window, input, or the time limit changed."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se detuvo porque cambiaron el Space, la ventana, la entrada o el límite de tiempo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêt parce que le Space, la fenêtre, une saisie ou la limite de temps a changé."
           }
         },
         "ja" : {
@@ -50,16 +152,58 @@
             "state" : "translated",
             "value" : "操作スペース・ウインドウ・入力・時間の条件が変わったため中止しました。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Space, 윈도우, 입력 또는 시간 제한 조건이 바뀌어 중단했습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrompido porque o Space, a janela, a entrada ou o limite de tempo mudou."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "空间、窗口、输入或时间限制发生了变化，因此已停止。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "由於空間、視窗、輸入或時間限制發生變化，因此已停止。"
+          }
         }
       }
     },
     "macWindowSystem.theOperationWasInterruptedBefore" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Vorgang wurde unterbrochen, bevor das Fenster in den Vordergrund geholt wurde."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The operation was interrupted before the window was raised."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La operación se interrumpió antes de traer la ventana al frente."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’opération a été interrompue avant que la fenêtre passe au premier plan."
           }
         },
         "ja" : {
@@ -67,22 +211,88 @@
             "state" : "translated",
             "value" : "ウインドウを前面にする前に操作が中断されました。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "윈도우를 앞으로 가져오기 전에 작업이 중단되었습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A operação foi interrompida antes de a janela ser trazida para a frente."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在窗口移到最前面之前，操作已中断。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在視窗移至最前方之前，操作已中斷。"
+          }
         }
       }
     },
     "macWindowSystem.theWindowCantBeRead" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Fenster kann in diesem Space nicht gelesen werden."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The window can't be read on that Space."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se puede leer la ventana en ese Space."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La fenêtre ne peut pas être lue sur ce Space."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "その操作スペースのウインドウを読めません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "해당 Space에서 윈도우를 읽을 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A janela não pode ser lida nesse Space."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取该空间中的窗口。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法在該空間讀取視窗。"
           }
         }
       }
@@ -91,10 +301,28 @@
       "comment" : "Arguments: 1 = `e.label`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Fenster hat keine Schließen-Taste: %@"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The window has no close button: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La ventana no tiene botón de cerrar: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La fenêtre n’a pas de bouton de fermeture : %@"
           }
         },
         "ja" : {
@@ -102,16 +330,58 @@
             "state" : "translated",
             "value" : "ウインドウに閉じるボタンがありません: %@"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "윈도우에 닫기 버튼이 없습니다: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A janela não tem botão de fechar: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "窗口没有关闭按钮：%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "視窗沒有關閉按鈕：%@"
+          }
         }
       }
     },
     "macWindowSystem.theWindowHasNotBeen" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Fenster wurde noch nicht untersucht."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The window has not been inspected yet."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La ventana aún no se ha inspeccionado."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La fenêtre n’a pas encore été inspectée."
           }
         },
         "ja" : {
@@ -119,16 +389,58 @@
             "state" : "translated",
             "value" : "まだ確認していないウインドウです。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아직 검사하지 않은 윈도우입니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A janela ainda não foi inspecionada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未检查该窗口。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未檢查此視窗。"
+          }
         }
       }
     },
     "spaceControl.aWindowCanBeSent" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Fenster kann nur zu einem gewöhnlichen Schreibtisch gesendet werden."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "A window can be sent only to an ordinary desktop."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una ventana solo se puede enviar a un escritorio normal."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une fenêtre ne peut être envoyée que vers un bureau ordinaire."
           }
         },
         "ja" : {
@@ -136,16 +448,58 @@
             "state" : "translated",
             "value" : "ウインドウを送れるのは通常のデスクトップだけです。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "윈도우는 일반 데스크탑으로만 보낼 수 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma janela só pode ser enviada para uma mesa comum."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "窗口只能移到普通桌面。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "視窗只能傳送至一般桌面。"
+          }
         }
       }
     },
     "spaceControl.couldNotConfirmTheSpace" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Space nach dem Wechsel konnte nicht bestätigt werden."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Could not confirm the Space after switching."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo confirmar el Space tras el cambio."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de confirmer le Space après le changement."
           }
         },
         "ja" : {
@@ -153,16 +507,58 @@
             "state" : "translated",
             "value" : "切り替え後の操作スペースを確認できません。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "전환 후 Space를 확인할 수 없었습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível confirmar o Space depois da mudança."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法确认切换后的空间。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切換後無法確認空間。"
+          }
         }
       }
     },
     "spaceControl.couldNotConfirmTheSpaceAfter" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Space nach dem Bewegen des Fensters konnte nicht bestätigt werden."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Could not confirm the Space after moving the window."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo confirmar el Space tras mover la ventana."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de confirmer le Space après le déplacement de la fenêtre."
           }
         },
         "ja" : {
@@ -170,16 +566,58 @@
             "state" : "translated",
             "value" : "移動後の操作スペースを確認できません。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "윈도우를 이동한 후 Space를 확인할 수 없었습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível confirmar o Space depois de mover a janela."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法确认移动窗口后的空间。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移動視窗後無法確認空間。"
+          }
         }
       }
     },
     "spaceControl.couldNotConfirmTheSpaceSwitch" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Space-Wechsel konnte nicht bestätigt werden."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Could not confirm the Space switch."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo confirmar el cambio de Space."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de confirmer le changement de Space."
           }
         },
         "ja" : {
@@ -187,16 +625,58 @@
             "state" : "translated",
             "value" : "操作スペースの切り替えを確認できませんでした。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Space 전환을 확인할 수 없었습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível confirmar a mudança de Space."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法确认空间已切换。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法確認空間已切換。"
+          }
         }
       }
     },
     "spaceControl.couldNotCreateTheKeyboard" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Tastaturereignis konnte nicht erzeugt werden."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Could not create the keyboard event."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo crear el evento de teclado."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de créer l’événement clavier."
           }
         },
         "ja" : {
@@ -204,22 +684,88 @@
             "state" : "translated",
             "value" : "キーボードイベントを作れませんでした。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "키보드 이벤트를 생성할 수 없었습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível criar o evento de teclado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法创建键盘事件。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法建立鍵盤事件。"
+          }
         }
       }
     },
     "spaceControl.couldNotDetermineTheCurrent" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der aktuelle Space konnte nicht ermittelt werden."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Could not determine the current Space."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo determinar el Space actual."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de déterminer le Space actuel."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "現在の操作スペースを確認できません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현재 Space를 확인할 수 없었습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível determinar o Space atual."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法确定当前空间。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法確定目前的空間。"
           }
         }
       }
@@ -228,10 +774,28 @@
       "comment" : "Arguments: 1 = `name`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Mission Control-Kurzbefehl „%@“ konnte nicht gelesen werden."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Could not read the Mission Control shortcut “%@”."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo leer el atajo “%@” de Mission Control."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de lire le raccourci Mission Control « %@ »."
           }
         },
         "ja" : {
@@ -239,22 +803,88 @@
             "state" : "translated",
             "value" : "Mission Controlのショートカット「%@」を読み取れませんでした。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Control의 ‘%@’ 단축키를 읽을 수 없었습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível ler o atalho “%@” do Mission Control."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取调度中心快捷键“%@”。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法讀取「指揮中心」快速鍵「%@」。"
+          }
         }
       }
     },
     "spaceControl.couldNotReadTheWindows" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Position und Größe des Fensters konnten nicht gelesen werden."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Could not read the window's position and size."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudieron leer la posición y el tamaño de la ventana."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de lire la position et la taille de la fenêtre."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ウインドウの位置とサイズを確認できません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "윈도우의 위치와 크기를 읽을 수 없었습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível ler a posição e o tamanho da janela."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取窗口的位置和大小。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法讀取視窗的位置與大小。"
           }
         }
       }
@@ -263,16 +893,58 @@
       "comment" : "Arguments: 1 = `space`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktueller Space: %@."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Current Space: %@."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Space actual: %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Space actuel : %@."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "現在の操作スペースは%@。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현재 Space: %@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Space atual: %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前空间：%@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目前的空間：%@。"
           }
         }
       }
@@ -281,10 +953,28 @@
       "comment" : "Arguments: 1 = `space`; 2 = `owned`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktueller Space: %@. Fenster: %@."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Current Space: %@. Window: %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Space actual: %@. Ventana: %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Space actuel : %@. Fenêtre : %@."
           }
         },
         "ja" : {
@@ -292,16 +982,58 @@
             "state" : "translated",
             "value" : "現在の操作スペースは%@。ウインドウの所属は%@。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현재 Space: %@. 윈도우: %@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Space atual: %@. Janela: %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前空间：%1$@。窗口所在空间：%2$@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目前的空間：%@。視窗：%@。"
+          }
         }
       }
     },
     "spaceControl.fullScreen" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vollbild"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Full Screen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pantalla completa"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plein écran"
           }
         },
         "ja" : {
@@ -309,22 +1041,88 @@
             "state" : "translated",
             "value" : "フルスクリーン"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "전체 화면"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tela cheia"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全屏幕"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全螢幕"
+          }
         }
       }
     },
     "spaceControl.mouseAndKeyboardInputObservation" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Beobachtung von Maus- und Tastatureingaben ist nicht verfügbar, daher macht LazySpace nicht weiter."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mouse and keyboard input observation is unavailable, so LazySpace will not continue."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La observación de la entrada del ratón y el teclado no está disponible, así que LazySpace no continuará."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’observation de la souris et du clavier est indisponible ; LazySpace ne continuera donc pas."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "マウスとキーボードの入力を観測できないため、操作しません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "마우스 및 키보드 입력 관찰을 사용할 수 없어 LazySpace가 작업을 계속하지 않습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A observação da entrada do mouse e do teclado não está disponível, por isso o LazySpace não vai continuar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "鼠标和键盘输入观测不可用，因此LazySpace不会继续。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法觀察滑鼠與鍵盤輸入，因此LazySpace不會繼續。"
           }
         }
       }
@@ -333,10 +1131,28 @@
       "comment" : "Arguments: 1 = `settings`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es wurde nichts gesendet. %@."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nothing was sent. %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se envió nada. %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien n’a été envoyé. %@."
           }
         },
         "ja" : {
@@ -344,22 +1160,88 @@
             "state" : "translated",
             "value" : "何も送信していません。%@。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아무것도 보내지 않았습니다. %@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada foi enviado. %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未发送任何按键。请检查%@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未傳送任何內容。%@。"
+          }
         }
       }
     },
     "spaceControl.sendingAWindowWithoutSwitching" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um ein Fenster zu senden, ohne zu wechseln, ist das direkte Bewegen nötig, das dieses macOS nicht bietet."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sending a window without switching needs the direct move, which this macOS does not offer."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviar una ventana sin cambiar de Space necesita el movimiento directo, que esta versión de macOS no ofrece."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoyer une fenêtre sans changer de Space exige le déplacement direct, que cette version de macOS n’offre pas."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "切り替えずに送るには直接の移動が必要ですが、このmacOSでは使えません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "전환하지 않고 윈도우를 보내려면 직접 이동이 필요하지만, 이 버전의 macOS에서는 제공되지 않습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enviar uma janela sem mudar de Space exige o movimento direto, que este macOS não oferece."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要在不切换空间的情况下移动窗口，需要直接移动，但此版本的macOS不支持。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不切換而傳送視窗需要直接移動，但此版本的macOS無法使用。"
           }
         }
       }
@@ -368,7 +1250,25 @@
       "comment" : "Arguments: 1 = `id`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Space %@"
+          }
+        },
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Space %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Space %@"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Space %@"
@@ -379,22 +1279,88 @@
             "state" : "translated",
             "value" : "操作スペース%@"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Space %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Space %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "空间%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "空間%@"
+          }
         }
       }
     },
     "spaceControl.systemSettingsKeyboardKeyboardShortcuts" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systemeinstellungen › Tastatur › Tastaturkurzbefehle … › Mission Control"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "System Settings › Keyboard › Keyboard Shortcuts… › Mission Control"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes del Sistema › Teclado › Atajos de teclado… › Mission Control"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages Système › Clavier › Raccourcis clavier… › Mission Control"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "システム設定 › キーボード › キーボードショートカット… › Mission Control"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "시스템 설정 › 키보드 › 키보드 단축키… › Mission Control"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes do Sistema › Teclado › Atalhos de Teclado… › Mission Control"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系统设置 › 键盘 › 键盘快捷键… › 调度中心"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「系統設定」›「鍵盤」›「鍵盤快速鍵⋯」›「指揮中心」"
           }
         }
       }
@@ -403,16 +1369,58 @@
       "comment" : "Arguments: 1 = `name`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Taste des Mission Control-Kurzbefehls „%@“ kann nicht gesendet werden."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The key for the Mission Control shortcut “%@” cannot be sent."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La tecla del atajo “%@” de Mission Control no se puede enviar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La touche du raccourci Mission Control « %@ » ne peut pas être envoyée."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mission Controlのショートカット「%@」のキーは送信できません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Control의 ‘%@’ 단축키에 지정된 키를 보낼 수 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A tecla do atalho “%@” do Mission Control não pode ser enviada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法发送调度中心快捷键“%@”的按键。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法傳送「指揮中心」快速鍵「%@」的按鍵。"
           }
         }
       }
@@ -421,16 +1429,58 @@
       "comment" : "Arguments: 1 = `name`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Mission Control-Kurzbefehl „%@“ enthält keine Control-, Option- oder Command-Taste."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The Mission Control shortcut “%@” does not include Control, Option, or Command."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El atajo “%@” de Mission Control no incluye Control, Opción ni Comando."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le raccourci Mission Control « %@ » ne comprend ni Contrôle, ni Option, ni Commande."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mission Controlのショートカット「%@」にControl・Option・Commandがありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Control의 ‘%@’ 단축키에 Control, Option 또는 Command가 포함되어 있지 않습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O atalho “%@” do Mission Control não inclui Control, Option nem Command."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "调度中心快捷键“%@”不包含Control、Option或Command。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「指揮中心」快速鍵「%@」未包含Control、Option或Command。"
           }
         }
       }
@@ -439,16 +1489,58 @@
       "comment" : "Arguments: 1 = `name`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dem Mission Control-Kurzbefehl „%@“ ist keine Taste zugewiesen."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The Mission Control shortcut “%@” has no key assigned."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El atajo “%@” de Mission Control no tiene ninguna tecla asignada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le raccourci Mission Control « %@ » n’a aucune touche attribuée."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mission Controlのショートカット「%@」にはキーが割り当てられていません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Control의 ‘%@’ 단축키에 할당된 키가 없습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O atalho “%@” do Mission Control não tem tecla atribuída."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "调度中心快捷键“%@”未分配按键。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「指揮中心」快速鍵「%@」未指定按鍵。"
           }
         }
       }
@@ -457,16 +1549,58 @@
       "comment" : "Arguments: 1 = `name`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Mission Control-Kurzbefehl „%@“ enthält die Feststelltaste."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The Mission Control shortcut “%@” includes Caps Lock."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El atajo “%@” de Mission Control incluye Bloqueo Mayúsculas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le raccourci Mission Control « %@ » comprend Verr. maj."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mission Controlのショートカット「%@」にCaps Lockが含まれています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Control의 ‘%@’ 단축키에 Caps Lock이 포함되어 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O atalho “%@” do Mission Control inclui Caps Lock."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "调度中心快捷键“%@”包含Caps Lock。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「指揮中心」快速鍵「%@」包含大寫鎖定鍵。"
           }
         }
       }
@@ -475,16 +1609,58 @@
       "comment" : "Arguments: 1 = `name`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Mission Control-Kurzbefehl „%@“ enthält Flags, die LazySpace nicht kennt."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The Mission Control shortcut “%@” includes flags LazySpace does not recognize."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El atajo “%@” de Mission Control incluye modificadores que LazySpace no reconoce."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le raccourci Mission Control « %@ » comprend des indicateurs que LazySpace ne reconnaît pas."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mission Controlのショートカット「%@」に、扱えないフラグが含まれています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Control의 ‘%@’ 단축키에 LazySpace가 인식하지 못하는 플래그가 포함되어 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O atalho “%@” do Mission Control inclui modificadores que o LazySpace não reconhece."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "调度中心快捷键“%@”包含LazySpace无法识别的标志。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「指揮中心」快速鍵「%@」包含LazySpace無法辨識的旗標。"
           }
         }
       }
@@ -493,16 +1669,58 @@
       "comment" : "Arguments: 1 = `name`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Mission Control-Kurzbefehl „%@“ ist ausgeschaltet."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The Mission Control shortcut “%@” is off."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El atajo “%@” de Mission Control está desactivado."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le raccourci Mission Control « %@ » est désactivé."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mission Controlのショートカット「%@」はオフです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Control의 ‘%@’ 단축키가 꺼져 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O atalho “%@” do Mission Control está desativado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "调度中心快捷键“%@”已关闭。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「指揮中心」快速鍵「%@」已關閉。"
           }
         }
       }
@@ -511,16 +1729,58 @@
       "comment" : "Arguments: 1 = `name`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Mission Control-Kurzbefehl „%@“ besteht nur aus einer Sondertaste."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The Mission Control shortcut “%@” is a modifier key alone."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El atajo “%@” de Mission Control es solo una tecla modificadora."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le raccourci Mission Control « %@ » est une touche de modification seule."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mission Controlのショートカット「%@」が修飾キーだけです。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Control의 ‘%@’ 단축키가 보조 키로만 되어 있습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O atalho “%@” do Mission Control é só uma tecla modificadora."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "调度中心快捷键“%@”只有修饰键。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「指揮中心」快速鍵「%@」只有變更鍵。"
           }
         }
       }
@@ -529,16 +1789,58 @@
       "comment" : "Arguments: 1 = `name`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Mission Control-Kurzbefehl „%@“ stimmt mit einem Kurzbefehl von LazySpace überein."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The Mission Control shortcut “%@” matches a LazySpace shortcut."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El atajo “%@” de Mission Control coincide con un atajo de LazySpace."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le raccourci Mission Control « %@ » est identique à un raccourci de LazySpace."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mission Controlのショートカット「%@」がLazySpaceのショートカットと重なっています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Control의 ‘%@’ 단축키가 LazySpace 단축키와 같습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O atalho “%@” do Mission Control coincide com um atalho do LazySpace."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "调度中心快捷键“%@”与LazySpace的快捷键相同。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「指揮中心」快速鍵「%@」與LazySpace的快速鍵相同。"
           }
         }
       }
@@ -547,16 +1849,58 @@
       "comment" : "Arguments: 1 = `name`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Mission Control-Kurzbefehl „%@“ oder das Dock hat sich geändert, während LazySpace wechselte. Die restlichen Schritte wurden nicht gesendet."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The Mission Control shortcut “%@” or the Dock changed while LazySpace was switching. The remaining steps were not sent."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El atajo “%@” de Mission Control o el Dock cambiaron mientras LazySpace cambiaba de Space. No se enviaron los pasos restantes."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le raccourci Mission Control « %@ » ou le Dock a changé pendant que LazySpace changeait de Space. Les étapes restantes n’ont pas été envoyées."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "切り替えの途中でMission Controlのショートカット「%@」またはDockが変わりました。残りの移動は送っていません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace가 전환하는 동안 Mission Control의 ‘%@’ 단축키 또는 Dock이 변경되었습니다. 남은 이동은 보내지 않았습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O atalho “%@” do Mission Control ou o Dock mudou enquanto o LazySpace mudava de Space. As etapas restantes não foram enviadas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace切换期间，调度中心快捷键“%@”或程序坞发生了变化。未发送剩余的步骤。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace切換期間，「指揮中心」快速鍵「%@」或Dock發生變化。未傳送其餘的切換。"
           }
         }
       }
@@ -565,16 +1909,58 @@
       "comment" : "Arguments: 1 = `name`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Mission Control-Kurzbefehl „%@“ oder das Dock hat sich geändert, bevor LazySpace mit dem Wechseln begann. Es wurde nichts gesendet."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The Mission Control shortcut “%@” or the Dock changed before LazySpace started switching. Nothing was sent."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El atajo “%@” de Mission Control o el Dock cambiaron antes de que LazySpace empezara a cambiar de Space. No se envió nada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le raccourci Mission Control « %@ » ou le Dock a changé avant que LazySpace commence à changer de Space. Rien n’a été envoyé."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "切り替えを始める前にMission Controlのショートカット「%@」またはDockが変わりました。何も送信していません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace가 전환을 시작하기 전에 Mission Control의 ‘%@’ 단축키 또는 Dock이 변경되었습니다. 아무것도 보내지 않았습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O atalho “%@” do Mission Control ou o Dock mudou antes de o LazySpace começar a mudar de Space. Nada foi enviado."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace开始切换前，调度中心快捷键“%@”或程序坞发生了变化。未发送任何按键。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace開始切換前，「指揮中心」快速鍵「%@」或Dock發生變化。未傳送任何內容。"
           }
         }
       }
@@ -583,16 +1969,58 @@
       "comment" : "Arguments: 1 = `name`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Mission Control-Kurzbefehl „%@“ verwendet die Umschalttaste ohne Control-, Option- oder Command-Taste."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The Mission Control shortcut “%@” uses Shift without Control, Option, or Command."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El atajo “%@” de Mission Control usa Mayúsculas sin Control, Opción ni Comando."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le raccourci Mission Control « %@ » utilise Maj sans Contrôle, Option ni Commande."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mission Controlのショートカット「%@」はShiftだけで、Control・Option・Commandがありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Control의 ‘%@’ 단축키가 Control, Option 또는 Command 없이 Shift를 사용합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O atalho “%@” do Mission Control usa Shift sem Control, Option ou Command."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "调度中心快捷键“%@”使用了Shift，但没有Control、Option或Command。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「指揮中心」快速鍵「%@」使用Shift，但未搭配Control、Option或Command。"
           }
         }
       }
@@ -601,16 +2029,58 @@
       "comment" : "Arguments: 1 = `name`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Mission Control-Kurzbefehl „%@“ verwendet eine Funktionstaste, die nicht gesendet wird."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The Mission Control shortcut “%@” uses a function key, which is not sent."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El atajo “%@” de Mission Control usa una tecla de función, que no se envía."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le raccourci Mission Control « %@ » utilise une touche de fonction, qui n’est pas envoyée."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mission Controlのショートカット「%@」はファンクションキーのため送信しません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Control의 ‘%@’ 단축키가 기능 키를 사용하므로 보내지 않습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O atalho “%@” do Mission Control usa uma tecla de função, que não é enviada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "调度中心快捷键“%@”使用了功能键，此类按键不会发送。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「指揮中心」快速鍵「%@」使用功能鍵，因此不會傳送。"
           }
         }
       }
@@ -619,16 +2089,58 @@
       "comment" : "Arguments: 1 = `name`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Mission Control-Kurzbefehl „%@“ verwendet eine Medientaste, die nicht gesendet wird."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The Mission Control shortcut “%@” uses a media key, which is not sent."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El atajo “%@” de Mission Control usa una tecla multimedia, que no se envía."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le raccourci Mission Control « %@ » utilise une touche multimédia, qui n’est pas envoyée."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mission Controlのショートカット「%@」はメディアキーのため送信しません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Control의 ‘%@’ 단축키가 미디어 키를 사용하므로 보내지 않습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O atalho “%@” do Mission Control usa uma tecla de mídia, que não é enviada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "调度中心快捷键“%@”使用了媒体键，此类按键不会发送。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「指揮中心」快速鍵「%@」使用媒體鍵，因此不會傳送。"
           }
         }
       }
@@ -637,16 +2149,58 @@
       "comment" : "Arguments: 1 = `name`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Mission Control-Kurzbefehl „%@“ verwendet eine erweiterte Taste, die nicht gesendet wird."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The Mission Control shortcut “%@” uses an extended key, which is not sent."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El atajo “%@” de Mission Control usa una tecla extendida, que no se envía."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le raccourci Mission Control « %@ » utilise une touche étendue, qui n’est pas envoyée."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mission Controlのショートカット「%@」は拡張キーのため送信しません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Control의 ‘%@’ 단축키가 확장 키를 사용하므로 보내지 않습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O atalho “%@” do Mission Control usa uma tecla estendida, que não é enviada."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "调度中心快捷键“%@”使用了扩展键，此类按键不会发送。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「指揮中心」快速鍵「%@」使用延伸按鍵，因此不會傳送。"
           }
         }
       }
@@ -655,16 +2209,58 @@
       "comment" : "Arguments: 1 = `name`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Mission Control-Kurzbefehl „%@“ verwendet Fn mit einer anderen Taste als einer Pfeiltaste."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The Mission Control shortcut “%@” uses Fn on a key other than an arrow."
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El atajo “%@” de Mission Control usa Fn con una tecla que no es una flecha."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le raccourci Mission Control « %@ » utilise Fn avec une touche autre qu’une flèche."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mission Controlのショートカット「%@」は矢印以外のキーにFnが付いています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mission Control의 ‘%@’ 단축키가 화살표 키가 아닌 키에 Fn을 사용합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O atalho “%@” do Mission Control usa Fn em uma tecla que não é de seta."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "调度中心快捷键“%@”在方向键以外的按键上使用了Fn。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「指揮中心」快速鍵「%@」在方向鍵以外的按鍵上使用Fn。"
           }
         }
       }
@@ -673,10 +2269,28 @@
       "comment" : "Arguments: 1 = `settings`.",
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die restlichen Schritte wurden nicht gesendet. %@."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The remaining steps were not sent. %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se enviaron los pasos restantes. %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les étapes restantes n’ont pas été envoyées. %@."
           }
         },
         "ja" : {
@@ -684,16 +2298,58 @@
             "state" : "translated",
             "value" : "残りの移動は送っていません。%@。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "남은 이동은 보내지 않았습니다. %@."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As etapas restantes não foram enviadas. %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未发送剩余的步骤。请检查%@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未傳送其餘的切換。%@。"
+          }
         }
       }
     },
     "spaceControl.theWindowCouldNotBe" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Fenster konnte nicht direkt bewegt werden."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The window could not be moved directly."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo mover la ventana directamente."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La fenêtre n’a pas pu être déplacée directement."
           }
         },
         "ja" : {
@@ -701,16 +2357,58 @@
             "state" : "translated",
             "value" : "ウインドウを直接移動できませんでした。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "윈도우를 직접 이동할 수 없었습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível mover a janela diretamente."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法直接移动窗口。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法直接移動視窗。"
+          }
         }
       }
     },
     "spaceControl.theWindowMovedToA" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Fenster wurde in einen anderen Space bewegt."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "The window moved to a different Space."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La ventana pasó a otro Space."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La fenêtre est passée à un autre Space."
           }
         },
         "ja" : {
@@ -718,22 +2416,88 @@
             "state" : "translated",
             "value" : "ウインドウの所属する操作スペースが変わりました。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "윈도우가 다른 Space로 이동했습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A janela foi para outro Space."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "窗口已移到其他空间。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "視窗已移至其他空間。"
+          }
         }
       }
     },
     "spaceControl.unknown" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "unbekannt"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "unknown"
           }
         },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "desconocido"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "inconnu"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "不明"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "알 수 없음"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "desconhecido"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未知"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未知"
           }
         }
       }

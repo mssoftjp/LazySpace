@@ -144,20 +144,20 @@ final class ConfigTests: XCTestCase {
 
     /// The values and the template comment come from the shipped languages; for English and Japanese they read as before.
     func testLanguageValuesFollowTheShippedLanguages() {
-        XCTAssertEqual(Config.languageValues, ["system", "en", "ja"])
-        XCTAssertTrue(Config.template.contains(#"language = "system"            # Display language: "system" (follow macOS), "en", or "ja""# + "\n"))
+        XCTAssertEqual(Config.languageValues, ["system", "en", "de", "es", "fr", "ja", "ko", "pt-BR", "zh-Hans", "zh-Hant"])
+        XCTAssertTrue(Config.template.contains(#"language = "system"            # Display language: "system" (follow macOS), "en", "de", "es", "fr", "ja", "ko", "pt-BR", "zh-Hans", or "zh-Hant""# + "\n"))
     }
 
     /// The error lists the allowed values with the final "or" in English, and with the Japanese list separator.
     func testInvalidLanguageNamesTheAllowedValues() {
         func problems() -> [String] {
-            do { _ = try Config.load(toml: "language = \"fr\""); return [] } catch { return (error as? Config.LoadError)?.problems ?? [] }
+            do { _ = try Config.load(toml: "language = \"it\""); return [] } catch { return (error as? Config.LoadError)?.problems ?? [] }
         }
-        XCTAssertTrue(problems().contains(#"language must be "system", "en", or "ja"."#), "\(problems())")
+        XCTAssertTrue(problems().contains(#"language must be "system", "en", "de", "es", "fr", "ja", "ko", "pt-BR", "zh-Hans", or "zh-Hant"."#), "\(problems())")
         let saved = Copy.language
         Copy.language = .japanese
         defer { Copy.language = saved }
-        XCTAssertTrue(problems().contains(#"languageは"system"、"en"、"ja"のいずれかで指定してください。"#), "\(problems())")
+        XCTAssertTrue(problems().contains(#"languageは"system"、"en"、"de"、"es"、"fr"、"ja"、"ko"、"pt-BR"、"zh-Hans"、"zh-Hant"のいずれかで指定してください。"#), "\(problems())")
     }
 
     func testLanguageParsingAndRendering() throws {
@@ -168,7 +168,7 @@ final class ConfigTests: XCTestCase {
             XCTAssertTrue(c.render().contains("language = \"\(value)\"\n"))
             XCTAssertEqual(try Config.load(toml: c.render()), c)
         }
-        for bad in ["\"fr\"", "\"EN\"", "1"] {
+        for bad in ["\"it\"", "\"EN\"", "\"zh-hans\"", "1"] {
             XCTAssertThrowsError(try Config.load(toml: "language = \(bad)"), bad) { e in
                 let problems = (e as? Config.LoadError)?.problems ?? []
                 XCTAssertTrue(problems.contains { $0.hasPrefix("language ") }, "\(problems)")

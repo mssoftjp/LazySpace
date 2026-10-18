@@ -99,6 +99,24 @@ final class ShortcutActionCell: NSTableCellView {
 enum ShortcutColumnMetrics {
     static let trailingInset: CGFloat = 6
     static let recorderWidth: CGFloat = 110
+
+    static let minimumColumnWidth: CGFloat = 120
+
+    /// The recording box: 110 pt, or wider when the language's prompt needs it (with the label's 6 pt inset on each side).
+    static func recorderWidth(for prompt: String, font: NSFont) -> CGFloat {
+        max(recorderWidth, promptWidth(prompt, font: font) + 12)
+    }
+
+    /// The Shortcut column's narrowest width: 120 pt, or the prompt with its insets and the box's 6 pt margins.
+    static func minimumColumnWidth(for prompt: String, font: NSFont) -> CGFloat {
+        max(minimumColumnWidth, promptWidth(prompt, font: font) + 24)
+    }
+
+    private static func promptWidth(_ prompt: String, font: NSFont) -> CGFloat {
+        let label = NSTextField(labelWithString: prompt)
+        label.font = font
+        return ceil(label.cell?.cellSize.width ?? 0)
+    }
 }
 
 /// Selection inset from the row edges with rounded corners. Not used for group rows.
@@ -313,9 +331,10 @@ final class ShortcutValueCell: NSTableCellView {
         return actions
     }
 
-    /// The recording box, at the row's right edge. Long keys are clipped inside it.
+    /// The recording box, at the row's right edge. Long keys are clipped inside it; the prompt always fits.
     var recorderBox: NSRect {
-        let width = min(ShortcutColumnMetrics.recorderWidth, max(0, bounds.width - 12))
+        let wanted = ShortcutColumnMetrics.recorderWidth(for: L(.settingsControlsTypeShortcut), font: valueLabel.font ?? .systemFont(ofSize: 13))
+        let width = min(wanted, max(0, bounds.width - 12))
         return NSRect(
             x: bounds.maxX - ShortcutColumnMetrics.trailingInset - width,
             y: max(0, (bounds.height - 20) / 2),

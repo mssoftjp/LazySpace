@@ -952,7 +952,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         let keyColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("key"))
         keyColumn.title = SettingsCopy.keyColumns[1]
         keyColumn.width = 216
-        keyColumn.minWidth = 120
+        keyColumn.minWidth = ShortcutColumnMetrics.minimumColumnWidth(for: L(.settingsControlsTypeShortcut), font: .systemFont(ofSize: 13))
         keyColumn.resizingMask = .autoresizingMask
         keysTable.addTableColumn(keyColumn)
         if let labelColumn = keysTable.tableColumn(withIdentifier: NSUserInterfaceItemIdentifier("label")) {

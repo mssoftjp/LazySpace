@@ -141,14 +141,49 @@ final class CatalogTests: XCTestCase {
         return (shown, selectors.subtracting(shown), bad)
     }
 
+    /// Arguments shown whichever plural form is chosen: by every top-level form, and through a substitution only when every one
+    /// of its forms shows them.
+    static func alwaysShown(_ localization: [String: Any]) -> Set<String> {
+        let substitutions = localization["substitutions"] as? [String: Any] ?? [:]
+        func value(_ form: Any) -> String { (((form as? [String: Any])?["stringUnit"] as? [String: Any])?["value"] as? String) ?? "" }
+        func inText(_ text: String) -> Set<String> {
+            var out: Set<String> = []
+            for token in tokens(text) {
+                switch token {
+                case .plain(let argument): out.insert(argument)
+                case .substitution(let name):
+                    guard let substitution = substitutions[name] as? [String: Any] else { continue }
+                    let argument = "\(substitution["argNum"] as? Int ?? -1):\(kind(substitution["formatSpecifier"] as? String ?? "?"))"
+                    let forms = ((substitution["variations"] as? [String: Any])?["plural"] as? [String: Any] ?? [:]).values.map(value)
+                    let perForm = forms.map { form -> Set<String> in
+                        let found = tokens(form, inSubstitution: true)
+                        var shown = Set(found.compactMap { if case .plain(let a) = $0 { a } else { nil } })
+                        if found.contains(.arg) { shown.insert(argument) }
+                        return shown
+                    }
+                    if let first = perForm.first { out.formUnion(perForm.dropFirst().reduce(first) { $0.intersection($1) }) }
+                default: break
+                }
+            }
+            return out
+        }
+        var readings = ((localization["variations"] as? [String: Any])?["plural"] as? [String: Any] ?? [:]).values.map(value)
+        if let text = (localization["stringUnit"] as? [String: Any])?["value"] as? String { readings.append(text) }
+        guard let first = readings.first else { return [] }
+        return readings.dropFirst().reduce(inText(first)) { $0.intersection(inText($1)) }
+    }
+
     /// What is wrong with a translation's arguments compared with English, or nil: every argument English shows must be shown,
-    /// nothing English lacks may be used, and no token may be malformed. A count English uses only to choose a plural form may be left out.
+    /// in every plural form where English shows it in all of them; nothing English lacks may be used; and no token may be
+    /// malformed. A count English uses only to choose a plural form may be left out.
     static func argumentProblem(english: [String: Any], other: [String: Any]) -> String? {
         let expected = argumentUse(of: english), actual = argumentUse(of: other)
         let missing = expected.shown.subtracting(actual.shown)
         let extra = actual.shown.union(actual.selectors).subtracting(expected.shown.union(expected.selectors))
-        guard !missing.isEmpty || !extra.isEmpty || !actual.bad.isEmpty else { return nil }
+        let missingInAForm = alwaysShown(english).subtracting(alwaysShown(other))
+        guard !missing.isEmpty || !extra.isEmpty || !actual.bad.isEmpty || !missingInAForm.isEmpty else { return nil }
         return "shows \(actual.shown.sorted()) vs en \(expected.shown.sorted())" + (extra.isEmpty ? "" : ", extra \(extra.sorted())")
+            + (missingInAForm.isEmpty ? "" : ", a plural form lacks \(missingInAForm.sorted())")
             + (actual.bad.isEmpty ? "" : ", malformed \(actual.bad)")
     }
 
@@ -162,7 +197,15 @@ final class CatalogTests: XCTestCase {
     }
 
     /// The plural categories each shipped language distinguishes for whole numbers (CLDR). A new language adds its own.
-    static let pluralCategories: [Language: Set<String>] = [.english: ["one", "other"], .japanese: ["other"]]
+    /// French and Portuguese count 0 as one; Spanish, French, and Portuguese "many" (a million) falls back to other.
+    static let pluralCategories: [Language: Set<String>] = [
+        .english: ["one", "other"], .german: ["one", "other"], .spanish: ["one", "other"], .french: ["one", "other"],
+        .japanese: ["other"], .korean: ["other"], .brazilianPortuguese: ["one", "other"],
+        .simplifiedChinese: ["other"], .traditionalChinese: ["other"],
+    ]
+
+    /// Languages that write sentences without a space between them.
+    static let unspacedSentences: Set<Language> = [.japanese, .simplifiedChinese, .traditionalChinese]
 
     /// Plural forms a localization is missing, at the top level and in each substitution.
     static func missingPluralForms(_ localization: [String: Any], language: Language) -> [String] {
@@ -216,7 +259,7 @@ final class CatalogTests: XCTestCase {
                     let state = unit["state"] as? String ?? "missing"
                     let value = unit["value"] as? String ?? ""
                     if state != "translated" { found.append("\(entry.module) \(entry.key) [\(language.rawValue)] \(label): state \(state)") }
-                    let mayBeEmpty = entry.key == "copy.sentenceSeparator" && language == .japanese
+                    let mayBeEmpty = entry.key == "copy.sentenceSeparator" && Self.unspacedSentences.contains(language)
                     if value.isEmpty && !mayBeEmpty { found.append("\(entry.module) \(entry.key) [\(language.rawValue)] \(label): empty") }
                 }
             }

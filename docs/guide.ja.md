@@ -138,7 +138,7 @@ Homebrewでインストールした場合も、同じ方法でアップデート
 
 | 設定 | 既定値 | 意味 |
 |---|---|---|
-| `language` | `"system"` | `"system"`、`"en"`、`"ja"` |
+| `language` | `"system"` | `"system"`、`"en"`、`"de"`、`"es"`、`"fr"`、`"ja"`、`"ko"`、`"pt-BR"`、`"zh-Hans"`、`"zh-Hant"` |
 | `gap` | `0` | ウインドウの間隔（0〜200ポイント。整数に丸めます）。`[gaps]`の`inner-horizontal`、`inner-vertical`、`outer-left`、`outer-top`、`outer-right`、`outer-bottom`で別々に指定できます（それぞれ0〜200） |
 | `place-dialogs-beside` | `false` | 計算機や警告など大きさが固定のウインドウから別のウインドウへ移ると、そのウインドウを右端か下端の帯へ移し、整列したウインドウは残りに並べる |
 | `follow-moved-window` | `false` | ショートカットかメニューでウインドウを別の操作スペースへ移したあと、その操作スペースにも切り替える。コマンドラインには影響しない |

@@ -1,10 +1,18 @@
 import Foundation
 
-/// A shipped display language: every catalog translates every entry into it. English is the source language.
-/// Command names, settings keys, and JSON keys are never translated.
+/// A shipped display language: every catalog translates every entry into it. English is the source language and comes
+/// first; the rest follow their codes, which is also their order in Settings. Command names, settings keys, and JSON keys
+/// are never translated.
 public enum Language: String, Codable, CaseIterable {
     case english = "en"
+    case german = "de"
+    case spanish = "es"
+    case french = "fr"
     case japanese = "ja"
+    case korean = "ko"
+    case brazilianPortuguese = "pt-BR"
+    case simplifiedChinese = "zh-Hans"
+    case traditionalChinese = "zh-Hant"
 
     /// Selects this language's catalog values. Cached because `L` runs often.
     public var locale: Locale { Self.locales[self]! }
