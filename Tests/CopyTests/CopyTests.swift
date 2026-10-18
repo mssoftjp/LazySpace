@@ -32,6 +32,20 @@ final class CopyTests: XCTestCase {
         XCTAssertEqual(Copy.systemLanguage(preferred: []), .english)
     }
 
+    /// The setting and LAZYSPACE_LANGUAGE match a code without regard to case, so mixed-case codes such as zh-Hans are not lost.
+    func testLanguageCodesMatchWithoutRegardToCase() {
+        XCTAssertEqual(Language.matching("JA"), .japanese)
+        XCTAssertEqual(Language.matching("En"), .english)
+        XCTAssertNil(Language.matching("fr-CA"))
+        XCTAssertNil(Language.matching("system"))
+        for language in Language.allCases {
+            XCTAssertEqual(Language.matching(language.rawValue.lowercased()), language)
+            XCTAssertEqual(Language.matching(language.rawValue.uppercased()), language)
+        }
+        Copy.apply(setting: "JA")
+        XCTAssertEqual(Copy.language, .japanese)
+    }
+
     func testEachLanguageIsNamedInItself() {
         XCTAssertEqual(Language.english.endonym, "English")
         XCTAssertEqual(Language.japanese.endonym, "日本語")

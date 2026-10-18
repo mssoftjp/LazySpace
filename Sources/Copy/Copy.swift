@@ -10,8 +10,16 @@ public enum Language: String, Codable, CaseIterable {
     public var locale: Locale { Self.locales[self]! }
     private static let locales = Dictionary(uniqueKeysWithValues: allCases.map { ($0, Locale(identifier: $0.rawValue)) })
 
-    /// The language's name in that language, as macOS gives it.
-    public var endonym: String { locale.localizedString(forLanguageCode: rawValue) ?? rawValue }
+    /// The language's name in that language, as macOS gives it, with its region or script ("Português (Brasil)", two Chinese).
+    public var endonym: String {
+        let name = locale.localizedString(forIdentifier: rawValue) ?? rawValue
+        return name.prefix(1).uppercased(with: locale) + name.dropFirst()
+    }
+
+    /// The language whose code matches without regard to case, so `zh-hans` and `ZH-Hans` both find `zh-Hans`.
+    public static func matching(_ code: String) -> Language? {
+        allCases.first { $0.rawValue.caseInsensitiveCompare(code) == .orderedSame }
+    }
 }
 
 public enum Copy {
@@ -33,7 +41,7 @@ public enum Copy {
     /// Applies the `language` setting. `LAZYSPACE_LANGUAGE` overrides it. "system" stays English in tests.
     public static func apply(setting: String) {
         if let forced = environmentLanguage() { language = forced; return }
-        if let explicit = Language(rawValue: setting.lowercased()) { language = explicit; return }
+        if let explicit = Language.matching(setting) { language = explicit; return }
         language = initialLanguage()
     }
 
@@ -45,7 +53,7 @@ public enum Copy {
     }
 
     private static func environmentLanguage() -> Language? {
-        ProcessInfo.processInfo.environment["LAZYSPACE_LANGUAGE"].flatMap { Language(rawValue: $0) }
+        ProcessInfo.processInfo.environment["LAZYSPACE_LANGUAGE"].flatMap(Language.matching)
     }
 }
 
