@@ -66,11 +66,11 @@ final class SettingsRecorderLogicProbeTests: XCTestCase {
         Copy.language = .english
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-        let suite = "LazySpace.RecorderLogicProbe.\(UUID().uuidString)"
-        let preferences = UserDefaults(suiteName: suite)!
+        let testPreferences = TestPreferences("RecorderLogicProbe")
+        let preferences = testPreferences.defaults
         preferences.set(SettingsPane.keys.rawValue, forKey: "settings.selectedPane")
         defer {
-            preferences.removePersistentDomain(forName: suite)
+            testPreferences.remove()
             try? FileManager.default.removeItem(at: root)
             Copy.language = oldLanguage
         }

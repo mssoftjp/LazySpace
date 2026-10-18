@@ -29,3 +29,23 @@ enum TestWindows {
         return controller
     }
 }
+
+/// A preferences suite for one test, kept in its own temporary folder: a suite named by an absolute path is stored at that
+/// path, so nothing reaches ~/Library/Preferences (macOS writes an empty plist there even after the domain is removed).
+struct TestPreferences {
+    let folder: URL
+    let suite: String
+    let defaults: UserDefaults
+
+    init(_ name: String) {
+        folder = FileManager.default.temporaryDirectory.appendingPathComponent("LazySpace.\(name).\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        suite = folder.appendingPathComponent("preferences").path
+        defaults = UserDefaults(suiteName: suite)!
+    }
+
+    func remove() {
+        defaults.removePersistentDomain(forName: suite)
+        try? FileManager.default.removeItem(at: folder)
+    }
+}

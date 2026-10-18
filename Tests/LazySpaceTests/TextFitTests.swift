@@ -14,21 +14,21 @@ final class TextFitTests: XCTestCase {
     private var root: URL!
     private var coordinator: Coordinator!
     private var preferences: UserDefaults!
-    private var suite: String!
+    private var testPreferences: TestPreferences!
 
     override func setUpWithError() throws {
         _ = NSApplication.shared
         root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-        suite = "LazySpace.TextFitTests.\(UUID().uuidString)"
-        preferences = UserDefaults(suiteName: suite)!
+        testPreferences = TestPreferences("TextFitTests")
+        preferences = testPreferences.defaults
         let system = CoordinatorSystem()
         coordinator = Coordinator(system: system, store: StateStore(root: root), configURL: root.appendingPathComponent("config.toml"),
                                   takeCensus: system.census, takeOverview: { nil })
     }
 
     override func tearDownWithError() throws {
-        preferences.removePersistentDomain(forName: suite)
+        testPreferences.remove()
         try FileManager.default.removeItem(at: root)
         Copy.language = .english
     }
