@@ -35,6 +35,7 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
     private var stableRetries = 0
     private var checking = false
     private var updatedAt: Date?
+    private let scrollerStyle: NSScroller.Style
 
     struct InspectorRow: Equatable {
         var app: String
@@ -65,20 +66,26 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
          readLive: @escaping () -> WindowInspectLive,
          markReady: @escaping () -> Void,
          openGeneralSettings: @escaping () -> Void,
-         openAccessSettings: @escaping () -> Void) {
+         openAccessSettings: @escaping () -> Void,
+         scrollerStyle: NSScroller.Style = NSScroller.preferredScrollerStyle) {
         self.loadInspection = loadInspection
         self.readLive = readLive
         self.markReady = markReady
         self.openGeneralSettings = openGeneralSettings
         self.openAccessSettings = openAccessSettings
+        self.scrollerStyle = scrollerStyle
+        // Scroll bars that are always shown take their width from the table; open that much wider so the columns are
+        // the same as with overlay scroll bars.
+        let scrollerWidth = scrollerStyle == .legacy ? NSScroller.scrollerWidth(for: .regular, scrollerStyle: .legacy) : 0
+        let size = NSSize(width: 560 + scrollerWidth, height: 340)
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 560, height: 340),
+            contentRect: NSRect(origin: .zero, size: size),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false)
         window.title = Self.windowTitle
         window.contentMinSize = NSSize(width: 520, height: 220)
-        window.setContentSize(NSSize(width: 560, height: 340))
+        window.setContentSize(size)
         window.center()
         window.isReleasedWhenClosed = false
         window.collectionBehavior = [.moveToActiveSpace]
@@ -223,6 +230,7 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
         stretch(emptyLabel, in: stack)
 
         tableScroll.hasVerticalScroller = true
+        tableScroll.scrollerStyle = scrollerStyle
         tableScroll.drawsBackground = false
         tableScroll.documentView = table
         tableScroll.translatesAutoresizingMaskIntoConstraints = false

@@ -21,10 +21,11 @@ enum TestWindows {
                           readLive: @escaping () -> WindowInspectLive,
                           markReady: @escaping () -> Void,
                           openGeneralSettings: @escaping () -> Void,
-                          openAccessSettings: @escaping () -> Void) -> ReadyWindowController {
+                          openAccessSettings: @escaping () -> Void,
+                          scrollerStyle: NSScroller.Style = .overlay) -> ReadyWindowController {
         let controller = ReadyWindowController(
             loadInspection: loadInspection, readLive: readLive, markReady: markReady,
-            openGeneralSettings: openGeneralSettings, openAccessSettings: openAccessSettings)
+            openGeneralSettings: openGeneralSettings, openAccessSettings: openAccessSettings, scrollerStyle: scrollerStyle)
         conceal(controller.window)
         return controller
     }

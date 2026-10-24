@@ -235,22 +235,26 @@ final class TextFitTests: XCTestCase {
 
     func testEveryExclusionReasonFitsTheWindowListInEveryLanguage() throws {
         var found: [String] = []
-        for language in Language.allCases {
-            Copy.language = language
-            let inspection = Self.everyExclusion()
-            XCTAssertFalse(inspection.excluded.contains { $0.reason.isEmpty })
-            let controller = TestWindows.inspector(loadInspection: { $0(inspection) }, readLive: { WindowInspectLive(
-                spaceID: 1, trusted: true, spaceObservationAvailable: true, waiting: [], status: self.coordinator.status(), firstLaunchDone: true) },
-                markReady: {}, openGeneralSettings: {}, openAccessSettings: {})
-            defer { controller.close() }
-            controller.showWindow(nil)
-            // At the default width, tall enough that every row has a view.
-            let window = try XCTUnwrap(controller.window)
-            window.setContentSize(NSSize(width: window.contentLayoutRect.width, height: 900))
-            let content = try XCTUnwrap(window.contentView)
-            content.layoutSubtreeIfNeeded()
-            XCTAssertEqual(controller.visibleRows().count, inspection.excluded.count + 2)
-            found += Self.clippedText(in: content).map { "\(language.rawValue): \($0)" }
+        // Scroll bars that are always shown take width from the table; overlay ones do not.
+        for scrollerStyle in [NSScroller.Style.overlay, .legacy] {
+            for language in Language.allCases {
+                Copy.language = language
+                let inspection = Self.everyExclusion()
+                XCTAssertFalse(inspection.excluded.contains { $0.reason.isEmpty })
+                let controller = TestWindows.inspector(loadInspection: { $0(inspection) }, readLive: { WindowInspectLive(
+                    spaceID: 1, trusted: true, spaceObservationAvailable: true, waiting: [], status: self.coordinator.status(), firstLaunchDone: true) },
+                    markReady: {}, openGeneralSettings: {}, openAccessSettings: {}, scrollerStyle: scrollerStyle)
+                defer { controller.close() }
+                controller.showWindow(nil)
+                // At the default width, tall enough that every row has a view.
+                let window = try XCTUnwrap(controller.window)
+                window.setContentSize(NSSize(width: window.contentLayoutRect.width, height: 900))
+                let content = try XCTUnwrap(window.contentView)
+                content.layoutSubtreeIfNeeded()
+                XCTAssertEqual(controller.visibleRows().count, inspection.excluded.count + 2)
+                let style = scrollerStyle == .legacy ? "legacy" : "overlay"
+                found += Self.clippedText(in: content).map { "\(language.rawValue), \(style) scroll bars: \($0)" }
+            }
         }
         XCTAssertEqual(found, [], "text that does not fit:\n" + found.joined(separator: "\n"))
     }
