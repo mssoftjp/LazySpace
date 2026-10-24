@@ -47,12 +47,15 @@ protocol CoordinatorWindowSystem: WindowSystem {
     func focusedWindowID(within timeout: TimeInterval) -> WindowID?
     /// Bounded observation (classifying new windows). No AX request waits beyond the time left; apps not finished go into `unobservedApps`.
     func snapshot(limitingTo ids: Set<WindowID>, deadline: Date) -> Snapshot
+    /// Bounded frame read (confirming a mouse edit). No AX request waits beyond the deadline.
+    func readFrame(_ id: WindowID, before deadline: Date) -> FrameRead
     /// Dialog-region evidence (one window). A missing attribute counts as known; any unreadable attribute gives nil.
     func dialogEvidence(pid: Int32, window id: WindowID, deadline: Date) -> DialogEvidence?
 }
 
 extension CoordinatorWindowSystem {
     func focusedWindowID(within timeout: TimeInterval) -> WindowID? { focusedWindowID() }
+    func readFrame(_ id: WindowID, before deadline: Date) -> FrameRead { readFrame(id) }
     func processExited(_ pid: Int32) -> Bool { false }
     func spacesOf(_ id: WindowID) -> [UInt64]? { nil }
     func spaceDisplay(_ space: UInt64) -> SpaceDisplay? { nil }
@@ -3459,10 +3462,10 @@ final class Coordinator {
             earlyMouseEdit = false
             mouseEditSample = nil
         } else if mouseHeld {
+            // A press without a drag (a click, a title-bar double-click) is never a mouse edit: what changes after it is the app's or
+            // macOS's doing (an Electron window maximizing itself once it is shown, a zoom), and drift correction puts it back, as AeroSpace does.
             mouseHeld = false
-            pendingMouseEdit = true
             dragQuietPending = true
-            if !dragged { mouseEditSpace = pressSpace }
         }
         // A press after the drag ended (a click, a title-bar double-click zoom), even between observations, keeps the quiet path.
         if presses != dragPresses { earlyMouseEdit = false; mouseEditSample = nil }
@@ -3472,7 +3475,7 @@ final class Coordinator {
             lock.lock(); let off = control.paused || pressSpace.map { state.pausedSpaces.contains($0) } ?? true; lock.unlock()
             if off || mouseEditSpace != pressSpace { clearPendingMouseEdit() }
         }
-        // The quiet wait applies only while the mouse is held and after a drag; key input alone never delays arrangement.
+        // The quiet wait applies only while the mouse is held and after a press; key input alone never delays arrangement.
         let quiet = !buttonDown && (dragQuietPending ? sinceInput >= quietInterval : true)
         if quiet { dragQuietPending = false }
 
@@ -3683,8 +3686,10 @@ final class Coordinator {
         if pendingMouseEdit, earlyMouseEdit, !quiet, !buttonDown, out.actions.isEmpty, out.deferredAdded.isEmpty, out.deferredRemoved.isEmpty,
            !holdingRemoval, removalGate == nil, !autoOff, let layout, !isBusy,
            adoptStillMouseEdit(current: current, spaceKey: spaceKey, layout: layout, managed: managed, authorization: decision) { return }
-        // Only changes after the left button is released are adopted, as ratio updates or swaps.
-        if out.actions.isEmpty, !holdingRemoval, pendingMouseEdit, quiet, !buttonDown, !autoOff, layout != nil, !isBusy {
+        // Only changes after the left button is released are adopted, as ratio updates or swaps, and only once the frames stopped moving:
+        // while macOS slides a Space away, CGWindowList lists its windows shifted at their own size and SkyLight still reports that Space as current.
+        if out.actions.isEmpty, !holdingRemoval, pendingMouseEdit, quiet, !buttonDown, !autoOff, layout != nil, !isBusy,
+           !managedFramesMoving(current, managed: managed) {
             switch applyFirstManualEdit(current: current, spaceKey: spaceKey, layout: layout!, managed: managed, authorization: decision) {
             case .applied: clearPendingMouseEdit(); return
             case .none: clearPendingMouseEdit()
@@ -5553,16 +5558,20 @@ final class Coordinator {
         if unchangedSinceNoopReconcile(current, spaceKey: spaceKey, ids: layout.windowIDs) { return false }
         // Do not rewrite mid closing / opening animation or while the app moves the window itself. Querying a closing window through AX
         // can block for hundreds of ms, delaying the refill after it closes. Decide on the next observation after frames stop.
-        let moving = managed.contains { id in
-            guard let before = driftReference[id], let now = current.bounds[id] else { return false }
-            return !now.matches(before, tolerance: limits.tolerance)
-        }
-        if moving { scheduleNextTick(after: fastTickInterval); return false }
+        if managedFramesMoving(current, managed: managed) { scheduleNextTick(after: fastTickInterval); return false }
         let attempts = reconcileAttempts[spaceKey] ?? 0
         guard attempts < 3 else { return false }
         reconcileAttempts[spaceKey] = attempts + 1
         if case .started = arrange(source: "auto", kind: "auto-reconcile", authorization: authorization) { return true }
         return false
+    }
+
+    /// Whether a managed window's census frame changed since the previous observation: an animation, a Space switch slide, or the app moving it.
+    private func managedFramesMoving(_ current: Census, managed: Set<WindowID>) -> Bool {
+        managed.contains { id in
+            guard let before = driftReference[id], let now = current.bounds[id] else { return false }
+            return !now.matches(before, tolerance: limits.tolerance)
+        }
     }
 
     /// The focused window changing moves the accordion strips too; rewrite if they differ from the plan.
@@ -5618,8 +5627,13 @@ final class Coordinator {
                 return false
             }
             if earlyMouseEditDeclined { return false }
-            let edits = classifyManualEdits(current: current, spaceKey: spaceKey, layout: layout, managed: managed)
-            guard let first = edits.first, edits.allSatisfy({ if case .float = $0.edit { return false } else { return true } }) else {
+            // Input during the reads: the quiet path decides later.
+            guard let evidence = classifyManualEdits(current: current, spaceKey: spaceKey, layout: layout, managed: managed, authorization: authorization) else {
+                earlyMouseEdit = false
+                return false
+            }
+            let edits = evidence.edits
+            guard evidence.complete, let first = edits.first, edits.allSatisfy({ if case .float = $0.edit { return false } else { return true } }) else {
                 earlyMouseEditDeclined = true
                 return false
             }
@@ -5637,19 +5651,57 @@ final class Coordinator {
         return false
     }
 
+    /// How long the Accessibility reads that confirm one mouse edit may take in total: the tick shares the operations queue with commands.
+    static let mouseEditReadBudget: TimeInterval = 0.5
+
+    enum EvidenceRead: Equatable {
+        /// Frames read, and whether every window was read before the deadline (a window that answered with an error counts as read).
+        case frames([WindowID: CGRect], complete: Bool)
+        /// The observation went stale (input, Pause, or a cancellation) before the reads finished.
+        case interrupted
+    }
+
+    /// Reads `ids` in order until the deadline, and stops as soon as `interrupted` reports the observation stale, also after the last read:
+    /// input during a read that failed would otherwise look like no edit and drop the drag.
+    static func readEvidence(_ ids: [WindowID], deadline: Date, now: () -> Date, interrupted: () -> Bool,
+                             read: (WindowID, Date) -> FrameRead) -> EvidenceRead {
+        var frames: [WindowID: CGRect] = [:]
+        for id in ids {
+            if interrupted() { return .interrupted }
+            guard now() < deadline else { return .frames(frames, complete: false) }
+            if case .frame(let frame) = read(id, deadline) { frames[id] = frame }
+        }
+        return interrupted() ? .interrupted : .frames(frames, complete: true)
+    }
+
     /// Mouse edits of every managed window whose frame differs from the last plan, in window order. None while zoomed (size differences are not intent).
-    private func classifyManualEdits(current: Census, spaceKey: String, layout: Layout, managed: Set<WindowID>) -> [(id: WindowID, edit: ManualEdit)] {
+    /// The census only finds the candidates: CGWindowList also lists frames macOS merely shows (a Space switch slide, Mission Control's thumbnails),
+    /// so each candidate is read through Accessibility and its edit comes from that frame; a window that cannot be read in time gives none.
+    /// nil when input, Pause, or a cancellation arrived during the reads (the drag waits for the quiet path); `complete` is false when the
+    /// read budget ran out before every candidate was read.
+    private func classifyManualEdits(current: Census, spaceKey: String, layout: Layout, managed: Set<WindowID>,
+                                     authorization: OperationAuthorization?) -> (edits: [(id: WindowID, edit: ManualEdit)], complete: Bool)? {
         lock.lock()
         let plan = lastPlans[spaceKey] ?? [:]
         let floating = Set(state.floating[spaceKey] ?? [])
         let zoomed = state.zoomed[spaceKey]
         lock.unlock()
-        guard zoomed == nil else { return [] }
-        return plan.sorted(by: { $0.key < $1.key }).compactMap { id, planned in
-            guard managed.contains(id), !floating.contains(id), let actual = current.bounds[id],
+        guard zoomed == nil else { return ([], true) }
+        let candidates = plan.keys.sorted().filter { id in
+            guard managed.contains(id), !floating.contains(id), let seen = current.bounds[id], let planned = plan[id] else { return false }
+            return !seen.matches(planned, tolerance: limits.tolerance)
+        }
+        guard !candidates.isEmpty else { return ([], true) }
+        let read = Self.readEvidence(candidates, deadline: Date().addingTimeInterval(Self.mouseEditReadBudget), now: Date.init,
+                                     interrupted: { [self] in authorization?.interruptionReason(system: system, control: control) != nil },
+                                     read: { [self] id, deadline in system.readFrame(id, before: deadline) })
+        guard case .frames(let frames, let complete) = read else { return nil }
+        let edits = candidates.compactMap { id -> (id: WindowID, edit: ManualEdit)? in
+            guard let actual = frames[id], let planned = plan[id],
                   let edit = ManualEdit.detect(id: id, planned: planned, actual: actual, layout: layout, plannedRects: plan, tolerance: limits.tolerance) else { return nil }
             return (id, edit)
         }
+        return (edits, complete)
     }
 
     /// Adopts the first mouse edit (for tests and the quiet path); true when one was applied.
@@ -5658,7 +5710,10 @@ final class Coordinator {
     }
 
     private func applyFirstManualEdit(current: Census, spaceKey: String, layout: Layout, managed: Set<WindowID>, authorization: OperationAuthorization?) -> MouseEditOutcome {
-        guard let first = classifyManualEdits(current: current, spaceKey: spaceKey, layout: layout, managed: managed).first else { return .none }
+        guard let evidence = classifyManualEdits(current: current, spaceKey: spaceKey, layout: layout, managed: managed, authorization: authorization) else {
+            return .interrupted
+        }
+        guard let first = evidence.edits.first else { return .none }
         return applyManualEdit(first.edit, layout: layout, spaceKey: spaceKey, authorization: authorization)
     }
 

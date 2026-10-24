@@ -22,11 +22,12 @@ final class PauseDuringWriteTests: XCTestCase {
         s.minimums[WindowID(2)] = CGSize(width: 500, height: 300)
         let control = OperationControl()
         var writesAtPause: Int?
+        // Two writes, the same two again to confirm both minimums, then the first restore.
         s.onWrite = { _, count in
-            if count == 3 { writesAtPause = count; control.paused = true }
+            if count == 5 { writesAtPause = count; control.paused = true }
         }
         let result = ArrangeOperation(system: s, control: control, knowledge: ConstraintKnowledge(), limits: OperationLimits(settleDelay: 0), priorLayout: Planner.rowLayout([WindowID(1), WindowID(2)], rows: 1), kind: "edit:resize", transform: { layout, _ in layout }, sleep: { _ in }).run()
-        XCTAssertEqual(writesAtPause, 3, "Fixture must reach rollback")
+        XCTAssertEqual(writesAtPause, 5, "Fixture must reach rollback")
         XCTAssertEqual(s.writes.count, writesAtPause, "Rollback must not issue the next write after Pause")
         XCTAssertEqual(result.stopReason, .paused)
         XCTAssertTrue(result.targets.contains { $0.noteKind == .notRestoredAfterStop })

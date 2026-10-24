@@ -353,6 +353,22 @@ public final class MacWindowSystem: WindowSystem {
         }
     }
 
+    /// Reads the frame within the time left until the deadline. A window without a cached element is not observed here (an observation
+    /// could take longer), so it gives `.failed`.
+    public func readFrame(_ id: WindowID, before deadline: Date) -> FrameRead {
+        lock.lock(); let c = cache[id]; lock.unlock()
+        guard let c else { return WindowList.exists(id.raw) ? .failed(L(.macWindowSystemTheWindowHasNotBeen)) : .gone }
+        // The deadline shortens the cached elements' limits; later reads, writes, and raises expect the usual ones (as `prepareForCaching` leaves them).
+        defer {
+            c.element.setMessagingTimeout(0)
+            c.app.setMessagingTimeout(readTimeout)
+        }
+        switch Self.frame(c, deadline: deadline) {
+        case .success(let f): return .frame(f)
+        case .failure(let e): return e == .invalidElement || !WindowList.exists(id.raw) ? .gone : .failed(e.label)
+        }
+    }
+
     /// The only path for authorized writes.
     public func writeFrame(_ id: WindowID, frame: CGRect, timeout: TimeInterval, shouldContinue: @escaping () -> Bool) -> WriteResult {
         guard shouldContinue() else { return .interrupted }

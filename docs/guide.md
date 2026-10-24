@@ -96,6 +96,8 @@ When automatic arrangement is on, you can edit tiled windows with the mouse:
 - Drop a window onto another tiled window to swap them.
 - Drop a window anywhere else to put it back.
 
+Clicking alone never changes the layout. If a tiled window is resized another way, such as a double-click on its title bar or by the app itself, LazySpace puts it back. To fill the work area, press `⌥Z`.
+
 ### Spaces
 
 - `⌥1`–`⌥9` (or `lazyspace space N`) switch to a numbered desktop, counted in Mission Control order. Full-screen and Split View Spaces are not numbered. With more than one display, numbers count the desktops of each display, and these shortcuts use the display with the focused window.

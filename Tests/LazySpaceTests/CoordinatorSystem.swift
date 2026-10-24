@@ -133,9 +133,11 @@ final class CoordinatorSystem: CoordinatorWindowSystem {
     private let frameLock = NSLock()
     /// Runs right after a frame read (to simulate something happening during the read).
     var onFrameRead: ((WindowID) -> Void)?
+    /// Windows whose frame read fails as if the app did not answer (the census still lists them).
+    var unreadableFrames: Set<WindowID> = []
     func readFrame(_ id: WindowID) -> FrameRead {
         frameLock.lock()
-        let read = frames[id].map(FrameRead.frame) ?? .gone
+        let read = unreadableFrames.contains(id) ? .failed("The test window did not answer.") : frames[id].map(FrameRead.frame) ?? .gone
         frameLock.unlock()
         onFrameRead?(id)
         return read

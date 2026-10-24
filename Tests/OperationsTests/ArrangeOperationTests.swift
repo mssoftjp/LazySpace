@@ -139,6 +139,7 @@ final class ArrangeOperationTests: XCTestCase {
         let r = makeOp(s).run()
         XCTAssertEqual(r.outcome, .complete, r.message)
         XCTAssertEqual(r.retries, 1)
+        XCTAssertEqual(s.writes.filter { $0.0 == WindowID(2) }.map(\.1.width), [960, 960, 1200], "the same request comes back larger twice before the minimum is learned")
         XCTAssertEqual(s.frames[WindowID(2)]!.width, 1200)
         XCTAssertEqual(s.frames[WindowID(1)]!.width, 720)
         XCTAssertEqual(s.frames[WindowID(1)]!.maxX, s.frames[WindowID(2)]!.minX)
@@ -615,6 +616,36 @@ final class ArrangeOperationTests: XCTestCase {
         XCTAssertEqual(op.run().outcome, .complete)
         XCTAssertFalse(s.writes.contains { $0.0 == WindowID(1) || $0.0 == WindowID(4) })
         XCTAssertEqual(Set(op.resultingLayout!.windowIDs), [WindowID(1), WindowID(2), WindowID(3)])
+    }
+
+    /// Minimums found one after another (the second shows only once the first has narrowed its neighbors) are each confirmed and replanned.
+    func testMinimumsFoundOneAfterAnotherAreEachReplanned() {
+        let s = FakeSystem(windows: [window(1, app: "a", x: 0), window(2, app: "b", x: 700), window(3, app: "c", x: 1400)])
+        s.fixed[WindowID(1)] = CGSize(width: 1200, height: 408)
+        s.minimums[WindowID(2)] = CGSize(width: 500, height: 0)
+        let r = makeOp(s).run()
+        XCTAssertEqual(r.outcome, .complete, r.message)
+        XCTAssertEqual(s.frames[WindowID(1)]?.size, CGSize(width: 1200, height: 408))
+        XCTAssertEqual(s.frames[WindowID(2)]?.width, 500)
+        XCTAssertEqual(s.frames[WindowID(3)]?.width, 220)
+    }
+
+    /// An app that enlarges its window once right after the write (an Electron app maximizing a window it has just opened)
+    /// gets the same request again and keeps its place; one larger readback is not a minimum.
+    func testOneLargerReadbackIsWrittenAgainAndNotLearned() {
+        let s = FakeSystem(windows: [window(1, app: "a", x: 0), window(2, app: "b", x: 900)])
+        var zoomed = false
+        s.onWrite = { sys, _ in
+            guard !zoomed, sys.writes.last?.0 == WindowID(2) else { return }
+            zoomed = true
+            sys.frames[WindowID(2)] = sys.snap.workArea
+        }
+        let r = makeOp(s).run()
+        XCTAssertTrue(zoomed)
+        XCTAssertEqual(r.outcome, .complete, r.message)
+        XCTAssertEqual(s.frames[WindowID(2)], CGRect(x: 960, y: 30, width: 960, height: 1050))
+        XCTAssertEqual(s.writes.filter { $0.0 == WindowID(2) }.count, 2, "written once more with the same request")
+        XCTAssertEqual(knowledge.constraints(for: [WindowID(2)], spaceID: 7, workArea: s.snap.workArea)[WindowID(2)], .unknown)
     }
 
     /// A user resize during the readback after writing is not learned as a minimum size.

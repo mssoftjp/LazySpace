@@ -97,7 +97,8 @@ final class MouseEditResponsivenessTests: XCTestCase {
         XCTAssertTrue(adopted)
     }
 
-    func testClickWithoutDragKeepsTheQuietPath() {
+    /// A click is never a mouse edit: what changes after it (a title-bar double-click zoom, an app resizing its own window) is drift, and is put back.
+    func testClickWithoutDragIsNotAnEdit() {
         mouse(.leftMouseDown)
         tick()
         system.frames[WindowID(2)] = CGRect(x: 1200, y: 0, width: 720, height: 1080) // e.g. a title-bar double-click zoom
@@ -105,8 +106,10 @@ final class MouseEditResponsivenessTests: XCTestCase {
         tick(); tick(); tick()
         XCTAssertFalse(adopted, "a click is not a drag")
         Thread.sleep(forTimeInterval: coordinator.quietInterval + 0.05)
-        tick()
-        XCTAssertTrue(adopted, "the quiet path decides as before")
+        tick(); tick()
+        XCTAssertFalse(adopted, "not on the quiet path either")
+        XCTAssertEqual(system.frames[WindowID(2)], CGRect(x: 960, y: 0, width: 960, height: 1080), "drift correction puts it back")
+        XCTAssertEqual(coordinator.lastResult?.kind, "auto-reconcile")
     }
 
     func testPressAfterTheDragDiscardsTheEarlyPath() {

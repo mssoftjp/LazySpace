@@ -512,12 +512,16 @@ public final class ArrangeOperation {
         // MARK: Applying and reading back
         var retries = 0
         var didRedistribute = false
-        var repeatedPlan = false
+        // Writing the same plan again to confirm a constraint: once for a minimum and once for a maximum.
+        var repeatedPlans = 0
+        // Recalculations for minimums confirmed after the usual recalculation was spent (confirming takes a pass of its own).
+        var minimumReplans = 0
         var didRelieve = false
         var stop: StopReason?
         var unresponsiveApps = Set<String>()
 
         var pullbacks: [WindowID: (requested: CGSize, actual: CGSize)] = [:]
+        var pushbacks: [WindowID: (requested: CGSize, actual: CGSize)] = [:]
         var applyIteration = 0
 
         builder.timing.planMs = (clock.now - planStart).milliseconds
@@ -655,6 +659,7 @@ public final class ArrangeOperation {
             var learned = false
             var needsRedistribute = false
             var repeatPlan = false
+            var confirmedMinimum = false
             for target in inspection.targets {
                 var report = builder.report(for: target.id)
                 guard report.status != .gone, report.status != .unapplied, let request = report.planned else { continue }
@@ -695,10 +700,25 @@ public final class ArrangeOperation {
                         mismatched.append(target.id)
                         let pushed = learnable && (actual.width > request.width + limits.tolerance || actual.height > request.height + limits.tolerance)
                         let pulled = learnable && (actual.width < request.width - limits.tolerance || actual.height < request.height - limits.tolerance)
+                        // As with a maximum, a minimum needs the same issued request to come back larger by the same amount again:
+                        // an app that resizes its own window once (an Electron app maximizing a window it has just opened) gets the
+                        // same plan written once more and then keeps its place, instead of turning into a window that cannot fit.
+                        var pushNoted = false
                         if pushed {
-                            learned = true
-                            knowledge.recordPushback(id: target.id, requested: request, actual: actual, spaceID: snapshot.spaceID, workArea: snapshot.workArea, tolerance: limits.tolerance, bundle: target.app, subrole: target.subrole)
-                            report.setNote(L(.arrangeOperationLargerThanRequestedBecauseOf(String(Int(actual.width)), String(Int(actual.height)))), .minimumSizePushback)
+                            let previous = pushbacks[target.id]
+                            let written = attemptedThisRound.contains(target.id)
+                            pushbacks[target.id] = written ? (request.size, actual.size) : nil
+                            if written, let previous, previous.requested == request.size,
+                               abs(previous.actual.width - actual.width) <= limits.tolerance,
+                               abs(previous.actual.height - actual.height) <= limits.tolerance {
+                                learned = true
+                                knowledge.recordPushback(id: target.id, requested: request, actual: actual, spaceID: snapshot.spaceID, workArea: snapshot.workArea, tolerance: limits.tolerance, bundle: target.app, subrole: target.subrole)
+                                report.setNote(L(.arrangeOperationLargerThanRequestedBecauseOf(String(Int(actual.width)), String(Int(actual.height)))), .minimumSizePushback)
+                                pushNoted = true
+                                confirmedMinimum = true
+                            } else if limits.maxRetries > 0 {
+                                repeatPlan = true
+                            }
                         }
                         if pulled {
                             learned = true
@@ -734,7 +754,7 @@ public final class ArrangeOperation {
                                 pullbacks[target.id] = nil
                             }
                             let smaller = L(.arrangeOperationTheAppMadeItSmaller(String(Int(actual.width)), String(Int(actual.height))))
-                            report.setNote(pushed ? L(.arrangeOperationNoteAndSmaller(report.note!, smaller)) : smaller, pushed ? .minimumSizePushback : nil)
+                            report.setNote(pushNoted ? L(.arrangeOperationNoteAndSmaller(report.note!, smaller)) : smaller, pushNoted ? .minimumSizePushback : nil)
                             // When a fixed size has been confirmed repeatedly and the position within the frame also matches, no further write is needed.
                             if let maximum = knowledge.maximums(for: [target.id], workArea: snapshot.workArea)[target.id] {
                                 let adjusted = Self.clamp(request, maximum: maximum)
@@ -768,11 +788,16 @@ public final class ArrangeOperation {
 
             if mismatched.isEmpty && !needsRedistribute { break applyLoop }
             let allowRetry = learned && retries < limits.maxRetries
-            let allowRepeat = repeatPlan && !repeatedPlan && !allowRetry
             let allowRedistribute = needsRedistribute && !didRedistribute
-            guard allowRetry || allowRepeat || allowRedistribute else { break applyLoop }
+            // Minimums can come to light one after another (a neighbor pushes back only once a recalculation made it narrower), and each
+            // takes a confirming pass, so a minimum confirmed after the usual recalculation still gets one, twice at most. A recalculation
+            // comes before writing the same plan again: it changes the requests that other windows would be confirming.
+            let allowMinimumReplan = confirmedMinimum && limits.maxRetries > 0 && !allowRetry && !allowRedistribute && minimumReplans < 2
+            let allowRepeat = repeatPlan && repeatedPlans < 2 && !allowRetry && !allowMinimumReplan
+            guard allowRetry || allowRepeat || allowRedistribute || allowMinimumReplan else { break applyLoop }
             if allowRedistribute { didRedistribute = true }
-            else if allowRepeat { repeatedPlan = true; continue }
+            else if allowMinimumReplan { minimumReplans += 1 }
+            else if allowRepeat { repeatedPlans += 1; continue }
 
             // Continue only if it can be recalculated keeping the structure, under the same authorization and limits.
             // Windows with confirmed maximums shrink their frames by that much and give the space to uncapped windows.
