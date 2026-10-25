@@ -96,12 +96,23 @@ public struct ObservedWindow: Equatable, Codable {
     public var kind: Kind
     /// Basis of the decision (subrole and so on), for display.
     public var detail: String
-    /// Role used to remember size constraints per app kind; empty means by window ID only.
+    /// AX subrole; with the app and `identifier`, it names the window's kind.
     public var subrole: String
     /// CGWindowList front-to-back order, 0 frontmost; unknown goes last.
     public var stackOrder: Int
+    /// AXIdentifier, which an app gives a kind of window (Finder's Get Info window is "Info"); empty when absent or unreadable.
+    /// Not encoded, like the title: an app could put something private in it.
+    public var identifier: String
+    /// Whether the window has an enabled full-screen button, so it can fill the screen. Not encoded.
+    public var fullScreenButtonEnabled: Bool
 
-    public init(id: WindowID, pid: Int32, app: String, frame: CGRect, membership: Membership, kind: Kind, detail: String, subrole: String = "", stackOrder: Int = Int.max, title: String = "") {
+    /// Windows of one kind share confirmed maximums (`ConstraintKnowledge`); nil without an AX identifier.
+    public var kindKey: String? {
+        identifier.isEmpty ? nil : [app, subrole, identifier].joined(separator: "\n")
+    }
+
+    public init(id: WindowID, pid: Int32, app: String, frame: CGRect, membership: Membership, kind: Kind, detail: String, subrole: String = "", stackOrder: Int = Int.max, title: String = "",
+                identifier: String = "", fullScreenButtonEnabled: Bool = true) {
         self.id = id
         self.pid = pid
         self.app = app
@@ -112,6 +123,8 @@ public struct ObservedWindow: Equatable, Codable {
         self.detail = detail
         self.subrole = subrole
         self.stackOrder = stackOrder
+        self.identifier = identifier
+        self.fullScreenButtonEnabled = fullScreenButtonEnabled
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -130,6 +143,8 @@ public struct ObservedWindow: Equatable, Codable {
         subrole = try c.decode(String.self, forKey: .subrole)
         stackOrder = try c.decode(Int.self, forKey: .stackOrder)
         title = ""
+        identifier = ""
+        fullScreenButtonEnabled = true
     }
 
     public func encode(to encoder: Encoder) throws {

@@ -357,6 +357,23 @@ final class PlannerTests: XCTestCase {
         XCTAssertEqual(lengths, [230, 700, 582])
     }
 
+    /// A window whose height follows its width (Finder's Get Info) can need more than a remembered short height or a maximum learned at
+    /// another width: the cap gives way to the known minimum instead of asking for less than the window can be.
+    func testACapBelowAKnownMinimumGivesWayToTheMinimum() {
+        let screen = CGRect(x: 0, y: 30, width: 2560, height: 1410)
+        let (a, b, c) = (WindowID(1), WindowID(2), WindowID(3))
+        let layout = Layout(root: .split(.horizontal, children: [.leaf(a), .leaf(b), .leaf(c)], ratios: [0.6, 0.2, 0.2]), leftoverHeights: [b: 1280])
+        let constraints: [WindowID: SizeKnowledge] = [
+            b: .estimated(CGSize(width: 0, height: 1308)),
+            c: .estimated(CGSize(width: 600, height: 0)),
+        ]
+        let maximums = [b: CGSize(width: 400, height: 1280), c: CGSize(width: 500, height: 0)]
+        guard case .fits(let plan) = Planner.fit(layout, in: screen, constraints: constraints, maximums: maximums) else { return XCTFail() }
+        XCTAssertEqual(plan.rects[a], CGRect(x: 0, y: 30, width: 1560, height: 1410))
+        XCTAssertEqual(plan.rects[b], CGRect(x: 1560, y: 30, width: 400, height: 1308), "the remembered height and the learned maximum give way")
+        XCTAssertEqual(plan.rects[c], CGRect(x: 1960, y: 30, width: 600, height: 1410), "a maximum width below the minimum gives way, and the height stays uncapped")
+    }
+
     /// Pinning caps and minimums at once with the same shares would reject a feasible split (500 and 500).
     func testDistributeFindsFeasibleLengthsWhenMinimumAndMaximumBothBind() {
         let lengths = Planner.distribute(available: 1000, ratios: [0.9, 0.1], minimums: [120, 500], maximums: [600, .infinity])

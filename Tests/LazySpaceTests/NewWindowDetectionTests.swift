@@ -64,6 +64,42 @@ final class NewWindowDetectionTests: XCTestCase {
         XCTAssertEqual(coordinator.testingAnnouncedWindows(), [], "the decision consumes the announcement")
     }
 
+    /// A window that is still opening (its frame changes between ticks) and is not placed is looked at again after 50 ms, so it can join soon
+    /// after its open animation ends (Finder's Get Info window reads as a dialog until then). A managed window that moves keeps the 150 ms tick.
+    func testAnOpeningWindowThatIsNotPlacedIsLookedAtAgainAfter50ms() {
+        system.kindOf[newWindow] = .dialog
+        appear()
+        tick(); tick()
+        XCTAssertFalse(integrated)
+        system.frames[newWindow] = CGRect(x: 90, y: 90, width: 620, height: 420)
+        XCTAssertLessThanOrEqual(tickAndReadDelay(), 0.051, "an unplaced window that is still changing its frame")
+        drain()
+        tick()
+        system.frames[WindowID(1)] = system.frames[WindowID(1)].map { $0.offsetBy(dx: 5, dy: 0) }
+        let delay = tickAndReadDelay()
+        XCTAssertGreaterThan(delay, 0.1, "a managed window that moves keeps the fast tick")
+        XCTAssertLessThanOrEqual(delay, 0.151)
+        drain()
+        tick()
+        coordinator.setCurrentSpaceAutoPaused(true)
+        system.frames[newWindow] = CGRect(x: 80, y: 80, width: 640, height: 440)
+        XCTAssertGreaterThan(tickAndReadDelay(), 0.1, "where automatic arrangement is off, nothing can add it, so no shorter tick")
+    }
+
+    /// A window that turns standard without moving, within a second of its first look, still joins: an opening window enables its zoom button
+    /// as macOS's open animation ends, and its frame may already be final by then.
+    func testAnOpeningWindowThatTurnsStandardWithoutMovingStillJoins() {
+        // Unplaced windows are looked at only once the Space is settled; the first tick of setUp recorded the arrival.
+        coordinator.noteSpaceArrival(at: Date().addingTimeInterval(-2))
+        system.kindOf[newWindow] = .dialog
+        appear()
+        tick(); tick(); tick()
+        XCTAssertFalse(integrated)
+        system.kindOf[newWindow] = nil
+        tick(); tick()
+        XCTAssertTrue(integrated)
+    }
+
     func testExpiredAnnouncementNeitherShortensTicksNorSkipsTheSecondCensus() {
         coordinator.noteAnnouncedWindow(newWindow)
         now = now.addingTimeInterval(1.1)

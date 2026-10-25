@@ -8,6 +8,9 @@ final class FakeSystem: WindowSystem {
     var snap: Snapshot
     var frames: [WindowID: CGRect] = [:]
     var minimums: [WindowID: CGSize] = [:]
+    var maximums: [WindowID: CGSize] = [:]
+    /// Height the window's content needs at a width (Finder's Get Info window grows taller when narrower).
+    var contentHeights: [WindowID: (CGFloat) -> CGFloat] = [:]
     var fixed: [WindowID: CGSize] = [:]
     var gone: Set<WindowID> = []
     var unresponsiveApps: Set<String> = []
@@ -95,6 +98,8 @@ final class FakeSystem: WindowSystem {
         if unresponsiveApps.contains(app) { frameLock.unlock(); return .timedOut }
         var f = frame
         if let m = minimums[id] { f.size.width = max(f.width, m.width); f.size.height = max(f.height, m.height) }
+        if let m = maximums[id] { f.size.width = min(f.width, m.width); f.size.height = min(f.height, m.height) }
+        if let content = contentHeights[id] { f.size.height = content(f.width) }
         if let fx = fixed[id] { f.size = fx }
         frames[id] = f
         writes.append((id, frame))

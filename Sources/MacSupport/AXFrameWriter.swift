@@ -5,7 +5,8 @@ import OSLog
 /// Order and error handling of AX writes. The caller supplies the actual attribute operations.
 enum AXFrameWriter {
     private static let logger = Logger(subsystem: "jp.lazyspace.app", category: "AXFrameWriter")
-    static func write(current: CGRect, target: CGRect,
+    /// `bounds` is the frame of the one display that holds both frames (top-left coordinates), or nil when unknown.
+    static func write(current: CGRect, target: CGRect, bounds: CGRect? = nil,
                       enhancedUI: () -> Bool?, setEnhancedUI: (Bool) -> AXFailure?,
                       setPosition: @escaping (CGPoint) -> AXFailure?,
                       setSize: @escaping (CGSize) -> AXFailure?,
@@ -16,14 +17,23 @@ enum AXFrameWriter {
         let needSize = abs(target.width - current.width) > 0.5 || abs(target.height - current.height) > 0.5
         guard needPosition || needSize else { return .issued }
         guard shouldContinue() else { return .interrupted }
-        // size -> position -> size, as AeroSpace does: the size clipped at the screen edge before moving is
-        // requested again after moving. The order stays the same for mixed growing and shrinking.
-        var steps: [(String, () -> AXFailure?)] = []
+        // The order follows what fits on the display (macOS clips a size at its edge). A size that fits at the current origin goes first,
+        // and nothing needs asking again; else a move that keeps the current size on the display goes first; else size -> position -> size,
+        // as AeroSpace does: the size clipped at the screen edge before moving is requested again after moving.
         let pos = ("position", { setPosition(target.origin) })
         let siz = ("size", { setSize(target.size) })
-        if needSize { steps.append(siz) }
-        if needPosition { steps.append(pos) }
-        if needSize && needPosition { steps.append(siz) }
+        func fits(_ rect: CGRect) -> Bool {
+            guard let bounds else { return false }
+            return rect.minX >= bounds.minX - 1 && rect.minY >= bounds.minY - 1 && rect.maxX <= bounds.maxX + 1 && rect.maxY <= bounds.maxY + 1
+        }
+        let steps: [(String, () -> AXFailure?)]
+        if needSize && needPosition {
+            if fits(CGRect(origin: current.origin, size: target.size)) { steps = [siz, pos] }
+            else if fits(CGRect(origin: target.origin, size: current.size)) { steps = [pos, siz] }
+            else { steps = [siz, pos, siz] }
+        } else {
+            steps = needSize ? [siz] : [pos]
+        }
 
         func failure(_ e: AXFailure, label: String) -> WriteResult {
             if e == .invalidElement || isGone() { return .gone }

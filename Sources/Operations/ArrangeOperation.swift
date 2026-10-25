@@ -339,6 +339,15 @@ public final class ArrangeOperation {
         for target in inspection.targets {
             knowledge.recordObservedSize(id: target.id, actual: target.frame.size)
         }
+        // A window of a kind whose maximum another window confirmed starts at that maximum instead of learning it with a second move.
+        // A single target does not borrow: it asks for the whole area, so the solo probe has nothing left to test.
+        let kindTargets = inspection.targets.compactMap { target in
+            target.kindKey.map {
+                ConstraintKnowledge.KindTarget(id: target.id, kind: $0, size: target.frame.size, fullScreenButtonEnabled: target.fullScreenButtonEnabled)
+            }
+        }
+        knowledge.reconcileKinds(kindTargets, adopt: inspection.targets.count > 1, spaceID: snapshot.spaceID,
+                                 workArea: snapshot.workArea, tolerance: limits.tolerance)
         var constraints = knowledge.constraints(for: ids, spaceID: snapshot.spaceID, workArea: snapshot.workArea)
         // With existing layout intent, remove vanished windows and add new ones at the siblings' average weight before distributing.
         var baseLayout: Layout
@@ -712,7 +721,7 @@ public final class ArrangeOperation {
                                abs(previous.actual.width - actual.width) <= limits.tolerance,
                                abs(previous.actual.height - actual.height) <= limits.tolerance {
                                 learned = true
-                                knowledge.recordPushback(id: target.id, requested: request, actual: actual, spaceID: snapshot.spaceID, workArea: snapshot.workArea, tolerance: limits.tolerance, bundle: target.app, subrole: target.subrole)
+                                knowledge.recordPushback(id: target.id, requested: request, actual: actual, spaceID: snapshot.spaceID, workArea: snapshot.workArea, tolerance: limits.tolerance)
                                 report.setNote(L(.arrangeOperationLargerThanRequestedBecauseOf(String(Int(actual.width)), String(Int(actual.height)))), .minimumSizePushback)
                                 pushNoted = true
                                 confirmedMinimum = true
@@ -740,7 +749,7 @@ public final class ArrangeOperation {
                                         confirmedHeight = true
                                     }
                                     if confirmedWidth || confirmedHeight {
-                                        knowledge.recordPullback(id: target.id, requested: request, actual: confirmed, spaceID: snapshot.spaceID, workArea: snapshot.workArea, tolerance: limits.tolerance)
+                                        knowledge.recordPullback(id: target.id, requested: request, actual: confirmed, spaceID: snapshot.spaceID, workArea: snapshot.workArea, tolerance: limits.tolerance, kind: target.kindKey)
                                         if plan.rects.count == 1, maximums[target.id] == nil { maximumsLearnedAlone[target.id] = options.tilingArea(snapshot.workArea).integralInset }
                                     }
                                 }

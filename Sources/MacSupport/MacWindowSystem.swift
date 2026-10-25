@@ -245,7 +245,10 @@ public final class MacWindowSystem: WindowSystem {
 
                     guard limit(w) else { out.unresponsive = true; break }
                     let title = w.string(kAXTitleAttribute) ?? ""
-                    out.windows.append(ObservedWindow(id: id, pid: pid, app: bundleID, frame: frame, membership: m, kind: kind, detail: "\(role)/\(subrole) layer=\(layer)", subrole: subrole, stackOrder: stackOrder[wid] ?? Int.max, title: title))
+                    guard limit(w) else { out.unresponsive = true; break }
+                    let identifier = w.string(kAXIdentifierAttribute) ?? ""
+                    out.windows.append(ObservedWindow(id: id, pid: pid, app: bundleID, frame: frame, membership: m, kind: kind, detail: "\(role)/\(subrole) layer=\(layer)", subrole: subrole, stackOrder: stackOrder[wid] ?? Int.max, title: title,
+                                                      identifier: identifier, fullScreenButtonEnabled: fullscreenButtonEnabled))
                     out.cache[id] = Cached(element: budget.prepareForCaching(w), app: appElement, pid: pid, bundleID: bundleID,
                                            observedSpace: m == .current ? active : nil)
                 }
@@ -389,7 +392,7 @@ public final class MacWindowSystem: WindowSystem {
         guard shouldContinue() else { return .interrupted }
         guard let c = cached(id) else { return WindowList.exists(id.raw) ? .rejected(L(.macWindowSystemTheWindowHasNotBeen)) : .gone }
         c.app.setMessagingTimeout(timeout)
-        return AXFrameWriter.write(current: currentFrame, target: frame,
+        return AXFrameWriter.write(current: currentFrame, target: frame, bounds: Self.displayFrame(holding: currentFrame, and: frame),
             enhancedUI: { self.suppressAXAnimations ? c.app.bool("AXEnhancedUserInterface") : nil },
             setEnhancedUI: { value in
                 let error = AXUIElementSetAttributeValue(c.app.raw, "AXEnhancedUserInterface" as CFString,
@@ -399,6 +402,14 @@ public final class MacWindowSystem: WindowSystem {
             setPosition: { c.element.setPosition($0) },
             setSize: { c.element.setSize($0) },
             isGone: { !WindowList.exists(id.raw) }, shouldContinue: shouldContinue)
+    }
+
+    /// The frame of the one display that holds the centers of both frames (top-left coordinates); nil when no single display does.
+    static func displayFrame(holding a: CGRect, and b: CGRect) -> CGRect? {
+        let holding = Screens.all().map(\.frame).filter {
+            $0.contains(CGPoint(x: a.midX, y: a.midY)) && $0.contains(CGPoint(x: b.midX, y: b.midY))
+        }
+        return holding.count == 1 ? holding[0] : nil
     }
 
     /// Reads only windows seen in the last observation; never reobserves for an unseen window.

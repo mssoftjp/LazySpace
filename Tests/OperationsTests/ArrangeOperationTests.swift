@@ -1184,6 +1184,118 @@ final class ArrangeOperationTests: XCTestCase {
         XCTAssertEqual(back.message, r.message)
     }
 
+    private func finderWindow(_ id: UInt32, identifier: String, frame: CGRect, fullScreen: Bool) -> ObservedWindow {
+        ObservedWindow(id: WindowID(id), pid: 1, app: "com.apple.finder", frame: frame, membership: .current, kind: .standard, detail: "",
+                       subrole: "AXStandardWindow", identifier: identifier, fullScreenButtonEnabled: fullScreen)
+    }
+
+    /// A Finder window fills the screen and a Get Info window (at most 400 x 900) joins it; the Get Info window teaches its kind that maximum.
+    private func spaceWithFirstGetInfo() -> (FakeSystem, Layout?) {
+        let area = CGRect(x: 0, y: 30, width: 1920, height: 1050)
+        let s = FakeSystem(windows: [
+            finderWindow(1, identifier: "FinderWindow", frame: area, fullScreen: true),
+            finderWindow(2, identifier: "Info", frame: CGRect(x: 10, y: 40, width: 400, height: 900), fullScreen: false),
+        ], area: area)
+        s.maximums[WindowID(2)] = CGSize(width: 400, height: 900)
+        let first = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0),
+                                     priorLayout: Layout(root: .leaf(WindowID(1))), sleep: { _ in })
+        let result = first.run()
+        XCTAssertEqual(result.outcome, .complete, result.message)
+        return (s, first.resultingLayout)
+    }
+
+    /// The first Get Info window, with no maximum known for its kind, is written its share like any window. Refusing that size twice confirms
+    /// its maximum, and the row is planned again around it.
+    func testTheFirstGetInfoWindowLearnsItsLimitFromItsShare() {
+        let (s, _) = spaceWithFirstGetInfo()
+        XCTAssertEqual(s.writes.first { $0.0 == WindowID(2) }?.1, CGRect(x: 960, y: 30, width: 960, height: 1050), "its share, not a request where it opened")
+        XCTAssertEqual(s.frames[WindowID(1)], CGRect(x: 0, y: 30, width: 1520, height: 1050))
+        XCTAssertEqual(s.frames[WindowID(2)], CGRect(x: 1520, y: 30, width: 400, height: 900))
+        XCTAssertEqual(knowledge.maximums(for: [WindowID(2)], workArea: s.snap.workArea)[WindowID(2)], CGSize(width: 400, height: 900))
+    }
+
+    private func join(_ window: ObservedWindow, maximum: CGSize, to s: FakeSystem, prior: Layout?) -> OperationResult {
+        s.snap.windows.append(window)
+        s.frames[window.id] = window.frame
+        s.maximums[window.id] = maximum
+        s.writes = []
+        return ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0),
+                                priorLayout: prior, sleep: { _ in }).run()
+    }
+
+    /// A second Get Info window opening at the size the first one taught its kind is planned at that size from the start, so every window moves once.
+    func testASecondWindowOfAKindIsPlannedAtTheLearnedMaximum() {
+        let (s, prior) = spaceWithFirstGetInfo()
+        let r = join(finderWindow(3, identifier: "Info", frame: CGRect(x: 10, y: 40, width: 400, height: 900), fullScreen: false),
+                     maximum: CGSize(width: 400, height: 900), to: s, prior: prior)
+        XCTAssertEqual(r.outcome, .complete, r.message)
+        XCTAssertEqual(r.retries, 0)
+        XCTAssertEqual(s.writes.filter { $0.0 == WindowID(3) }.map(\.1), [CGRect(x: 1520, y: 30, width: 400, height: 900)])
+        XCTAssertEqual(Dictionary(grouping: s.writes, by: { $0.0 }).mapValues(\.count).values.max(), 1, "every window is written once")
+        XCTAssertEqual(s.frames[WindowID(1)], CGRect(x: 0, y: 30, width: 1203, height: 1050))
+        XCTAssertEqual(s.frames[WindowID(2)], CGRect(x: 1203, y: 30, width: 317, height: 900))
+    }
+
+    /// Another kind, a window that can fill the screen, or one that opens at another size does not borrow the kind's maximum:
+    /// its first write is its share, not its final frame.
+    func testOnlyAWindowOfTheSameKindAtThatSizeStartsAtTheLearnedMaximum() {
+        let variants: [(String, ObservedWindow)] = [
+            ("another identifier", finderWindow(3, identifier: "Other", frame: CGRect(x: 10, y: 40, width: 400, height: 900), fullScreen: false)),
+            ("full-screen button", finderWindow(3, identifier: "Info", frame: CGRect(x: 10, y: 40, width: 400, height: 900), fullScreen: true)),
+            ("another size", finderWindow(3, identifier: "Info", frame: CGRect(x: 10, y: 40, width: 380, height: 900), fullScreen: false)),
+        ]
+        for (name, window) in variants {
+            knowledge = ConstraintKnowledge()
+            let (s, prior) = spaceWithFirstGetInfo()
+            let r = join(window, maximum: CGSize(width: 400, height: 900), to: s, prior: prior)
+            XCTAssertEqual(r.outcome, .complete, "\(name): \(r.message)")
+            XCTAssertNotEqual(s.writes.first { $0.0 == WindowID(3) }?.1, CGRect(x: 1520, y: 30, width: 400, height: 900), name)
+            XCTAssertEqual(s.frames[WindowID(3)]?.width, 400, name)
+        }
+    }
+
+    /// A single window does not take its kind's maximum: it asks for the whole area, so the solo probe has nothing left to test.
+    func testASingleWindowOfAKindDoesNotBorrowTheMaximum() {
+        let (s, _) = spaceWithFirstGetInfo()
+        s.writes = []
+        let window = finderWindow(3, identifier: "Info", frame: CGRect(x: 10, y: 40, width: 400, height: 900), fullScreen: false)
+        s.snap.windows = [window]
+        s.frames[window.id] = window.frame
+        s.maximums[window.id] = CGSize(width: 400, height: 900)
+        let op = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), sleep: { _ in })
+        XCTAssertEqual(op.run().outcome, .complete)
+        XCTAssertEqual(s.writes.filter { $0.0 == WindowID(3) }.first?.1.width, 1920)
+        XCTAssertNotNil(op.maximumsLearnedAlone[WindowID(3)])
+    }
+
+    /// A third Get Info window joins a Finder window and two Get Info windows (measured live). The first Get Info window is made 285 wide and
+    /// grows to 1308 to fit its contents, above the 1280 its layout remembers: the arrangement still completes and adds the new window.
+    func testAWindowThatGrowsTallerWhenNarrowerKeepsTheHeightItNeeds() {
+        let area = CGRect(x: 0, y: 30, width: 2560, height: 1410)
+        let infos: [(UInt32, CGRect)] = [(2, CGRect(x: 1822, y: 30, width: 338, height: 1280)), (3, CGRect(x: 2160, y: 30, width: 400, height: 1280)),
+                                         (4, CGRect(x: 10, y: 40, width: 400, height: 1280))]
+        let s = FakeSystem(windows: [finderWindow(1, identifier: "FinderWindow", frame: CGRect(x: 0, y: 30, width: 1822, height: 1410), fullScreen: true)]
+                           + infos.map { finderWindow($0.0, identifier: "Info", frame: $0.1, fullScreen: false) }, area: area)
+        for (id, _) in infos {
+            s.maximums[WindowID(id)] = CGSize(width: 400, height: area.height)
+            s.contentHeights[WindowID(id)] = { $0 < 300 ? 1308 : 1280 }
+        }
+        for id: UInt32 in [2, 3] {
+            knowledge.recordPullback(id: WindowID(id), requested: CGRect(x: 0, y: 30, width: 1280, height: 1410), actual: CGRect(x: 0, y: 30, width: 400, height: 1280),
+                                     spaceID: 7, workArea: area, tolerance: 1, kind: "com.apple.finder\nAXStandardWindow\nInfo")
+        }
+        let prior = Layout(root: .split(.horizontal, children: [.leaf(WindowID(1)), .leaf(WindowID(2)), .leaf(WindowID(3))],
+                                        ratios: [1822.0 / 2560.0, 338.0 / 2560.0, 400.0 / 2560.0]),
+                           leftoverHeights: [WindowID(2): 1280, WindowID(3): 1280])
+        let op = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), priorLayout: prior,
+                                  adding: [WindowID(4)], kind: "auto-integrate", sleep: { _ in })
+        let r = op.run()
+        XCTAssertEqual(r.outcome, .complete, r.message)
+        XCTAssertEqual(op.resultingLayout?.windowIDs.contains(WindowID(4)), true)
+        XCTAssertEqual(s.frames[WindowID(2)], CGRect(x: 1537, y: 30, width: 285, height: 1308))
+        XCTAssertEqual(s.frames[WindowID(4)], CGRect(x: 2160, y: 30, width: 400, height: 1280))
+    }
+
     /// Portuguese counts 0 as one, so the messages that can report 0 arranged windows carry their own zero form.
     func testPortugueseReportsZeroArrangedWindowsInThePlural() {
         let zero = [L(.arrangeOperationArranged(windows: 0), in: .brazilianPortuguese),

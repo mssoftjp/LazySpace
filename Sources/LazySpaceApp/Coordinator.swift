@@ -445,6 +445,10 @@ final class Coordinator {
     private var notTileable: [WindowID: CGRect] = [:]
     /// Windows that were not standard in the latest AX query; not queried again while the frame stays the same.
     private var lastUnclassified: [WindowID: Unclassified] = [:]
+    /// When each window outside the layout was first looked at. Within `openingClassification` of that, `notTileable` does not hold it back:
+    /// an opening window can turn standard without moving (Finder's Get Info window enables its zoom button as macOS's open animation ends).
+    private var firstLooked: [WindowID: Date] = [:]
+    static let openingClassification: TimeInterval = 1
     private struct Unclassified {
         var frame: CGRect
         /// The title when a title-conditioned rule excluded it; reconsidered when it changes.
@@ -3598,9 +3602,15 @@ final class Coordinator {
         lock.lock()
         let layout = state.layouts[spaceKey]
         let managed = Set(layout?.windowIDs ?? [])
+        let floatingHere = Set(state.floating[spaceKey] ?? [])
         let paused = control.paused
         let autoOff = paused || state.pausedSpaces.contains(spaceKey)
         lock.unlock()
+        // A window that is still opening and not placed is looked at again after 50 ms, not 150: it can join only once macOS's open animation
+        // ends (Finder's Get Info window reads as a dialog until then). Only where automatic arrangement can add it.
+        if !autoOff, layout != nil, current.bounds.contains(where: { id, rect in
+            !managed.contains(id) && !floatingHere.contains(id) && (driftReference[id].map { !rect.matches($0, tolerance: limits.tolerance) } ?? false)
+        }) { scheduleNextTick(after: 0.05) }
 
         // Window count changes do not wait for stillness unless a drag moved a managed window. The slight wobble of clicking a close button or menu
         // counts as a drag, so waiting would delay only mouse actions by 0.6 s.
@@ -3999,7 +4009,8 @@ final class Coordinator {
     }
 
     /// Inserts visible standard windows that are in neither the layout nor the floating set beside the focus.
-    /// True if started. Windows AX says are not standard are not reobserved until their frame changes.
+    /// True if started. Windows AX says are not standard are not reobserved until their frame changes, except within
+    /// `openingClassification` of their first look.
     /// Rule-excluded windows do not go into `notTileable`. After failing twice at the same frame, automatic retries stop.
     @discardableResult
     /// `authorization` is the input at the start of the decision. Taken here when omitted.
@@ -4040,9 +4051,11 @@ final class Coordinator {
         lock.unlock()
         guard let layout else { return false }
         let layoutIDs = Set(layout.windowIDs)
+        firstLooked = firstLooked.filter { current.windows[$0.key] != nil }
         let unknown = current.windows.keys.filter { id in
             guard !layoutIDs.contains(id), !floating.contains(id) else { return false }
-            if let seen = notTileable[id], let now = current.bounds[id], now.matches(seen, tolerance: limits.tolerance) { return false }
+            let opening = firstLooked[id].map { backoffNow.timeIntervalSince($0) < Self.openingClassification } ?? true
+            if !opening, let seen = notTileable[id], let now = current.bounds[id], now.matches(seen, tolerance: limits.tolerance) { return false }
             return true
         }
         guard !unknown.isEmpty else {
@@ -4077,6 +4090,7 @@ final class Coordinator {
             lock.unlock()
             return false
         }
+        for id in needsLook where firstLooked[id] == nil { firstLooked[id] = backoffNow }
         // Only the windows looked at are read, so an app that does not answer elsewhere on the Space does not stall the look.
         let snap = system.snapshot(limitingTo: Set(needsLook))
         guard snap.spaceID == current.spaceID, system.currentSpaceID() == current.spaceID else { return false }

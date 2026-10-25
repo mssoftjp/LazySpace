@@ -144,6 +144,13 @@ public enum Planner {
                 caps[id] = size
             }
         }
+        // A cap below the window's known minimum (a remembered short height, or a maximum learned at another width) gives way to the minimum,
+        // since a window whose height follows its width would otherwise be asked again and again for less than it can be. An axis without a cap stays uncapped.
+        for (id, cap) in caps {
+            guard let minimum = constraints[id]?.size else { continue }
+            caps[id] = CGSize(width: cap.width > 0 ? max(cap.width, minimum.width) : 0,
+                              height: cap.height > 0 ? max(cap.height, minimum.height) : 0)
+        }
         var rects: [WindowID: CGRect] = [:]
         if let unfit = place(root, in: tileArea, constraints: constraints, options: options, maximums: caps, focused: focused, rects: &rects) {
             return .unfit(unfit)
