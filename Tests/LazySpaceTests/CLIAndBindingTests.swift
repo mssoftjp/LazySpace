@@ -219,6 +219,29 @@ final class CLIParseTests: XCTestCase {
         XCTAssertEqual(CLI.parse(["--version"]), .version)
     }
 
+    /// Found on PATH, the command gets only its name as argv[0]; its version comes from the path the process runs from,
+    /// through Homebrew's link or one of the user's own.
+    func testVersionIsThisCopysThroughALink() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("CLIVersionTests.\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let app = root.appendingPathComponent("LazySpace.app")
+        let executable = app.appendingPathComponent("Contents/MacOS/LazySpace")
+        let shim = app.appendingPathComponent("Contents/Resources/bin/lazyspace")
+        let link = root.appendingPathComponent("bin/lazyspace")
+        for file in [executable, shim, link] {
+            try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+        }
+        try Data().write(to: executable)
+        try FileManager.default.createSymbolicLink(atPath: shim.path, withDestinationPath: "../../MacOS/LazySpace")
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: shim)
+        let info = ["CFBundleShortVersionString": "9.9", "CFBundleVersion": "123"]
+        try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)
+            .write(to: app.appendingPathComponent("Contents/Info.plist"))
+        XCTAssertEqual(CLI.executableVersion(executable: link), "9.9 (123)")
+        XCTAssertEqual(CLI.executableVersion(executable: shim), "9.9 (123)")
+        XCTAssertEqual(CLI.executableVersion(executable: root.appendingPathComponent("lazyspace")), "dev", "outside an app")
+    }
+
     func testStrictSubcommands() {
         XCTAssertEqual(inv(["status"])?.cmd, "status")
 

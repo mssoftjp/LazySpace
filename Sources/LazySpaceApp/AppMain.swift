@@ -46,7 +46,7 @@ public enum AppMain {
             case .invocation(let invocation):
                 let instanceLockHeld = ControlCredential.instanceLockIsHeld(root: StateStore.defaultRoot)
                 let unavailable = instanceLockHeld
-                    ? L(.appMainLazySpaceAppearsToBeRunning)
+                    ? L(.appMainTheLazyspaceCommandCantConnect)
                     : notRunningMessage
                 let output = CLI.execute(invocation,
                                          send: { request, timeout in ControlPort.send(request, timeout: timeout) },

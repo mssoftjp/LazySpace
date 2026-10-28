@@ -3136,61 +3136,61 @@
         }
       }
     },
-    "appMain.lazySpaceAppearsToBeRunning" : {
+    "appMain.theLazyspaceCommandCantConnect" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "LazySpace scheint zu laufen, aber die CLI kann nicht mit der App kommunizieren. Prüfe die Berechtigungen des Ordners „Application Support“ von LazySpace oder versuche es nach dem Start erneut."
+            "value" : "Der Befehl lazyspace kann keine Verbindung zu LazySpace herstellen. Wenn du ihn in einer Sandbox ausführst, führe ihn außerhalb der Sandbox aus. Wenn LazySpace gerade erst geöffnet wurde, warte einen Moment und versuche es erneut."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "LazySpace appears to be running, but CLI communication is unavailable. Check the LazySpace Application Support folder permissions or try again after startup."
+            "value" : "The lazyspace command can’t connect to LazySpace. If you’re running it in a sandbox, run it outside the sandbox. If LazySpace just opened, wait a moment and try again."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "LazySpace parece estar en ejecución, pero la comunicación con la CLI no está disponible. Comprueba los permisos de la carpeta Application Support de LazySpace o inténtalo de nuevo cuando termine de abrirse."
+            "value" : "El comando lazyspace no puede conectarse a LazySpace. Si lo ejecutas en un sandbox, ejecútalo fuera del sandbox. Si LazySpace se acaba de abrir, espera un momento e inténtalo de nuevo."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "LazySpace semble en cours d’exécution, mais la communication avec la CLI est indisponible. Vérifiez les autorisations du dossier Application Support de LazySpace ou réessayez une fois le démarrage terminé."
+            "value" : "La commande lazyspace ne peut pas se connecter à LazySpace. Si vous l’exécutez dans un bac à sable, exécutez-la en dehors de celui-ci. Si LazySpace vient de s’ouvrir, patientez un instant puis réessayez."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "LazySpaceは起動中のようですが、CLIから通信できません。LazySpaceのApplication Supportフォルダのアクセス権を確認するか、起動完了後に再試行してください。"
+            "value" : "lazyspaceコマンドからLazySpaceに接続できません。サンドボックス内で実行している場合は、サンドボックスの外で実行してください。LazySpaceの起動直後は、少し待ってからもう一度お試しください。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "LazySpace가 실행 중인 것으로 보이지만 CLI와 통신할 수 없습니다. LazySpace의 Application Support 폴더 권한을 확인하거나 시작이 완료된 후 다시 시도하십시오."
+            "value" : "lazyspace 명령어가 LazySpace에 연결할 수 없습니다. 샌드박스에서 실행 중이라면 샌드박스 밖에서 실행하십시오. LazySpace가 방금 열렸다면 잠시 기다린 후 다시 시도하십시오."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O LazySpace parece estar em execução, mas a comunicação com a CLI não está disponível. Verifique as permissões da pasta Application Support do LazySpace ou tente de novo depois da inicialização."
+            "value" : "O comando lazyspace não consegue se conectar ao LazySpace. Se você estiver executando o comando em um sandbox, execute-o fora dele. Se o LazySpace acabou de abrir, aguarde um momento e tente de novo."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "LazySpace似乎正在运行，但无法通过CLI通信。请检查LazySpace的Application Support文件夹的权限，或在启动完成后重试。"
+            "value" : "lazyspace命令无法连接到LazySpace。如果在沙盒中运行此命令，请在沙盒外运行。如果LazySpace刚刚打开，请稍候，然后重试。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "LazySpace似乎正在執行，但無法使用CLI通訊。請檢查LazySpace的Application Support檔案夾權限，或在啟動完成後再試一次。"
+            "value" : "lazyspace指令無法連線到LazySpace。如果在沙箱中執行此指令，請在沙箱外執行。如果LazySpace剛開啟，請稍候片刻，然後再試一次。"
           }
         }
       }

@@ -1868,6 +1868,30 @@ final class SettingsWindowTests: XCTestCase {
         assertFullyVisible(popup, in: clip)
     }
 
+    /// Switching panes animates the window to the pane's height. A banner that appears meanwhile is fitted when the animation
+    /// ends; resized at once, the window would end at the animation's last frame and cut the banner off.
+    func testBannerThatAppearsWhileThePaneAnimatesFitsWhenTheAnimationEnds() throws {
+        try load(Config())
+        controller.visibleHeightForLayout = 800
+        try select(.general)
+        let content = try XCTUnwrap(controller.window?.contentView)
+        let before = content.bounds.height
+
+        controller.resizeAnimations = 1
+        controller.applyConfigStatus("The configuration file could not be applied.")
+        content.layoutSubtreeIfNeeded()
+        XCTAssertEqual(content.bounds.height, before, accuracy: 0.5, "the running animation owns the frame")
+
+        controller.resizeAnimationEnded()
+        content.layoutSubtreeIfNeeded()
+        XCTAssertGreaterThan(content.bounds.height, before + 8)
+        let banner = try XCTUnwrap(views().compactMap { $0 as? NSTextField }.first { $0.stringValue == "The configuration file could not be applied." })
+        XCTAssertFalse(banner.isHiddenOrHasHiddenAncestor)
+        let bannerFrame = banner.convert(banner.bounds, to: content)
+        XCTAssertGreaterThanOrEqual(bannerFrame.minY, -1)
+        XCTAssertLessThanOrEqual(bannerFrame.maxY, content.bounds.height + 1)
+    }
+
     func testSuccessfulShortcutEditsReplaceThePreviousWarning() throws {
         var config = Config()
         config.keys["space-3"] = .init(modifiers: [], key: "f3")

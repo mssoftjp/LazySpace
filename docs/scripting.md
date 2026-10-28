@@ -4,7 +4,13 @@ This page describes how to drive LazySpace from scripts and AI agents. For the l
 
 The running app accepts CLI requests from processes running as the same macOS user. The CLI automatically reads a per-launch credential from the user's LazySpace application support directory; scripts need no prompt or extra argument. LazySpace refuses CLI control if the directory is writable by another user or its `control-credential` file is readable by another user. ACL entries that grant access are also refused; deny-only ACLs are allowed. Restarting the app rotates the credential. A different user cannot use the control port through the CLI.
 
-Run the CLI as the logged-in user, without `sudo`. If `LAZYSPACE_SUPPORT` is set, the app and CLI must use the same value so they find the same credential. A sandboxed caller must also be allowed to read that directory. When the instance lock is held but CLI communication fails, JSON output uses `control-unavailable` (exit 2); `connection-unavailable` means the CLI could not confirm a running app. Check the folder's ownership and permissions if communication fails while the app is open.
+Run the CLI as the logged-in user, without `sudo`. If `LAZYSPACE_SUPPORT` is set, the app and CLI must use the same value so they find the same credential. When the instance lock is held but CLI communication fails, JSON output uses `control-unavailable` (exit 2); `connection-unavailable` means the CLI could not confirm a running app. Check the folder's ownership and permissions if communication fails while the app is open.
+
+A sandboxed caller needs two permissions: to read that directory, and to look up LazySpace's Mach service, whose name begins with `jp.lazyspace.control.`. Without read access, the CLI can't tell that LazySpace is running, so it reports `connection-unavailable`. A sandbox that allows only a fixed list of Mach services blocks the lookup, and the CLI reports `control-unavailable`. In that case, run the command outside the sandbox.
+
+## Finding the command
+
+Homebrew installs `lazyspace`. Without Homebrew, link it into your `PATH` as the [guide](guide.md#the-lazyspace-command-without-homebrew) shows. When the command is not on `PATH`, call it inside the app: `/Applications/LazySpace.app/Contents/Resources/bin/lazyspace`.
 
 ## Arguments are checked strictly
 

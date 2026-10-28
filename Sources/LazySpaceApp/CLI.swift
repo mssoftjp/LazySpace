@@ -314,10 +314,10 @@ enum CLI {
         }
     }
 
-    /// This executable's version, read from the .app's Info.plist even through the lazyspace symlink.
-    static func executableVersion() -> String {
-        if Bundle.main.infoDictionary?["CFBundleShortVersionString"] != nil { return BundleVersion.label() }
-        let exe = URL(fileURLWithPath: CommandLine.arguments[0]).resolvingSymlinksInPath()
+    /// This executable's version, read from the .app's Info.plist even through lazyspace links.
+    /// The path is the one the process runs from: found on PATH, the command gets only "lazyspace" as argv[0].
+    static func executableVersion(executable: URL? = Bundle.main.executableURL) -> String {
+        guard let exe = executable?.resolvingSymlinksInPath() else { return "dev" }
         let bundleURL = exe.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         if bundleURL.pathExtension == "app", let bundle = Bundle(url: bundleURL) { return BundleVersion.label(bundle) }
         return "dev"

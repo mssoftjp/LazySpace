@@ -219,9 +219,12 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
     private var stickyFailureText = ""
     /// Height changes are batched during building and redrawing.
     private var layoutHold = 0
-    /// A height change that arrived while a sheet or menu was open.
+    /// A height change that arrived while a sheet or menu was open, or while the window was animating to a new height.
     private var deferredResize = false
     private var openMenuCount = 0
+    /// Animated resizes still running. A resize asked for meanwhile waits for them, or the animation's last frame would undo it
+    /// (a banner can appear while the window grows to a pane's height). Tests set it to stand in for one.
+    var resizeAnimations = 0
     private enum RecordingTarget: Equatable { case command(String, mode: String) }
     private enum StatusTone { case secondary, accent, warning, failure }
     private enum ShortcutSelection: Equatable {
@@ -551,11 +554,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
     private var layingOutPane = false
 
     /// General, Arrangement, and Advanced take their content height; table panes (Shortcuts, Apps) a fixed height. Including the banner, fit on screen keeping the top edge.
-    /// Unchanged while a sheet or menu is open and applied at once when it closes. No animation during validation and recording.
+    /// Unchanged while a sheet or menu is open or an animated resize runs, and applied when that ends. No animation during validation and recording.
     private func resizePane(animated: Bool = false) {
         if layoutHold > 0 { return }
         guard !layingOutPane, let window, panes[selectedPane] is NSScrollView else { return }
-        if window.attachedSheet != nil || openMenuCount > 0 {
+        if window.attachedSheet != nil || openMenuCount > 0 || (resizeAnimations > 0 && !animated) {
             deferredResize = true
             return
         }
@@ -595,10 +598,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
                 frame = Self.clampedFrame(frame, within: visible)
             }
             if animated, window.isVisible, !reduceMotion, !testing {
+                resizeAnimations += 1
                 NSAnimationContext.runAnimationGroup({ _ in
                     window.animator().setFrame(frame, display: true)
                 }, completionHandler: { [weak self] in
-                    self?.reflow()
+                    self?.resizeAnimationEnded()
                 })
             } else {
                 window.setFrame(frame, display: true)
@@ -608,8 +612,15 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         reflow()
     }
 
+    /// The end of an animated resize; tests call it directly.
+    func resizeAnimationEnded() {
+        resizeAnimations = max(0, resizeAnimations - 1)
+        reflow()
+        flushDeferredResize()
+    }
+
     private func flushDeferredResize() {
-        guard deferredResize, layoutHold == 0, openMenuCount == 0, window?.attachedSheet == nil else { return }
+        guard deferredResize, layoutHold == 0, openMenuCount == 0, resizeAnimations == 0, window?.attachedSheet == nil else { return }
         deferredResize = false
         resizePane(animated: false)
     }
