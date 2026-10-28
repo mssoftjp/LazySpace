@@ -317,7 +317,7 @@ final class FollowMovedWindowTests: XCTestCase {
         guard case .refused(_, let code) = coordinator.edit(.moveToSpace(.index(3)), source: "menu", menuTarget: captured) else {
             return XCTFail("accepted for another window")
         }
-        XCTAssertEqual(code, "targets-changed")
+        XCTAssertEqual(code, .targetsChanged)
 
         for changedBeforeIssue in [true, false] {
             try make()
@@ -376,7 +376,7 @@ final class FollowMovedWindowTests: XCTestCase {
         let title = SettingsCopy.followMovedWindowTitle
         for source in ["hotkey ⌥⇧3", "menu"] {
             guard case .refused(let message, let code) = coordinator.edit(.sendToSpace(.index(3)), source: source) else { return XCTFail(source) }
-            XCTAssertEqual(code, "send-unavailable")
+            XCTAssertEqual(code, .sendUnavailable)
             XCTAssertTrue(message.contains("turn on “\(title)” in Settings › Shortcuts"), message)
             XCTAssertFalse(message.contains("--follow"), message)
         }

@@ -7705,55 +7705,55 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "--json enthält schemaVersion 2 und bei jedem Fehler einen maschinenlesbaren code. Unbekannte Argumente werden abgelehnt."
+            "value" : "--json enthält schemaVersion 3 und bei jedem Fehler einen maschinenlesbaren code. Unbekannte Argumente werden abgelehnt."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "--json includes schemaVersion 2 and a machine-readable code on every error. Unknown arguments are rejected."
+            "value" : "--json includes schemaVersion 3 and a machine-readable code on every error. Unknown arguments are rejected."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "--json incluye schemaVersion 2 y un code legible por máquina en cada error. Los argumentos desconocidos se rechazan."
+            "value" : "--json incluye schemaVersion 3 y un code legible por máquina en cada error. Los argumentos desconocidos se rechazan."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "--json inclut schemaVersion 2 et un code lisible par machine pour chaque erreur. Les arguments inconnus sont rejetés."
+            "value" : "--json inclut schemaVersion 3 et un code lisible par machine pour chaque erreur. Les arguments inconnus sont rejetés."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "--jsonはschemaVersion 2と、すべてのエラーのcodeを含みます。不明な引数は拒否します。"
+            "value" : "--jsonはschemaVersion 3と、すべてのエラーのcodeを含みます。不明な引数は拒否します。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "--json은 schemaVersion 2와 모든 오류에 대한 기계 판독용 code를 포함합니다. 알 수 없는 인수는 거부됩니다."
+            "value" : "--json은 schemaVersion 3와 모든 오류에 대한 기계 판독용 code를 포함합니다. 알 수 없는 인수는 거부됩니다."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "--json inclui schemaVersion 2 e um code legível por máquina em todo erro. Argumentos desconhecidos são rejeitados."
+            "value" : "--json inclui schemaVersion 3 e um code legível por máquina em todo erro. Argumentos desconhecidos são rejeitados."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "--json的输出包含schemaVersion 2，且每个错误都带有机器可读的code。未知参数会被拒绝。"
+            "value" : "--json的输出包含schemaVersion 3，且每个错误都带有机器可读的code。未知参数会被拒绝。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "--json會包含schemaVersion 2，並在每個錯誤中附上機器可讀的code。未知的引數會被拒絕。"
+            "value" : "--json會包含schemaVersion 3，並在每個錯誤中附上機器可讀的code。未知的引數會被拒絕。"
           }
         }
       }

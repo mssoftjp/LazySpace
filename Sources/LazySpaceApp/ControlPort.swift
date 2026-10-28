@@ -4,10 +4,79 @@ import MacSupport
 import Operations
 import LayoutCore
 
+/// Every `code` the app and the CLI return. `docs/scripting.md` lists each one (`ScriptingContractTests`).
+/// `ControlPort.Response.code` stays a string, so a reply from a newer app with a code this build does not know still decodes.
+enum ResultCode: String, CaseIterable {
+    // Arguments and communication
+    case usage
+    case connectionUnavailable = "connection-unavailable"
+    case controlUnavailable = "control-unavailable"
+    case unauthorized
+    case invalidRequest = "invalid-request"
+    case unknownCommand = "unknown-command"
+    case protocolError = "protocol-error"
+    case timeout
+    case internalError = "internal-error"
+    // Receipts
+    case reserved
+    case pending
+    case finished
+    case requestCapacity = "request-capacity"
+    case requestSequenceExhausted = "request-sequence-exhausted"
+    case unknownRequest = "unknown-request"
+    case requestNotSubmitted = "request-not-submitted"
+    case requestConflict = "request-conflict"
+    case requestExpired = "request-expired"
+    case sessionMismatch = "session-mismatch"
+    case unknownOperation = "unknown-operation"
+    // Refusals
+    case busy
+    case spaceMismatch = "space-mismatch"
+    case targetNotFound = "target-not-found"
+    case paused
+    case inputChanged = "input-changed"
+    case spaceChanged = "space-changed"
+    case targetsChanged = "targets-changed"
+    case permissionLost = "permission-lost"
+    case appUnresponsive = "app-unresponsive"
+    case cancelled
+    case notStarted = "not-started"
+    case noFocusedWindow = "no-focused-window"
+    case notTiled = "not-tiled"
+    case layoutUnavailable = "layout-unavailable"
+    case noNeighbor = "no-neighbor"
+    case singleWindow = "single-window"
+    case nothingToUndo = "nothing-to-undo"
+    case noFocusHistory = "no-focus-history"
+    case sameSpace = "same-space"
+    case spaceNotFound = "space-not-found"
+    case spaceUnavailable = "space-unavailable"
+    case sendUnavailable = "send-unavailable"
+    // Other commands
+    case unknownMode = "unknown-mode"
+    case configError = "config-error"
+    case resumeUnavailable = "resume-unavailable"
+}
+
+/// What kept `wait-settled` from finishing (`ControlPort.Settlement.blockers`). `docs/scripting.md` lists each one.
+enum SettlementBlocker: String, CaseIterable {
+    case operationsOrMouse = "operations-or-mouse"
+    case spaceUnavailable = "space-unavailable"
+    case accessibilityUnavailable = "accessibility-unavailable"
+    case input
+    case arrival
+    case deferred
+    case autoStart = "auto-start"
+    case observing
+}
+
 /// Local IPC connecting the UI and CLI to the same operation path. Every wire request
 /// carries a per-launch credential stored in an owner-only file; CFMessagePort alone
 /// does not identify the sender.
 enum ControlPort {
+    /// Schema of the replies between the app and the CLI. The CLI prints its own schema (`PublicJSON.schemaVersion`).
+    static let wireSchemaVersion = 2
+
     static func name(for credential: String) -> String {
         let digest = SHA256.hash(data: Data(credential.utf8))
         return "jp.lazyspace.control.\(digest.map { String(format: "%02x", $0) }.joined())"
@@ -74,7 +143,8 @@ enum ControlPort {
         var spaces: SpaceOverview?
         var operationID: String?
         var settlement: Settlement? = nil
-        var schemaVersion: Int = 2
+        var schemaVersion: Int = ControlPort.wireSchemaVersion
+        /// A `ResultCode`, or one from a newer app.
         var code: String? = nil
         /// Session-scoped mutation receipt. Distinct from `operationID` and `result.id`.
         var requestID: String? = nil
@@ -82,6 +152,21 @@ enum ControlPort {
         var result: OperationResult? = nil
         /// Set only by the CLI: ms from the acceptance reply to receiving the completed result (CLI clock). Its origin differs from the server's `result.timeline`, so never add them.
         var receivedAt: Double? = nil
+
+        /// Codes are given as `ResultCode`, so every code a reply carries is one `docs/scripting.md` lists.
+        init(ok: Bool, message: String, status: AppStatus? = nil, inspection: Inspection? = nil, spaces: SpaceOverview? = nil, operationID: String? = nil,
+             settlement: Settlement? = nil, code: ResultCode? = nil, requestID: String? = nil, result: OperationResult? = nil) {
+            self.ok = ok
+            self.message = message
+            self.status = status
+            self.inspection = inspection
+            self.spaces = spaces
+            self.operationID = operationID
+            self.settlement = settlement
+            self.code = code?.rawValue
+            self.requestID = requestID
+            self.result = result
+        }
     }
 
     static let encoder: JSONEncoder = {
@@ -112,7 +197,7 @@ enum ControlPort {
     /// Dispatch an already authenticated request (also used by request parsing tests).
     static func response(for data: Data, handler: (Request) -> Response) -> Response {
         guard let request = decodeRequest(data) else {
-            return Response(ok: false, message: "Invalid request.", code: "invalid-request")
+            return Response(ok: false, message: "Invalid request.", code: .invalidRequest)
         }
         return handler(request)
     }
@@ -124,7 +209,7 @@ enum ControlPort {
               ControlCredential.matches(supplied, credential),
               let requestObject = object["request"] as? [String: Any],
               let requestData = try? JSONSerialization.data(withJSONObject: requestObject) else {
-            return Response(ok: false, message: "Unauthorized control request.", code: "unauthorized")
+            return Response(ok: false, message: "Unauthorized control request.", code: .unauthorized)
         }
         return response(for: requestData, handler: handler)
     }

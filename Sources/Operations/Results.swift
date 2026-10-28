@@ -74,7 +74,7 @@ public struct TargetReport: Equatable, Codable {
 
 }
 
-public enum Outcome: Equatable, Codable {
+public enum Outcome: Equatable, Codable, CaseIterable {
     case complete
     case partial
     case interrupted
@@ -82,7 +82,7 @@ public enum Outcome: Equatable, Codable {
     case nothingToDo
 }
 
-public enum StopReason: String, Codable {
+public enum StopReason: String, Codable, CaseIterable {
     case paused
     case userInput
     case spaceChanged

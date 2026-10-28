@@ -25,7 +25,7 @@ public enum AppMain {
 
         let notRunningMessage = L(.appMainCouldNotCommunicateWithLazySpace)
 
-        func fail(_ message: String, code: String, operationID: String? = nil, exitCode: Int32 = 1) -> Never {
+        func fail(_ message: String, code: ResultCode, operationID: String? = nil, exitCode: Int32 = 1) -> Never {
             if argv.contains("--json") {
                 write(CLI.render(ControlPort.Response(ok: false, message: message, operationID: operationID, code: code),
                                  invocation: CLI.Invocation(cmd: "error", json: true)))
@@ -42,7 +42,7 @@ public enum AppMain {
                 write("LazySpace \(CLI.executableVersion())")
                 exit(0)
             case .error(let message):
-                fail(message, code: "usage")
+                fail(message, code: .usage)
             case .invocation(let invocation):
                 let instanceLockHeld = ControlCredential.instanceLockIsHeld(root: StateStore.defaultRoot)
                 let unavailable = instanceLockHeld
@@ -51,7 +51,7 @@ public enum AppMain {
                 let output = CLI.execute(invocation,
                                          send: { request, timeout in ControlPort.send(request, timeout: timeout) },
                                          unavailable: unavailable,
-                                         unavailableCode: instanceLockHeld ? "control-unavailable" : "connection-unavailable")
+                                         unavailableCode: instanceLockHeld ? .controlUnavailable : .connectionUnavailable)
                 if output.stderr == nil || !output.stdout.isEmpty { write(output.stdout) }
                 if let error = output.stderr { write(error, to: .standardError) }
                 exit(output.exitCode)

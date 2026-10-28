@@ -88,22 +88,22 @@ final class MutationReceiptTests: XCTestCase {
         for bad in ["01234567-89ab-cdef-0123-456789abcdef:17", "01234567-89AB-CDEF-0123-456789ABCDEF:01", "01234567-89AB-CDEF-0123-456789ABCDEF:0", "01234567-89AB-CDEF-0123-456789ABCDEF", "nope", first + ":2"] {
             XCTAssertFalse(MutationReceiptRegistry.isCanonicalToken(bad), bad)
             if case .dispatch = registry.begin(bad, payload: payload()) { XCTFail("Malformed token dispatched") }
-            XCTAssertEqual(registry.query(bad).code, "usage", bad)
+            XCTAssertEqual(registry.query(bad).code, .usage, bad)
         }
         let issued = first.split(separator: ":").first.map(String.init) ?? ""
-        XCTAssertEqual(registry.query(issued + ":9").code, "unknown-request")
+        XCTAssertEqual(registry.query(issued + ":9").code, .unknownRequest)
         XCTAssertEqual(registry.begin(issued + ":9", payload: payload()).code, "unknown-request")
         let other = MutationReceiptRegistry(now: clock.now)
         XCTAssertEqual(other.begin(first, payload: payload()).code, "session-mismatch")
-        XCTAssertEqual(other.query(first).code, "session-mismatch")
+        XCTAssertEqual(other.query(first).code, .sessionMismatch)
         XCTAssertTrue(other.query(first).message.contains("unavailable"))
         XCTAssertEqual(other.dispatchCount, 0)
 
         clock.time += 59
-        XCTAssertEqual(registry.query(first).code, "request-not-submitted")
+        XCTAssertEqual(registry.query(first).code, .requestNotSubmitted)
         XCTAssertNil(registry.query(first).operationID)
         clock.time += 1
-        XCTAssertEqual(registry.query(first).code, "request-expired")
+        XCTAssertEqual(registry.query(first).code, .requestExpired)
         XCTAssertEqual(registry.begin(first, payload: payload()).code, "request-expired")
         guard case .reserved(let third) = registry.reserve() else { return XCTFail("Sequence was reused or refused") }
         XCTAssertEqual(third.split(separator: ":").last, "3")
@@ -116,16 +116,16 @@ final class MutationReceiptTests: XCTestCase {
             held.append(id)
         }
         guard case .refused(let full) = registry.reserve() else { return XCTFail("65th reservation was accepted") }
-        XCTAssertEqual(full.code, "request-capacity")
+        XCTAssertEqual(full.code, .requestCapacity)
         XCTAssertEqual(registry.counts.active, 64)
         if case .dispatch = registry.begin(held[0], payload: payload()) {} else { return XCTFail("Live reservation did not dispatch") }
         XCTAssertEqual(registry.reserve().code, "request-capacity")
         clock.time += 120
-        XCTAssertEqual(registry.query(held[0]).code, "pending")
-        XCTAssertEqual(registry.query(held[1]).code, "request-expired")
+        XCTAssertEqual(registry.query(held[0]).code, .pending)
+        XCTAssertEqual(registry.query(held[1]).code, .requestExpired)
         guard case .reserved = registry.reserve() else { return XCTFail("Expired reservations did not free a slot") }
-        let refusal = MutationReceiptRegistry.Outcome(ok: false, code: "busy", message: "Another operation is in progress.", operationID: nil, result: nil)
-        XCTAssertEqual(registry.finish(held[0], .refused(refusal)).code, "busy")
+        let refusal = MutationReceiptRegistry.Outcome(ok: false, code: .busy, message: "Another operation is in progress.", operationID: nil, result: nil)
+        XCTAssertEqual(registry.finish(held[0], .refused(refusal)).code, .busy)
 
         clock.time += 120
         var terminal: [String] = []
@@ -137,14 +137,14 @@ final class MutationReceiptTests: XCTestCase {
             terminal.append(id)
         }
         XCTAssertEqual(registry.counts.terminal, 32)
-        for _ in 0..<5 { XCTAssertEqual(registry.query(terminal[0]).code, "busy") }
+        for _ in 0..<5 { XCTAssertEqual(registry.query(terminal[0]).code, .busy) }
         guard case .reserved(let newest) = registry.reserve() else { return XCTFail("No slot after terminals") }
         XCTAssertEqual(registry.begin(newest, payload: bound), .dispatch)
         _ = registry.finish(newest, .refused(refusal))
-        XCTAssertEqual(registry.query(terminal[0]).code, "request-expired")
+        XCTAssertEqual(registry.query(terminal[0]).code, .requestExpired)
         XCTAssertEqual(registry.begin(terminal[0], payload: bound).code, "request-expired")
         XCTAssertEqual(registry.begin(terminal[0], payload: payload(edit: .undo, window: nil)).code, "request-expired")
-        XCTAssertEqual(registry.query(terminal[1]).code, "busy")
+        XCTAssertEqual(registry.query(terminal[1]).code, .busy)
         XCTAssertEqual(registry.begin(terminal[1], payload: payload(edit: .undo, window: nil)).code, "request-conflict")
         XCTAssertEqual(registry.dispatchCount, 1 + 33)
 
@@ -172,7 +172,7 @@ final class MutationReceiptTests: XCTestCase {
         XCTAssertEqual(registry.counts.active, 0)
         let finished = registry.finish(early, .started(operationID: "op-early", message: "Accepted."))
         registry.disarm()
-        XCTAssertEqual(finished.code, "finished")
+        XCTAssertEqual(finished.code, .finished)
         XCTAssertEqual(finished.result?.id, "op-early")
         XCTAssertEqual(finished.operationID, "op-early")
         XCTAssertNotEqual(registry.begin(early, payload: bound), .dispatch)
@@ -181,10 +181,10 @@ final class MutationReceiptTests: XCTestCase {
         guard case .reserved(let late) = registry.reserve() else { return XCTFail("No second token") }
         XCTAssertEqual(registry.begin(late, payload: bound), .dispatch)
         let pending = registry.finish(late, .started(operationID: "op-late", message: "Accepted."))
-        XCTAssertEqual(pending.code, "pending")
+        XCTAssertEqual(pending.code, .pending)
         XCTAssertEqual(pending.operationID, "op-late")
         registry.absorb(OperationResult.note(id: "op-late", kind: "edit:resize", spaceID: 7, message: "later", ok: false))
-        XCTAssertEqual(registry.query(late).code, "finished")
+        XCTAssertEqual(registry.query(late).code, .finished)
         XCTAssertEqual(registry.query(late).result?.message, "later")
         XCTAssertFalse(registry.query(late).ok)
         XCTAssertEqual(registry.dispatchCount, 2)
@@ -541,9 +541,9 @@ final class MutationReceiptTests: XCTestCase {
         XCTAssertEqual(harness.delegate.handle(.init(cmd: "edit.v3", arg: "undo")).code, "usage")
         XCTAssertEqual(harness.delegate.handle(.init(cmd: "status", requestID: token(harness))).code, "usage")
 
-        XCTAssertEqual(Coordinator.preconditionCode(.permissionLost), "permission-lost")
-        XCTAssertEqual(Coordinator.preconditionCode(.targetsChanged), "targets-changed")
-        XCTAssertEqual(Coordinator.preconditionCode(.appUnresponsive), "app-unresponsive")
+        XCTAssertEqual(Coordinator.preconditionCode(.permissionLost), .permissionLost)
+        XCTAssertEqual(Coordinator.preconditionCode(.targetsChanged), .targetsChanged)
+        XCTAssertEqual(Coordinator.preconditionCode(.appUnresponsive), .appUnresponsive)
         var codes: [String: String] = [:]
         func remember(_ name: String, _ response: ControlPort.Response) {
             XCTAssertFalse(response.ok, name)
@@ -667,7 +667,7 @@ final class MutationReceiptTests: XCTestCase {
         var sends: [String] = []
         let missingToken = CLI.execute(automatic, send: { request, _ in
             sends.append(request.cmd)
-            return ControlPort.Response(ok: true, message: "Reserved.", code: "reserved")
+            return ControlPort.Response(ok: true, message: "Reserved.", code: .reserved)
         }, sleep: { _ in }, unavailable: "down")
         XCTAssertEqual(sends, ["request-token.v3"])
         XCTAssertEqual(try XCTUnwrap(decode(missingToken.stdout)).code, "protocol-error")
@@ -676,7 +676,7 @@ final class MutationReceiptTests: XCTestCase {
         sends.removeAll()
         let malformedToken = CLI.execute(automatic, send: { request, _ in
             sends.append(request.cmd)
-            return ControlPort.Response(ok: true, message: "Reserved.", code: "reserved", requestID: "not-a-token")
+            return ControlPort.Response(ok: true, message: "Reserved.", code: .reserved, requestID: "not-a-token")
         }, sleep: { _ in }, unavailable: "down")
         XCTAssertEqual(sends, ["request-token.v3"])
         XCTAssertEqual(try XCTUnwrap(decode(malformedToken.stdout)).code, "protocol-error")
@@ -686,7 +686,7 @@ final class MutationReceiptTests: XCTestCase {
         guard case .invocation(let supplied) = CLI.parse(["resize", "width", "-0.1", "--window-id", "1", "--expect-space-id", "7", "--request-id", retained, "--json"]) else {
             return XCTFail("Supplied resize did not parse")
         }
-        func once(_ response: ControlPort.Response, file: StaticString = #filePath, line: UInt = #line) throws -> ControlPort.Response {
+        func once(_ response: ControlPort.Response, file: StaticString = #filePath, line: UInt = #line) throws -> Printed {
             var count = 0
             let output = CLI.execute(supplied, send: { _, _ in
                 count += 1
@@ -699,23 +699,23 @@ final class MutationReceiptTests: XCTestCase {
             XCTAssertEqual(decoded.requestID, retained, file: file, line: line)
             return decoded
         }
-        XCTAssertNil(try once(.init(ok: true, message: "Accepted.", operationID: "op-a", code: "pending")).operationID)
-        XCTAssertNil(try once(.init(ok: true, message: "Accepted.", operationID: "op-a", code: "pending", requestID: "01234567-89AB-CDEF-0123-456789ABCDEF:99")).operationID)
-        var wrongSchema = ControlPort.Response(ok: true, message: "Accepted.", operationID: "op-a", code: "pending", requestID: retained)
+        XCTAssertNil(try once(.init(ok: true, message: "Accepted.", operationID: "op-a", code: .pending)).operationID)
+        XCTAssertNil(try once(.init(ok: true, message: "Accepted.", operationID: "op-a", code: .pending, requestID: "01234567-89AB-CDEF-0123-456789ABCDEF:99")).operationID)
+        var wrongSchema = ControlPort.Response(ok: true, message: "Accepted.", operationID: "op-a", code: .pending, requestID: retained)
         wrongSchema.schemaVersion = 1
         XCTAssertEqual(try once(wrongSchema).requestID, retained)
-        XCTAssertNil(try once(.init(ok: true, message: "Done", operationID: "op-a", code: "finished", requestID: retained)).result)
+        XCTAssertNil(try once(.init(ok: true, message: "Done", operationID: "op-a", code: .finished, requestID: retained)).result)
         let partial = OperationResult.note(id: "op-a", kind: "edit:resize", spaceID: 7, message: "partial", ok: false)
-        XCTAssertNil(try once(.init(ok: true, message: "Done", operationID: "op-a", code: "finished", requestID: retained, result: partial)).result)
-        XCTAssertNil(try once(.init(ok: true, message: "Busy", operationID: "op-a", code: "busy", requestID: retained)).operationID)
+        XCTAssertNil(try once(.init(ok: true, message: "Done", operationID: "op-a", code: .finished, requestID: retained, result: partial)).result)
+        XCTAssertNil(try once(.init(ok: true, message: "Busy", operationID: "op-a", code: .busy, requestID: retained)).operationID)
         var clock = Date()
-        func afterAcceptance(_ later: @escaping (ControlPort.Request) -> ControlPort.Response, file: StaticString = #filePath, line: UInt = #line) throws -> ControlPort.Response {
+        func afterAcceptance(_ later: @escaping (ControlPort.Request) -> ControlPort.Response, file: StaticString = #filePath, line: UInt = #line) throws -> Printed {
             var count = 0
             clock = Date()
             let output = CLI.execute(supplied, send: { request, _ in
                 count += 1
                 if request.cmd == "edit.v3" {
-                    return ControlPort.Response(ok: true, message: "Accepted.", operationID: "op-a", code: "pending", requestID: retained)
+                    return ControlPort.Response(ok: true, message: "Accepted.", operationID: "op-a", code: .pending, requestID: retained)
                 }
                 return later(request)
             }, sleep: { clock.addTimeInterval($0) }, now: { clock }, unavailable: "down")
@@ -728,16 +728,16 @@ final class MutationReceiptTests: XCTestCase {
             XCTAssertNil(decoded.result, file: file, line: line)
             return decoded
         }
-        _ = try afterAcceptance { _ in ControlPort.Response(ok: true, message: "Accepted.", operationID: "op-a", code: "pending") }
-        _ = try afterAcceptance { _ in ControlPort.Response(ok: true, message: "Accepted.", operationID: "op-a", code: "pending", requestID: "01234567-89AB-CDEF-0123-456789ABCDEF:99") }
+        _ = try afterAcceptance { _ in ControlPort.Response(ok: true, message: "Accepted.", operationID: "op-a", code: .pending) }
+        _ = try afterAcceptance { _ in ControlPort.Response(ok: true, message: "Accepted.", operationID: "op-a", code: .pending, requestID: "01234567-89AB-CDEF-0123-456789ABCDEF:99") }
         let foreignResult = OperationResult.note(id: "op-b", kind: "edit:resize", spaceID: 7, message: "other", ok: true)
         var steps = 0
         let changed = CLI.execute(supplied, send: { request, _ in
             steps += 1
             if request.cmd == "edit.v3" {
-                return ControlPort.Response(ok: true, message: "Accepted.", operationID: "op-a", code: "pending", requestID: retained)
+                return ControlPort.Response(ok: true, message: "Accepted.", operationID: "op-a", code: .pending, requestID: retained)
             }
-            return ControlPort.Response(ok: true, message: "Done", operationID: "op-b", code: "finished", requestID: retained, result: foreignResult)
+            return ControlPort.Response(ok: true, message: "Done", operationID: "op-b", code: .finished, requestID: retained, result: foreignResult)
         }, sleep: { clock.addTimeInterval($0) }, now: { clock }, unavailable: "down")
         XCTAssertEqual(steps, 2)
         let changedJSON = try XCTUnwrap(decode(changed.stdout))
@@ -757,13 +757,13 @@ final class MutationReceiptTests: XCTestCase {
         var sends: [String] = []
         let missingAllocation = CLI.execute(tokenCall, send: { request, _ in
             sends.append(request.cmd)
-            return ControlPort.Response(ok: true, message: "Reserved.", code: "reserved")
+            return ControlPort.Response(ok: true, message: "Reserved.", code: .reserved)
         }, unavailable: "down")
         XCTAssertEqual(sends, ["request-token.v3"])
         XCTAssertEqual(try XCTUnwrap(decode(missingAllocation.stdout)).code, "protocol-error")
         XCTAssertNotEqual(missingAllocation.exitCode, 0)
         let capacity = CLI.execute(tokenCall, send: { _, _ in
-            ControlPort.Response(ok: false, message: "Too many reserved or in-flight requests.", code: "request-capacity")
+            ControlPort.Response(ok: false, message: "Too many reserved or in-flight requests.", code: .requestCapacity)
         }, unavailable: "down")
         XCTAssertEqual(capacity.exitCode, 1)
         XCTAssertEqual(try XCTUnwrap(decode(capacity.stdout)).code, "request-capacity")
@@ -780,11 +780,11 @@ final class MutationReceiptTests: XCTestCase {
             XCTAssertNil(decoded.operationID, file: file, line: line)
             XCTAssertNil(decoded.result, file: file, line: line)
         }
-        try rejected(.init(ok: true, message: "Done", operationID: otherOperation, code: "finished", requestID: other, result: otherResult))
-        try rejected(.init(ok: true, message: "Done", operationID: operation, code: "finished", result: kept))
-        try rejected(.init(ok: true, message: "Done", operationID: operation, code: "finished", requestID: token, result: otherResult))
-        try rejected(.init(ok: true, message: "Done", operationID: operation, code: "finished", requestID: token, result: OperationResult.note(id: operation, kind: "edit:resize", spaceID: 7, message: "partial", ok: false)))
-        var wrongSchema = ControlPort.Response(ok: true, message: "Done", operationID: operation, code: "finished", requestID: token, result: kept)
+        try rejected(.init(ok: true, message: "Done", operationID: otherOperation, code: .finished, requestID: other, result: otherResult))
+        try rejected(.init(ok: true, message: "Done", operationID: operation, code: .finished, result: kept))
+        try rejected(.init(ok: true, message: "Done", operationID: operation, code: .finished, requestID: token, result: otherResult))
+        try rejected(.init(ok: true, message: "Done", operationID: operation, code: .finished, requestID: token, result: OperationResult.note(id: operation, kind: "edit:resize", spaceID: 7, message: "partial", ok: false)))
+        var wrongSchema = ControlPort.Response(ok: true, message: "Done", operationID: operation, code: .finished, requestID: token, result: kept)
         wrongSchema.schemaVersion = 1
         try rejected(wrongSchema)
 
@@ -803,7 +803,7 @@ final class MutationReceiptTests: XCTestCase {
         XCTAssertEqual(lostOperationJSON.operationID, operation)
         XCTAssertNil(lostOperationJSON.requestID)
         let foreignOperation = CLI.execute(operationLookup, send: { _, _ in
-            ControlPort.Response(ok: true, message: "Done", operationID: otherOperation, code: "finished", result: otherResult)
+            ControlPort.Response(ok: true, message: "Done", operationID: otherOperation, code: .finished, result: otherResult)
         }, unavailable: "down")
         let foreignOperationJSON = try XCTUnwrap(decode(foreignOperation.stdout))
         XCTAssertEqual(foreignOperation.exitCode, 1)
@@ -817,9 +817,9 @@ final class MutationReceiptTests: XCTestCase {
         guard case .invocation(let supplied) = CLI.parse(["resize", "width", "-0.1", "--window-id", "1", "--expect-space-id", "7", "--request-id", retained, "--json"]) else {
             return XCTFail("Supplied resize did not parse")
         }
-        let terminal = [
-            ("session-mismatch", "The request ID belongs to a different LazySpace session. An earlier effect may have occurred, and its outcome is unavailable."),
-            ("request-expired", "The request ID is expired or no longer retained. It will not dispatch again.")
+        let terminal: [(ResultCode, String)] = [
+            (.sessionMismatch, "The request ID belongs to a different LazySpace session. An earlier effect may have occurred, and its outcome is unavailable."),
+            (.requestExpired, "The request ID is expired or no longer retained. It will not dispatch again.")
         ]
         for (code, message) in terminal {
             var commands: [String] = []
@@ -827,14 +827,14 @@ final class MutationReceiptTests: XCTestCase {
             let output = CLI.execute(supplied, send: { request, _ in
                 commands.append(request.cmd)
                 if request.cmd == "edit.v3" {
-                    return ControlPort.Response(ok: true, message: "Accepted.", operationID: "op-a", code: "pending", requestID: retained)
+                    return ControlPort.Response(ok: true, message: "Accepted.", operationID: "op-a", code: .pending, requestID: retained)
                 }
                 return ControlPort.Response(ok: false, message: message, code: code, requestID: retained)
             }, sleep: { clock.addTimeInterval($0) }, now: { clock }, unavailable: "down")
-            XCTAssertEqual(commands, ["edit.v3", "result"], code)
-            XCTAssertEqual(output.exitCode, 1, code)
+            XCTAssertEqual(commands, ["edit.v3", "result"], code.rawValue)
+            XCTAssertEqual(output.exitCode, 1, code.rawValue)
             let decoded = try XCTUnwrap(decode(output.stdout))
-            XCTAssertEqual(decoded.code, code)
+            XCTAssertEqual(decoded.code, code.rawValue)
             XCTAssertEqual(decoded.message, message)
             XCTAssertEqual(decoded.requestID, retained)
             XCTAssertEqual(decoded.operationID, "op-a")
@@ -845,9 +845,9 @@ final class MutationReceiptTests: XCTestCase {
         let omitted = CLI.execute(supplied, send: { request, _ in
             commands.append(request.cmd)
             if request.cmd == "edit.v3" {
-                return ControlPort.Response(ok: true, message: "Accepted.", operationID: "op-a", code: "pending", requestID: retained)
+                return ControlPort.Response(ok: true, message: "Accepted.", operationID: "op-a", code: .pending, requestID: retained)
             }
-            return ControlPort.Response(ok: true, message: "Accepted.", code: "pending", requestID: retained)
+            return ControlPort.Response(ok: true, message: "Accepted.", code: .pending, requestID: retained)
         }, sleep: { clock.addTimeInterval($0) }, now: { clock }, unavailable: "down")
         XCTAssertEqual(commands, ["edit.v3", "result"])
         let omittedJSON = try XCTUnwrap(decode(omitted.stdout))
@@ -857,22 +857,32 @@ final class MutationReceiptTests: XCTestCase {
         XCTAssertEqual(omittedJSON.operationID, "op-a")
     }
 
-    private func decode(_ text: String) -> ControlPort.Response? {
-        guard let data = text.data(using: .utf8) else { return nil }
-        return try? ControlPort.decoder.decode(ControlPort.Response.self, from: data)
+    /// The printed `--json` reply (`PublicJSON`), for the fields these tests read.
+    private struct Printed: Decodable {
+        struct Result: Decodable { var id: String }
+        var ok: Bool
+        var code: String?
+        var message: String
+        var requestID: String?
+        var operationID: String?
+        var result: Result?
+    }
+
+    private func decode(_ text: String) -> Printed? {
+        try? JSONDecoder().decode(Printed.self, from: Data(text.utf8))
     }
 }
 
 private extension MutationReceiptRegistry.Decision {
     var code: String? {
-        if case .outcome(let outcome) = self { return outcome.code }
+        if case .outcome(let outcome) = self { return outcome.code.rawValue }
         return nil
     }
 }
 
 private extension MutationReceiptRegistry.Reservation {
     var code: String? {
-        if case .refused(let outcome) = self { return outcome.code }
+        if case .refused(let outcome) = self { return outcome.code.rawValue }
         return nil
     }
 }

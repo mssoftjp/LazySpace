@@ -50,17 +50,17 @@ final class CLILayoutTests: XCTestCase {
         ]
     }
 
-    /// Output before the nine-language change, for these fixtures.
+    /// Output for these fixtures: the layout from before the nine-language change, with window IDs as `--window-id` takes them.
     static let before: [String: [String: String]] = [
         "en": [
             "spaces": "     ID       Type           Windows\n* 1. 1        Standard       2\n   — 117      Full Screen    —\n   — 9        Other          —\n* = current Space. Only ordinary desktops are numbered, in macOS order on each display. Full-screen / Split View spaces are unnumbered.",
             "status": "LazySpace 0.2.0\nActivity:               Idle\nStatus:                 Manual Arrangement Only\nThis Space:             Manual Arrangement Only\nDevice Control and Data Access: Granted\nManual arrangement:     Available\nAutomatic arrangement:  Unavailable — Not checked\nMode:                   main (available modes: main, service)\nOpen at Login:          Off\nWaiting windows: 0\nConfiguration:          /tmp/config.toml\n  Error: line 3: bad\nFixed-size windows:     ",
-            "windows": "ID      App                         Size and Position     Eligibility\nw1      Finder                      800×600 @0,25         Eligible\nw2      Safari                      800×600 @0,25         Excluded: Not a standard window\n-       Slow                        ?                     No Response: could not read this app's windows before the timeout\nEligible 1 / Excluded 1 / No response 1",
+            "windows": "ID      App                         Size and Position     Eligibility\n1       Finder                      800×600 @0,25         Eligible\n2       Safari                      800×600 @0,25         Excluded: Not a standard window\n-       Slow                        ?                     No Response: could not read this app's windows before the timeout\nEligible 1 / Excluded 1 / No response 1",
         ],
         "ja": [
             "spaces": "     ID       種類           ウインドウ数\n* 1. 1        通常           2\n   — 117      フルスクリーン —\n   — 9        その他         —\n* = 現在の操作スペース。通常のデスクトップだけをディスプレイごとにmacOSの並び順で数えます。フルスクリーン・Split Viewに番号は付きません。",
             "status": "LazySpace 0.2.0\n処理:                   待機中\n状態:                   手動整列のみ\nこの操作スペース:       手動整列のみ\nデバイスの制御とデータへのアクセス: 許可済み\n手動整列:               利用可能\n自動整列:               利用不可 — Not checked\nモード:                 main（使えるモード: main、service）\nログイン時に開く:       Off\n待機中のウインドウ: 0\n設定:                   /tmp/config.toml\n  誤り: line 3: bad\n大きさが固定のウインドウ: ",
-            "windows": "ID      アプリ                      現在の位置・サイズ    整列対象\nw1      Finder                      800×600 @0,25         整列対象\nw2      Safari                      800×600 @0,25         対象外：通常のウインドウではない\n-       Slow                        ?                     応答なし: 期限内にウインドウの一覧を読めませんでした\n整列対象1 / 対象外1 / 応答なし1",
+            "windows": "ID      アプリ                      現在の位置・サイズ    整列対象\n1       Finder                      800×600 @0,25         整列対象\n2       Safari                      800×600 @0,25         対象外：通常のウインドウではない\n-       Slow                        ?                     応答なし: 期限内にウインドウの一覧を読めませんでした\n整列対象1 / 対象外1 / 応答なし1",
         ],
     ]
 

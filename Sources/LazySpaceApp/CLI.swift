@@ -180,6 +180,7 @@ enum CLI {
         .indented(.cliHelpJSONOutputResultIdAnd),
         .indented(.cliHelpJSONOutputHelpAndVersion),
         .indented(.cliHelpJSONOutputScriptsShouldRead),
+        .literal("https://github.com/mssoftjp/LazySpace/blob/main/docs/scripting.md"),
         .blank,
         .text(.cliHelpSectionExitCodes),
         .indented(.cliHelpExitCodes0SucceededOr),
@@ -332,7 +333,7 @@ enum CLI {
     }
 
     static func exitCode(_ response: ControlPort.Response, invocation: Invocation) -> Int32 {
-        response.ok && (invocation.cmd != "result" || response.code == "finished") ? 0 : 1
+        response.ok && (invocation.cmd != "result" || response.code == ResultCode.finished.rawValue) ? 0 : 1
     }
 
     static func completedResult(in response: ControlPort.Response, operationID: String?) -> OperationResult? {
@@ -347,16 +348,26 @@ enum CLI {
                         now: () -> Date = Date.init,
                         uptime: () -> TimeInterval = { ProcessInfo.processInfo.systemUptime },
                         unavailable: String,
-                        unavailableCode: String = "connection-unavailable") -> Output {
+                        unavailableCode: ResultCode = .connectionUnavailable) -> Output {
         func present(_ response: ControlPort.Response, exit: Int32? = nil, textToStderr: Bool = false) -> Output {
-            let rendered = render(response, invocation: invocation)
             let code = exit ?? exitCode(response, invocation: invocation)
-            if invocation.json || !textToStderr { return Output(stdout: rendered, exitCode: code) }
+            if invocation.json {
+                // A reply that cannot be printed never exits 0, even when its operation succeeded.
+                let printed = json(response, invocation: invocation)
+                return Output(stdout: printed.text, exitCode: printed.written ? code : max(code, 1))
+            }
+            let rendered = render(response, invocation: invocation)
+            if !textToStderr { return Output(stdout: rendered, exitCode: code) }
             return Output(stderr: rendered, exitCode: code)
         }
         func lost(_ message: String, requestID: String?, operationID: String?, exit: Int32) -> Output {
-            let response = ControlPort.Response(ok: false, message: message, operationID: operationID, code: exit == 2 ? unavailableCode : "timeout", requestID: requestID)
+            let response = ControlPort.Response(ok: false, message: message, operationID: operationID, code: exit == 2 ? unavailableCode : .timeout, requestID: requestID)
             return present(response, exit: exit, textToStderr: true)
+        }
+        /// Replies that skip `correlated` are checked here, so a reply in another wire schema is never printed as this CLI's output.
+        func unsupported(_ reply: ControlPort.Response) -> Output? {
+            guard reply.schemaVersion != ControlPort.wireSchemaVersion else { return nil }
+            return present(protocolFailure(requestID: nil, operationID: nil, message: "The reply used an unsupported schema."), exit: 1)
         }
         if invocation.cmd == "wait-settled" {
             let waitStarted = uptime()
@@ -368,6 +379,7 @@ enum CLI {
                 guard let started = send(ControlPort.Request(cmd: "settle.v2"), min(1, max(0.05, remaining))) else {
                     return lost(unavailable, requestID: nil, operationID: nil, exit: 2)
                 }
+                if let refused = unsupported(started) { return refused }
                 guard started.ok, let id = started.operationID else { return present(started, exit: 1) }
                 while now() < deadline {
                     sleep(0.05)
@@ -375,11 +387,12 @@ enum CLI {
                     guard let observation = send(ControlPort.Request(cmd: "inspect-result", arg: id), min(1, max(0.05, slice))) else {
                         return lost(unavailable, requestID: nil, operationID: nil, exit: 2)
                     }
+                    if let refused = unsupported(observation) { return refused }
                     if let settled = observation.settlement {
                         last = observation
                         if settledForRequest(settled, elapsed: uptime() - waitStarted) {
-                            let text = invocation.json ? render(observation, invocation: invocation) : "Current-Space geometry was stable after observation."
-                            return Output(stdout: text, exitCode: 0)
+                            if invocation.json { return present(observation, exit: 0) }
+                            return Output(stdout: "Current-Space geometry was stable after observation.", exitCode: 0)
                         }
                         break
                     }
@@ -388,7 +401,7 @@ enum CLI {
             }
             var response = last ?? ControlPort.Response(ok: false, message: "")
             response.ok = false
-            response.code = "timeout"
+            response.code = ResultCode.timeout.rawValue
             response.message = "Current-Space observation did not settle before the timeout."
             return present(response, exit: 1)
         }
@@ -401,6 +414,7 @@ enum CLI {
         guard let response = send(ControlPort.Request(cmd: invocation.cmd, arg: invocation.arg, windowID: invocation.windowID, expectedSpaceID: invocation.expectedSpaceID, expectedPID: invocation.expectedPID, desiredState: invocation.desiredState, requestID: invocation.requestID), 5) else {
             return lost(unavailable, requestID: invocation.requestID, operationID: nil, exit: 2)
         }
+        if let refused = unsupported(response) { return refused }
         if invocation.cmd == "inspect", let id = response.operationID {
             let deadline = now().addingTimeInterval(30)
             while now() < deadline {
@@ -408,6 +422,7 @@ enum CLI {
                 guard let next = send(ControlPort.Request(cmd: "inspect-result", arg: id), 5) else {
                     return lost(unavailable, requestID: nil, operationID: id, exit: 2)
                 }
+                if let refused = unsupported(next) { return refused }
                 if next.inspection != nil { return present(next, exit: 0) }
             }
             return lost("Window inspection did not finish before the timeout.", requestID: nil, operationID: id, exit: 1)
@@ -442,7 +457,7 @@ enum CLI {
         let acceptedAt = uptime()
         var knownOperationID: String?
         let accepted = correlated(response, context: .request(requestID, knownOperationID: knownOperationID), seenOperationID: &knownOperationID)
-        guard accepted.code != "protocol-error" else { return present(accepted, 1, false) }
+        guard accepted.code != ResultCode.protocolError.rawValue else { return present(accepted, 1, false) }
         // Adds the time since the acceptance reply (CLI clock) to a completed result under its own key.
         func received(_ response: ControlPort.Response) -> ControlPort.Response {
             var stamped = response
@@ -452,7 +467,7 @@ enum CLI {
         if let completed = completedResult(in: accepted, operationID: accepted.operationID) {
             return present(received(accepted), completed.outcome == .complete ? 0 : 1, false)
         }
-        guard accepted.code == "pending" else { return present(accepted, nil, false) }
+        guard accepted.code == ResultCode.pending.rawValue else { return present(accepted, nil, false) }
         let started = now()
         let deadline = started.addingTimeInterval(120)
         var last = accepted
@@ -463,7 +478,7 @@ enum CLI {
                 return lost(unavailable, requestID, knownOperationID, 2)
             }
             let valid = correlated(polled, context: .request(requestID, knownOperationID: knownOperationID), seenOperationID: &knownOperationID)
-            if valid.code == "protocol-error" { return present(valid, 1, false) }
+            if valid.code == ResultCode.protocolError.rawValue { return present(valid, 1, false) }
             last = valid
             if completedResult(in: valid, operationID: valid.operationID) != nil || !valid.ok { break }
         }
@@ -471,7 +486,7 @@ enum CLI {
             return present(received(last), completed.outcome == .complete ? 0 : 1, false)
         }
         if !last.ok { return present(last, nil, false) }
-        let timeout = ControlPort.Response(ok: false, message: "Could not get the operation result. Query this request ID before sending a different mutation.", operationID: knownOperationID, code: "timeout", requestID: requestID)
+        let timeout = ControlPort.Response(ok: false, message: "Could not get the operation result. Query this request ID before sending a different mutation.", operationID: knownOperationID, code: .timeout, requestID: requestID)
         return present(timeout, 1, true)
     }
 
@@ -521,7 +536,7 @@ enum CLI {
     }
 
     private static func protocolFailure(requestID: String?, operationID: String?, message: String) -> ControlPort.Response {
-        ControlPort.Response(ok: false, message: message, operationID: operationID, code: "protocol-error", requestID: requestID)
+        ControlPort.Response(ok: false, message: message, operationID: operationID, code: .protocolError, requestID: requestID)
     }
 
     /// Schema, identity, and state for a reservation, mutation, or result reply.
@@ -542,7 +557,7 @@ enum CLI {
             knownOperationID = operationID
         }
         let failure = protocolFailure(requestID: requiredRequestID, operationID: knownOperationID, message: "The response did not match the retained request.")
-        guard response.schemaVersion == 2 else { return failure }
+        guard response.schemaVersion == ControlPort.wireSchemaVersion else { return failure }
         if let requiredRequestID, response.requestID != requiredRequestID { return failure }
         if let result = response.result, result.id != response.operationID { return failure }
         if let knownOperationID, let returned = response.operationID, returned != knownOperationID { return failure }
@@ -550,7 +565,7 @@ enum CLI {
         switch context {
         case .reservation:
             if response.ok {
-                guard response.code == "reserved", let id = response.requestID, MutationReceiptRegistry.isCanonicalToken(id),
+                guard response.code == ResultCode.reserved.rawValue, let id = response.requestID, MutationReceiptRegistry.isCanonicalToken(id),
                       response.operationID == nil, response.result == nil else { return failure }
                 return response
             }
@@ -558,18 +573,18 @@ enum CLI {
             return response
         case .request, .operation:
             switch response.code {
-            case "pending":
+            case ResultCode.pending.rawValue:
                 guard response.ok, response.result == nil else { return failure }
                 if let knownOperationID, response.operationID != knownOperationID { return failure }
                 if seenOperationID == nil { seenOperationID = response.operationID }
                 return response
-            case "finished":
+            case ResultCode.finished.rawValue:
                 guard let result = response.result, let operationID = response.operationID, result.id == operationID,
                       response.ok == (result.outcome == .complete) else { return failure }
                 if let knownOperationID, operationID != knownOperationID { return failure }
                 if seenOperationID == nil { seenOperationID = operationID }
                 return response
-            case "reserved", nil:
+            case ResultCode.reserved.rawValue, nil:
                 return failure
             default:
                 guard response.ok == false, response.result == nil, response.code?.isEmpty == false else { return failure }
@@ -581,14 +596,7 @@ enum CLI {
     }
 
     static func render(_ res: ControlPort.Response, invocation: Invocation) -> String {
-        if invocation.json {
-            var response = res
-            if invocation.cmd == "inspect" {
-                response.status = nil
-                if invocation.view == "spaces" { response.inspection = nil } else { response.spaces = nil }
-            }
-            return (try? ControlPort.encoder.encode(response)).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
-        }
+        if invocation.json { return json(res, invocation: invocation).text }
         switch invocation.cmd {
         case "status":
             return res.status.map(statusText) ?? res.message
@@ -606,6 +614,20 @@ enum CLI {
             return lines.joined(separator: "\n")
         default:
             return res.message.isEmpty ? (res.ok ? "OK" : L(.cliFailed)) : res.message
+        }
+    }
+
+    /// `--json` text (`PublicJSON`). `written` is false when the reply could not be written; the text is then that error.
+    static func json(_ res: ControlPort.Response, invocation: Invocation) -> (text: String, written: Bool) {
+        var response = res
+        if invocation.cmd == "inspect" {
+            response.status = nil
+            if invocation.view == "spaces" { response.inspection = nil } else { response.spaces = nil }
+        }
+        do {
+            return (try PublicJSON.text(response), true)
+        } catch {
+            return (PublicJSON.failureText(for: response), false)
         }
     }
 
@@ -703,8 +725,9 @@ enum CLI {
             lines.append(padded(id, to: 8) + padded(app, to: 28) + padded(size, to: 22) + note)
         }
         row("ID", L(.cliApp), L(.cliSizeAndPosition), ReadyWindowController.verdictColumnTitle)
-        for t in ins.targets { row(t.id.description, ReadyWindowController.shownApp(t.app, name: name), sizeText(t.frame), ReadyWindowController.eligibleVerdict) }
-        for e in ins.excluded { row(e.window.id.description, ReadyWindowController.shownApp(e.window.app, name: name), sizeText(e.window.frame), ReadyWindowController.exclusionText(e)) }
+        // IDs as `--window-id` takes them.
+        for t in ins.targets { row(String(t.id.raw), ReadyWindowController.shownApp(t.app, name: name), sizeText(t.frame), ReadyWindowController.eligibleVerdict) }
+        for e in ins.excluded { row(String(e.window.id.raw), ReadyWindowController.shownApp(e.window.app, name: name), sizeText(e.window.frame), ReadyWindowController.exclusionText(e)) }
         for a in ins.snapshot.unobservedApps { row("-", ReadyWindowController.shownApp(a, name: name), "?", L(.cliNoResponseCouldNotRead)) }
         if ins.targets.isEmpty && ins.excluded.isEmpty { lines.append(ins.snapshot.trusted ? L(.cliNoWindows) : L(.cliCannotReadWindowsWithoutThe(AccessPane.name()))) }
         let unobserved = ins.snapshot.unobservedApps.count

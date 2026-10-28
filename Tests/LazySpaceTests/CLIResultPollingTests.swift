@@ -15,7 +15,7 @@ final class CLIResultPollingTests: XCTestCase {
     private func finished(_ timeline: [TimelineEvent] = []) -> ControlPort.Response {
         var result = OperationResult.note(id: "op-a", kind: "space", spaceID: 8, message: "Switched to Space 2.", ok: true)
         result.timeline = timeline
-        return ControlPort.Response(ok: true, message: "Switched to Space 2.", operationID: "op-a", code: "finished", requestID: token, result: result)
+        return ControlPort.Response(ok: true, message: "Switched to Space 2.", operationID: "op-a", code: .finished, requestID: token, result: result)
     }
 
     func testPollIntervalStartsShortAndWidensForLongOperations() {
@@ -33,17 +33,18 @@ final class CLIResultPollingTests: XCTestCase {
         var uptime: TimeInterval = 100
         var slept: [TimeInterval] = []
         let output = CLI.execute(try invocation(json: true), send: { request, _ in
-            if request.cmd == "edit.v3" { return ControlPort.Response(ok: true, message: "Accepted.", operationID: "op-a", code: "pending", requestID: self.token) }
+            if request.cmd == "edit.v3" { return ControlPort.Response(ok: true, message: "Accepted.", operationID: "op-a", code: .pending, requestID: self.token) }
             // Finishes 0.5 s after acceptance.
             return clock.timeIntervalSince1970 >= 0.5 ? self.finished([TimelineEvent(at: 0, event: "accepted"), TimelineEvent(at: 480, event: "published")])
-                : ControlPort.Response(ok: true, message: "Accepted.", operationID: "op-a", code: "pending", requestID: self.token)
+                : ControlPort.Response(ok: true, message: "Accepted.", operationID: "op-a", code: .pending, requestID: self.token)
         }, sleep: { slept.append($0); clock.addTimeInterval($0); uptime += $0 }, now: { clock }, uptime: { uptime }, unavailable: "down")
         XCTAssertEqual(output.exitCode, 0, output.stdout)
         XCTAssertLessThanOrEqual(clock.timeIntervalSince1970, 0.52 + 1e-9)
         XCTAssertTrue(slept.allSatisfy { $0 == 0.02 })
-        let decoded = try XCTUnwrap(ControlPort.decoder.decode(ControlPort.Response.self, from: Data(output.stdout.utf8)))
-        XCTAssertEqual(try XCTUnwrap(decoded.receivedAt), 520, accuracy: 0.11, "the CLI's own clock, from the acceptance reply")
-        XCTAssertEqual(decoded.result?.timeline.map(\.event), ["accepted", "published"], "the server timeline is kept separately")
+        let printed = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(output.stdout.utf8)) as? [String: Any])
+        XCTAssertEqual(try XCTUnwrap(printed["receivedAt"] as? Double), 520, accuracy: 0.11, "the CLI's own clock, from the acceptance reply")
+        let timeline = (printed["result"] as? [String: Any])?["timeline"] as? [[String: Any]]
+        XCTAssertEqual(timeline?.map { $0["event"] as? String }, ["accepted", "published"], "the server timeline is kept separately")
     }
 
     /// Losing the app while a window inspection is pending is "not reachable" (exit 2), not a timeout.
@@ -61,7 +62,7 @@ final class CLIResultPollingTests: XCTestCase {
     func testReceivedAtOnlyOnCompletedJSONResults() throws {
         var clock = Date(timeIntervalSince1970: 0)
         let pendingForever = CLI.execute(try invocation(json: true), send: { request, _ in
-            ControlPort.Response(ok: true, message: "Accepted.", operationID: "op-a", code: "pending", requestID: self.token)
+            ControlPort.Response(ok: true, message: "Accepted.", operationID: "op-a", code: .pending, requestID: self.token)
         }, sleep: { clock.addTimeInterval($0) }, now: { clock }, uptime: { clock.timeIntervalSince1970 }, unavailable: "down")
         XCTAssertFalse(pendingForever.stdout.contains("receivedAt"), "a timeout carries no receive time")
         let immediate = CLI.execute(try invocation(json: true), send: { _, _ in self.finished() }, sleep: { _ in }, uptime: { 5 }, unavailable: "down")

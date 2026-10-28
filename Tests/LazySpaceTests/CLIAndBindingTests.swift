@@ -316,8 +316,8 @@ final class CLIParseTests: XCTestCase {
         XCTAssertNotNil(inv(["minimize", "off", "--window-id", "1", "--expect-space-id", "7"]))
         XCTAssertNil(EditCommand.parse("resize-width 50"))
         XCTAssertNil(EditCommand.parse("resize-width 0"))
-        XCTAssertEqual(CLI.exitCode(.init(ok: true, message: "", code: "pending"), invocation: .init(cmd: "result")), 1)
-        XCTAssertEqual(CLI.exitCode(.init(ok: true, message: "", code: "finished"), invocation: .init(cmd: "result")), 0)
+        XCTAssertEqual(CLI.exitCode(.init(ok: true, message: "", code: .pending), invocation: .init(cmd: "result")), 1)
+        XCTAssertEqual(CLI.exitCode(.init(ok: true, message: "", code: .finished), invocation: .init(cmd: "result")), 0)
     }
 
     func testResizeRejectsNonFiniteAndMalformedAmounts() {

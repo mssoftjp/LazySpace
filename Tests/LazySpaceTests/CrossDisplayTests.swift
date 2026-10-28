@@ -415,9 +415,9 @@ final class CrossDisplayTests: XCTestCase {
         system.focused = WindowID(1)
         system.frontPID = 101
         guard case .refused(_, let code) = coordinator.edit(.sendToSpace(.desktop(1, display: 3)), source: "test") else { return XCTFail("display 3 accepted") }
-        XCTAssertEqual(code, "space-not-found")
+        XCTAssertEqual(code, .spaceNotFound)
         guard case .refused(_, let missing) = coordinator.edit(.sendToSpace(.desktop(5, display: 2)), source: "test") else { return XCTFail("desktop 5 accepted") }
-        XCTAssertEqual(missing, "space-not-found")
+        XCTAssertEqual(missing, .spaceNotFound)
     }
 
     /// `--follow` to another display: the direct move keeps the old frame, so the window is fitted onto that display after arriving.

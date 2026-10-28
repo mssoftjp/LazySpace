@@ -92,11 +92,11 @@ final class ControlCredentialTests: XCTestCase {
 
     func testRunningAppCommunicationErrorHasDistinctJSONCode() throws {
         let invocation = CLI.Invocation(cmd: "status", json: true)
-        let output = CLI.execute(invocation, send: { _, _ in nil }, unavailable: "App is running but control is unavailable.", unavailableCode: "control-unavailable")
+        let output = CLI.execute(invocation, send: { _, _ in nil }, unavailable: "App is running but control is unavailable.", unavailableCode: .controlUnavailable)
         XCTAssertEqual(output.exitCode, 2)
-        let response = try ControlPort.decoder.decode(ControlPort.Response.self, from: Data(output.stdout.utf8))
-        XCTAssertEqual(response.code, "control-unavailable")
-        XCTAssertEqual(response.message, "App is running but control is unavailable.")
+        let response = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(output.stdout.utf8)) as? [String: Any])
+        XCTAssertEqual(response["code"] as? String, "control-unavailable")
+        XCTAssertEqual(response["message"] as? String, "App is running but control is unavailable.")
     }
 
     func testUnauthenticatedRequestNeverReachesHandler() throws {

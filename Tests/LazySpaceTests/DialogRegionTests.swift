@@ -844,7 +844,7 @@ final class DialogRegionCoordinatorTests: XCTestCase {
         coordinator.processStartTime = { pid in Date(timeIntervalSince1970: pid == 105 ? 5_000 : 1_000) }
         XCTAssertFalse(coordinator.canApplyEdit(.focus(.right), focused: WindowID(2)))
         guard case .refused(_, let code) = coordinator.edit(.focus(.right), source: "test") else { return XCTFail("should be refused") }
-        XCTAssertEqual(code, "no-neighbor")
+        XCTAssertEqual(code, .noNeighbor)
     }
 
     /// The border also shows on strip dialogs, but not on dialogs outside the strip.

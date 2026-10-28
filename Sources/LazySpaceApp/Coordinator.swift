@@ -100,6 +100,26 @@ extension MacWindowSystem: CoordinatorWindowSystem {
 }
 
 /// State shown to the user. Missing permission, Pause, and failures are kept distinct.
+/// Why automatic arrangement is unavailable, for scripts: the first unmet condition, in the order `status` checks them, so it is the one
+/// `autoReason` describes. Pausing is separate state, not a cause.
+enum AutoUnavailableCause: String, CaseIterable {
+    case accessibility
+    case spaceObservation
+    case inputObservation
+    case configNotApplied
+    case stageManager
+    case sharedSpaces
+
+    init(_ gate: AutoGateCause) {
+        switch gate {
+        case .inputUnobservable: self = .inputObservation
+        case .configUnapplied: self = .configNotApplied
+        case .stageManager: self = .stageManager
+        case .sharedSpaces: self = .sharedSpaces
+        }
+    }
+}
+
 struct AppStatus: Codable, Equatable {
     enum Availability: String, Codable {
         case needsSetup
@@ -118,6 +138,8 @@ struct AppStatus: Codable, Equatable {
     var manualReason: String
     var autoAvailable: Bool
     var autoReason: String
+    /// `AutoUnavailableCause` while `autoAvailable` is false. A string, so a reply from a newer app with another cause still decodes.
+    var autoUnavailableCause: String? = nil
     /// Whether the current Space has saved layout intent (automatic arrangement handles only such Spaces).
     var currentSpaceManaged: Bool
     var trusted: Bool
@@ -1105,10 +1127,12 @@ final class Coordinator {
         let busy = isBusy
         var manual = true
         var manualReason = L(.coordinatorAvailable)
-        if !trusted { manual = false; manualReason = L(.coordinatorThePermissionIsRequired(AccessPane.name())) }
-        else if !spaceOK { manual = false; manualReason = L(.coordinatorThisVersionOfMacOSDoes) }
+        var manualCause: AutoUnavailableCause?
+        if !trusted { manual = false; manualReason = L(.coordinatorThePermissionIsRequired(AccessPane.name())); manualCause = .accessibility }
+        else if !spaceOK { manual = false; manualReason = L(.coordinatorThisVersionOfMacOSDoes); manualCause = .spaceObservation }
         let gate = autoGate()
         let autoOK = manual && gate.allowed
+        let autoCause = manualCause ?? gate.cause.map(AutoUnavailableCause.init)
         let spaceKey = system.currentSpaceID().map(String.init) ?? "-"
         let login = LoginItem.state() // SMAppService is queried outside the lock
         lock.lock()
@@ -1139,7 +1163,7 @@ final class Coordinator {
         return AppStatus(
             availability: availability, availabilityReason: reason,
             manualAvailable: manual, manualReason: manualReason,
-            autoAvailable: autoOK, autoReason: manual ? gate.reason : manualReason,
+            autoAvailable: autoOK, autoReason: manual ? gate.reason : manualReason, autoUnavailableCause: autoCause?.rawValue,
             currentSpaceManaged: managed,
             trusted: trusted, spaceObservation: spaceOK,
             inputObservation: system.input.mode.rawValue,
@@ -1314,24 +1338,24 @@ final class Coordinator {
             tick()
             let current = takeCensus(system.currentSpaceID())
             let now = Date()
-            var blockers: [String] = []
+            var blockers: [SettlementBlocker] = []
             lock.lock(); let idle = idleLocked(); lock.unlock()
-            if !idle { blockers.append("operations-or-mouse") }
-            if current.spaceID == nil || current.spaceID != system.currentSpaceID() { blockers.append("space-unavailable") }
-            if !system.axTrusted { blockers.append("accessibility-unavailable") }
-            if now.timeIntervalSince(lastInputChange) < quietInterval { blockers.append("input") }
-            if now.timeIntervalSince(spaceArrivedAt) < arrivalDwell { blockers.append("arrival") }
-            if settleDeferred { blockers.append("deferred") }
+            if !idle { blockers.append(.operationsOrMouse) }
+            if current.spaceID == nil || current.spaceID != system.currentSpaceID() { blockers.append(.spaceUnavailable) }
+            if !system.axTrusted { blockers.append(.accessibilityUnavailable) }
+            if now.timeIntervalSince(lastInputChange) < quietInterval { blockers.append(.input) }
+            if now.timeIntervalSince(spaceArrivedAt) < arrivalDwell { blockers.append(.arrival) }
+            if settleDeferred { blockers.append(.deferred) }
             lock.lock(); let pending = pendingAutoStart != nil; let revision = settleRevision; lock.unlock()
-            if pending { blockers.append("auto-start") }
+            if pending { blockers.append(.autoStart) }
             if settleCensus != current || !blockers.isEmpty || revision != observedSettleRevision || now.timeIntervalSince(settleLastObserved) > 2 { settleSince = now }
             observedSettleRevision = revision
             settleLastObserved = now
             settleCensus = current
             let stableFor = now.timeIntervalSince(settleSince)
-            if stableFor < max(arrivalDwell, quietInterval) { blockers.append("observing") }
+            if stableFor < max(arrivalDwell, quietInterval) { blockers.append(.observing) }
             completion(ControlPort.Settlement(settled: blockers.isEmpty, spaceID: current.spaceID, observedAt: now,
-                                               stableFor: stableFor, requiredStableFor: max(arrivalDwell, quietInterval), blockers: blockers))
+                                               stableFor: stableFor, requiredStableFor: max(arrivalDwell, quietInterval), blockers: blockers.map(\.rawValue)))
         }
     }
 
@@ -1791,25 +1815,25 @@ final class Coordinator {
 
     private struct CodedRefusal: Equatable {
         var message: String
-        var code: String
+        var code: ResultCode
         var accept: EditAccept { .refused(message, code: code) }
     }
 
     enum EditAccept: Equatable {
         case started(String)
         case busy
-        case refused(String, code: String)
+        case refused(String, code: ResultCode)
     }
 
-    static func preconditionCode(_ reason: StopReason) -> String {
+    static func preconditionCode(_ reason: StopReason) -> ResultCode {
         switch reason {
-        case .paused: return "paused"
-        case .userInput: return "input-changed"
-        case .spaceChanged: return "space-changed"
-        case .permissionLost: return "permission-lost"
-        case .targetsChanged: return "targets-changed"
-        case .cancelled: return "cancelled"
-        case .appUnresponsive: return "app-unresponsive"
+        case .paused: .paused
+        case .userInput: .inputChanged
+        case .spaceChanged: .spaceChanged
+        case .permissionLost: .permissionLost
+        case .targetsChanged: .targetsChanged
+        case .cancelled: .cancelled
+        case .appUnresponsive: .appUnresponsive
         }
     }
 
@@ -1820,12 +1844,12 @@ final class Coordinator {
         if isBusy { return .busy }
         var authorization = OperationAuthorization(system: system, control: control, allowPaused: command.map { if case .space = $0 { return true }; return false } ?? false)
         authorization.expectedSpaceID = expectedSpaceID
-        if let expectedSpaceID, authorization.spaceID != expectedSpaceID { return .refused("Expected Space does not match the current Space.", code: "space-mismatch") }
+        if let expectedSpaceID, authorization.spaceID != expectedSpaceID { return .refused("Expected Space does not match the current Space.", code: .spaceMismatch) }
         if let windowID {
-            guard expectedSpaceID != nil else { return .refused("A window target requires --expect-space-id.", code: "usage") }
+            guard expectedSpaceID != nil else { return .refused("A window target requires --expect-space-id.", code: .usage) }
             let snapshot = system.snapshot(limitingTo: [windowID])
             guard snapshot.trusted, let window = snapshot.windows.first(where: { $0.id == windowID && $0.membership == .current }),
-                  expectedPID == nil || expectedPID == window.pid else { return .refused("The target window or its process could not be confirmed in this Space.", code: "target-not-found") }
+                  expectedPID == nil || expectedPID == window.pid else { return .refused("The target window or its process could not be confirmed in this Space.", code: .targetNotFound) }
             authorization.expectedWindow = window
             if let reason = authorization.stopReason(system: system, control: control, snapshot: snapshot) {
                 return .refused("Precondition changed: \(reason.rawValue).", code: Self.preconditionCode(reason))
@@ -1834,7 +1858,7 @@ final class Coordinator {
         if let command {
             return edit(command, source: "agent", target: windowID, authorization: authorization, desiredState: desiredState, timeline: timeline)
         }
-        guard let windowID else { return .refused("A focus target is required.", code: "usage") }
+        guard let windowID else { return .refused("A focus target is required.", code: .usage) }
         return runFocus(windowID, source: "agent", authorization: authorization)
     }
 
@@ -1898,7 +1922,7 @@ final class Coordinator {
     func edit(_ command: EditCommand, source: String, pressedAt: Date? = nil, repeats: Int = 1, resultTicket: String? = nil, target: WindowID? = nil, authorization: OperationAuthorization? = nil, desiredState: Bool? = nil, timeline: OperationTimeline? = nil,
               resolved: ResolvedSpace? = nil, menuTarget: MenuWindowTarget? = nil) -> EditAccept {
         if let menuTarget, self.menuWindowTarget() != menuTarget {
-            return .refused(L(.coordinatorTheSelectedWindowChangedOpen), code: "targets-changed")
+            return .refused(L(.coordinatorTheSelectedWindowChangedOpen), code: .targetsChanged)
         }
         let timeline: OperationTimeline? = {
             switch command {
@@ -1921,7 +1945,7 @@ final class Coordinator {
             if control.paused {
                 // Space switches run even while paused. During stop handling (waiting to confirm issued operations), refuse as busy.
                 if case .space = command { return .busy }
-                return .refused(L(.coordinatorAllSpacesArePausedSo), code: "paused")
+                return .refused(L(.coordinatorAllSpacesArePausedSo), code: .paused)
             }
             guard UserWorkQueue.queuesWhileBusy(source) else { return .busy }
             if currentKind?.hasPrefix("auto-") == true { control.invalidate() }
@@ -1945,19 +1969,19 @@ final class Coordinator {
         }
         // Space switches do not touch windows, so they run even while paused.
         if case .space(let target) = command { return runSpaceSwitch(target, source: source, authorization: authorization, timeline: timeline, resolved: resolved) }
-        if control.paused { return .refused(L(.coordinatorAllSpacesArePausedSo), code: "paused") }
+        if control.paused { return .refused(L(.coordinatorAllSpacesArePausedSo), code: .paused) }
         // Edits that need no focused window, or no started Space.
         switch command {
         case .moveToSpace(let destination):
             // From the menu (with `follow-moved-window`), the window pinned when the menu opened, as for a send.
-            guard let focused = menuTarget?.window ?? target ?? frontWindowForEdit() else { return .refused(L(.coordinatorCouldNotFindTheFocused), code: "no-focused-window") }
+            guard let focused = menuTarget?.window ?? target ?? frontWindowForEdit() else { return .refused(L(.coordinatorCouldNotFindTheFocused), code: .noFocusedWindow) }
             return runMoveToSpace(focused, target: destination, source: source, authorization: authorization, timeline: timeline, resolved: resolved, menuTarget: menuTarget)
         case .sendToSpace(let destination):
             // Sending a background window with `--window-id` is not accepted (front window only, as with `move-to-space`).
-            guard let focused = menuTarget?.window ?? target ?? frontWindowForEdit() else { return .refused(L(.appDelegateCouldNotFindTheFocused), code: "no-focused-window") }
+            guard let focused = menuTarget?.window ?? target ?? frontWindowForEdit() else { return .refused(L(.appDelegateCouldNotFindTheFocused), code: .noFocusedWindow) }
             return runSendToSpace(focused, target: destination, source: source, authorization: authorization, timeline: timeline, resolved: resolved, menuTarget: menuTarget)
         case .fullscreen, .minimize:
-            guard let focused = target ?? frontWindowForEdit() else { return .refused(L(.coordinatorCouldNotFindTheFocusedWindow), code: "no-focused-window") }
+            guard let focused = target ?? frontWindowForEdit() else { return .refused(L(.coordinatorCouldNotFindTheFocusedWindow), code: .noFocusedWindow) }
             return runWindowState(focused, command == .fullscreen ? .fullscreen : .minimized, source: source, authorization: authorization, desiredState: desiredState, requireFocus: target == nil)
         case .undo:
             // undo restores only the layout tree (structure and ratios), leaving floating, zoom, and waiting state alone.
@@ -1971,12 +1995,12 @@ final class Coordinator {
                 let pruned = candidate.removing(Set(candidate.windowIDs).subtracting(alive).union(floating))
                 if pruned.root != nil, pruned != layout { previous = pruned; break }
             }
-            guard let previous else { lock.unlock(); return .refused(L(.coordinatorThereIsNoLayoutChange), code: "nothing-to-undo") }
+            guard let previous else { lock.unlock(); return .refused(L(.coordinatorThereIsNoLayoutChange), code: .nothingToUndo) }
             lock.unlock()
             return wrap(arrange(source: source, kind: command.kind, layoutOverride: previous, ignoreZoom: true,
                                 editState: EditState(floating: Array(floating), zoomed: zoomed, undoHistory: history), authorization: authorization, pressedAt: acceptedAt))
         case .focusBack:
-            guard layout != nil else { return .refused(notStartedMessage, code: "not-started") }
+            guard layout != nil else { return .refused(notStartedMessage, code: .notStarted) }
             lock.lock(); let history = focusHistory[spaceKey] ?? []; lock.unlock()
             let current = system.currentSpaceID()
             let census = takeCensus(current)
@@ -1984,17 +2008,17 @@ final class Coordinator {
             // (When the front app has no window, the head of the history is the target as is.)
             // The census also lists other displays' windows; one SkyLight puts only on other Spaces is skipped (unknown membership keeps it).
             let onThisSpace = { (id: WindowID) in current.flatMap { space in self.system.spacesOf(id).map { $0.isEmpty || $0.contains(space) } } ?? true }
-            guard let target = history.first(where: { $0 != census.frontWindow && census.windows[$0] != nil && onThisSpace($0) }) else { return .refused(L(.coordinatorThereIsNoPreviouslyFocused), code: "no-focus-history") }
+            guard let target = history.first(where: { $0 != census.frontWindow && census.windows[$0] != nil && onThisSpace($0) }) else { return .refused(L(.coordinatorThereIsNoPreviouslyFocused), code: .noFocusHistory) }
             return runFocus(target, source: source, pressedAt: acceptedAt, authorization: authorization)
         default: break
         }
-        guard let layout else { return .refused(notStartedMessage, code: "not-started") }
-        guard let focused = target ?? frontWindowForEdit() else { return .refused(L(.coordinatorCouldNotFindTheFocusedWindowSelect), code: "no-focused-window") }
+        guard let layout else { return .refused(notStartedMessage, code: .notStarted) }
+        guard let focused = target ?? frontWindowForEdit() else { return .refused(L(.coordinatorCouldNotFindTheFocusedWindowSelect), code: .noFocusedWindow) }
 
         func requireManaged() -> CodedRefusal? {
-            if floating.contains(focused) { return CodedRefusal(message: floatingEditRefusal(), code: "not-tiled") }
+            if floating.contains(focused) { return CodedRefusal(message: floatingEditRefusal(), code: .notTiled) }
             if !layout.windowIDs.contains(focused) {
-                return CodedRefusal(message: L(.coordinatorTheFocusedWindowIsNot), code: "not-tiled")
+                return CodedRefusal(message: L(.coordinatorTheFocusedWindowIsNot), code: .notTiled)
             }
             return nil
         }
@@ -2036,7 +2060,7 @@ final class Coordinator {
             let maximums = knowledge.maximums(for: layout.windowIDs, workArea: workArea)
             let tileFocus = layout.windowIDs.contains(focused) ? focused : nil
             guard case .fits(let plan) = Planner.fit(layout, in: workArea, constraints: constraints, options: plannerOptions(forSpaceKey: spaceKey), maximums: maximums, focused: tileFocus) else {
-                return .refused(L(.coordinatorTheLayoutCouldNotBe), code: "layout-unavailable")
+                return .refused(L(.coordinatorTheLayoutCouldNotBe), code: .layoutUnavailable)
             }
             let rects = plan.rects.merging(members) { tile, _ in tile }
             var cursor = focused
@@ -2046,7 +2070,7 @@ final class Coordinator {
                 target = next
                 cursor = next
             }
-            guard let target else { return .refused(neighborFailure(d), code: "no-neighbor") }
+            guard let target else { return .refused(neighborFailure(d), code: .noNeighbor) }
             var destination: FocusOperation.RegionDestination?
             // Moving to a strip dialog passes the confirmed owner as is (not treated as a normal window).
             if let member = live[target], !layout.windowIDs.contains(target), let space {
@@ -2078,7 +2102,7 @@ final class Coordinator {
 
         case .resizeSmart(let delta):
             if let why = requireManaged() { return why.accept }
-            guard let axis = layout.parentAxis(of: focused) else { return .refused(L(.coordinatorTheShareCannotChangeBecause), code: "single-window") }
+            guard let axis = layout.parentAxis(of: focused) else { return .refused(L(.coordinatorTheShareCannotChangeBecause), code: .singleWindow) }
             let transform: ArrangeOperation.Transform = { current, _ in LayoutEdit.resize(focused, axis: axis, by: delta, in: current) }
             return wrap(arrange(source: source, kind: command.kind, transform: transform, transformFailure: L(.coordinatorTheShareCannotChangeBecauseNo), ignoreZoom: true, authorization: authorization, pressedAt: acceptedAt))
 
@@ -2093,7 +2117,7 @@ final class Coordinator {
             if floating.contains(focused) || layout.windowIDs.contains(focused) || waitingNow.contains(focused) {
                 return runClose(focused, source: source, authorization: authorization, requireFocus: target == nil)
             }
-            return .refused(L(.coordinatorTheFocusedWindowIsNotTiled), code: "not-tiled")
+            return .refused(L(.coordinatorTheFocusedWindowIsNotTiled), code: .notTiled)
 
         case .toggleOrientation:
             if let why = requireManaged() { return why.accept }
@@ -2130,7 +2154,7 @@ final class Coordinator {
                                 editState: EditState(floating: Array(floating), zoomed: turningOn ? focused : nil), authorization: authorization, pressedAt: acceptedAt))
 
         case .undo, .focusBack, .space, .moveToSpace, .sendToSpace, .fullscreen, .minimize:
-            return .refused(L(.coordinatorInternalError), code: "internal-error") // handled above
+            return .refused(L(.coordinatorInternalError), code: .internalError) // handled above
         }
     }
 
@@ -2144,13 +2168,13 @@ final class Coordinator {
     }
     private func resolveSpace(_ target: SpaceTarget, desktopsOnly: Bool = false) -> SpaceResolution {
         guard let listing = spaceListing(), let snapshot = listing.spaceSnapshot() else {
-            return .failure(CodedRefusal(message: L(.coordinatorSpacesCannotBeUsedBecause), code: "space-unavailable"))
+            return .failure(CodedRefusal(message: L(.coordinatorSpacesCannotBeUsedBecause), code: .spaceUnavailable))
         }
         // Order, uuids, display, and current Space from one read (so a reorder between reads never yields a mismatched set).
         let order = snapshot.order
         func resolved(_ id: UInt64) -> SpaceResolution {
             guard let holder = snapshot.holder(of: id) else {
-                return .failure(CodedRefusal(message: L(.coordinatorThatSpaceIsNoLonger), code: "space-not-found"))
+                return .failure(CodedRefusal(message: L(.coordinatorThatSpaceIsNoLonger), code: .spaceNotFound))
             }
             return .success(ResolvedSpace(id: id, uuid: snapshot.uuids?[id], display: holder.display, isDesktop: holder.desktops.contains(id),
                                           otherDisplay: holder.display != snapshot.display))
@@ -2160,12 +2184,12 @@ final class Coordinator {
         if case .desktop(let n, let display) = target {
             let count = max(snapshot.groups.count, 1)
             guard display >= 1, display <= count else {
-                return .failure(CodedRefusal(message: L(.coordinatorNoDisplay(String(display), displays: count)), code: "space-not-found"))
+                return .failure(CodedRefusal(message: L(.coordinatorNoDisplay(String(display), displays: count)), code: .spaceNotFound))
             }
             if let group = snapshot.groups.dropFirst(display - 1).first, group.display != snapshot.display {
                 guard n >= 1, n <= group.desktops.count else {
                     return .failure(CodedRefusal(message: L(.coordinatorNoDesktopOnDisplay(Copy.desktop(n), group.name, desktops: group.desktops.count)),
-                                                 code: "space-not-found"))
+                                                 code: .spaceNotFound))
                 }
                 return resolved(group.desktops[n - 1])
             }
@@ -2180,25 +2204,25 @@ final class Coordinator {
             return listing.neighbor(offset: offset).flatMap { order.contains($0) && (!desktopsOnly || snapshot.desktops.contains($0)) ? $0 : nil }
         }
         switch target {
-        case .desktop: return .failure(CodedRefusal(message: "Unresolved display target.", code: "invalid-request"))
+        case .desktop: return .failure(CodedRefusal(message: "Unresolved display target.", code: .invalidRequest))
         case .index(let n):
             guard n >= 1, n <= snapshot.desktops.count else {
-                return .failure(CodedRefusal(message: L(.coordinatorNoDesktop(Copy.desktop(n), desktops: snapshot.desktops.count)), code: "space-not-found"))
+                return .failure(CodedRefusal(message: L(.coordinatorNoDesktop(Copy.desktop(n), desktops: snapshot.desktops.count)), code: .spaceNotFound))
             }
             return resolved(snapshot.desktops[n - 1])
         case .next:
-            guard let id = neighbor(1) else { return .failure(CodedRefusal(message: L(.coordinatorThereIsNoSpaceTo), code: "space-not-found")) }
+            guard let id = neighbor(1) else { return .failure(CodedRefusal(message: L(.coordinatorThereIsNoSpaceTo), code: .spaceNotFound)) }
             return resolved(id)
         case .prev:
-            guard let id = neighbor(-1) else { return .failure(CodedRefusal(message: L(.coordinatorThereIsNoSpaceToThe), code: "space-not-found")) }
+            guard let id = neighbor(-1) else { return .failure(CodedRefusal(message: L(.coordinatorThereIsNoSpaceToThe), code: .spaceNotFound)) }
             return resolved(id)
         case .back:
             lock.lock(); let prev = previousSpaceID; lock.unlock()
-            guard let prev, snapshot.holder(of: prev) != nil else { return .failure(CodedRefusal(message: L(.coordinatorThereIsNoPreviousSpace), code: "space-not-found")) }
+            guard let prev, snapshot.holder(of: prev) != nil else { return .failure(CodedRefusal(message: L(.coordinatorThereIsNoPreviousSpace), code: .spaceNotFound)) }
             return resolved(prev)
         case .id(let id):
             guard let holder = snapshot.holder(of: id), !desktopsOnly || holder.desktops.contains(id) else {
-                return .failure(CodedRefusal(message: L(.coordinatorThatSpaceIsNoLonger), code: "space-not-found"))
+                return .failure(CodedRefusal(message: L(.coordinatorThatSpaceIsNoLonger), code: .spaceNotFound))
             }
             return resolved(id)
         }
@@ -2333,11 +2357,11 @@ final class Coordinator {
             }
         }
         let dest = resolved.id
-        if system.currentSpaceID() == dest { return .refused(L(.coordinatorYouAreAlreadyOnThat), code: "same-space") }
+        if system.currentSpaceID() == dest { return .refused(L(.coordinatorYouAreAlreadyOnThat), code: .sameSpace) }
         let switcher: SpaceSwitcher
         if let override = spaceSwitcherOverride { switcher = override }
         else if let sc = spaceControl { switcher = { sc.switchTo(spaceID: $0, plan: $1, shouldContinue: $2) } }
-        else { return .refused(L(.coordinatorSpaceDetectionIsUnavailable), code: "space-unavailable") }
+        else { return .refused(L(.coordinatorSpaceDetectionIsUnavailable), code: .spaceUnavailable) }
         prestartPassThroughTap()
         let landing = SpaceLanding(dest: dest)
         return runSimple(kind: "space", progress: L(.coordinatorSwitchingSpaces), source: source, allowPaused: true, authorization: authorization,
@@ -2541,9 +2565,9 @@ final class Coordinator {
         }
         let dest = resolved.id
         let current = system.currentSpaceID()
-        if current == dest { return .refused(L(.coordinatorTheWindowIsAlreadyOn), code: "same-space") }
+        if current == dest { return .refused(L(.coordinatorTheWindowIsAlreadyOn), code: .sameSpace) }
         let census = takeCensus(current)
-        guard let targetPID = census.windows[target] else { return .refused(L(.coordinatorTheFocusedWindowIsNotOn), code: "target-not-found") }
+        guard let targetPID = census.windows[target] else { return .refused(L(.coordinatorTheFocusedWindowIsNotOn), code: .targetNotFound) }
         let mover: SpaceMover
         if let override = spaceMoverOverride { mover = override }
         else if let sc = spaceControl {
@@ -2553,7 +2577,7 @@ final class Coordinator {
                 sc.moveWindow(wid, frame: frame, toSpace: dest, arrows: arrowPolicy(), timeline: timeline, hooks: gates.hooks, shouldContinue: gates.shouldContinue)
             }
         }
-        else { return .refused(L(.coordinatorSpaceDetectionIsUnavailable), code: "space-unavailable") }
+        else { return .refused(L(.coordinatorSpaceDetectionIsUnavailable), code: .spaceUnavailable) }
         prestartPassThroughTap()
         let landing = SpaceLanding(dest: dest)
         let sameTarget = { [self] in menuTarget.map { self.menuWindowTarget() == $0 } ?? (frontWindowForEdit() == target) }
@@ -2658,17 +2682,17 @@ final class Coordinator {
         }
         let dest = resolved.id
         let current = system.currentSpaceID()
-        if current == dest { return .refused(L(.coordinatorTheWindowIsAlreadyOn), code: "same-space") }
+        if current == dest { return .refused(L(.coordinatorTheWindowIsAlreadyOn), code: .sameSpace) }
         let sender: SpaceSender
         if let override = spaceSenderOverride { sender = override }
         else if let sc = spaceControl { sender = { sc.sendWindow($0, toSpace: $1, timeline: timeline, beforeIssue: $2.beforeIssue, afterIssue: $2.afterIssue) } }
-        else { return .refused(L(.coordinatorSpaceDetectionIsUnavailable), code: "space-unavailable") }
+        else { return .refused(L(.coordinatorSpaceDetectionIsUnavailable), code: .spaceUnavailable) }
         // Dragging instead would switch Spaces, so without the direct move it is refused.
         guard sendAvailableOverride ?? spaceControl?.canSendWithoutFollowing ?? true else {
-            return .refused(Self.sendUnavailable(fromShortcutOrMenu: UserWorkQueue.queuesWhileBusy(source), followSetting: config.followMovedWindow), code: "send-unavailable")
+            return .refused(Self.sendUnavailable(fromShortcutOrMenu: UserWorkQueue.queuesWhileBusy(source), followSetting: config.followMovedWindow), code: .sendUnavailable)
         }
         let census = takeCensus(current)
-        guard let targetPID = census.windows[target] else { return .refused(L(.coordinatorTheFocusedWindowIsNotOn), code: "target-not-found") }
+        guard let targetPID = census.windows[target] else { return .refused(L(.coordinatorTheFocusedWindowIsNotOn), code: .targetNotFound) }
         // The restore candidate comes from the front history before sending (unaffected by history updates after). The front app at acceptance is noted too
         // (if another app comes forward later without input, no restoration).
         let restore = current.flatMap { restoreCandidate(excluding: target, space: $0, census: census) }
@@ -3037,7 +3061,7 @@ final class Coordinator {
         switch a {
         case .started(let id): return .started(id)
         case .busy: return .busy
-        case .notApplicable: return .refused(L(.coordinatorThisSpaceHasNoLayout), code: "not-started")
+        case .notApplicable: return .refused(L(.coordinatorThisSpaceHasNoLayout), code: .notStarted)
         }
     }
 

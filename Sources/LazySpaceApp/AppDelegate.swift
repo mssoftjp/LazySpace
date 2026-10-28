@@ -97,7 +97,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.delegate = self
         statusItem.menu = menu
 
-        if !ControlPort.startServer(handler: { [weak self] req in self?.handle(req) ?? ControlPort.Response(ok: false, message: L(.appDelegateLazySpaceIsNotAvailable), code: "internal-error") }) {
+        if !ControlPort.startServer(handler: { [weak self] req in self?.handle(req) ?? ControlPort.Response(ok: false, message: L(.appDelegateLazySpaceIsNotAvailable), code: .internalError) }) {
             NSLog("LazySpace: CLI control port unavailable; check the owner and permissions of the application support directory.")
         }
         hotkeys = Hotkeys(bindings: HotkeyBinding.from(coordinator.config, mode: coordinator.mode)) { [weak self] action, source, pressedAt in
@@ -568,7 +568,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func handle(_ req: ControlPort.Request) -> ControlPort.Response {
         if let error = req.validationError {
-            return ControlPort.Response(ok: false, message: error, code: "usage")
+            return ControlPort.Response(ok: false, message: error, code: .usage)
         }
         switch req.cmd {
         case "status":
@@ -577,7 +577,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return ControlPort.Response(ok: true, message: "", status: status)
         case "result":
             guard let id = req.arg, !id.isEmpty else {
-                return ControlPort.Response(ok: false, message: "A result ID is required.", code: "usage")
+                return ControlPort.Response(ok: false, message: "A result ID is required.", code: .usage)
             }
             // A receipt token never falls through to the ordinary result cache.
             if id.contains(":") {
@@ -589,13 +589,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 result.id = id
                 var status = coordinator.status()
                 status.lastResult = result
-                return ControlPort.Response(ok: result.outcome == .complete, message: result.message, status: status, operationID: id, code: "finished", result: result)
+                return ControlPort.Response(ok: result.outcome == .complete, message: result.message, status: status, operationID: id, code: .finished, result: result)
             }
             // The completion wait polls every 20 ms. Unfinished replies carry no status (building it reads settings and login items each time).
             if coordinator.resultPending(id: id) {
-                return ControlPort.Response(ok: true, message: L(.appDelegateInProgress), operationID: id, code: "pending")
+                return ControlPort.Response(ok: true, message: L(.appDelegateInProgress), operationID: id, code: .pending)
             }
-            return ControlPort.Response(ok: false, message: "Unknown or expired operation ID.", operationID: id, code: "unknown-operation")
+            return ControlPort.Response(ok: false, message: "Unknown or expired operation ID.", operationID: id, code: .unknownOperation)
         case "settle.v2":
             let id = UUID().uuidString
             coordinator.observeSettlement { [weak self] observation in
@@ -603,7 +603,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     self?.storeObservation(ControlPort.Response(ok: true, message: "", operationID: id, settlement: observation), id: id)
                 }
             }
-            return ControlPort.Response(ok: true, message: "Observing.", operationID: id, code: "pending")
+            return ControlPort.Response(ok: true, message: "Observing.", operationID: id, code: .pending)
         case "inspect":
             let id = UUID().uuidString
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -617,13 +617,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return ControlPort.Response(ok: true, message: L(.appDelegateReadingWindows), operationID: id)
         case "inspect-result":
-            guard let id = req.arg else { return ControlPort.Response(ok: false, message: L(.appDelegateMissingInspectionID), code: "usage") }
+            guard let id = req.arg else { return ControlPort.Response(ok: false, message: L(.appDelegateMissingInspectionID), code: .usage) }
             if let response = inspectionResponses.removeValue(forKey: id) { inspectionOrder.removeAll { $0 == id }; return response }
             return ControlPort.Response(ok: true, message: L(.appDelegateReadingWindows), operationID: id)
         case "request-token.v3":
             switch receipts.reserve() {
             case .reserved(let id):
-                return ControlPort.Response(ok: true, message: "Reserved.", code: "reserved", requestID: id)
+                return ControlPort.Response(ok: true, message: "Reserved.", code: .reserved, requestID: id)
             case .refused(let outcome):
                 return outcome.response(requestID: nil)
             }
@@ -635,27 +635,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             switch coordinator.setMode(name, source: "cli") {
             case .changed: return ControlPort.Response(ok: true, message: StatusMenuCopy.modeTitle(name), status: coordinator.status())
             case .unchanged: return ControlPort.Response(ok: true, message: L(.appDelegateAlreadyInMode(name)), status: coordinator.status())
-            case .refused(let why): return ControlPort.Response(ok: false, message: why, status: coordinator.status(), code: "unknown-mode")
+            case .refused(let why): return ControlPort.Response(ok: false, message: why, status: coordinator.status(), code: .unknownMode)
             }
         case "login-item":
             switch (req.arg ?? "").lowercased() {
             case "on", "true", "enable": coordinator.setLoginItem(true)
             case "off", "false", "disable": coordinator.setLoginItem(false)
             case "": break
-            default: return ControlPort.Response(ok: false, message: L(.appDelegateLoginItemTakesOnOr), status: coordinator.status(), code: "usage")
+            default: return ControlPort.Response(ok: false, message: L(.appDelegateLoginItemTakesOnOr), status: coordinator.status(), code: .usage)
             }
             let s = coordinator.status()
             return ControlPort.Response(ok: true, message: "\(MacItem.openAtLogin): \(s.loginItem)", status: s)
         case "reload":
             let message = coordinator.reloadConfig(source: "cli")
             let ok = coordinator.configError == nil
-            return ControlPort.Response(ok: ok, message: message, status: coordinator.status(), code: ok ? nil : "config-error")
+            return ControlPort.Response(ok: ok, message: message, status: coordinator.status(), code: ok ? nil : .configError)
         case "pause":
             coordinator.pause()
             return ControlPort.Response(ok: true, message: StatusMenuCopy.pauseNotice(), status: coordinator.status())
         case "resume":
             if let reason = coordinator.resume() {
-                return ControlPort.Response(ok: false, message: reason, status: coordinator.status(), code: "resume-unavailable")
+                return ControlPort.Response(ok: false, message: reason, status: coordinator.status(), code: .resumeUnavailable)
             }
             return ControlPort.Response(ok: true, message: StatusMenuCopy.resumeNotice(), status: coordinator.status())
         case "settings":
@@ -667,7 +667,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         case "quit":
             return Self.makeQuitResponse()
         default:
-            return ControlPort.Response(ok: false, message: L(.appDelegateUnknownCommand(req.cmd)), code: "unknown-command")
+            return ControlPort.Response(ok: false, message: L(.appDelegateUnknownCommand(req.cmd)), code: .unknownCommand)
         }
     }
 
@@ -705,14 +705,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return product(coordinator.agentEdit(nil, windowID: req.windowID, expectedSpaceID: req.expectedSpaceID, expectedPID: req.expectedPID), accepted: "Accepted.")
         case "edit.v3":
             guard let command = EditCommand.parse(req.arg ?? "") else {
-                return .refused(MutationReceiptRegistry.Outcome(ok: false, code: "internal-error", message: "Invalid edit command.", operationID: nil, result: nil))
+                return .refused(MutationReceiptRegistry.Outcome(ok: false, code: .internalError, message: "Invalid edit command.", operationID: nil, result: nil))
             }
             // The timeline origin is when ControlPort accepted this request.
             let timeline = OperationTimeline()
             return product(coordinator.agentEdit(command, windowID: req.windowID, expectedSpaceID: req.expectedSpaceID, expectedPID: req.expectedPID,
                                                  desiredState: req.desiredState, timeline: timeline), accepted: "Accepted.")
         default:
-            return .refused(MutationReceiptRegistry.Outcome(ok: false, code: "internal-error", message: "This command is not a mutation.", operationID: nil, result: nil))
+            return .refused(MutationReceiptRegistry.Outcome(ok: false, code: .internalError, message: "This command is not a mutation.", operationID: nil, result: nil))
         }
     }
 
@@ -720,7 +720,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         var authorization = OperationAuthorization(system: coordinator.system, control: coordinator.control)
         authorization.expectedSpaceID = req.expectedSpaceID
         if let expected = req.expectedSpaceID, authorization.spaceID != expected {
-            return .refused(MutationReceiptRegistry.Outcome(ok: false, code: "space-mismatch", message: "Expected Space does not match.", operationID: nil, result: nil))
+            return .refused(MutationReceiptRegistry.Outcome(ok: false, code: .spaceMismatch, message: "Expected Space does not match.", operationID: nil, result: nil))
         }
         let accepted = integrate
             ? coordinator.integrateWaiting(source: "agent", authorization: authorization)
@@ -729,9 +729,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         case .started(let id):
             return .started(operationID: id, message: L(.appDelegateAccepted))
         case .busy:
-            return .refused(MutationReceiptRegistry.Outcome(ok: false, code: "busy", message: L(.appDelegateAnotherOperationIsInProgressThe), operationID: nil, result: nil))
+            return .refused(MutationReceiptRegistry.Outcome(ok: false, code: .busy, message: L(.appDelegateAnotherOperationIsInProgressThe), operationID: nil, result: nil))
         case .notApplicable:
-            return .refused(MutationReceiptRegistry.Outcome(ok: false, code: "not-started", message: L(.appDelegateThisSpaceHasNoLayout), operationID: nil, result: nil))
+            return .refused(MutationReceiptRegistry.Outcome(ok: false, code: .notStarted, message: L(.appDelegateThisSpaceHasNoLayout), operationID: nil, result: nil))
         }
     }
 
@@ -740,7 +740,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         case .started(let id):
             return .started(operationID: id, message: message)
         case .busy:
-            return .refused(MutationReceiptRegistry.Outcome(ok: false, code: "busy", message: L(.appDelegateAnotherOperationIsInProgressThe), operationID: nil, result: nil))
+            return .refused(MutationReceiptRegistry.Outcome(ok: false, code: .busy, message: L(.appDelegateAnotherOperationIsInProgressThe), operationID: nil, result: nil))
         case .refused(let why, let code):
             return .refused(MutationReceiptRegistry.Outcome(ok: false, code: code, message: why, operationID: nil, result: nil))
         }

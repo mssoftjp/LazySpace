@@ -39,6 +39,31 @@ final class CoordinatorTests: XCTestCase {
         drain()
     }
 
+    /// `autoUnavailableCause` names the first unmet condition, the one `autoReason` describes, and none while automatic arrangement is available.
+    func testStatusNamesWhyAutomaticArrangementIsUnavailable() throws {
+        func cause() -> String? {
+            let status = coordinator.status()
+            XCTAssertEqual(status.autoAvailable, status.autoUnavailableCause == nil)
+            return status.autoUnavailableCause
+        }
+        XCTAssertNil(cause())
+        coordinator.pause()
+        XCTAssertNil(cause(), "pausing is not a cause")
+        system.displaysShareOneSpace = true
+        XCTAssertEqual(cause(), "sharedSpaces")
+        system.stageManagerOn = true
+        XCTAssertEqual(cause(), "stageManager")
+        try "not = [toml".write(to: root.appendingPathComponent("config.toml"), atomically: true, encoding: .utf8)
+        _ = coordinator.reloadConfig(source: "launch")
+        XCTAssertEqual(cause(), "configNotApplied")
+        system.inputAvailable = false
+        XCTAssertEqual(cause(), "inputObservation")
+        system.spaceObservationAvailable = false
+        XCTAssertEqual(cause(), "spaceObservation")
+        system.trusted = false
+        XCTAssertEqual(cause(), "accessibility")
+    }
+
     func testTrustChangeIsReportedOnceEachWayAndFromTheSystemNotification() {
         var changes: [Bool] = []
         coordinator.onTrustChange = { changes.append($0) }
@@ -567,7 +592,7 @@ final class CoordinatorTests: XCTestCase {
         coordinator.pause()
         XCTAssertEqual(
             coordinator.edit(.resize(.horizontal, 0.05), source: "hotkey h"),
-            .refused("All Spaces are paused, so the layout was not changed. Resume LazySpace, then try again.", code: "paused")
+            .refused("All Spaces are paused, so the layout was not changed. Resume LazySpace, then try again.", code: .paused)
         )
         XCTAssertEqual(coordinator.pendingUserWork, 0)
         coordinator.resume()
@@ -582,7 +607,7 @@ final class CoordinatorTests: XCTestCase {
         try "language = \"ja\"\n".write(to: coordinator.configURL, atomically: true, encoding: .utf8)
         coordinator.pause()
         let expected = "すべての操作スペースが一時停止中のため編集しません。再開してから操作してください。"
-        XCTAssertEqual(coordinator.edit(.resize(.horizontal, 0.05), source: "hotkey h"), .refused(expected, code: "paused"))
+        XCTAssertEqual(coordinator.edit(.resize(.horizontal, 0.05), source: "hotkey h"), .refused(expected, code: .paused))
         XCTAssertEqual(coordinator.pendingUserWork, 0)
         coordinator.resume()
         XCTAssertEqual(coordinator.reportReload(source: "menu"), "設定を読み込みました。ウインドウは動かしていません。")

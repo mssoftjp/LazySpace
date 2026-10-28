@@ -22,7 +22,7 @@ final class MutationReceiptRegistry {
 
     struct Outcome: Equatable {
         var ok: Bool
-        var code: String
+        var code: ResultCode
         var message: String
         var operationID: String?
         var result: OperationResult?
@@ -129,10 +129,10 @@ final class MutationReceiptRegistry {
         lock.lock(); defer { lock.unlock() }
         sweep(now())
         if active.count >= activeLimit {
-            return .refused(Self.outcome(ok: false, code: "request-capacity", message: "Too many reserved or in-flight requests."))
+            return .refused(Self.outcome(ok: false, code: .requestCapacity, message: "Too many reserved or in-flight requests."))
         }
         guard let sequence = nextSequence else {
-            return .refused(Self.outcome(ok: false, code: "request-sequence-exhausted", message: "The session cannot allocate another request ID."))
+            return .refused(Self.outcome(ok: false, code: .requestSequenceExhausted, message: "The session cannot allocate another request ID."))
         }
         let text = "\(session.uuidString):\(sequence)"
         highestIssued = sequence
@@ -163,11 +163,11 @@ final class MutationReceiptRegistry {
         lock.lock(); defer { lock.unlock() }
         switch locate(raw, at: now()) {
         case .malformed:
-            return .outcome(Self.outcome(ok: false, code: "usage", message: "The request ID is malformed."))
+            return .outcome(Self.outcome(ok: false, code: .usage, message: "The request ID is malformed."))
         case .sessionMismatch:
-            return .outcome(Self.outcome(ok: false, code: "session-mismatch", message: "The request ID belongs to a different LazySpace session. An earlier effect may have occurred, and its outcome is unavailable."))
+            return .outcome(Self.outcome(ok: false, code: .sessionMismatch, message: "The request ID belongs to a different LazySpace session. An earlier effect may have occurred, and its outcome is unavailable."))
         case .unknown:
-            return .outcome(Self.outcome(ok: false, code: "unknown-request", message: "The request ID has not been allocated in this session."))
+            return .outcome(Self.outcome(ok: false, code: .unknownRequest, message: "The request ID has not been allocated in this session."))
         case .expired:
             return .outcome(Self.expired)
         case .live(let token, .reserved):
@@ -190,15 +190,15 @@ final class MutationReceiptRegistry {
         lock.lock(); defer { lock.unlock() }
         switch locate(raw, at: now()) {
         case .malformed:
-            return Self.outcome(ok: false, code: "usage", message: "The request ID is malformed.")
+            return Self.outcome(ok: false, code: .usage, message: "The request ID is malformed.")
         case .sessionMismatch:
-            return Self.outcome(ok: false, code: "session-mismatch", message: "The request ID belongs to a different LazySpace session. An earlier effect may have occurred, and its outcome is unavailable.")
+            return Self.outcome(ok: false, code: .sessionMismatch, message: "The request ID belongs to a different LazySpace session. An earlier effect may have occurred, and its outcome is unavailable.")
         case .unknown:
-            return Self.outcome(ok: false, code: "unknown-request", message: "The request ID has not been allocated in this session.")
+            return Self.outcome(ok: false, code: .unknownRequest, message: "The request ID has not been allocated in this session.")
         case .expired:
             return Self.expired
         case .live(_, .reserved):
-            return Self.outcome(ok: false, code: "request-not-submitted", message: "No mutation has been dispatched for this request ID.")
+            return Self.outcome(ok: false, code: .requestNotSubmitted, message: "No mutation has been dispatched for this request ID.")
         case .live(_, .dispatching):
             return Self.pending("Accepted.", operationID: nil)
         case .live(_, .pending(_, let outcome)):
@@ -227,7 +227,7 @@ final class MutationReceiptRegistry {
             switch product {
             case .started(let operationID, let message):
                 guard outcome.operationID == operationID else {
-                    return Self.outcome(ok: false, code: "internal-error", message: "The operation ID did not match the receipt.")
+                    return Self.outcome(ok: false, code: .internalError, message: "The operation ID did not match the receipt.")
                 }
                 outcome.message = message
                 active[raw] = .pending(payload, outcome)
@@ -237,7 +237,7 @@ final class MutationReceiptRegistry {
                 return outcome
             }
         default:
-            return Self.outcome(ok: false, code: "internal-error", message: "The request is not awaiting dispatch.")
+            return Self.outcome(ok: false, code: .internalError, message: "The request is not awaiting dispatch.")
         }
     }
 
@@ -290,18 +290,18 @@ final class MutationReceiptRegistry {
         return Token(session: parsed.session, sequence: parsed.sequence, text: parsed.text)
     }
 
-    private static func outcome(ok: Bool, code: String, message: String, operationID: String? = nil, result: OperationResult? = nil) -> Outcome {
+    private static func outcome(ok: Bool, code: ResultCode, message: String, operationID: String? = nil, result: OperationResult? = nil) -> Outcome {
         Outcome(ok: ok, code: code, message: message, operationID: operationID, result: result)
     }
 
     private static func pending(_ message: String, operationID: String?) -> Outcome {
-        outcome(ok: true, code: "pending", message: message, operationID: operationID)
+        outcome(ok: true, code: .pending, message: message, operationID: operationID)
     }
 
     private static func finished(_ result: OperationResult) -> Outcome {
-        outcome(ok: result.outcome == .complete, code: "finished", message: result.message, operationID: result.id, result: result)
+        outcome(ok: result.outcome == .complete, code: .finished, message: result.message, operationID: result.id, result: result)
     }
 
-    private static let expired = outcome(ok: false, code: "request-expired", message: "The request ID is expired or no longer retained. It will not dispatch again.")
-    private static let conflict = outcome(ok: false, code: "request-conflict", message: "The request ID is bound to a different mutation.")
+    private static let expired = outcome(ok: false, code: .requestExpired, message: "The request ID is expired or no longer retained. It will not dispatch again.")
+    private static let conflict = outcome(ok: false, code: .requestConflict, message: "The request ID is bound to a different mutation.")
 }

@@ -112,7 +112,7 @@ final class SendToSpaceTests: XCTestCase {
         sender()
         coordinator.sendAvailableOverride = false
         guard case .refused(let message, let code) = coordinator.edit(.sendToSpace(.index(3)), source: "test") else { return XCTFail("accepted without the direct move") }
-        XCTAssertEqual(code, "send-unavailable", "never falls back to a drag, which would switch Spaces")
+        XCTAssertEqual(code, .sendUnavailable, "never falls back to a drag, which would switch Spaces")
         XCTAssertTrue(message.contains("--follow"), "the recovery guidance must name the explicit following mode")
         XCTAssertTrue(sends.isEmpty)
     }
