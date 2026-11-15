@@ -452,6 +452,20 @@ final class ManualEditTests: XCTestCase {
         XCTAssertEqual(ManualEdit.detect(id: a, planned: r[a]!, actual: moved, layout: row, plannedRects: r), .dropOnto(a, c))
     }
 
+    /// Windows of a row that does not fit sit beside each other, so a drop on one swaps, as between tiles. A real accordion's frames do not tell where it landed.
+    func testADropSwapsInARowThatDoesNotFitButNotInAnAccordion() {
+        let planned = [a: CGRect(x: 0, y: 0, width: 840, height: 900), b: CGRect(x: 772, y: 0, width: 740, height: 900)]
+        let tiles = Layout(root: .split(.horizontal, children: [.leaf(a), .leaf(b)], ratios: [0.5, 0.5]))
+        let accordion = Layout(root: .accordion(.horizontal, children: [.leaf(a), .leaf(b)], ratios: [0.5, 0.5]))
+        let dropped = planned[b]!.offsetBy(dx: -500, dy: 0)
+        XCTAssertEqual(ManualEdit.detect(id: b, planned: planned[b]!, actual: dropped, layout: tiles, shape: accordion, plannedRects: planned), .dropOnto(b, a))
+        XCTAssertNil(ManualEdit.detect(id: b, planned: planned[b]!, actual: dropped, layout: accordion, shape: accordion, plannedRects: planned))
+        // A resize along its axis is no edit in either.
+        let wider = CGRect(x: 0, y: 0, width: 1000, height: 900)
+        XCTAssertNil(ManualEdit.detect(id: a, planned: planned[a]!, actual: wider, layout: tiles, shape: accordion, plannedRects: planned))
+        XCTAssertNil(ManualEdit.detect(id: a, planned: planned[a]!, actual: wider, layout: accordion, shape: accordion, plannedRects: planned))
+    }
+
     func testMoveToNowhereOrSnapBecomesFloat() {
         let r = rects(row)
         let nowhere = CGRect(x: 0, y: 3000, width: r[a]!.width, height: r[a]!.height)

@@ -9,6 +9,12 @@ public struct Plan: Equatable {
     public var assumedUnknown: Set<WindowID>
     /// Rows used by the initial layout; 0 when recalculating the user's structure.
     public var rows: Int
+    /// The tree as placed, node for node with `layout`: a folded split (one whose windows do not fit side by side) is an accordion here, since its windows overlap too.
+    /// Consumers that treat accordions specially read this; `layout` stays the intent that is saved.
+    public var shape: Layout
+
+    /// Whether some split was folded.
+    public var folded: Bool { shape.root != layout.root }
 }
 
 /// Why it does not fit. Anything found before changing the layout is never written to the OS.
@@ -48,7 +54,7 @@ public struct PlannerOptions: Equatable {
     /// Maximum rows considered for the initial layout, to keep it bounded.
     public var maxRows: Int
     /// Size each window should get in the initial layout. Prefers the fewest rows where every window reaches it, else the fewest rows that fit.
-    /// A preference, not a constraint, so recalculating the user's structure (fit) ignores it.
+    /// A preference, not a constraint. Recalculating the user's structure (fit) uses it only in a folded split, where a window would otherwise get its minimum, however small.
     public var preferredMinimum: CGSize
     /// Width (pt) of the visible strip of unfocused accordion windows; 0 overlaps them completely.
     public var accordionPadding: Double
@@ -56,6 +62,8 @@ public struct PlannerOptions: Equatable {
     public var reservedRight: Double = 0
     /// Height reserved at the bottom for the dialog region (region plus gap). Never used together with the right reservation.
     public var reservedBottom: Double = 0
+    /// Whether a tiled split whose windows do not fit side by side overlaps by what it lacks (folded) instead of not fitting.
+    public var folds: Bool = true
 
     public init(gap: Double = 0, unknownFloor: CGSize = CGSize(width: 120, height: 120), maxRows: Int = 4, preferredMinimum: CGSize = CGSize(width: 400, height: 300), accordionPadding: Double = 30, gapVertical: Double? = nil, outerLeft: Double = 0, outerTop: Double = 0, outerRight: Double = 0, outerBottom: Double = 0) {
         self.gap = gap
@@ -124,7 +132,7 @@ public enum Planner {
         focused: WindowID? = nil
     ) -> PlanOutcome {
         guard let root = layout.root else {
-            return .fits(Plan(layout: layout, rects: [:], assumedUnknown: [], rows: 0))
+            return .fits(Plan(layout: layout, rects: [:], assumedUnknown: [], rows: 0, shape: layout))
         }
         // Rounded once for the whole layout, so tiles share their edges and ratios written back from them reproduce the same tiles.
         let tileArea = options.tilingArea(area).integralInset
@@ -148,14 +156,16 @@ public enum Planner {
         // since a window whose height follows its width would otherwise be asked again and again for less than it can be. An axis without a cap stays uncapped.
         for (id, cap) in caps {
             guard let minimum = constraints[id]?.size else { continue }
-            caps[id] = CGSize(width: cap.width > 0 ? max(cap.width, minimum.width) : 0,
-                              height: cap.height > 0 ? max(cap.height, minimum.height) : 0)
+            caps[id] = CGSize(width: cap.width > 0 ? max(cap.width, wholePoints(minimum.width)) : 0,
+                              height: cap.height > 0 ? max(cap.height, wholePoints(minimum.height)) : 0)
         }
         var rects: [WindowID: CGRect] = [:]
-        if let unfit = place(root, in: tileArea, constraints: constraints, options: options, maximums: caps, focused: focused, rects: &rects) {
+        switch place(root, in: tileArea, constraints: constraints, options: options, maximums: caps, focused: focused, rects: &rects) {
+        case .unfit(let unfit):
             return .unfit(unfit)
+        case .placed(let shape):
+            return .fits(Plan(layout: layout, rects: rects, assumedUnknown: assumed, rows: 0, shape: Layout(root: shape, leftoverHeights: layout.leftoverHeights)))
         }
-        return .fits(Plan(layout: layout, rects: rects, assumedUnknown: assumed, rows: 0))
     }
 
     /// Initial layout. Prefers horizontal; if one row does not fit, adds rows up to a bound.
@@ -168,15 +178,24 @@ public enum Planner {
         maximums: [WindowID: CGSize] = [:]
     ) -> PlanOutcome {
         guard !ids.isEmpty else {
-            return .fits(Plan(layout: Layout(root: nil), rects: [:], assumedUnknown: [], rows: 0))
+            let empty = Layout(root: nil)
+            return .fits(Plan(layout: empty, rects: [:], assumedUnknown: [], rows: 0, shape: empty))
         }
+        // In order: the fewest comfortable rows without folding, one folded row, the fewest rows that fit without folding, any folded rows.
         var firstFailure: Unfit?
         var firstFit: Plan?
+        var oneFoldedRow: Plan?
+        var firstFolded: Plan?
         for rows in 1...max(1, min(options.maxRows, ids.count)) {
             let layout = rowLayout(ids, rows: rows)
             switch fit(layout, in: area, constraints: constraints, options: options, maximums: maximums) {
             case .fits(var plan):
                 plan.rows = rows
+                if plan.folded {
+                    if rows == 1 { oneFoldedRow = plan }
+                    if firstFolded == nil { firstFolded = plan }
+                    continue
+                }
                 let comfortable = plan.rects.values.allSatisfy { $0.width >= options.preferredMinimum.width && $0.height >= options.preferredMinimum.height }
                 if comfortable { return .fits(plan) }
                 if firstFit == nil { firstFit = plan }
@@ -184,7 +203,7 @@ public enum Planner {
                 if firstFailure == nil { firstFailure = u }
             }
         }
-        if let firstFit { return .fits(firstFit) }
+        if let plan = oneFoldedRow ?? firstFit ?? firstFolded { return .fits(plan) }
         return .unfit(firstFailure!)
     }
 
@@ -223,6 +242,9 @@ public enum Planner {
         return minimum(of: root, constraints: constraints, options: options, assumed: &assumed)
     }
 
+    /// A minimum in whole points, as every length is, within the half point a fit allows: a length rounded down must not put a window below it.
+    private static func wholePoints(_ length: Double) -> Double { (length - 0.5).rounded(.up) }
+
     static func minimum(
         of node: LayoutNode,
         constraints: [WindowID: SizeKnowledge],
@@ -231,25 +253,28 @@ public enum Planner {
     ) -> CGSize {
         switch node {
         case .leaf(let id):
+            var out = options.unknownFloor
             switch constraints[id] ?? .unknown {
             case .known(let s), .estimated(let s):
                 // If only one axis is known (the other 0), fill that axis with the provisional minimum.
-                var out = s
-                if out.width <= 0 { out.width = options.unknownFloor.width; assumed.insert(id) }
-                if out.height <= 0 { out.height = options.unknownFloor.height; assumed.insert(id) }
-                return out
+                if s.width > 0 { out.width = s.width } else { assumed.insert(id) }
+                if s.height > 0 { out.height = s.height } else { assumed.insert(id) }
             case .unknown:
                 assumed.insert(id)
-                return options.unknownFloor
             }
+            return CGSize(width: wholePoints(out.width), height: wholePoints(out.height))
         case .split(let axis, let children, _):
             let mins = children.map { minimum(of: $0, constraints: constraints, options: options, assumed: &assumed) }
             let gaps = Double(max(0, children.count - 1)) * options.innerGap(along: axis)
+            // A split that does not fit side by side folds, which needs no more than the same children as an accordion.
+            let folded = options.folds && children.count > 1 ? options.accordionStrip * 2 : .infinity
             switch axis {
             case .horizontal:
-                return CGSize(width: mins.map(\.width).reduce(0, +) + gaps, height: mins.map(\.height).max() ?? 0)
+                let tiled = mins.map(\.width).reduce(0, +) + gaps
+                return CGSize(width: min(tiled, (mins.map(\.width).max() ?? 0) + folded), height: mins.map(\.height).max() ?? 0)
             case .vertical:
-                return CGSize(width: mins.map(\.width).max() ?? 0, height: mins.map(\.height).reduce(0, +) + gaps)
+                let tiled = mins.map(\.height).reduce(0, +) + gaps
+                return CGSize(width: mins.map(\.width).max() ?? 0, height: min(tiled, (mins.map(\.height).max() ?? 0) + folded))
             }
         case .accordion(let axis, let children, _):
             let mins = children.map { minimum(of: $0, constraints: constraints, options: options, assumed: &assumed) }
@@ -288,6 +313,40 @@ public enum Planner {
         }
     }
 
+    /// The shape a subtree was placed in, or why it did not fit.
+    private enum Placed {
+        case placed(LayoutNode)
+        case unfit(Unfit)
+    }
+
+    /// Where length a capped window or row can't use goes, along each axis.
+    private struct UnusedLength {
+        enum Side { case bothSides, after, before }
+        var horizontal: Side
+        var vertical: Side
+
+        /// Tiled: width is split evenly on both sides of the window or row. Height stays below it, where a new window can join.
+        static let tiled = UnusedLength(horizontal: .bothSides, vertical: .after)
+
+        func offset(_ unused: Double, along axis: Axis) -> Double {
+            switch axis == .horizontal ? horizontal : vertical {
+            case .bothSides: return floor(unused / 2)
+            case .after: return 0
+            case .before: return floor(unused)
+            }
+        }
+
+        /// For a child of an accordion, which keeps the edge its strip shows on, or it would vanish behind the front window. Across the accordion's axis
+        /// it keeps the edge an outer accordion chose. Nothing inside an accordion is centered.
+        func inAccordion(along axis: Axis, keepsTrailingEdge: Bool) -> UnusedLength {
+            var inner = self
+            if inner.horizontal == .bothSides { inner.horizontal = .after }
+            let own: Side = keepsTrailingEdge ? .before : .after
+            if axis == .horizontal { inner.horizontal = own } else { inner.vertical = own }
+            return inner
+        }
+    }
+
     private static func place(
         _ node: LayoutNode,
         in area: CGRect,
@@ -295,27 +354,29 @@ public enum Planner {
         options: PlannerOptions,
         maximums: [WindowID: CGSize],
         focused: WindowID?,
-        centersUnusedWidth: Bool = true,
+        unused: UnusedLength = .tiled,
         rects: inout [WindowID: CGRect]
-    ) -> Unfit? {
+    ) -> Placed {
         switch node {
         case .leaf(let id):
             var ignored = Set<WindowID>()
             let need = minimum(of: node, constraints: constraints, options: options, assumed: &ignored)
             if need.width > area.width + 0.5 || need.height > area.height + 0.5 {
-                return Unfit(cause: .windowLargerThanArea(id, required: need, available: area.size))
+                return .unfit(Unfit(cause: .windowLargerThanArea(id, required: need, available: area.size)))
             }
             var rect = area.integralInset
             if let cap = maximums[id] {
-                // Width the window can't use is split evenly on both sides. Height it can't use stays below it, where a new window can join.
                 if cap.width > 0, cap.width < rect.width {
-                    if centersUnusedWidth { rect.origin.x += floor((rect.width - cap.width) / 2) }
+                    rect.origin.x += unused.offset(rect.width - cap.width, along: .horizontal)
                     rect.size.width = cap.width
                 }
-                if cap.height > 0 { rect.size.height = min(rect.height, cap.height) }
+                if cap.height > 0, cap.height < rect.height {
+                    rect.origin.y += unused.offset(rect.height - cap.height, along: .vertical)
+                    rect.size.height = cap.height
+                }
             }
             rects[id] = rect
-            return nil
+            return .placed(node)
         case .split(let axis, let children, let ratios):
             var ignored = Set<WindowID>()
             let mins = children.map { minimum(of: $0, constraints: constraints, options: options, assumed: &ignored) }
@@ -323,12 +384,20 @@ public enum Planner {
             let available = (axis == .horizontal ? area.width : area.height) - gaps
             let required: [Double] = mins.map { Double(axis == .horizontal ? $0.width : $0.height) }
             let caps = children.map { maximumLength(of: $0, along: axis, maximums: maximums, options: options) }
+            let overflow = Unfit(cause: .splitOverflow(axis, required: required.reduce(0, +) + gaps, available: available + gaps, members: node.windowIDs))
             guard let lengths = distribute(available: available, ratios: ratios, minimums: required, maximums: caps) else {
-                return Unfit(cause: .splitOverflow(axis, required: required.reduce(0, +) + gaps, available: available + gaps, members: node.windowIDs))
+                // Windows that do not fit side by side overlap by what they lack; the intent stays a split.
+                // If even that does not fit, the split's members are what overflow, as without folding, so relief picks among all of them.
+                guard options.folds, children.count > 1 else { return .unfit(overflow) }
+                switch placeFolded(axis, children: children, ratios: ratios, required: required, caps: caps, in: area, constraints: constraints, options: options,
+                                   maximums: maximums, focused: focused, unused: unused, rects: &rects) {
+                case .placed(let shape): return .placed(shape)
+                case .unfit: return .unfit(overflow)
+                }
             }
-            // Width that capped children leave unused is split evenly on both sides of the row, as for a single capped window.
-            let unusedWidth = axis == .horizontal && centersUnusedWidth ? max(0, available - lengths.reduce(0, +)) : 0
-            var cursor = axis == .horizontal ? area.minX + floor(unusedWidth / 2) : area.minY
+            // Length that capped children leave unused goes where it goes for a single capped window.
+            var cursor = (axis == .horizontal ? area.minX : area.minY) + unused.offset(max(0, available - lengths.reduce(0, +)), along: axis)
+            var shapes: [LayoutNode] = []
             for (index, child) in children.enumerated() {
                 let length = lengths[index]
                 let childArea: CGRect
@@ -338,34 +407,104 @@ public enum Planner {
                 case .vertical:
                     childArea = CGRect(x: area.minX, y: cursor, width: area.width, height: length)
                 }
-                if let unfit = place(child, in: childArea, constraints: constraints, options: options, maximums: maximums, focused: focused, centersUnusedWidth: centersUnusedWidth, rects: &rects) {
-                    return unfit
+                switch place(child, in: childArea, constraints: constraints, options: options, maximums: maximums, focused: focused, unused: unused, rects: &rects) {
+                case .unfit(let unfit): return .unfit(unfit)
+                case .placed(let shape): shapes.append(shape)
                 }
                 cursor += length + options.innerGap(along: axis)
             }
-            return nil
-        case .accordion(let axis, let children, _):
-            let padding = options.accordionStrip
-            let mru = focused.flatMap { id in children.firstIndex { $0.windowIDs.contains(id) } } ?? 0
-            for (index, child) in children.enumerated() {
-                let (leading, trailing) = accordionInset(index: index, count: children.count, mru: mru, padding: padding)
-                let childArea: CGRect
-                switch axis {
-                case .horizontal:
-                    childArea = CGRect(x: area.minX + leading, y: area.minY, width: area.width - leading - trailing, height: area.height)
-                case .vertical:
-                    childArea = CGRect(x: area.minX, y: area.minY + leading, width: area.width, height: area.height - leading - trailing)
-                }
-                if childArea.width < -0.5 || childArea.height < -0.5 {
-                    return Unfit(cause: .windowLargerThanArea(child.windowIDs.first ?? WindowID(0), required: childArea.size, available: area.size))
-                }
-                // Centering a window that sits behind the front one would hide the strip that shows it, so accordion windows keep their leading edge.
-                if let unfit = place(child, in: childArea, constraints: constraints, options: options, maximums: maximums, focused: focused, centersUnusedWidth: false, rects: &rects) {
-                    return unfit
-                }
-            }
-            return nil
+            return .placed(.split(axis, children: shapes, ratios: ratios))
+        case .accordion(let axis, let children, let ratios):
+            return placeAccordion(axis, children: children, ratios: ratios, in: area, constraints: constraints, options: options,
+                                  maximums: maximums, focused: focused, unused: unused, rects: &rects)
         }
+    }
+
+    /// A split that does not fit side by side: each child takes what it needs, the first keeps the leading edge and the last the trailing edge,
+    /// and the shortage is split evenly over the joints, so the split stays as close to its tiles as it can and no frame depends on focus.
+    private static func placeFolded(
+        _ axis: Axis,
+        children: [LayoutNode],
+        ratios: [Double],
+        required: [Double],
+        caps: [Double],
+        in area: CGRect,
+        constraints: [WindowID: SizeKnowledge],
+        options: PlannerOptions,
+        maximums: [WindowID: CGSize],
+        focused: WindowID?,
+        unused: UnusedLength,
+        rects: inout [WindowID: CGRect]
+    ) -> Placed {
+        let strip = options.accordionStrip
+        let origin = axis == .horizontal ? area.minX : area.minY
+        let length = axis == .horizontal ? area.width : area.height
+        let preferred = axis == .horizontal ? options.preferredMinimum.width : options.preferredMinimum.height
+        let lastIndex = children.count - 1
+        // As in an accordion, a child leaves one strip at the ends of the split and two elsewhere, and fits if it fits there.
+        let lengths = children.indices.map { index -> Double in
+            let (leading, trailing) = accordionInset(index: index, count: children.count, mru: 0, padding: strip)
+            return min(max(0, length - leading - trailing), ceil(max(required[index], min(caps[index], preferred))))
+        }
+        let shortage = lengths.reduce(0, +) - length
+        var end = origin
+        var shapes: [LayoutNode] = []
+        for (index, child) in children.enumerated() {
+            // Rounded from the total, so every child starts on a whole point and the last one ends at the trailing edge.
+            var start = end - (Double(index) * shortage / Double(lastIndex)).rounded()
+            // A short window beside long ones cannot take an even share: stay inside the strips of the ends, which keeps every frame in the area and both ends showing.
+            if index > 0, index < lastIndex { start = min(max(start, origin + strip), origin + length - lengths[index] - strip) }
+            let childArea: CGRect
+            switch axis {
+            case .horizontal:
+                childArea = CGRect(x: start, y: area.minY, width: lengths[index], height: area.height)
+            case .vertical:
+                childArea = CGRect(x: area.minX, y: start, width: area.width, height: lengths[index])
+            }
+            switch place(child, in: childArea, constraints: constraints, options: options, maximums: maximums, focused: focused, unused: unused, rects: &rects) {
+            case .unfit(let unfit): return .unfit(unfit)
+            case .placed(let shape): shapes.append(shape)
+            }
+            end += lengths[index]
+        }
+        return .placed(.accordion(axis, children: shapes, ratios: ratios))
+    }
+
+    private static func placeAccordion(
+        _ axis: Axis,
+        children: [LayoutNode],
+        ratios: [Double],
+        in area: CGRect,
+        constraints: [WindowID: SizeKnowledge],
+        options: PlannerOptions,
+        maximums: [WindowID: CGSize],
+        focused: WindowID?,
+        unused: UnusedLength,
+        rects: inout [WindowID: CGRect]
+    ) -> Placed {
+        let padding = options.accordionStrip
+        let mru = focused.flatMap { id in children.firstIndex { $0.windowIDs.contains(id) } } ?? 0
+        var shapes: [LayoutNode] = []
+        for (index, child) in children.enumerated() {
+            let (leading, trailing) = accordionInset(index: index, count: children.count, mru: mru, padding: padding)
+            let childArea: CGRect
+            switch axis {
+            case .horizontal:
+                childArea = CGRect(x: area.minX + leading, y: area.minY, width: area.width - leading - trailing, height: area.height)
+            case .vertical:
+                childArea = CGRect(x: area.minX, y: area.minY + leading, width: area.width, height: area.height - leading - trailing)
+            }
+            if childArea.width < -0.5 || childArea.height < -0.5 {
+                return .unfit(Unfit(cause: .windowLargerThanArea(child.windowIDs.first ?? WindowID(0), required: childArea.size, available: area.size)))
+            }
+            // AeroSpace does not cover this: a capped window whose area reaches only the far end would sit behind the front window with no strip showing.
+            let inner = unused.inAccordion(along: axis, keepsTrailingEdge: leading > 0 && trailing == 0)
+            switch place(child, in: childArea, constraints: constraints, options: options, maximums: maximums, focused: focused, unused: inner, rects: &rects) {
+            case .unfit(let unfit): return .unfit(unfit)
+            case .placed(let shape): shapes.append(shape)
+            }
+        }
+        return .placed(.accordion(axis, children: shapes, ratios: ratios))
     }
 
     /// The same strips as AeroSpace's layoutAccordion: only the first, last, and focus neighbors differ in width; far windows hide behind the focused one.

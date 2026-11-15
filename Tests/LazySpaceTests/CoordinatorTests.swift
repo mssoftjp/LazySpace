@@ -1818,8 +1818,9 @@ final class CoordinatorTests: XCTestCase {
     func testAutoIntegrationThatCannotFitFloatsTheWindow() {
         system.minimums[WindowID(1)] = CGSize(width: 800, height: 700)
         system.minimums[WindowID(2)] = CGSize(width: 800, height: 700)
-        system.minimums[WindowID(3)] = CGSize(width: 800, height: 700)
-        system.frames[WindowID(3)] = CGRect(x: 100, y: 100, width: 800, height: 700)
+        // Wider than the 1890 a window gets beside one strip: it does not fit even overlapping.
+        system.minimums[WindowID(3)] = CGSize(width: 1900, height: 700)
+        system.frames[WindowID(3)] = CGRect(x: 10, y: 100, width: 1900, height: 700)
         _ = coordinator.integrateForeground([WindowID(3)], beside: nil)
         drain()
         XCTAssertEqual(coordinator.lastResult?.outcome, .complete)
@@ -1849,8 +1850,9 @@ final class CoordinatorTests: XCTestCase {
         let original2 = CGRect(x: 300, y: 33, width: 500, height: 300)
         system.frames[WindowID(1)] = original1
         system.frames[WindowID(2)] = original2
-        system.minimums[WindowID(1)] = CGSize(width: 500, height: 300)
-        system.minimums[WindowID(2)] = CGSize(width: 500, height: 300)
+        // Wider than the 770 a window gets beside one strip: they do not fit even overlapping.
+        system.minimums[WindowID(1)] = CGSize(width: 790, height: 300)
+        system.minimums[WindowID(2)] = CGSize(width: 790, height: 300)
         guard case .started(let first) = coordinator.arrange(source: "test") else { return XCTFail("Arrange refused") }
         drain()
         let firstResult = coordinator.result(id: first)
@@ -2051,6 +2053,41 @@ final class CoordinatorTests: XCTestCase {
         drain(); drain()
         XCTAssertNotEqual(system.frames, before, "the strip follows the focused window")
     }
+    /// In a row that does not fit, no frame depends on focus: a focus command raises the window, writes nothing, and starts no arrangement.
+    func testFocusInARowThatDoesNotFitMovesNothing() {
+        system.minimums[WindowID(1)] = CGSize(width: 1100, height: 300)
+        system.minimums[WindowID(2)] = CGSize(width: 1100, height: 300)
+        system.frames[WindowID(1)] = CGRect(x: 0, y: 0, width: 1100, height: 1000)
+        system.frames[WindowID(2)] = CGRect(x: 800, y: 0, width: 1100, height: 1000)
+        guard case .started = coordinator.arrange(source: "test") else { return XCTFail("arrange refused") }
+        drain()
+        XCTAssertEqual(system.frames[WindowID(1)], CGRect(x: 0, y: 0, width: 1100, height: 1080))
+        XCTAssertEqual(system.frames[WindowID(2)], CGRect(x: 820, y: 0, width: 1100, height: 1080))
+        let writes = system.writes
+        guard case .started = coordinator.runFocus(WindowID(2), source: "test") else { return XCTFail("focus refused") }
+        drain(); drain()
+        XCTAssertEqual(system.focused, WindowID(2))
+        XCTAssertEqual(system.writes, writes)
+        XCTAssertNotEqual(coordinator.lastResult?.kind, "auto-reconcile")
+    }
+    /// Dropping a window on its neighbor in a row that does not fit swaps them, as between tiles.
+    func testADropInARowThatDoesNotFitSwapsTheWindows() {
+        system.minimums[WindowID(1)] = CGSize(width: 1100, height: 300)
+        system.minimums[WindowID(2)] = CGSize(width: 1100, height: 300)
+        system.frames[WindowID(1)] = CGRect(x: 0, y: 0, width: 1100, height: 1000)
+        system.frames[WindowID(2)] = CGRect(x: 800, y: 0, width: 1100, height: 1000)
+        guard case .started = coordinator.arrange(source: "test") else { return XCTFail("arrange refused") }
+        drain()
+        // Moved left until its center has left its own frame (820–1920) and is over the other window's.
+        system.frames[WindowID(2)] = CGRect(x: 100, y: 0, width: 1100, height: 1080)
+        let layout = coordinator.state.layouts["7"]!
+        XCTAssertTrue(coordinator.detectManualEdit(current: system.census(7), spaceKey: "7", layout: layout, managed: Set(layout.windowIDs)))
+        drain()
+        XCTAssertEqual(coordinator.lastResult?.kind, "mouse-swap")
+        XCTAssertEqual(coordinator.state.layouts["7"]?.windowIDs, [WindowID(2), WindowID(1)])
+        XCTAssertEqual(system.frames[WindowID(2)], CGRect(x: 0, y: 0, width: 1100, height: 1080))
+        XCTAssertEqual(system.frames[WindowID(1)], CGRect(x: 820, y: 0, width: 1100, height: 1080))
+    }
     /// The reflow after a focus command writes nothing while a mouse button is held (the user may be dragging).
     func testFocusInAccordionDoesNotReflowWhileAMouseButtonIsHeld() {
         system.frames[WindowID(3)] = CGRect(x: 100, y: 100, width: 600, height: 400)
@@ -2126,5 +2163,106 @@ final class CoordinatorTests: XCTestCase {
         drain()
         XCTAssertEqual(coordinator.lastResult?.outcome, .complete)
         XCTAssertEqual(coordinator.state.layouts["7"]?.windowIDs ?? [], [])
+    }
+
+    // MARK: A row of three that does not fit
+
+    /// Saves a row of windows 1, 2 and 3 with `ratios`, whose minimums (1100, 950 and 1300 wide) do not fit the 1920-wide area, and arranges it:
+    /// the first window at the leading edge, the last at the trailing edge, and the middle one covered entirely by the two.
+    private func arrangeFoldedRowOfThree(ratios: [Double] = [1.0 / 3, 1.0 / 3, 1.0 / 3], file: StaticString = #filePath, line: UInt = #line) {
+        let ids = [WindowID(1), WindowID(2), WindowID(3)]
+        var saved = store.load()
+        saved.layouts["7"] = Layout(root: .split(.horizontal, children: ids.map { .leaf($0) }, ratios: ratios))
+        store.save(saved)
+        coordinator = Coordinator(system: system, store: store, configURL: coordinator.configURL, takeCensus: system.census, takeOverview: { nil })
+        coordinator.limits.settleDelay = 0
+        system.minimums[ids[0]] = CGSize(width: 1100, height: 300)
+        system.minimums[ids[1]] = CGSize(width: 950, height: 300)
+        system.minimums[ids[2]] = CGSize(width: 1300, height: 300)
+        system.frames[ids[0]] = CGRect(x: 0, y: 0, width: 1100, height: 900)
+        system.frames[ids[1]] = CGRect(x: 300, y: 50, width: 950, height: 900)
+        system.frames[ids[2]] = CGRect(x: 600, y: 100, width: 1300, height: 900)
+        guard case .started = coordinator.arrange(source: "test") else { return XCTFail("arrange refused", file: file, line: line) }
+        drain()
+        XCTAssertEqual(coordinator.lastResult?.outcome, .complete, coordinator.lastResult?.message ?? "", file: file, line: line)
+        XCTAssertEqual(coordinator.state.layouts["7"]?.windowIDs, ids, file: file, line: line)
+        XCTAssertEqual(coordinator.testingShape(spaceKey: "7")?.root?.box?.accordion, true, "shown folded", file: file, line: line)
+        XCTAssertEqual(coordinator.state.layouts["7"]?.root?.box?.accordion, false, "saved as a split", file: file, line: line)
+        XCTAssertEqual(system.frames[ids[0]], CGRect(x: 0, y: 0, width: 1100, height: 1080), file: file, line: line)
+        XCTAssertEqual(system.frames[ids[2]], CGRect(x: 620, y: 0, width: 1300, height: 1080), file: file, line: line)
+        let middle = system.frames[ids[1]] ?? .null
+        XCTAssertEqual(middle.size, CGSize(width: 950, height: 1080), file: file, line: line)
+        XCTAssertTrue(middle.minX >= 0 && middle.maxX <= 1920, "inside the area, under the two ends", file: file, line: line)
+    }
+
+    /// In a row that does not fit, the windows overlap, so directional focus finds its neighbor in the tree: from either end it reaches the middle window,
+    /// which no frame shows, and raises it without writing a frame. The menu enables the same moves.
+    func testDirectionalFocusInARowThatDoesNotFitReachesTheCoveredMiddleWindow() {
+        arrangeFoldedRowOfThree()
+        let first = WindowID(1), middle = WindowID(2), last = WindowID(3)
+        XCTAssertTrue(coordinator.canApplyEdit(.focus(.right), focused: first))
+        XCTAssertTrue(coordinator.canApplyEdit(.focus(.left), focused: last))
+        XCTAssertTrue(coordinator.canApplyEdit(.swap(.right), focused: first))
+        let writes = system.writes
+        let raises = system.focusCalls
+        system.focused = first
+        guard case .started = coordinator.edit(.focus(.right), source: "test") else { return XCTFail("focus right refused") }
+        drain(); drain()
+        XCTAssertEqual(system.focused, middle)
+        XCTAssertGreaterThan(system.focusCalls, raises, "the middle window is raised")
+        system.focused = last
+        guard case .started = coordinator.edit(.focus(.left), source: "test") else { return XCTFail("focus left refused") }
+        drain(); drain()
+        XCTAssertEqual(system.focused, middle)
+        XCTAssertEqual(system.writes, writes, "no frame depends on focus")
+        XCTAssertNotEqual(coordinator.lastResult?.kind, "auto-reconcile")
+    }
+
+    /// Swap finds its neighbor in a row that does not fit from the shape it is shown in, and swaps the windows in the saved row.
+    func testSwapInARowThatDoesNotFitReordersTheSavedRow() {
+        arrangeFoldedRowOfThree()
+        system.focused = WindowID(1)
+        guard case .started = coordinator.edit(.swap(.right), source: "test") else { return XCTFail("swap refused") }
+        drain()
+        XCTAssertEqual(coordinator.lastResult?.outcome, .complete, coordinator.lastResult?.message ?? "")
+        XCTAssertEqual(coordinator.state.layouts["7"]?.windowIDs, [WindowID(2), WindowID(1), WindowID(3)])
+        XCTAssertEqual(coordinator.state.layouts["7"]?.root?.box?.accordion, false, "still saved as a split")
+        XCTAssertEqual(system.frames[WindowID(2)]?.minX, 0, "the swapped window takes the leading edge")
+    }
+
+    /// Resuming adopts where the windows are, but the overlapping frames of a row that does not fit say nothing about its ratios: the saved ones stay.
+    func testResumeKeepsTheRatiosOfARowThatDoesNotFit() {
+        arrangeFoldedRowOfThree(ratios: [0.5, 0.2, 0.3])
+        let prior = coordinator.state.layouts["7"]
+        guard case .split(.horizontal, _, let arranged)? = prior?.root else { return XCTFail("expected a horizontal split") }
+        XCTAssertEqual(arranged, [0.5, 0.2, 0.3], "arranging a fold keeps the ratios")
+        coordinator.pause()
+        XCTAssertNil(coordinator.resume())
+        drain()
+        XCTAssertFalse(coordinator.status().paused)
+        XCTAssertEqual(coordinator.state.layouts["7"], prior)
+        XCTAssertEqual(coordinator.state.layouts["7"]?.leftoverHeights ?? [:], [:])
+    }
+
+    /// Widening a window of a row that does not fit is a resize along the fold, so it changes no ratio, and drift puts the frame back.
+    func testWideningAWindowInARowThatDoesNotFitChangesNothingAndDriftPutsItBack() {
+        arrangeFoldedRowOfThree()
+        tick(); tick(); tick()
+        coordinator.noteSpaceArrival(at: Date().addingTimeInterval(-2))
+        let prior = coordinator.state.layouts["7"]
+        let planned = system.frames
+        system.focused = WindowID(1)
+        mouse(.leftMouseDown)
+        mouse(.leftMouseDragged)
+        system.frames[WindowID(1)] = CGRect(x: 0, y: 0, width: 1300, height: 1080)
+        mouse(.leftMouseUp)
+        tick()
+        Thread.sleep(forTimeInterval: coordinator.quietInterval + 0.05)
+        // Also waits out the one-second arrival dwell of the first observation, so allow a few ticks (bounded).
+        for _ in 0..<10 where system.frames != planned { tick(); Thread.sleep(forTimeInterval: 0.2) }
+        XCTAssertEqual(system.frames, planned, "drift puts the frame back")
+        XCTAssertEqual(coordinator.state.layouts["7"], prior, "no ratio changed")
+        XCTAssertNotEqual(coordinator.lastResult?.kind, "mouse-resize")
+        XCTAssertEqual(coordinator.lastResult?.kind, "auto-reconcile")
     }
 }

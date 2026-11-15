@@ -128,10 +128,10 @@ func automaticIntegrationChecks() throws -> [(String, Bool)] {
                 checks.append(("insertion stops before writing when input arrives", system.writes == 0
                                && coordinator.waiting.isEmpty && coordinator.state.layouts["7"]?.windowIDs == [a, b]))
             } else {
-                checks.append(("overfull insertion floats the new window and keeps the row", snapshots == 1
+                checks.append(("overfull insertion overlaps the row with the new window beside its anchor", snapshots == 1
                                && coordinator.lastResult?.outcome == .complete
-                               && coordinator.state.layouts["7"]?.windowIDs == [a, b]
-                               && coordinator.state.floating["7"] == [c]))
+                               && coordinator.state.layouts["7"]?.windowIDs == [a, c, b]
+                               && coordinator.state.floating["7"] == nil))
             }
         }
     }
@@ -143,11 +143,11 @@ func automaticIntegrationChecks() throws -> [(String, Bool)] {
         system.frames[c] = CGRect(x: 100, y: 100, width: 800, height: 700)
         _ = coordinator.integrateForeground([c], beside: nil)
         checks.append(("unfit foreground integration finishes", drain(coordinator)))
-        checks.append(("unfit integration floats the new window and keeps the existing row",
+        checks.append(("an integration that does not fit side by side overlaps the row instead of floating the new window",
                        coordinator.lastResult?.outcome == .complete
-                       && coordinator.lastResult?.message.contains("kept in place as floating") == true
-                       && coordinator.state.layouts["7"]?.windowIDs == [a, b]
-                       && coordinator.state.floating["7"] == [c]
+                       && coordinator.lastResult?.message.contains("floating") == false
+                       && Set(coordinator.state.layouts["7"]?.windowIDs ?? []) == [a, b, c]
+                       && coordinator.state.floating["7"] == nil
                        && coordinator.waiting.isEmpty
                        && !store.load().sizeFacts.isEmpty))
     }
@@ -159,11 +159,11 @@ func automaticIntegrationChecks() throws -> [(String, Bool)] {
         system.frames[c] = CGRect(x: 100, y: 100, width: 800, height: 700)
         _ = coordinator.integrateForeground([c], beside: a)
         checks.append(("unfit anchored integration finishes", drain(coordinator)))
-        checks.append(("anchored integration floats the new window without rebuilding the row",
+        checks.append(("an anchored integration that does not fit side by side overlaps beside its anchor",
                        coordinator.lastResult?.outcome == .complete
                        && coordinator.lastResult?.message.contains("returned to where they were before") != true
-                       && coordinator.state.layouts["7"]?.windowIDs == [a, b]
-                       && coordinator.state.floating["7"] == [c]
+                       && coordinator.state.layouts["7"]?.windowIDs == [a, c, b]
+                       && coordinator.state.floating["7"] == nil
                        && coordinator.waiting.isEmpty
                        && !store.load().sizeFacts.isEmpty))
     }

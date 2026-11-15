@@ -249,10 +249,12 @@ public struct Layout: Equatable, Codable {
         }
     }
 
+    /// Call it on the plan's shape: a window in an accordion (folded or not) never hosts, since its siblings can cover the space below it.
     public func unusedStackHost(rects: [WindowID: CGRect], area: CGRect, need: CGSize, tolerance: CGFloat = 1) -> UnusedStackHost? {
         var best: UnusedStackHost?
         var bestArea = 0.0
-        for id in windowIDs {
+        let overlapping = accordionMembers
+        for id in windowIDs where !overlapping.contains(id) {
             guard let frame = rects[id] else { continue }
             var bottom = area.maxY
             for otherID in windowIDs where otherID != id {
@@ -444,10 +446,11 @@ public struct Layout: Equatable, Codable {
 
     /// Writes split ratios back from actual frames, so a distribution shrunk by caps becomes the intent for the next calculation.
     /// Only leaves with space below them in their column keep a height in leftoverHeights; leaves reaching the bottom are just split vertically.
-    public func packing(rects: [WindowID: CGRect]) -> Layout {
+    /// `shape` is the plan's tree as placed, node for node with this one: a split shown as an accordion (folded) keeps its ratios, as an accordion does.
+    public func packing(rects: [WindowID: CGRect], shape: Layout) -> Layout {
         var heights = leftoverHeights
         let bottom = rects.values.map(\.maxY).max() ?? 0
-        let accordionIDs = root.map(Layout.accordionMembers) ?? []
+        let accordionIDs = shape.accordionMembers
         for id in windowIDs where !accordionIDs.contains(id) {
             guard let frame = rects[id] else { continue }
             let hasBelow = windowIDs.contains { other in
@@ -462,10 +465,12 @@ public struct Layout: Equatable, Codable {
                 heights[id] = nil
             }
         }
-        return Layout(root: root.map { Layout.pack($0, rects: rects) }, leftoverHeights: heights)
+        return Layout(root: root.map { Layout.pack($0, shape: shape.root, rects: rects) }, leftoverHeights: heights)
     }
 
-    /// Remembering accordion overlap as free height would make the next calculation shrink the strips further.
+    /// Windows inside an accordion. Remembering accordion overlap as free height would make the next calculation shrink the strips further.
+    public var accordionMembers: Set<WindowID> { root.map(Layout.accordionMembers) ?? [] }
+
     private static func accordionMembers(_ node: LayoutNode) -> Set<WindowID> {
         switch node {
         case .leaf:
@@ -477,14 +482,24 @@ public struct Layout: Equatable, Codable {
         }
     }
 
-    private static func pack(_ node: LayoutNode, rects: [WindowID: CGRect]) -> LayoutNode {
+    /// `shape` is the same node as placed; nil or a different structure counts as tiled as written.
+    private static func pack(_ node: LayoutNode, shape: LayoutNode?, rects: [WindowID: CGRect]) -> LayoutNode {
+        let shapes = shape?.box?.children
+        func shapeOf(_ index: Int) -> LayoutNode? {
+            guard let shapes, shapes.indices.contains(index), shapes.count == node.box?.children.count else { return nil }
+            return shapes[index]
+        }
         switch node {
         case .leaf:
             return node
         case .accordion(let axis, let children, let ratios):
-            return .accordion(axis, children: children.map { pack($0, rects: rects) }, ratios: ratios)
+            return .accordion(axis, children: children.enumerated().map { pack($1, shape: shapeOf($0), rects: rects) }, ratios: ratios)
         case .split(let axis, let children, let ratios):
-            let packed = children.map { pack($0, rects: rects) }
+            let packed = children.enumerated().map { pack($1, shape: shapeOf($0), rects: rects) }
+            // Shown as an accordion: its frames overlap and say nothing about the ratios.
+            if shape?.box?.accordion == true, shape?.windowIDs == node.windowIDs {
+                return .split(axis, children: packed, ratios: ratios)
+            }
             let lengths = children.map { span($0, along: axis, rects: rects) }
             let total = lengths.reduce(0, +)
             return .split(axis, children: packed, ratios: total > 0 ? lengths.map { $0 / total } : ratios)

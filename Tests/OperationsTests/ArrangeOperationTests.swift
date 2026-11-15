@@ -506,7 +506,7 @@ final class ArrangeOperationTests: XCTestCase {
         let s = FakeSystem(windows: [window(1), window(2, membership: .other)])
         let op = ArrangeOperation(system: s, control: control, knowledge: knowledge,
                                   limits: OperationLimits(settleDelay: 0),
-                                  transform: { layout, _ in layout.inserting(WindowID(2)).inserting(WindowID(3)) }, sleep: { _ in })
+                                  transform: { layout, _, _ in layout.inserting(WindowID(2)).inserting(WindowID(3)) }, sleep: { _ in })
         let result = op.run()
         XCTAssertEqual(result.outcome, .complete)
         XCTAssertEqual(op.resultingLayout?.windowIDs, [WindowID(1)])
@@ -611,7 +611,7 @@ final class ArrangeOperationTests: XCTestCase {
                                   limits: OperationLimits(settleDelay: 0), priorLayout: prior,
                                   allowedWindows: [WindowID(1), WindowID(2), WindowID(3)],
                                   kind: "auto-integrate-protected",
-                                  transform: { layout, rects in layout.inserting(WindowID(3), splitting: WindowID(2), targetRect: rects[WindowID(2)]!) },
+                                  transform: { layout, rects, _ in layout.inserting(WindowID(3), splitting: WindowID(2), targetRect: rects[WindowID(2)]!) },
                                   protected: [WindowID(1)], sleep: { _ in })
         XCTAssertEqual(op.run().outcome, .complete)
         XCTAssertFalse(s.writes.contains { $0.0 == WindowID(1) || $0.0 == WindowID(4) })
@@ -752,10 +752,11 @@ final class ArrangeOperationTests: XCTestCase {
 
     func testUnfitKnownBeforeWriteWritesNothing() {
         let s = FakeSystem(windows: [window(1, app: "a", x: 0), window(2, app: "b", x: 900)])
-        // Previously learned constraints do not fit, and the current sizes meet the same minimums.
-        for id in [WindowID(1), WindowID(2)] { s.frames[id]?.size = CGSize(width: 1500, height: 900) }
-        knowledge.recordPushback(id: WindowID(1), requested: CGRect(x: 0, y: 0, width: 10, height: 10), actual: CGRect(x: 0, y: 0, width: 1500, height: 900), spaceID: 7, workArea: s.snap.workArea, tolerance: 1)
-        knowledge.recordPushback(id: WindowID(2), requested: CGRect(x: 0, y: 0, width: 10, height: 10), actual: CGRect(x: 0, y: 0, width: 1500, height: 900), spaceID: 7, workArea: s.snap.workArea, tolerance: 1)
+        // Previously learned constraints do not fit even overlapping (1900 × 1040 is larger than the 1890 × 1050 or 1920 × 1020
+        // a window gets beside one strip), and the current sizes meet the same minimums.
+        for id in [WindowID(1), WindowID(2)] { s.frames[id]?.size = CGSize(width: 1900, height: 1040) }
+        knowledge.recordPushback(id: WindowID(1), requested: CGRect(x: 0, y: 0, width: 10, height: 10), actual: CGRect(x: 0, y: 0, width: 1900, height: 1040), spaceID: 7, workArea: s.snap.workArea, tolerance: 1)
+        knowledge.recordPushback(id: WindowID(2), requested: CGRect(x: 0, y: 0, width: 10, height: 10), actual: CGRect(x: 0, y: 0, width: 1900, height: 1040), spaceID: 7, workArea: s.snap.workArea, tolerance: 1)
         let op = makeOp(s)
         let r = op.run()
         XCTAssertEqual(r.outcome, .complete, r.message)
@@ -878,7 +879,7 @@ final class ArrangeOperationTests: XCTestCase {
         XCTAssertFalse(r.message.lowercased().contains("rebuil"))
     }
 
-    func testPriorStructureThatCannotFitIsRebuiltAndSaidSo() {
+    func testPriorStructureThatDoesNotFitSideBySideOverlapsEveryWindow() {
         let s = FakeSystem(windows: [window(1, app: "a", x: 0), window(2, app: "b", x: 900), window(3, app: "c", x: 1200)])
         for id in [1, 2, 3] {
             s.frames[WindowID(UInt32(id))]?.size = CGSize(width: 900, height: 400)
@@ -888,10 +889,82 @@ final class ArrangeOperationTests: XCTestCase {
         let op = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), priorLayout: prior, sleep: { _ in })
         let r = op.run()
         XCTAssertEqual(r.outcome, .complete, r.message)
-        XCTAssertTrue(r.excluded.contains { $0.code == .overflowFloat })
-        XCTAssertTrue(r.message.contains("kept in place as floating"), r.message)
+        XCTAssertFalse(r.excluded.contains { $0.code == .overflowFloat })
+        XCTAssertFalse(r.message.contains("floating"), r.message)
         XCTAssertFalse(r.message.lowercased().contains("rebuil"))
-        XCTAssertEqual(op.resultingLayout?.windowIDs.count, 2)
+        XCTAssertEqual(op.resultingLayout?.windowIDs, [WindowID(1), WindowID(2), WindowID(3)])
+        guard case .split(.horizontal, _, let ratios)? = op.resultingLayout?.root else { return XCTFail("the intent stays a row") }
+        XCTAssertEqual(ratios.count, 3)
+        // Overlapping by what they lack: 2700 points on 1920, so 390 at each joint.
+        XCTAssertEqual([1, 2, 3].map { s.frames[WindowID(UInt32($0))]?.minX }, [0, 510, 1020])
+        for id in [1, 2, 3] { XCTAssertEqual(s.frames[WindowID(UInt32(id))]?.width, 900) }
+    }
+
+    /// Overlapping frames say nothing about the proportions: the saved ratios of a row that overlaps come back unchanged,
+    /// including when an app that does not answer leaves the layout to be reclaimed.
+    func testARowThatOverlapsKeepsItsSavedRatios() {
+        for reclaiming in [false, true] {
+            knowledge = ConstraintKnowledge()
+            let s = FakeSystem(windows: [window(1, app: "a", x: 0), window(2, app: "b", x: 30)])
+            for id in [WindowID(1), WindowID(2)] {
+                s.frames[id]?.size = CGSize(width: 1200, height: 600)
+                knowledge.recordPushback(id: id, requested: CGRect(x: 0, y: 0, width: 10, height: 10), actual: CGRect(x: 0, y: 0, width: 1200, height: 600), spaceID: 7, workArea: s.snap.workArea, tolerance: 1)
+            }
+            if reclaiming { s.snap.unobservedApps = ["com.example.hung"] }
+            let prior = Layout(root: .split(.horizontal, children: [.leaf(WindowID(1)), .leaf(WindowID(2))], ratios: [0.7, 0.3]))
+            let op = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), priorLayout: prior,
+                                      unanswered: reclaiming ? .reclaim : .arrangeAround, sleep: { _ in })
+            let r = op.run()
+            XCTAssertEqual(r.outcome, .complete, r.message)
+            XCTAssertTrue(r.excluded.isEmpty, r.message)
+            let first = s.frames[WindowID(1)]!, second = s.frames[WindowID(2)]!
+            XCTAssertEqual(first.minX, 0)
+            XCTAssertEqual(second.maxX, 1920)
+            XCTAssertGreaterThan(first.maxX, second.minX, "the row overlaps")
+            XCTAssertEqual(op.resultingShape?.root?.box?.accordion, true)
+            XCTAssertEqual(op.resultingLayout, prior, reclaiming ? "reclaimed" : "arranged")
+        }
+    }
+
+    /// Frames observed while a split overlaps are not taken as the user's proportions, even where they happen to line up edge to edge.
+    func testObservedFramesAreNotAdoptedWhileASplitOverlaps() {
+        let a = WindowID(1), b = WindowID(2), c = WindowID(3)
+        let s = FakeSystem(windows: [window(1, app: "a", x: 0), window(2, app: "b", x: 1100), window(3, app: "c", x: 1500)])
+        s.frames[a] = CGRect(x: 0, y: 30, width: 1100, height: 1050)
+        s.frames[b] = CGRect(x: 1100, y: 30, width: 400, height: 1050)
+        s.frames[c] = CGRect(x: 1500, y: 30, width: 420, height: 1050)
+        // Two windows at least 700 tall do not fit one above the other in 1050, so the right column overlaps.
+        for id in [b, c] {
+            knowledge.recordPushback(id: id, requested: CGRect(x: 0, y: 0, width: 10, height: 10), actual: CGRect(x: 0, y: 0, width: 10, height: 700), spaceID: 7, workArea: s.snap.workArea, tolerance: 1)
+        }
+        let column = LayoutNode.split(.vertical, children: [.leaf(b), .leaf(c)], ratios: [0.5, 0.5])
+        let prior = Layout(root: .split(.horizontal, children: [.leaf(a), column], ratios: [0.5, 0.5]))
+        let op = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), priorLayout: prior, sleep: { _ in })
+        let r = op.run()
+        XCTAssertEqual(r.outcome, .complete, r.message)
+        XCTAssertEqual(s.frames[a]?.width, 960, "the left window goes back to its saved half")
+        XCTAssertEqual(op.resultingLayout, prior)
+    }
+
+    /// After writing, the focused window is raised when its row overlaps, and not when the same row fits side by side.
+    func testTheFocusedWindowIsRaisedOnlyWhenItsRowOverlaps() {
+        for (width, overlaps) in [(CGFloat(1920), true), (CGFloat(2560), false)] {
+            knowledge = ConstraintKnowledge()
+            let area = CGRect(x: 0, y: 30, width: width, height: 1050)
+            let s = FakeSystem(windows: [window(1, app: "a", x: 0), window(2, app: "b", x: 30)], area: area)
+            s.focused = WindowID(2)
+            for id in [WindowID(1), WindowID(2)] {
+                s.frames[id]?.size = CGSize(width: 1200, height: 600)
+                knowledge.recordPushback(id: id, requested: CGRect(x: 0, y: 0, width: 10, height: 10), actual: CGRect(x: 0, y: 0, width: 1200, height: 600), spaceID: 7, workArea: area, tolerance: 1)
+            }
+            let prior = Layout(root: .split(.horizontal, children: [.leaf(WindowID(1)), .leaf(WindowID(2))], ratios: [0.5, 0.5]))
+            let op = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), priorLayout: prior, sleep: { _ in })
+            let r = op.run()
+            XCTAssertEqual(r.outcome, .complete, r.message)
+            XCTAssertFalse(s.writes.isEmpty, "\(width)")
+            XCTAssertEqual(op.resultingShape?.root?.box?.accordion, overlaps, "\(width)")
+            XCTAssertEqual(s.focusCalls, overlaps ? [WindowID(2)] : [], "\(width)")
+        }
     }
 
     func testHeldOutWindowsAreExcludedWithReasonAndNotWritten() {
@@ -911,7 +984,7 @@ final class ArrangeOperationTests: XCTestCase {
         let prior = Coordinator_priorFor(s)
         // An edit swapping a and c.
         let op = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), priorLayout: prior, kind: "edit:swap",
-                                  transform: { layout, _ in LayoutEdit.swap(WindowID(1), WindowID(3), in: layout) }, sleep: { _ in })
+                                  transform: { layout, _, _ in LayoutEdit.swap(WindowID(1), WindowID(3), in: layout) }, sleep: { _ in })
         let r = op.run()
         XCTAssertEqual(r.outcome, .complete, r.message)
         XCTAssertEqual(Set(s.writes.map(\.0)), [WindowID(1), WindowID(3)], "b does not move")
@@ -922,7 +995,7 @@ final class ArrangeOperationTests: XCTestCase {
     func testTransformReturningNilWritesNothingAndExplains() {
         let s = FakeSystem(windows: [window(1, app: "a", x: 0)])
         let op = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), kind: "edit:focus",
-                                  transform: { _, _ in nil }, transformFailure: "右に窓がありません。", sleep: { _ in })
+                                  transform: { _, _, _ in nil }, transformFailure: "右に窓がありません。", sleep: { _ in })
         let r = op.run()
         XCTAssertEqual(r.outcome, .notPossible)
         XCTAssertEqual(r.message, "右に窓がありません。")
@@ -1079,7 +1152,7 @@ final class ArrangeOperationTests: XCTestCase {
         s.snap.windows.append(window(3, app: "c", x: 80))
         s.frames[WindowID(3)] = originalC
         s.minimums[WindowID(3)] = CGSize(width: 400, height: 300)
-        let transform: ArrangeOperation.Transform = { layout, rects in
+        let transform: ArrangeOperation.Transform = { layout, rects, _ in
             guard let rect = rects[WindowID(1)] else { return nil }
             return layout.inserting(WindowID(3), splitting: WindowID(1), targetRect: rect)
         }
@@ -1100,7 +1173,7 @@ final class ArrangeOperationTests: XCTestCase {
         _ = makeOp(s).run(); s.writes = []
         let prior = Coordinator_priorFor(s)
         s.snap.windows.append(window(3, app: "c", x: 1500)); s.frames[WindowID(3)] = s.snap.windows[2].frame
-        let transform: ArrangeOperation.Transform = { layout, rects in layout.inserting(WindowID(3), splitting: WindowID(2), targetRect: rects[WindowID(2)]!) }
+        let transform: ArrangeOperation.Transform = { layout, rects, _ in layout.inserting(WindowID(3), splitting: WindowID(2), targetRect: rects[WindowID(2)]!) }
         let op = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), priorLayout: prior, kind: "auto-integrate-protected", transform: transform, protected: [WindowID(1)], sleep: { _ in })
         let r = op.run()
         XCTAssertEqual(r.outcome, .complete, r.message)
@@ -1125,6 +1198,111 @@ final class ArrangeOperationTests: XCTestCase {
         XCTAssertFalse(s.writes.contains { $0.0 == WindowID(1) })
     }
 
+    func testMinimumsLearnedAfterWritingThatDoNotFitSideBySideOverlap() {
+        let area = CGRect(x: 0, y: 33, width: 800, height: 400)
+        let s = FakeSystem(windows: [window(1, app: "big.a"), window(2, app: "big.b", x: 300)], area: area)
+        s.frames[WindowID(1)] = CGRect(x: 0, y: 33, width: 500, height: 300)
+        s.frames[WindowID(2)] = CGRect(x: 300, y: 33, width: 500, height: 300)
+        s.minimums[WindowID(1)] = CGSize(width: 500, height: 300)
+        s.minimums[WindowID(2)] = CGSize(width: 500, height: 300)
+        let op = makeOp(s)
+        let r = op.run()
+        XCTAssertEqual(r.outcome, .complete, r.message)
+        XCTAssertTrue(r.excluded.isEmpty, r.message)
+        XCTAssertEqual(op.resultingLayout?.windowIDs, [WindowID(1), WindowID(2)])
+        guard case .split(.horizontal, _, _)? = op.resultingLayout?.root else { return XCTFail("the fold is not saved") }
+        XCTAssertEqual(s.frames[WindowID(1)], CGRect(x: 0, y: 33, width: 500, height: 400))
+        XCTAssertEqual(s.frames[WindowID(2)], CGRect(x: 300, y: 33, width: 500, height: 400))
+        XCTAssertTrue(r.targets.allSatisfy { $0.status == .verified || $0.status == .unchanged })
+    }
+
+    /// A window that will not shrink or grow ends beside the other one in the same arrangement, and the next arrangement has nothing to write.
+    func testAWindowFixedAtItsWidthEndsBesideTheOtherOne() {
+        let area = CGRect(x: 0, y: 33, width: 1512, height: 949)
+        let s = FakeSystem(windows: [window(1, app: "wide"), window(2, app: "settings", x: 300)], area: area)
+        s.frames[WindowID(1)] = CGRect(x: 0, y: 33, width: 900, height: 949)
+        s.frames[WindowID(2)] = CGRect(x: 772, y: 33, width: 740, height: 949)
+        s.minimums[WindowID(1)] = CGSize(width: 840, height: 300)
+        s.minimums[WindowID(2)] = CGSize(width: 740, height: 300)
+        s.maximums[WindowID(2)] = CGSize(width: 740, height: 2000)
+        let op = makeOp(s)
+        let r = op.run()
+        XCTAssertEqual(r.outcome, .complete, r.message)
+        XCTAssertEqual(s.frames[WindowID(1)], CGRect(x: 0, y: 33, width: 840, height: 949))
+        XCTAssertEqual(s.frames[WindowID(2)], CGRect(x: 772, y: 33, width: 740, height: 949))
+        XCTAssertTrue(r.targets.allSatisfy { $0.status == .verified || $0.status == .unchanged }, r.message)
+        s.writes.removeAll()
+        let again = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), priorLayout: op.resultingLayout, sleep: { _ in })
+        XCTAssertEqual(again.run().outcome, .complete)
+        XCTAssertTrue(s.writes.isEmpty, "\(s.writes)")
+    }
+
+    /// The dialog region is used only while the tiles fit side by side next to it: it never makes them overlap.
+    func testTheRegionGivesWayWhenTheTilesWouldOnlyFitOverlappingBesideIt() {
+        let s = FakeSystem(windows: [window(1, app: "a", x: 0), window(2, app: "b", x: 900)])
+        for id in [WindowID(1), WindowID(2)] {
+            s.frames[id]?.size = CGSize(width: 900, height: 600)
+            knowledge.recordPushback(id: id, requested: CGRect(x: 0, y: 0, width: 10, height: 10), actual: CGRect(x: 0, y: 0, width: 900, height: 600), spaceID: 7, workArea: s.snap.workArea, tolerance: 1)
+        }
+        var reserved = PlannerOptions()
+        reserved.reservedRight = 300
+        let prior = Layout(root: .split(.horizontal, children: [.leaf(WindowID(1)), .leaf(WindowID(2))], ratios: [0.5, 0.5]))
+        let op = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), options: reserved, priorLayout: prior, sleep: { _ in })
+        op.regionFallback = PlannerOptions()
+        let r = op.run()
+        XCTAssertEqual(r.outcome, .complete, r.message)
+        XCTAssertTrue(op.regionDropped, "1800 fits 1920 side by side only without the 300-point strip")
+        XCTAssertEqual(s.frames[WindowID(2)]?.minX, 960)
+    }
+
+    /// Minimums learned while writing are checked the same way: the region gives way when the tiles would overlap beside it.
+    func testMinimumsLearnedWhileWritingMakeTheRegionGiveWay() {
+        let s = FakeSystem(windows: [window(1, app: "a", x: 0), window(2, app: "b", x: 900)])
+        s.minimums[WindowID(1)] = CGSize(width: 900, height: 300)
+        s.minimums[WindowID(2)] = CGSize(width: 900, height: 300)
+        var reserved = PlannerOptions()
+        reserved.reservedRight = 300
+        let prior = Layout(root: .split(.horizontal, children: [.leaf(WindowID(1)), .leaf(WindowID(2))], ratios: [0.5, 0.5]))
+        let op = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), options: reserved, priorLayout: prior, sleep: { _ in })
+        op.regionFallback = PlannerOptions()
+        let r = op.run()
+        XCTAssertEqual(r.outcome, .complete, r.message)
+        XCTAssertTrue(op.regionDropped)
+        XCTAssertEqual(s.frames[WindowID(2)]?.minX, 960, "side by side without the strip")
+        XCTAssertEqual(op.resultingShape?.root?.box?.accordion, false)
+    }
+
+    func testSwitchingOverlappingAndTiledWhileTheWindowsDoNotFitMovesThem() {
+        let s = FakeSystem(windows: [window(1, app: "a", x: 0), window(2, app: "b", x: 30)])
+        s.focused = WindowID(2)
+        for id in [WindowID(1), WindowID(2)] {
+            s.frames[id]?.size = CGSize(width: 1200, height: 600)
+            knowledge.recordPushback(id: id, requested: CGRect(x: 0, y: 0, width: 10, height: 10), actual: CGRect(x: 0, y: 0, width: 1200, height: 600), spaceID: 7, workArea: s.snap.workArea, tolerance: 1)
+        }
+        let tiles = Layout(root: .split(.horizontal, children: [.leaf(WindowID(1)), .leaf(WindowID(2))], ratios: [0.5, 0.5]))
+        let start = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), priorLayout: tiles, sleep: { _ in })
+        XCTAssertEqual(start.run().outcome, .complete)
+        XCTAssertEqual(s.frames[WindowID(1)], CGRect(x: 0, y: 30, width: 1200, height: 1050))
+        XCTAssertEqual(s.frames[WindowID(2)], CGRect(x: 720, y: 30, width: 1200, height: 1050))
+
+        let toAccordion = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), priorLayout: tiles, kind: "edit:accordion",
+                                           transform: { layout, _, _ in LayoutEdit.toggleAccordion(of: WindowID(2), in: layout) }, sleep: { _ in })
+        let first = toAccordion.run()
+        XCTAssertEqual(first.outcome, .complete, first.message)
+        XCTAssertGreaterThan(first.issued, 0)
+        XCTAssertEqual(s.frames[WindowID(1)], CGRect(x: 0, y: 30, width: 1890, height: 1050))
+        XCTAssertEqual(s.frames[WindowID(2)], CGRect(x: 30, y: 30, width: 1890, height: 1050))
+        guard case .accordion? = toAccordion.resultingLayout?.root else { return XCTFail("the intent is an accordion now") }
+
+        let back = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), priorLayout: toAccordion.resultingLayout, kind: "edit:accordion",
+                                    transform: { layout, _, _ in LayoutEdit.toggleAccordion(of: WindowID(2), in: layout) }, sleep: { _ in })
+        let second = back.run()
+        XCTAssertEqual(second.outcome, .complete, second.message)
+        XCTAssertEqual(s.frames[WindowID(1)], CGRect(x: 0, y: 30, width: 1200, height: 1050))
+        XCTAssertEqual(s.frames[WindowID(2)], CGRect(x: 720, y: 30, width: 1200, height: 1050))
+        XCTAssertEqual(back.resultingLayout, tiles)
+    }
+
     func testLearnedUnfitAfterWriteFloatsTheOverflow() {
         let area = CGRect(x: 0, y: 33, width: 800, height: 400)
         let s = FakeSystem(windows: [window(1, app: "big.a"), window(2, app: "big.b", x: 300)], area: area)
@@ -1132,8 +1310,9 @@ final class ArrangeOperationTests: XCTestCase {
         let original2 = CGRect(x: 300, y: 33, width: 500, height: 300)
         s.frames[WindowID(1)] = original1
         s.frames[WindowID(2)] = original2
-        s.minimums[WindowID(1)] = CGSize(width: 500, height: 300)
-        s.minimums[WindowID(2)] = CGSize(width: 500, height: 300)
+        // Wider than the 770 a window gets beside one strip: they do not fit even overlapping.
+        s.minimums[WindowID(1)] = CGSize(width: 790, height: 300)
+        s.minimums[WindowID(2)] = CGSize(width: 790, height: 300)
         let op = makeOp(s)
         let r = op.run()
         XCTAssertEqual(r.outcome, .complete, r.message)
@@ -1160,16 +1339,32 @@ final class ArrangeOperationTests: XCTestCase {
         let original2 = CGRect(x: 80, y: 90, width: 200, height: 180)
         s.frames[WindowID(1)] = original1
         s.frames[WindowID(2)] = original2
-        s.minimums[WindowID(1)] = CGSize(width: 500, height: 300)
-        s.minimums[WindowID(2)] = CGSize(width: 500, height: 300)
+        s.minimums[WindowID(1)] = CGSize(width: 790, height: 300)
+        s.minimums[WindowID(2)] = CGSize(width: 790, height: 300)
         let op = makeOp(s)
         let r = op.run()
         XCTAssertEqual(r.outcome, .complete, r.message)
         XCTAssertTrue(r.excluded.contains { $0.code == .overflowFloat })
         XCTAssertTrue(r.message.contains("kept in place as floating"), r.message)
         XCTAssertEqual(op.resultingLayout?.windowIDs, [WindowID(1)])
-        XCTAssertNotEqual(s.frames[WindowID(1)], CGRect(x: 40, y: 80, width: 500, height: 300))
+        XCTAssertNotEqual(s.frames[WindowID(1)], CGRect(x: 40, y: 80, width: 790, height: 300))
         XCTAssertNotEqual(s.frames[WindowID(2)], original2)
+    }
+
+    /// Folding needs two windows: one window larger than the work area alone still floats where it is.
+    func testASingleWindowLargerThanTheWorkAreaIsKeptFloating() {
+        let s = FakeSystem(windows: [window(1, app: "huge")])
+        s.frames[WindowID(1)]?.size = CGSize(width: 2000, height: 600)
+        knowledge.recordPushback(id: WindowID(1), requested: CGRect(x: 0, y: 0, width: 10, height: 10), actual: CGRect(x: 0, y: 0, width: 2000, height: 600), spaceID: 7, workArea: s.snap.workArea, tolerance: 1)
+        let op = makeOp(s)
+        let r = op.run()
+        XCTAssertEqual(r.outcome, .complete, r.message)
+        XCTAssertEqual(r.excluded.map(\.window.id), [WindowID(1)])
+        XCTAssertEqual(r.excluded.first?.code, .overflowFloat)
+        XCTAssertTrue(r.message.contains("didn't fit even at minimum size"), r.message)
+        XCTAssertTrue(r.message.contains("kept in place as floating"), r.message)
+        XCTAssertEqual(op.resultingLayout?.windowIDs, [])
+        XCTAssertTrue(s.writes.isEmpty, "\(s.writes)")
     }
 
     func testResultRoundTripsThroughJSON() throws {

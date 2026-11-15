@@ -365,6 +365,7 @@ enum StatusMenuCopy {
     static func canApply(
         _ command: EditCommand,
         layout: Layout?,
+        shape: Layout? = nil,
         focused: WindowID?,
         floating: Set<WindowID> = [],
         waiting: Set<WindowID> = [],
@@ -400,10 +401,10 @@ enum StatusMenuCopy {
         case .focus(let direction):
             // Directional focus can move from and to dialogs in the region (rects include the region's frames).
             guard managed || regionMembers.contains(focused) else { return false }
-            return LayoutEdit.neighbor(of: focused, direction: direction, rects: rects, layout: layout) != nil
+            return LayoutEdit.neighbor(of: focused, direction: direction, rects: rects, layout: shape ?? layout) != nil
         case .swap(let direction), .move(let direction), .join(let direction):
             guard managed else { return false }
-            return LayoutEdit.neighbor(of: focused, direction: direction, rects: rects, layout: layout) != nil
+            return LayoutEdit.neighbor(of: focused, direction: direction, rects: rects, layout: shape ?? layout) != nil
         case .resize(let axis, let delta):
             guard managed else { return false }
             return LayoutEdit.resize(focused, axis: axis, by: delta, in: layout) != nil

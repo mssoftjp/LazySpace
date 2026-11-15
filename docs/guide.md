@@ -38,7 +38,7 @@ sudo ln -s /Applications/LazySpace.app/Contents/Resources/bin/lazyspace /usr/loc
 1. Open LazySpace. Its icon appears in the menu bar.
 2. The first time, macOS asks for access and Settings › General opens. Click **Open System Settings…** and turn on LazySpace in Privacy & Security › **Device Control and Data Access**. You can come back to this later from **Check Windows…** › **Show Fix…** › **Open General Settings**.
 3. Go to a Space and keep working. After you stay there for about a second without input, LazySpace tiles its windows. A single window fills the work area (the screen minus the menu bar and Dock).
-4. Open more windows. Each one joins beside the window you were using.
+4. Open more windows. Each one joins beside the window you were using. When there is not enough room to tile them all, they overlap just enough to fit, with the window you are using in front, until there is room again. With three or more, a window you are not using can end up hidden behind the others; focus it with `⌥H` or `⌥L` and send it to another desktop with `⌥⇧1`–`⌥⇧9`.
 
 If a Space should be left alone, uncheck **Automatically Arrange This Space** in the menu bar while you are on it. If an app should never be tiled, add it in Settings › Apps.
 
@@ -146,8 +146,8 @@ You can change settings in the Settings window or in the file `~/.config/lazyspa
 | `follow-moved-window` | `false` | After a shortcut or the menu moves a window to another Space, switch to that Space too. The command line is not affected |
 | `new-window-placement` | `"beside-focused"` | Where new windows join. `"end"` adds them at the end |
 | `focus-after-close` | `true` | After the focused window closes, focus a nearby window if no window on this Space has focus |
-| `accordion-padding` | `30` | Width of the strip shown for other windows in an accordion, 0–200 points (rounded to whole points) |
-| `preferred-minimum` | `[400, 300]` | A size hint (each 0–100000 points) for how many rows to use and for whether a new window fits in the space below a short window. Not an enforced minimum |
+| `accordion-padding` | `30` | Width of the strip shown for other windows in an accordion or in a row that does not fit, 0–200 points (rounded to whole points) |
+| `preferred-minimum` | `[400, 300]` | A size hint (each 0–100000 points) for how many rows to use, for whether a new window fits in the space below a short window, and for how narrow a window gets when a row does not fit. Not an enforced minimum |
 | `unknown-floor` | `[120, 120]` | Size assumed when an app does not report a window's minimum size (each 0–100000 points) |
 | `quiet-interval` | `0.6` | How long input must be quiet before automatic arrangement starts on a Space and after a mouse drag, in seconds (0.1–10). Ordinary window additions and removals do not always wait this long, and a mouse resize or swap can be adopted sooner once the windows stay still |
 | `per-app-timeout` | `2.0` | How long to wait for an app to respond, in seconds (0.2–30) |

@@ -537,8 +537,8 @@ public struct Config: Equatable, Codable {
         # outer-top = 0
         # outer-right = 0
         # outer-bottom = 0
-        accordion-padding = 30         # Width of the visible strip of unfocused windows in accordion layout (pt)
-        preferred-minimum = [400, 300] # Hint for the initial row count, and for fitting a new window into unused space below a short window. Not an enforced size or minimum; saving does not rearrange windows
+        accordion-padding = 30         # Width of the visible strip of other windows in an accordion or in a row that does not fit (pt)
+        preferred-minimum = [400, 300] # Hint for the initial row count, for fitting a new window into unused space below a short window, and for how narrow a window gets when a row does not fit. Not an enforced size or minimum; saving does not rearrange windows
         unknown-floor = [120, 120]     # Minimum size assumed for windows whose minimum size is unknown (pt)
         quiet-interval = 0.6           # Input quiet time used by automatic arrangement (seconds, 0.1–10)
         per-app-timeout = 2.0          # Maximum wait for an app request (seconds, 0.2–30)

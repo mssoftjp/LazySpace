@@ -64,12 +64,22 @@ final class PlannerTests: XCTestCase {
         XCTAssertEqual(plan.rects.values.filter { Int($0.width) == 756 }.count, 2)
     }
 
-    func testPreferredMinimumFallsBackToAnyFit() {
-        // When no row count meets the preference, return the fewest rows that fit above the provisional minimum 120 (40 windows -> 3 rows, 14 per row = 137 wide).
+    func testPreferredMinimumFallsBackToOneOverlappingRow() {
+        // When no row count meets the preference, one overlapping row comes before rows that only fit above the provisional
+        // minimum 120 (40 windows would be 3 rows of 14, 137 wide each).
         guard case .fits(let plan) = Planner.initial(for: ids(40), in: area, constraints: [:]) else { return XCTFail() }
-        XCTAssertEqual(plan.rows, 3)
+        XCTAssertEqual(plan.rows, 1)
+        XCTAssertTrue(plan.folded)
         XCTAssertEqual(plan.rects.count, 40)
-        for r in plan.rects.values { XCTAssertGreaterThanOrEqual(r.width, 120) }
+        for r in plan.rects.values {
+            XCTAssertEqual(r.width, 400, "the preferred width")
+            XCTAssertTrue(area.contains(r), "\(r) is outside the area")
+        }
+        var unfolded = PlannerOptions()
+        unfolded.folds = false
+        guard case .fits(let rows) = Planner.initial(for: ids(40), in: area, constraints: [:], options: unfolded) else { return XCTFail() }
+        XCTAssertEqual(rows.rows, 3)
+        for r in rows.rects.values { XCTAssertGreaterThanOrEqual(r.width, 120) }
         // 12 windows in 3 rows (4 per row = 480x350) meet the preference.
         guard case .fits(let plan12) = Planner.initial(for: ids(12), in: area, constraints: [:]) else { return XCTFail() }
         XCTAssertEqual(plan12.rows, 3)
@@ -92,9 +102,9 @@ final class PlannerTests: XCTestCase {
 
     func testUnfitReportsMembersAndDoesNotPlan() {
         var c: [WindowID: SizeKnowledge] = [:]
-        c[WindowID(1)] = .known(CGSize(width: 1000, height: 600))
-        c[WindowID(2)] = .known(CGSize(width: 1000, height: 600))
-        // Two rows need 600+600 > 1055 high; one row needs 2000 > 1920 wide.
+        c[WindowID(1)] = .known(CGSize(width: 1900, height: 1040))
+        c[WindowID(2)] = .known(CGSize(width: 1900, height: 1040))
+        // Side by side needs 3800 > 1920 wide, stacked 2080 > 1055 high; overlapping leaves 1890 < 1900 wide or 1025 < 1040 high.
         guard case .unfit(let u) = Planner.initial(for: ids(2), in: area, constraints: c) else { return XCTFail("must not fit") }
         XCTAssertEqual(Set(u.offending), Set(ids(2)))
     }
@@ -125,7 +135,7 @@ final class PlannerTests: XCTestCase {
         }
         XCTAssertEqual(planned.rects[WindowID(1)]?.width, 230)
         XCTAssertEqual(planned.rects[WindowID(2)]?.width, 1282)
-        let packed = planned.layout.packing(rects: planned.rects)
+        let packed = planned.layout.packing(rects: planned.rects, shape: planned.shape)
         guard case .split(.horizontal, _, let ratios)? = packed.root else { return XCTFail() }
         XCTAssertEqual(ratios[0], 230.0 / 1512.0, accuracy: 1e-9)
         XCTAssertEqual(ratios[1], 1282.0 / 1512.0, accuracy: 1e-9)
@@ -178,7 +188,7 @@ final class PlannerTests: XCTestCase {
         let layout = Layout(root: .split(.horizontal, children: [.leaf(WindowID(1)), .leaf(WindowID(2))], ratios: [0.5, 0.5]))
         let maximums = [WindowID(1): CGSize(width: 230, height: 408), WindowID(2): CGSize(width: 400, height: 300)]
         guard case .fits(let first) = Planner.fit(layout, in: screen, constraints: [:], maximums: maximums) else { return XCTFail() }
-        guard case .fits(let second) = Planner.fit(first.layout.normalized().packing(rects: first.rects), in: screen, constraints: [:], maximums: maximums) else { return XCTFail() }
+        guard case .fits(let second) = Planner.fit(first.layout.normalized().packing(rects: first.rects, shape: first.shape), in: screen, constraints: [:], maximums: maximums) else { return XCTFail() }
         XCTAssertEqual(second.rects, first.rects)
     }
 
@@ -263,7 +273,7 @@ final class PlannerTests: XCTestCase {
         XCTAssertEqual(first.rects[WindowID(1)]?.maxX, first.rects[WindowID(2)]?.minX, "no gap between the tiles")
         var plan = first
         for _ in 0..<3 {
-            guard case .fits(let next) = Planner.fit(plan.layout.normalized().packing(rects: plan.rects), in: workArea, constraints: [:], options: options) else { return XCTFail() }
+            guard case .fits(let next) = Planner.fit(plan.layout.normalized().packing(rects: plan.rects, shape: plan.shape), in: workArea, constraints: [:], options: options) else { return XCTFail() }
             XCTAssertEqual(next.rects, first.rects)
             plan = next
         }
@@ -279,7 +289,7 @@ final class PlannerTests: XCTestCase {
             for rect in first.rects.values { XCTAssertEqual(rect, rect.integral, "\(axis)") }
             var plan = first
             for _ in 0..<3 {
-                guard case .fits(let next) = Planner.fit(plan.layout.normalized().packing(rects: plan.rects), in: workArea, constraints: [:], options: options) else { return XCTFail() }
+                guard case .fits(let next) = Planner.fit(plan.layout.normalized().packing(rects: plan.rects, shape: plan.shape), in: workArea, constraints: [:], options: options) else { return XCTFail() }
                 XCTAssertEqual(next.rects, first.rects, "\(axis)")
                 plan = next
             }
@@ -300,7 +310,7 @@ final class PlannerTests: XCTestCase {
         XCTAssertEqual(first.rects[WindowID(2)]?.maxX, first.rects[WindowID(3)]?.minX, "no gap between the tiles")
         var plan = first
         for _ in 0..<3 {
-            guard case .fits(let next) = Planner.fit(plan.layout.normalized().packing(rects: plan.rects), in: workArea, constraints: [:], options: options, focused: WindowID(2)) else { return XCTFail() }
+            guard case .fits(let next) = Planner.fit(plan.layout.normalized().packing(rects: plan.rects, shape: plan.shape), in: workArea, constraints: [:], options: options, focused: WindowID(2)) else { return XCTFail() }
             XCTAssertEqual(next.rects, first.rects)
             plan = next
         }
@@ -418,7 +428,7 @@ final class PlannerTests: XCTestCase {
         let gapped = sideBySide.packing(rects: [
             a: CGRect(x: 0, y: 33, width: 700, height: 432),
             b: CGRect(x: 700, y: 33, width: 812, height: 949),
-        ])
+        ], shape: sideBySide)
         XCTAssertEqual(gapped.leftoverHeights[a], 432)
         XCTAssertNil(gapped.leftoverHeights[b])
         let stacked = Layout(
@@ -428,7 +438,7 @@ final class PlannerTests: XCTestCase {
         let filled = stacked.packing(rects: [
             a: CGRect(x: 0, y: 33, width: 1512, height: 474),
             b: CGRect(x: 0, y: 507, width: 1512, height: 475),
-        ])
+        ], shape: stacked)
         XCTAssertNil(filled.leftoverHeights[a])
         XCTAssertNil(filled.leftoverHeights[b])
     }
@@ -471,7 +481,7 @@ final class PlannerTests: XCTestCase {
             a: CGRect(x: 0, y: 33, width: 700, height: 440),
             extra: CGRect(x: 0, y: 473, width: 700, height: 509),
             b: CGRect(x: 700, y: 33, width: 812, height: 949),
-        ])
+        ], shape: stacked)
         XCTAssertEqual(packed.leftoverHeights[a], 440)
         let collapsed = packed.removing([extra])
         XCTAssertEqual(collapsed.leftoverHeights[a], 440)
@@ -509,7 +519,7 @@ final class PlannerTests: XCTestCase {
         XCTAssertEqual(column.rects[b], CGRect(x: 0, y: 30, width: 1000, height: 470))
     }
 
-    /// Centering a capped window behind the front one would hide its strip, so windows in an accordion keep their leading edge.
+    /// Centering a capped window behind the front one would hide its strip, so a window whose strip is on the leading side keeps its leading edge.
     func testCappedWindowInAnAccordionKeepsItsStrip() {
         let a = WindowID(1), b = WindowID(2), c = WindowID(3)
         let layout = Layout(root: .accordion(.horizontal, children: [.leaf(a), .split(.vertical, children: [.leaf(b)], ratios: [1]), .leaf(c)], ratios: [1.0 / 3, 1.0 / 3, 1.0 / 3]))
@@ -518,6 +528,351 @@ final class PlannerTests: XCTestCase {
         guard case .fits(let plan) = Planner.fit(layout, in: screen, constraints: [:], options: PlannerOptions(accordionPadding: 30), maximums: maximums, focused: c) else { return XCTFail() }
         XCTAssertEqual(plan.rects[a], CGRect(x: 0, y: 0, width: 600, height: 1080))
         XCTAssertEqual(plan.rects[b]?.minX, 0, "a capped window in a split inside the accordion keeps its leading edge too")
+    }
+
+    /// A row that does not fit overlaps by what it lacks and no more, whoever has focus and whatever its ratios. The last window keeps the trailing edge.
+    func testARowThatDoesNotFitOverlapsOnlyByWhatItLacks() {
+        let wide = WindowID(1), other = WindowID(2)
+        let screen = CGRect(x: 0, y: 33, width: 1512, height: 949)
+        let options = PlannerOptions(accordionPadding: 30)
+        for (width, start) in [(800.0, 712.0), (1000.0, 512.0)] {
+            let constraints = [wide: SizeKnowledge.known(CGSize(width: 840, height: 400)), other: .known(CGSize(width: width, height: 400))]
+            for ratios in [[0.5, 0.5], [0.9, 0.1]] {
+                let layout = Layout(root: .split(.horizontal, children: [.leaf(wide), .leaf(other)], ratios: ratios))
+                for focused in [wide, other] {
+                    guard case .fits(let plan) = Planner.fit(layout, in: screen, constraints: constraints, options: options, focused: focused) else { return XCTFail() }
+                    XCTAssertTrue(plan.folded)
+                    XCTAssertEqual(plan.layout, layout, "the intent stays a row")
+                    XCTAssertEqual(plan.shape.root?.box?.accordion, true, "its windows overlap")
+                    XCTAssertEqual(plan.rects[wide], CGRect(x: 0, y: 33, width: 840, height: 949))
+                    XCTAssertEqual(plan.rects[other], CGRect(x: start, y: 33, width: width, height: 949))
+                }
+            }
+        }
+    }
+
+    /// A capped window sits beside the other one in either order, and a capped height stays at the top.
+    func testACappedWindowInARowThatDoesNotFitSitsBesideTheOther() {
+        let wide = WindowID(1), capped = WindowID(2)
+        let screen = CGRect(x: 0, y: 33, width: 1512, height: 949)
+        let constraints = [wide: SizeKnowledge.known(CGSize(width: 840, height: 400)), capped: SizeKnowledge.known(CGSize(width: 740, height: 400))]
+        let options = PlannerOptions(accordionPadding: 30)
+        let row = Layout(root: .split(.horizontal, children: [.leaf(wide), .leaf(capped)], ratios: [0.5, 0.5]))
+        let swapped = Layout(root: .split(.horizontal, children: [.leaf(capped), .leaf(wide)], ratios: [0.5, 0.5]))
+        for focused in [wide, capped] {
+            guard case .fits(let plan) = Planner.fit(row, in: screen, constraints: constraints, options: options, maximums: [capped: CGSize(width: 740, height: 0)], focused: focused) else { return XCTFail() }
+            XCTAssertEqual(plan.rects[wide], CGRect(x: 0, y: 33, width: 840, height: 949))
+            XCTAssertEqual(plan.rects[capped], CGRect(x: 772, y: 33, width: 740, height: 949))
+            guard case .fits(let other) = Planner.fit(swapped, in: screen, constraints: constraints, options: options, maximums: [capped: CGSize(width: 740, height: 0)], focused: focused) else { return XCTFail() }
+            XCTAssertEqual(other.rects[capped], CGRect(x: 0, y: 33, width: 740, height: 949))
+            XCTAssertEqual(other.rects[wide], CGRect(x: 672, y: 33, width: 840, height: 949))
+        }
+        guard case .fits(let short) = Planner.fit(row, in: screen, constraints: constraints, options: options, maximums: [capped: CGSize(width: 740, height: 500)]) else { return XCTFail() }
+        XCTAssertEqual(short.rects[capped], CGRect(x: 772, y: 33, width: 740, height: 500))
+    }
+
+    /// Nothing jumps at the edge of fitting: one point short looks like the tiles.
+    func testARowOnePointShortOfFittingLooksLikeItsTiles() {
+        let a = WindowID(1), b = WindowID(2)
+        let screen = CGRect(x: 0, y: 0, width: 1512, height: 949)
+        let layout = Layout(root: .split(.horizontal, children: [.leaf(a), .leaf(b)], ratios: [0.5, 0.5]))
+        func known(_ width: Double) -> [WindowID: SizeKnowledge] {
+            [a: .known(CGSize(width: 840, height: 400)), b: .known(CGSize(width: width, height: 400))]
+        }
+        guard case .fits(let tiles) = Planner.fit(layout, in: screen, constraints: known(672)) else { return XCTFail() }
+        XCTAssertFalse(tiles.folded)
+        XCTAssertEqual(tiles.rects[a], CGRect(x: 0, y: 0, width: 840, height: 949))
+        XCTAssertEqual(tiles.rects[b], CGRect(x: 840, y: 0, width: 672, height: 949))
+        guard case .fits(let short) = Planner.fit(layout, in: screen, constraints: known(673)) else { return XCTFail() }
+        XCTAssertTrue(short.folded)
+        XCTAssertEqual(short.rects[a], CGRect(x: 0, y: 0, width: 840, height: 949))
+        XCTAssertEqual(short.rects[b], CGRect(x: 839, y: 0, width: 673, height: 949))
+    }
+
+    /// The shortage is split evenly over the joints, in whole points, and no frame depends on focus.
+    func testTheShortageIsSplitEvenlyOverTheJoints() {
+        let a = WindowID(1), b = WindowID(2), c = WindowID(3), d = WindowID(4)
+        let screen = CGRect(x: 0, y: 0, width: 1512, height: 949)
+        let three = Layout(root: .split(.horizontal, children: [.leaf(a), .leaf(b), .leaf(c)], ratios: [1.0 / 3, 1.0 / 3, 1.0 / 3]))
+        let constraints = [a: SizeKnowledge.known(CGSize(width: 840, height: 400)), b: .known(CGSize(width: 800, height: 400)), c: .known(CGSize(width: 740, height: 400))]
+        for focused in [a, b, c, nil] {
+            guard case .fits(let plan) = Planner.fit(three, in: screen, constraints: constraints, maximums: [c: CGSize(width: 740, height: 0)], focused: focused) else { return XCTFail() }
+            XCTAssertEqual(plan.rects[a], CGRect(x: 0, y: 0, width: 840, height: 949))
+            XCTAssertEqual(plan.rects[b], CGRect(x: 406, y: 0, width: 800, height: 949))
+            XCTAssertEqual(plan.rects[c], CGRect(x: 772, y: 0, width: 740, height: 949))
+        }
+        // 889 points do not divide by three joints.
+        let four = Layout(root: .split(.horizontal, children: [.leaf(a), .leaf(b), .leaf(c), .leaf(d)], ratios: [0.25, 0.25, 0.25, 0.25]))
+        let uneven = [a: SizeKnowledge.known(CGSize(width: 600, height: 400)), b: .known(CGSize(width: 600, height: 400)), c: .known(CGSize(width: 600, height: 400)), d: .known(CGSize(width: 601, height: 400))]
+        guard case .fits(let plan) = Planner.fit(four, in: screen, constraints: uneven) else { return XCTFail() }
+        XCTAssertEqual([a, b, c, d].map { plan.rects[$0]?.minX }, [0, 304, 607, 911])
+        XCTAssertEqual(plan.rects[d]?.maxX, 1512)
+    }
+
+    /// A short window beside long ones cannot share the shortage evenly, so a window between the ends stays inside their strips.
+    func testAWindowBetweenTheEndsStaysInsideTheirStrips() {
+        let a = WindowID(1), b = WindowID(2), c = WindowID(3)
+        let screen = CGRect(x: 0, y: 0, width: 1512, height: 949)
+        let layout = Layout(root: .split(.horizontal, children: [.leaf(a), .leaf(b), .leaf(c)], ratios: [1.0 / 3, 1.0 / 3, 1.0 / 3]))
+        func starts(_ widths: [Double]) -> [CGFloat?] {
+            let constraints = Dictionary(uniqueKeysWithValues: zip([a, b, c], widths).map { ($0, SizeKnowledge.known(CGSize(width: $1, height: 400))) })
+            guard case .fits(let plan) = Planner.fit(layout, in: screen, constraints: constraints) else { return [] }
+            return [a, b, c].map { plan.rects[$0]?.minX }
+        }
+        XCTAssertEqual(starts([400, 1000, 1000]), [0, 30, 512], "evenly it would start at -44, past the left edge")
+        XCTAssertEqual(starts([1000, 1000, 400]), [0, 482, 1112], "evenly it would end at 1556, past the right edge")
+    }
+
+    /// Whatever the lengths, every frame stays in the area, and the first and last windows always show a strip.
+    func testEveryFrameOfARowThatDoesNotFitStaysInTheArea() {
+        let screen = CGRect(x: 100, y: 50, width: 1512, height: 949)
+        let widths: [Double] = [230, 400, 740, 1000, 1400]
+        var rows: [[Double]] = []
+        for x in widths {
+            for y in widths {
+                for z in widths {
+                    rows.append([x, y, z])
+                    for w in widths { rows.append([x, y, z, w]) }
+                }
+            }
+        }
+        for row in rows {
+            let ids = row.indices.map { WindowID(UInt32($0 + 1)) }
+            let constraints = Dictionary(uniqueKeysWithValues: zip(ids, row).map { ($0, SizeKnowledge.known(CGSize(width: $1, height: 400))) })
+            guard case .fits(let plan) = Planner.fit(Planner.rowLayout(ids, rows: 1), in: screen, constraints: constraints) else { return XCTFail("\(row)") }
+            for id in ids {
+                let frame = plan.rects[id]!
+                XCTAssertTrue(screen.contains(frame), "\(row): \(frame)")
+                XCTAssertEqual(frame, frame.integral, "\(row)")
+            }
+            guard plan.folded else { continue }
+            let first = plan.rects[ids[0]]!, last = plan.rects[ids[ids.count - 1]]!
+            XCTAssertEqual(first.minX, screen.minX, "\(row)")
+            XCTAssertEqual(last.maxX, screen.maxX, "\(row)")
+            for id in ids.dropFirst() { XCTAssertGreaterThanOrEqual(plan.rects[id]!.minX, screen.minX + 30, "\(row)") }
+            for id in ids.dropLast() { XCTAssertLessThanOrEqual(plan.rects[id]!.maxX, screen.maxX - 30, "\(row)") }
+        }
+    }
+
+    /// A child fits if it fits in its room, as in a real accordion: two windows in an accordion need less than the two strips its minimum counts.
+    func testARealAccordionInARowThatDoesNotFitFitsInItsRoom() {
+        let a = WindowID(1), b = WindowID(2), c = WindowID(3)
+        let screen = CGRect(x: 0, y: 0, width: 1000, height: 600)
+        let constraints = [a: SizeKnowledge.known(CGSize(width: 930, height: 400)), b: .known(CGSize(width: 930, height: 400)), c: .known(CGSize(width: 400, height: 400))]
+        let stack = LayoutNode.accordion(.horizontal, children: [.leaf(a), .leaf(b)], ratios: [0.5, 0.5])
+        let row = Layout(root: .split(.horizontal, children: [stack, .leaf(c)], ratios: [0.5, 0.5]))
+        guard case .fits(let plan) = Planner.fit(row, in: screen, constraints: constraints, focused: a) else { return XCTFail("970 holds an accordion of two 930s with their strips") }
+        XCTAssertEqual(plan.rects[a], CGRect(x: 0, y: 0, width: 940, height: 600))
+        XCTAssertEqual(plan.rects[b], CGRect(x: 30, y: 0, width: 940, height: 600))
+        XCTAssertEqual(plan.rects[c], CGRect(x: 600, y: 0, width: 400, height: 600))
+    }
+
+    /// Lengths are rounded down, so a minimum counts in whole points: 100.8 is not left with 100, which fitting would refuse.
+    func testAFractionalMinimumFitsWhereItsWholePointsDo() {
+        let a = WindowID(1), b = WindowID(2), c = WindowID(3), d = WindowID(4)
+        let area = CGRect(x: 0, y: 0, width: 400, height: 600)
+        let constraints = [a: SizeKnowledge.known(CGSize(width: 100.8, height: 200)), b: .known(CGSize(width: 100.8, height: 200))]
+        let row = Layout(root: .split(.horizontal, children: [.leaf(a), .leaf(b)], ratios: [0.2, 0.8]))
+        guard case .fits(let plan) = Planner.fit(row, in: area, constraints: constraints) else { return XCTFail("a tile pinned to its minimum fits") }
+        XCTAssertEqual(plan.rects[a], CGRect(x: 0, y: 0, width: 101, height: 600))
+        XCTAssertEqual(plan.rects[b], CGRect(x: 101, y: 0, width: 299, height: 600))
+        // Half a point below a whole point still counts as that point: fitting allows it.
+        guard case .fits(let half) = Planner.fit(Layout(root: .leaf(a)), in: CGRect(x: 0, y: 0, width: 1055, height: 600), constraints: [a: .known(CGSize(width: 1055.5, height: 200))]) else { return XCTFail() }
+        XCTAssertEqual(half.rects[a]?.width, 1055)
+        // A fixed window with a fractional width keeps its whole points, whatever its share.
+        guard case .fits(let fixed) = Planner.fit(row, in: area, constraints: constraints, maximums: [a: CGSize(width: 100.8, height: 0)]) else { return XCTFail() }
+        XCTAssertEqual(fixed.rects[a]?.width, 101)
+
+        // In a row that does not fit, the children of a child get whole points too.
+        let inner = LayoutNode.split(.horizontal, children: [.leaf(a), .leaf(b)], ratios: [0.2, 0.8])
+        let column = LayoutNode.split(.vertical, children: [inner, .leaf(d)], ratios: [0.5, 0.5])
+        let nested = Layout(root: .split(.horizontal, children: [column, .leaf(c)], ratios: [0.5, 0.5]))
+        let tight = [a: SizeKnowledge.known(CGSize(width: 100.8, height: 200)), b: .known(CGSize(width: 100.8, height: 200)),
+                     d: .known(CGSize(width: 120, height: 200)), c: .known(CGSize(width: 900, height: 200))]
+        guard case .fits(let folded) = Planner.fit(nested, in: CGRect(x: 0, y: 0, width: 1000, height: 600), constraints: tight) else { return XCTFail("expected the nested layout to fit folded") }
+        XCTAssertEqual(folded.rects[a]?.width, 101)
+        XCTAssertEqual(folded.rects[c], CGRect(x: 100, y: 0, width: 900, height: 600))
+    }
+
+    /// A small or unknown minimum does not make a window that narrow: it gets the preferred length, up to its cap and the room it has.
+    func testASmallWindowInARowThatDoesNotFitGetsThePreferredLength() {
+        let a = WindowID(1), b = WindowID(2), c = WindowID(3)
+        let screen = CGRect(x: 0, y: 0, width: 1512, height: 949)
+        let layout = Layout(root: .split(.horizontal, children: [.leaf(a), .leaf(b), .leaf(c)], ratios: [1.0 / 3, 1.0 / 3, 1.0 / 3]))
+        let wide = [a: SizeKnowledge.known(CGSize(width: 1000, height: 400)), c: .known(CGSize(width: 800, height: 400))]
+        var small = wide
+        small[b] = .known(CGSize(width: 300, height: 400))
+        for constraints in [small, wide] {
+            guard case .fits(let plan) = Planner.fit(layout, in: screen, constraints: constraints) else { return XCTFail() }
+            XCTAssertEqual(plan.rects[b], CGRect(x: 656, y: 0, width: 400, height: 949))
+            XCTAssertEqual(plan.rects[c], CGRect(x: 712, y: 0, width: 800, height: 949))
+        }
+        guard case .fits(let capped) = Planner.fit(layout, in: screen, constraints: wide, maximums: [b: CGSize(width: 230, height: 0)]) else { return XCTFail() }
+        XCTAssertEqual(capped.rects[b]?.width, 230)
+
+        let pair = Layout(root: .split(.horizontal, children: [.leaf(a), .leaf(c)], ratios: [0.5, 0.5]))
+        let huge = PlannerOptions(preferredMinimum: CGSize(width: 100000, height: 100000))
+        guard case .fits(let plan) = Planner.fit(pair, in: screen, constraints: wide, options: huge) else { return XCTFail() }
+        XCTAssertEqual(plan.rects[a], CGRect(x: 0, y: 0, width: 1482, height: 949))
+        XCTAssertEqual(plan.rects[c], CGRect(x: 30, y: 0, width: 1482, height: 949))
+    }
+
+    /// The same acceptance as a real accordion: the first and last windows leave one strip, any other two.
+    func testARowFitsWhileEveryWindowLeavesItsStrips() {
+        let a = WindowID(1), b = WindowID(2), c = WindowID(3)
+        let screen = CGRect(x: 0, y: 0, width: 1512, height: 949)
+        func known(_ widths: [WindowID: Double]) -> [WindowID: SizeKnowledge] { widths.mapValues { .known(CGSize(width: $0, height: 400)) } }
+        let pair = Layout(root: .split(.horizontal, children: [.leaf(a), .leaf(b)], ratios: [0.5, 0.5]))
+        guard case .fits(let plan) = Planner.fit(pair, in: screen, constraints: known([a: 1482, b: 1482])) else { return XCTFail() }
+        XCTAssertEqual(plan.rects[b], CGRect(x: 30, y: 0, width: 1482, height: 949))
+        guard case .unfit(let unfit) = Planner.fit(pair, in: screen, constraints: known([a: 1483, b: 400])) else { return XCTFail() }
+        XCTAssertEqual(Set(unfit.offending), [a, b])
+
+        let three = Layout(root: .split(.horizontal, children: [.leaf(a), .leaf(b), .leaf(c)], ratios: [1.0 / 3, 1.0 / 3, 1.0 / 3]))
+        guard case .fits(let middle) = Planner.fit(three, in: screen, constraints: known([a: 400, b: 1452, c: 400])) else { return XCTFail() }
+        XCTAssertEqual(middle.rects[b], CGRect(x: 30, y: 0, width: 1452, height: 949))
+        guard case .unfit(let wide) = Planner.fit(three, in: screen, constraints: known([a: 400, b: 1453, c: 400])) else { return XCTFail() }
+        XCTAssertEqual(Set(wide.offending), [a, b, c])
+
+        let plain = PlannerOptions(accordionPadding: 0)
+        guard case .fits(let full) = Planner.fit(pair, in: screen, constraints: known([a: 1512, b: 1512]), options: plain) else { return XCTFail() }
+        XCTAssertEqual(full.rects[b], CGRect(x: 0, y: 0, width: 1512, height: 949))
+    }
+
+    /// A column overlaps the same way, and a capped width is centered as between tiles.
+    func testAColumnThatDoesNotFitOverlapsOnlyByWhatItLacks() {
+        let a = WindowID(1), b = WindowID(2)
+        let screen = CGRect(x: 0, y: 33, width: 1512, height: 949)
+        let constraints = [a: SizeKnowledge.known(CGSize(width: 500, height: 600)), b: .known(CGSize(width: 500, height: 600))]
+        let column = Layout(root: .split(.vertical, children: [.leaf(a), .leaf(b)], ratios: [0.5, 0.5]))
+        guard case .fits(let plan) = Planner.fit(column, in: screen, constraints: constraints, maximums: [b: CGSize(width: 700, height: 0)]) else { return XCTFail() }
+        XCTAssertTrue(plan.folded)
+        XCTAssertEqual(plan.rects[a], CGRect(x: 0, y: 33, width: 1512, height: 600))
+        XCTAssertEqual(plan.rects[b], CGRect(x: 406, y: 382, width: 700, height: 600))
+    }
+
+    /// Gaps give way before windows overlap.
+    func testGapsGiveWayInARowThatDoesNotFit() {
+        let a = WindowID(1), b = WindowID(2)
+        let screen = CGRect(x: 0, y: 0, width: 1512, height: 949)
+        let constraints = [a: SizeKnowledge.known(CGSize(width: 756, height: 400)), b: .known(CGSize(width: 756, height: 400))]
+        let row = Layout(root: .split(.horizontal, children: [.leaf(a), .leaf(b)], ratios: [0.5, 0.5]))
+        guard case .fits(let plan) = Planner.fit(row, in: screen, constraints: constraints, options: PlannerOptions(gap: 8)) else { return XCTFail() }
+        XCTAssertEqual(plan.rects[a], CGRect(x: 0, y: 0, width: 756, height: 949))
+        XCTAssertEqual(plan.rects[b], CGRect(x: 756, y: 0, width: 756, height: 949))
+    }
+
+    /// Each split decides for itself: a row beside a column, both short.
+    func testNestedSplitsThatDoNotFitEachOverlapByWhatTheyLack() {
+        let a = WindowID(1), b = WindowID(2), c = WindowID(3)
+        let screen = CGRect(x: 0, y: 0, width: 1500, height: 900)
+        let constraints = [a: SizeKnowledge.known(CGSize(width: 840, height: 400)),
+                           b: SizeKnowledge.known(CGSize(width: 740, height: 500)),
+                           c: SizeKnowledge.known(CGSize(width: 740, height: 500))]
+        let column = LayoutNode.split(.vertical, children: [.leaf(b), .leaf(c)], ratios: [0.5, 0.5])
+        let layout = Layout(root: .split(.horizontal, children: [.leaf(a), column], ratios: [0.5, 0.5]))
+        guard case .fits(let plan) = Planner.fit(layout, in: screen, constraints: constraints) else { return XCTFail() }
+        XCTAssertEqual(plan.rects[a], CGRect(x: 0, y: 0, width: 840, height: 900))
+        XCTAssertEqual(plan.rects[b], CGRect(x: 760, y: 0, width: 740, height: 500))
+        XCTAssertEqual(plan.rects[c], CGRect(x: 760, y: 400, width: 740, height: 500))
+    }
+
+    /// A capped window in a real accordion keeps its strip's edge: the right edge when it is behind, whoever has focus, in a pair.
+    func testCappedLastWindowOfAnAccordionKeepsItsTrailingEdge() {
+        let wide = WindowID(1), capped = WindowID(2)
+        let screen = CGRect(x: 0, y: 33, width: 1512, height: 949)
+        let maximums = [capped: CGSize(width: 740, height: 0)]
+        let options = PlannerOptions(accordionPadding: 30)
+        let layout = Layout(root: .accordion(.horizontal, children: [.leaf(wide), .leaf(capped)], ratios: [0.5, 0.5]))
+        for focused in [wide, capped] {
+            guard case .fits(let plan) = Planner.fit(layout, in: screen, constraints: [:], options: options, maximums: maximums, focused: focused) else { return XCTFail() }
+            XCTAssertEqual(plan.rects[wide], CGRect(x: 0, y: 33, width: 1482, height: 949))
+            XCTAssertEqual(plan.rects[capped], CGRect(x: 772, y: 33, width: 740, height: 949), "30 points show to the right of the wide window")
+        }
+        let swapped = Layout(root: .accordion(.horizontal, children: [.leaf(capped), .leaf(wide)], ratios: [0.5, 0.5]))
+        for focused in [wide, capped] {
+            guard case .fits(let plan) = Planner.fit(swapped, in: screen, constraints: [:], options: options, maximums: maximums, focused: focused) else { return XCTFail() }
+            XCTAssertEqual(plan.rects[capped], CGRect(x: 0, y: 33, width: 740, height: 949))
+            XCTAssertEqual(plan.rects[wide], CGRect(x: 30, y: 33, width: 1482, height: 949))
+        }
+    }
+
+    /// A capped middle window follows its strip as focus moves past it.
+    func testCappedMiddleWindowOfAnAccordionFollowsItsStrip() {
+        let a = WindowID(1), b = WindowID(2), c = WindowID(3)
+        let layout = Layout(root: .accordion(.horizontal, children: [.leaf(a), .leaf(b), .leaf(c)], ratios: [1.0 / 3, 1.0 / 3, 1.0 / 3]))
+        let screen = CGRect(x: 0, y: 0, width: 1500, height: 900)
+        let maximums = [b: CGSize(width: 700, height: 0)]
+        let options = PlannerOptions(accordionPadding: 30)
+        func frame(focused: WindowID) -> CGRect? {
+            guard case .fits(let plan) = Planner.fit(layout, in: screen, constraints: [:], options: options, maximums: maximums, focused: focused) else { return nil }
+            return plan.rects[b]
+        }
+        XCTAssertEqual(frame(focused: a), CGRect(x: 800, y: 0, width: 700, height: 900), "its strip is on the right")
+        XCTAssertEqual(frame(focused: c), CGRect(x: 0, y: 0, width: 700, height: 900), "its strip is on the left")
+        XCTAssertEqual(frame(focused: b), CGRect(x: 30, y: 0, width: 700, height: 900), "in front, it has no strip to keep")
+    }
+
+    /// Everything inside a child on the trailing side keeps the trailing edge, and a vertical accordion does the same with height.
+    func testCappedWindowsKeepTheTrailingEdgeInsideChildrenAndAlongTheHeight() {
+        let a = WindowID(1), b = WindowID(2), c = WindowID(3)
+        let screen = CGRect(x: 0, y: 0, width: 1500, height: 900)
+        let options = PlannerOptions(accordionPadding: 30)
+
+        let stacked = Layout(root: .accordion(.horizontal, children: [.leaf(a), .split(.vertical, children: [.leaf(b), .leaf(c)], ratios: [0.5, 0.5])], ratios: [0.5, 0.5]))
+        let narrow = [b: CGSize(width: 600, height: 0), c: CGSize(width: 500, height: 0)]
+        guard case .fits(let column) = Planner.fit(stacked, in: screen, constraints: [:], options: options, maximums: narrow, focused: a) else { return XCTFail() }
+        XCTAssertEqual(column.rects[b]?.maxX, 1500)
+        XCTAssertEqual(column.rects[c]?.maxX, 1500)
+
+        let row = Layout(root: .accordion(.horizontal, children: [.leaf(a), .split(.horizontal, children: [.leaf(b), .leaf(c)], ratios: [0.5, 0.5])], ratios: [0.5, 0.5]))
+        let narrowRow = [b: CGSize(width: 300, height: 0), c: CGSize(width: 200, height: 0)]
+        guard case .fits(let packed) = Planner.fit(row, in: screen, constraints: [:], options: options, maximums: narrowRow, focused: a) else { return XCTFail() }
+        XCTAssertEqual(packed.rects[c]?.maxX, 1500, "the row's unused width is on the leading side")
+        XCTAssertEqual(packed.rects[b]?.maxX, packed.rects[c]?.minX)
+
+        let vertical = Layout(root: .accordion(.vertical, children: [.leaf(a), .leaf(b)], ratios: [0.5, 0.5]))
+        let short = [a: CGSize(width: 0, height: 400), b: CGSize(width: 800, height: 400)]
+        guard case .fits(let plan) = Planner.fit(vertical, in: screen, constraints: [:], options: options, maximums: short, focused: a) else { return XCTFail() }
+        XCTAssertEqual(plan.rects[a], CGRect(x: 0, y: 0, width: 1500, height: 400), "its strip is at the top")
+        XCTAssertEqual(plan.rects[b], CGRect(x: 0, y: 500, width: 800, height: 400), "its strip is at the bottom; its width stays at the leading edge")
+    }
+
+    /// A column that does not fit inside an accordion decides its own axis and keeps the accordion's edge across it, or the wide window would cover both.
+    func testCappedWindowsInAColumnInsideAnAccordionKeepTheStripEdge() {
+        let a = WindowID(1), b = WindowID(2), c = WindowID(3)
+        let screen = CGRect(x: 0, y: 0, width: 1500, height: 900)
+        let options = PlannerOptions(accordionPadding: 30)
+        let constraints = [a: SizeKnowledge.known(CGSize(width: 840, height: 400)),
+                           b: SizeKnowledge.known(CGSize(width: 740, height: 500)),
+                           c: SizeKnowledge.known(CGSize(width: 740, height: 500))]
+        let maximums = [b: CGSize(width: 740, height: 0), c: CGSize(width: 740, height: 0)]
+        let column = LayoutNode.split(.vertical, children: [.leaf(b), .leaf(c)], ratios: [0.5, 0.5])
+
+        let trailing = Layout(root: .accordion(.horizontal, children: [.leaf(a), column], ratios: [0.5, 0.5]))
+        guard case .fits(let plan) = Planner.fit(trailing, in: screen, constraints: constraints, options: options, maximums: maximums, focused: a) else { return XCTFail() }
+        XCTAssertEqual(plan.rects[a], CGRect(x: 0, y: 0, width: 1470, height: 900))
+        XCTAssertEqual(plan.rects[b], CGRect(x: 760, y: 0, width: 740, height: 500))
+        XCTAssertEqual(plan.rects[c], CGRect(x: 760, y: 400, width: 740, height: 500))
+
+        let leading = Layout(root: .accordion(.horizontal, children: [column, .leaf(a)], ratios: [0.5, 0.5]))
+        guard case .fits(let other) = Planner.fit(leading, in: screen, constraints: constraints, options: options, maximums: maximums, focused: a) else { return XCTFail() }
+        XCTAssertEqual(other.rects[b]?.minX, 0)
+        XCTAssertEqual(other.rects[c]?.minX, 0)
+
+        // Alone, the column is a tile: capped widths are centered.
+        guard case .fits(let alone) = Planner.fit(Layout(root: column), in: screen, constraints: constraints, options: options, maximums: maximums, focused: b) else { return XCTFail() }
+        XCTAssertEqual(alone.rects[b]?.minX, 380)
+        XCTAssertEqual(alone.rects[c]?.minX, 380)
+    }
+
+    /// Without strips there is no edge to keep.
+    func testCappedWindowsInAnAccordionWithoutStripsKeepTheLeadingEdge() {
+        let a = WindowID(1), b = WindowID(2)
+        let layout = Layout(root: .accordion(.horizontal, children: [.leaf(a), .leaf(b)], ratios: [0.5, 0.5]))
+        let maximums = [b: CGSize(width: 700, height: 0)]
+        guard case .fits(let plan) = Planner.fit(layout, in: CGRect(x: 0, y: 0, width: 1500, height: 900), constraints: [:], options: PlannerOptions(accordionPadding: 0), maximums: maximums, focused: a) else { return XCTFail() }
+        XCTAssertEqual(plan.rects[b]?.minX, 0)
     }
 
     func testAccordionFitsWhenTiledMinimumsWouldNot() {
@@ -530,7 +885,7 @@ final class PlannerTests: XCTestCase {
             return XCTFail("requires only the largest minimum width plus the strip")
         }
         XCTAssertEqual(plan.rects[b]?.width, 440)
-        let packed = layout.packing(rects: plan.rects)
+        let packed = layout.packing(rects: plan.rects, shape: plan.shape)
         XCTAssertTrue(packed.leftoverHeights.isEmpty)
         guard case .accordion = packed.root else { return XCTFail() }
     }

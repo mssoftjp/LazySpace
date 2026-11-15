@@ -273,16 +273,31 @@ extension Layout {
 extension LayoutEdit {
     /// Length covered by the nearest same-axis split containing id (union of its leaves' frames); nil if none.
     public static func containerExtent(of id: WindowID, axis: Axis, in layout: Layout, rects: [WindowID: CGRect]) -> Double? {
+        guard let n = nearestContainer(of: id, axis: axis, in: layout) else { return nil }
+        let leafRects = n.windowIDs.compactMap { rects[$0] }
+        guard let first = leafRects.first else { return nil }
+        let union = leafRects.dropFirst().reduce(first) { $0.union($1) }
+        return axis == .horizontal ? union.width : union.height
+    }
+
+    /// The nearest split or accordion of this axis containing id.
+    static func nearestContainer(of id: WindowID, axis: Axis, in layout: Layout) -> LayoutNode? {
         guard let root = layout.root, let path = pathTo(id, in: root) else { return nil }
         for depth in stride(from: path.count - 1, through: 0, by: -1) {
             let n = node(at: Array(path.prefix(depth)), in: root)
-            guard let box = n.box, box.axis == axis else { continue }
-            let leafRects = n.windowIDs.compactMap { rects[$0] }
-            guard let first = leafRects.first else { return nil }
-            let union = leafRects.dropFirst().reduce(first) { $0.union($1) }
-            return axis == .horizontal ? union.width : union.height
+            if let box = n.box, box.axis == axis { return n }
         }
         return nil
+    }
+
+    /// The other windows of the innermost accordion containing id; empty outside accordions.
+    static func accordionSiblings(of id: WindowID, in layout: Layout) -> Set<WindowID> {
+        guard let root = layout.root, let path = pathTo(id, in: root) else { return [] }
+        for depth in stride(from: path.count - 1, through: 0, by: -1) {
+            let n = node(at: Array(path.prefix(depth)), in: root)
+            if n.box?.accordion == true { return Set(n.windowIDs).subtracting([id]) }
+        }
+        return []
     }
 }
 
@@ -305,7 +320,9 @@ public enum ManualEdit: Equatable {
     }
 
     /// Identifies one user edit from the difference between the planned and actual frames; nil when there is none.
-    public static func detect(id: WindowID, planned: CGRect, actual: CGRect, layout: Layout, plannedRects: [WindowID: CGRect], tolerance: Double = 1) -> ManualEdit? {
+    /// `layout` is the intent, and `shape` the plan's tree as placed, when it differs. Resizing along an accordion's axis, folded or not, is no edit.
+    /// A drop never targets a sibling in a real accordion, whose frames do not tell where it landed; in a fold it swaps, as between tiles.
+    public static func detect(id: WindowID, planned: CGRect, actual: CGRect, layout: Layout, shape: Layout? = nil, plannedRects: [WindowID: CGRect], tolerance: Double = 1) -> ManualEdit? {
         if actual.matches(planned, tolerance: tolerance) { return nil }
         let sizeChanged = abs(actual.width - planned.width) > tolerance || abs(actual.height - planned.height) > tolerance
         let leftFixed = abs(actual.minX - planned.minX) <= tolerance, rightFixed = abs(actual.maxX - planned.maxX) <= tolerance
@@ -313,18 +330,35 @@ public enum ManualEdit: Equatable {
         let anchored = (leftFixed || rightFixed) && (topFixed || bottomFixed)
         if sizeChanged && anchored {
             var deltas: [(Axis, Double, Direction)] = []
-            if abs(actual.width - planned.width) > tolerance, let extent = LayoutEdit.containerExtent(of: id, axis: .horizontal, in: layout, rects: plannedRects), extent > 0 {
-                deltas.append((.horizontal, (actual.width - planned.width) / extent, leftFixed ? .right : .left))
+            var alongAccordion = false
+            func delta(_ axis: Axis, _ change: Double, _ direction: Direction) {
+                guard abs(change) > tolerance else { return }
+                if LayoutEdit.nearestContainer(of: id, axis: axis, in: shape ?? layout)?.box?.accordion == true { alongAccordion = true; return }
+                guard let extent = LayoutEdit.containerExtent(of: id, axis: axis, in: shape ?? layout, rects: plannedRects), extent > 0 else { return }
+                deltas.append((axis, change / extent, direction))
             }
-            if abs(actual.height - planned.height) > tolerance, let extent = LayoutEdit.containerExtent(of: id, axis: .vertical, in: layout, rects: plannedRects), extent > 0 {
-                deltas.append((.vertical, (actual.height - planned.height) / extent, topFixed ? .down : .up))
-            }
+            delta(.horizontal, actual.width - planned.width, leftFixed ? .right : .left)
+            delta(.vertical, actual.height - planned.height, topFixed ? .down : .up)
             if !deltas.isEmpty { return .resize(id, deltas) }
-            return .float(id)
+            return alongAccordion ? nil : .float(id)
         }
         if !sizeChanged {
             let center = CGPoint(x: actual.midX, y: actual.midY)
-            if let target = plannedRects.first(where: { $0.key != id && $0.value.contains(center) })?.key { return .dropOnto(id, target) }
+            let siblings = LayoutEdit.accordionSiblings(of: id, in: layout)
+            let order = Dictionary(layout.windowIDs.enumerated().map { ($1, $0) }, uniquingKeysWith: { first, _ in first })
+            // Frames can overlap, so a center still over the window's own frame is no drop: any nudge in a fold would swap.
+            let under = planned.contains(center) ? [] : plannedRects.filter { $0.key != id && !siblings.contains($0.key) && $0.value.contains(center) }.map(\.key)
+            // A real accordion counts once, by the first of its windows in the tree, which is the one in front while the dragged window has focus.
+            let targets = under.filter { target in
+                !LayoutEdit.accordionSiblings(of: target, in: layout).contains { under.contains($0) && (order[$0] ?? Int.max) < (order[target] ?? Int.max) }
+            }
+            // In a fold it lands on the window whose center is nearest; the first in the tree on a tie.
+            func distance(_ target: WindowID) -> Double {
+                plannedRects[target].map { hypot($0.midX - center.x, $0.midY - center.y) } ?? .infinity
+            }
+            if let target = targets.min(by: { (distance($0), order[$0] ?? Int.max, $0.raw) < (distance($1), order[$1] ?? Int.max, $1.raw) }) { return .dropOnto(id, target) }
+            // Still over its own accordion: no edit, and drift puts it back.
+            if siblings.contains(where: { plannedRects[$0]?.contains(center) ?? false }) { return nil }
             return .float(id)
         }
         return .float(id)

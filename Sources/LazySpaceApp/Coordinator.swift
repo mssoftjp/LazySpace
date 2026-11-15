@@ -557,6 +557,8 @@ final class Coordinator {
     private var focusReadRequested = false
     /// Per Space, actual frames from the last completed operation, used to detect mouse edits.
     private var lastPlans: [String: [WindowID: CGRect]] = [:]
+    /// The tree as placed for `lastPlans` (`Plan.shape`), kept and cleared with it so mouse edits read the shape those frames came from.
+    private var lastShapes: [String: Layout] = [:]
     /// The left button was held; after release, frame changes during the hold are adopted once.
     private var mouseHeld = false
     /// A mouse edit not yet adopted.
@@ -1589,6 +1591,7 @@ final class Coordinator {
                 if let region { setRegionLocked(key, op.regionDropped ? nil : region.plan) }
                 else if op.regionDropped || !options.reservesRegion { setRegionLocked(key, nil) }
                 lastPlans[key] = Dictionary(uniqueKeysWithValues: result.targets.compactMap { t in t.after.map { (t.id, $0) } })
+                lastShapes[key] = op.resultingShape
                 // The layout now fits the current work area: a pending display or launch fit is done.
                 displayRefitPending.remove(key)
                 displayRefitFailures[key] = nil
@@ -1621,7 +1624,7 @@ final class Coordinator {
                     state.floatHomes[key] = homes.isEmpty ? nil : homes
                 }
                 if floatedLastWindow {
-                    state.layouts[key] = prior; lastPlans[key] = [:]
+                    state.layouts[key] = prior; lastPlans[key] = [:]; lastShapes[key] = nil
                     result.outcome = .complete
                     result.verified = true
                     result.message = L(.coordinatorWindowRemovedFromTiling)
@@ -1648,6 +1651,7 @@ final class Coordinator {
                     // Drop the frame records so the partial frames are not mistaken for the user's mouse edit on return; the dirty redistribution fixes them.
                     hiddenRefitDirty.insert(String(sid))
                     lastPlans[String(sid)] = nil
+                    lastShapes[String(sid)] = nil
                 }
             }
             if kind != "auto-reconcile", let sid = result.spaceID {
@@ -1733,7 +1737,7 @@ final class Coordinator {
         guard placement == .besideFocused, anchor != nil || floated != nil || returning else {
             return arrange(source: "auto", kind: "auto-integrate", ignoreZoom: true, adding: Set(ids), authorization: authorization, unanswered: unanswered)
         }
-        let transform: ArrangeOperation.Transform = { [weak self] current, rects in
+        let transform: ArrangeOperation.Transform = { [weak self] current, rects, shape in
             guard let self else { return nil }
             self.lock.lock()
             let need = self.config.preferredMinimum
@@ -1756,7 +1760,8 @@ final class Coordinator {
             }
             for group in homes { layout = layout.returning(group.ids, home: group.home) }
             for id in ids.sorted() where !layout.windowIDs.contains(id) {
-                if let host = layout.unusedStackHost(rects: rects, area: area, need: need) {
+                // The host is chosen in the shape: no window of an accordion (folded or not) hosts. Windows added above are not in it yet.
+                if let host = shape.unusedStackHost(rects: rects, area: area, need: need), layout.windowIDs.contains(host.id) {
                     layout = layout.inserting(id, stackingBelow: host.id, hostHeight: host.usedHeight, unusedHeight: host.unusedHeight)
                 } else if let floated, let home {
                     layout = layout.inserting(id, inPlaceOf: floated, home: home)
@@ -1913,18 +1918,16 @@ final class Coordinator {
         let focus = focusHistory[spaceKey] ?? []
         let waitingNow = waitingBySpace[spaceKey] ?? []
         lock.unlock()
-        let rects: [WindowID: CGRect]
+        var rects: [WindowID: CGRect] = [:]
+        var shape = layout
         if let layout {
             let workArea = system.currentWorkArea()
             let constraints = knowledge.constraints(for: layout.windowIDs, spaceID: system.currentSpaceID(), workArea: workArea)
             let maximums = knowledge.maximums(for: layout.windowIDs, workArea: workArea)
             if case .fits(let plan) = Planner.fit(layout, in: workArea, constraints: constraints, options: plannerOptions(forSpaceKey: spaceKey), maximums: maximums) {
                 rects = plan.rects
-            } else {
-                rects = [:]
+                shape = plan.shape
             }
-        } else {
-            rects = [:]
         }
         // Only directional focus includes strip dialogs' frames among neighbor candidates.
         var focusRects = rects
@@ -1934,7 +1937,7 @@ final class Coordinator {
             focusRects.merge(members) { tile, _ in tile }
         }
         return StatusMenuCopy.canApply(
-            command, layout: layout, focused: focused, floating: floating, waiting: waitingNow,
+            command, layout: layout, shape: shape, focused: focused, floating: floating, waiting: waitingNow,
             rects: focusRects, canUndo: !history.isEmpty, canFocusBack: focus.contains { $0 != focused },
             regionMembers: Set(members.keys)
         )
@@ -2090,7 +2093,7 @@ final class Coordinator {
             var cursor = focused
             var target: WindowID?
             for _ in 0..<max(repeats, 1) {
-                guard let next = LayoutEdit.neighbor(of: cursor, direction: d, rects: rects, layout: layout) else { break }
+                guard let next = LayoutEdit.neighbor(of: cursor, direction: d, rects: rects, layout: plan.shape) else { break }
                 target = next
                 cursor = next
             }
@@ -2106,8 +2109,8 @@ final class Coordinator {
 
         case .swap(let d), .move(let d), .join(let d):
             if let why = requireManaged() { return why.accept }
-            let transform: ArrangeOperation.Transform = { current, rects in
-                guard let other = LayoutEdit.neighbor(of: focused, direction: d, rects: rects, layout: current) else { return nil }
+            let transform: ArrangeOperation.Transform = { current, rects, shape in
+                guard let other = LayoutEdit.neighbor(of: focused, direction: d, rects: rects, layout: shape) else { return nil }
                 switch command {
                 case .swap: return LayoutEdit.swap(focused, other, in: current)
                 case .move: return LayoutEdit.move(focused, toward: other, direction: d, in: current)
@@ -2118,7 +2121,7 @@ final class Coordinator {
 
         case .resize(let axis, let delta):
             if let why = requireManaged() { return why.accept }
-            let transform: ArrangeOperation.Transform = { current, _ in LayoutEdit.resize(focused, axis: axis, by: delta, in: current) }
+            let transform: ArrangeOperation.Transform = { current, _, _ in LayoutEdit.resize(focused, axis: axis, by: delta, in: current) }
             return wrap(arrange(source: source, kind: command.kind, transform: transform,
                                 transformFailure: axis == .horizontal
                                     ? L(.coordinatorTheWidthCannotChangeBecause)
@@ -2127,11 +2130,11 @@ final class Coordinator {
         case .resizeSmart(let delta):
             if let why = requireManaged() { return why.accept }
             guard let axis = layout.parentAxis(of: focused) else { return .refused(L(.coordinatorTheShareCannotChangeBecause), code: .singleWindow) }
-            let transform: ArrangeOperation.Transform = { current, _ in LayoutEdit.resize(focused, axis: axis, by: delta, in: current) }
+            let transform: ArrangeOperation.Transform = { current, _, _ in LayoutEdit.resize(focused, axis: axis, by: delta, in: current) }
             return wrap(arrange(source: source, kind: command.kind, transform: transform, transformFailure: L(.coordinatorTheShareCannotChangeBecauseNo), ignoreZoom: true, authorization: authorization, pressedAt: acceptedAt))
 
         case .balance:
-            let transform: ArrangeOperation.Transform = { current, _ in
+            let transform: ArrangeOperation.Transform = { current, _, _ in
                 let balanced = current.balanced()
                 return balanced == current ? nil : balanced
             }
@@ -2145,12 +2148,12 @@ final class Coordinator {
 
         case .toggleOrientation:
             if let why = requireManaged() { return why.accept }
-            let transform: ArrangeOperation.Transform = { current, _ in LayoutEdit.toggleOrientation(of: focused, in: current) }
+            let transform: ArrangeOperation.Transform = { current, _, _ in LayoutEdit.toggleOrientation(of: focused, in: current) }
             return wrap(arrange(source: source, kind: command.kind, transform: transform, transformFailure: L(.coordinatorTheSplitOrientationCannotChange), ignoreZoom: true, authorization: authorization, pressedAt: acceptedAt))
 
         case .toggleAccordion:
             if let why = requireManaged() { return why.accept }
-            let transform: ArrangeOperation.Transform = { current, _ in LayoutEdit.toggleAccordion(of: focused, in: current) }
+            let transform: ArrangeOperation.Transform = { current, _, _ in LayoutEdit.toggleAccordion(of: focused, in: current) }
             return wrap(arrange(source: source, kind: command.kind, transform: transform, transformFailure: L(.coordinatorAccordionLayoutNeedsMoreThan), ignoreZoom: true, authorization: authorization, pressedAt: acceptedAt))
 
         case .toggleFloat:
@@ -3129,6 +3132,7 @@ final class Coordinator {
         let layout = state.layouts[spaceKey]
         let zoomed = state.zoomed[spaceKey]
         lock.unlock()
+        // Only a real accordion's frames depend on focus.
         guard zoomed == nil, !control.paused, let layout, layout.containsAccordion(around: target) else { return }
         _ = arrange(source: "auto", kind: "auto-reconcile", followsUserCommand: true)
     }
@@ -3305,7 +3309,7 @@ final class Coordinator {
             }
             let targets = snap.windows.filter { $0.kind == .standard && ($0.membership == .current || $0.membership == .unknown) }
             let layout = prior.removing(ids.subtracting(targets.map(\.id)))
-            adopted = layout.root == nil ? nil : layout.packing(rects: Dictionary(uniqueKeysWithValues: targets.map { ($0.id, $0.frame) }))
+            adopted = layout.root == nil ? nil : layout.packing(rects: Dictionary(uniqueKeysWithValues: targets.map { ($0.id, $0.frame) }), shape: shownShape(of: layout, spaceKey: key))
         }
         guard system.axTrusted, system.currentSpaceID() == sid,
               authorization.interruptionReason(system: system, control: control) == nil else { return refuse() }
@@ -3315,7 +3319,7 @@ final class Coordinator {
             lock.unlock(); return refuse()
         }
         state.layouts[key] = adopted
-        if adopted == nil { lastPlans[key] = nil; layoutHistory[key] = nil; state.dialogRegions?[key] = nil }
+        if adopted == nil { lastPlans[key] = nil; lastShapes[key] = nil; layoutHistory[key] = nil; state.dialogRegions?[key] = nil }
         // The adopted layout is where the windows are: a pending display or launch fit of this Space is done.
         displayRefitPending.remove(key)
         displayRefitFailures[key] = nil
@@ -3638,6 +3642,7 @@ final class Coordinator {
         if let last = lastWorkAreas, last != workAreas {
             lock.lock()
             lastPlans.removeAll()
+            lastShapes.removeAll()
             displayRefitPending = Set(state.layouts.keys)
             displayRefitFailures.removeAll()
             lock.unlock()
@@ -5279,7 +5284,10 @@ final class Coordinator {
         }
         let liveLayout = layout.removing(closedTiles)
         let constraints = knowledge.constraints(for: liveLayout.windowIDs, spaceID: space, workArea: workArea)
-        let tileMinimum = Planner.minimumSize(of: liveLayout, constraints: constraints, options: base)
+        // The region is admitted only where the tiles fit side by side next to it, so it never makes them overlap.
+        var unfolded = base
+        unfolded.folds = false
+        let tileMinimum = Planner.minimumSize(of: liveLayout, constraints: constraints, options: unfolded)
         lock.lock(); let remembered = regionEdgeMemory[key]; lock.unlock()
         let allowSwitch = remembered.map { now.timeIntervalSince($0.changedAt) >= Self.regionSwitchInterval } ?? true
         let result = DialogRegionPlanner.plan(DialogRegionPlanner.Input(previous: saved, arrivals: arrivals, departed: departed, sizes: sizes, pinned: pinned,
@@ -5563,6 +5571,7 @@ final class Coordinator {
             plan[newID] = frame
             lastPlans[spaceKey] = plan
         }
+        lastShapes[spaceKey] = lastShapes[spaceKey]?.replacing(oldID, with: newID)
         store.save(state)
         lock.unlock()
         return true
@@ -5684,13 +5693,23 @@ final class Coordinator {
         }
     }
 
+    /// The layout as it would be placed now on the current display (`Plan.shape`: folded splits are accordions); the layout itself when it does not fit.
+    func shownShape(of layout: Layout, spaceKey: String) -> Layout {
+        let workArea = system.currentWorkArea()
+        let constraints = knowledge.constraints(for: layout.windowIDs, spaceID: system.currentSpaceID(), workArea: workArea)
+        let maximums = knowledge.maximums(for: layout.windowIDs, workArea: workArea)
+        guard case .fits(let plan) = Planner.fit(layout, in: workArea, constraints: constraints, options: plannerOptions(forSpaceKey: spaceKey), maximums: maximums) else { return layout }
+        return plan.shape
+    }
+
     /// The focused window changing moves the accordion strips too; rewrite if they differ from the plan.
     private func reflowAccordion(current: Census, spaceKey: String, layout: Layout, authorization: OperationAuthorization?) -> Bool {
-        guard let front = current.frontWindow, layout.containsAccordion(around: front) else { return false }
+        guard let front = current.frontWindow, layout.windowIDs.contains(front) else { return false }
         let workArea = system.currentWorkArea()
         let constraints = knowledge.constraints(for: layout.windowIDs, spaceID: current.spaceID, workArea: workArea)
         let maximums = knowledge.maximums(for: layout.windowIDs, workArea: workArea)
-        guard case .fits(let desired) = Planner.fit(layout, in: workArea, constraints: constraints, options: plannerOptions(forSpaceKey: spaceKey), maximums: maximums, focused: front) else { return false }
+        guard case .fits(let desired) = Planner.fit(layout, in: workArea, constraints: constraints, options: plannerOptions(forSpaceKey: spaceKey), maximums: maximums, focused: front),
+              desired.shape.containsAccordion(around: front) else { return false }
         lock.lock()
         let plan = lastPlans[spaceKey] ?? [:]
         lock.unlock()
@@ -5707,6 +5726,9 @@ final class Coordinator {
 
     /// For tests: whether a mouse edit is still waiting to be adopted.
     func testingMouseEditPending() -> Bool { operationsQueue.sync { pendingMouseEdit } }
+
+    /// For tests: the shape the last plan's frames were placed in.
+    func testingShape(spaceKey: String) -> Layout? { operationsQueue.sync { lock.lock(); defer { lock.unlock() }; return lastShapes[spaceKey] } }
 
     /// For tests: the plan mouse edits and drift compare against.
     func testingPlan(spaceKey: String) -> [WindowID: CGRect]? { operationsQueue.sync { lock.lock(); defer { lock.unlock() }; return lastPlans[spaceKey] } }
@@ -5793,6 +5815,7 @@ final class Coordinator {
                                      authorization: OperationAuthorization?) -> (edits: [(id: WindowID, edit: ManualEdit)], complete: Bool)? {
         lock.lock()
         let plan = lastPlans[spaceKey] ?? [:]
+        let shape = lastShapes[spaceKey] ?? layout
         let floating = Set(state.floating[spaceKey] ?? [])
         let zoomed = state.zoomed[spaceKey]
         lock.unlock()
@@ -5808,7 +5831,7 @@ final class Coordinator {
         guard case .frames(let frames, let complete) = read else { return nil }
         let edits = candidates.compactMap { id -> (id: WindowID, edit: ManualEdit)? in
             guard let actual = frames[id], let planned = plan[id],
-                  let edit = ManualEdit.detect(id: id, planned: planned, actual: actual, layout: layout, plannedRects: plan, tolerance: limits.tolerance) else { return nil }
+                  let edit = ManualEdit.detect(id: id, planned: planned, actual: actual, layout: layout, shape: shape, plannedRects: plan, tolerance: limits.tolerance) else { return nil }
             return (id, edit)
         }
         return (edits, complete)

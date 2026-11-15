@@ -40,8 +40,9 @@ public final class ArrangeOperation {
         case reclaim
     }
     private let unanswered: UnansweredPolicy
-    /// Edit of layout intent: takes the current intent and frames computed from it, returns the new intent; nil means "cannot be done".
-    public typealias Transform = (Layout, [WindowID: CGRect]) -> Layout?
+    /// Edit of layout intent: takes the current intent, the frames computed from it, and the tree as placed (`Plan.shape`, where folded splits are
+    /// accordions; neighbors come from it), and returns the new intent; nil means "cannot be done". The returned tree is intent, never the shape.
+    public typealias Transform = (Layout, [WindowID: CGRect], Layout) -> Layout?
     private let transform: Transform?
     private let transformFailure: String
     /// The temporarily zoomed window. If among the targets, only it fills the work area and the others stay put.
@@ -63,6 +64,8 @@ public final class ArrangeOperation {
 
     /// Layout intent that may be saved afterward (only when complete).
     public private(set) var resultingLayout: Layout?
+    /// The tree as placed for the frames written with `resultingLayout` (`Plan.shape`: folded splits are accordions); nil without a plan.
+    public private(set) var resultingShape: Layout?
 
     // MARK: Dialog region (`place-dialogs-beside`)
 
@@ -110,6 +113,15 @@ public final class ArrangeOperation {
     public private(set) var placementOutcomes: [WindowID: PlacementOutcome] = [:]
     /// Sizes seen by this operation's observation before placing (for the record).
     public private(set) var placementObservedSizes: [WindowID: CGSize] = [:]
+
+    /// The dialog region is used only while the tiles fit side by side next to it (tiles come first): otherwise it is dropped,
+    /// so it never makes the tiles fold, and folding and overflow relief apply without it.
+    private func dropRegionUnlessTilesFitBesideIt(_ layout: Layout, area: CGRect, constraints: [WindowID: SizeKnowledge], maximums: [WindowID: CGSize]) {
+        guard options.reservesRegion else { return }
+        var unfolded = options
+        unfolded.folds = false
+        if case .unfit = Planner.fit(layout, in: area, constraints: constraints, options: unfolded, maximums: maximums) { _ = dropRegion() }
+    }
 
     /// Drops the region (when things do not fit); true if dropped.
     private func dropRegion() -> Bool {
@@ -388,9 +400,13 @@ public final class ArrangeOperation {
         }
         // The edit (transforming layout intent).
         if let transform {
-            let baseRects: [WindowID: CGRect]
-            if case .fits(let p) = Planner.fit(baseLayout, in: snapshot.workArea, constraints: constraints, options: options, maximums: initialMaximums(ids, workArea: snapshot.workArea), focused: focused) { baseRects = p.rects } else { baseRects = [:] }
-            guard let edited = transform(baseLayout, baseRects) else {
+            var baseRects: [WindowID: CGRect] = [:]
+            var baseShape = baseLayout
+            if case .fits(let p) = Planner.fit(baseLayout, in: snapshot.workArea, constraints: constraints, options: options, maximums: initialMaximums(ids, workArea: snapshot.workArea), focused: focused) {
+                baseRects = p.rects
+                baseShape = p.shape
+            }
+            guard let edited = transform(baseLayout, baseRects, baseShape) else {
                 builder.markAllUnapplied(note: L(.arrangeOperationEditNotPossible))
                 return builder.finish(outcome: .notPossible, stopReason: nil, message: transformFailure, finishedAt: now(), wallMs: elapsedMs())
             }
@@ -400,7 +416,8 @@ public final class ArrangeOperation {
         }
         if adoptObservedProportions, priorLayout != nil, transform == nil, case .split(let axis, _, _)? = baseLayout.root {
             let caps = initialMaximums(ids, workArea: snapshot.workArea)
-            if case .fits(let preview) = Planner.fit(baseLayout, in: snapshot.workArea, constraints: constraints, options: options, maximums: caps, focused: focused) {
+            // Folded frames overlap and say nothing about the proportions.
+            if case .fits(let preview) = Planner.fit(baseLayout, in: snapshot.workArea, constraints: constraints, options: options, maximums: caps, focused: focused), !preview.folded {
                 let grew = inspection.targets.contains { target in
                     guard let planned = preview.rects[target.id] else { return false }
                     let cap = caps[target.id]
@@ -411,12 +428,12 @@ public final class ArrangeOperation {
                 }
                 let current = Dictionary(uniqueKeysWithValues: inspection.targets.map { ($0.id, $0.frame) })
                 if grew, Self.covers(current.values.map { $0 }, along: axis, area: options.tilingArea(snapshot.workArea), tolerance: limits.tolerance) {
-                    baseLayout = baseLayout.packing(rects: current)
+                    baseLayout = baseLayout.packing(rects: current, shape: preview.shape)
                 }
             }
         }
+        dropRegionUnlessTilesFitBesideIt(baseLayout, area: snapshot.workArea, constraints: constraints, maximums: initialMaximums(ids, workArea: snapshot.workArea))
         var planOutcome = Planner.fit(baseLayout, in: snapshot.workArea, constraints: constraints, options: options, maximums: initialMaximums(ids, workArea: snapshot.workArea), focused: focused)
-        // If the dialog region is why things do not fit, drop it and retry before floating tiles (tiles come first).
         if case .unfit = planOutcome, dropRegion() {
             planOutcome = Planner.fit(baseLayout, in: snapshot.workArea, constraints: constraints, options: options, maximums: initialMaximums(ids, workArea: snapshot.workArea), focused: focused)
         }
@@ -646,7 +663,7 @@ public final class ArrangeOperation {
                 // A raise after writing frames passes the same stop check right before sending.
                 if let reason = gate(snapshot: snapshot) {
                     stop = reason
-                } else if let focused, plan.layout.containsAccordion(around: focused),
+                } else if let focused, plan.shape.containsAccordion(around: focused),
                    inspection.targets.contains(where: { $0.id == focused }) {
                     _ = system.raise(focused, timeout: limits.perAppTimeout, activateIf: { [self] in
                         lifetime.isActive && gate(snapshot: snapshot) == nil
@@ -811,6 +828,8 @@ public final class ArrangeOperation {
             // Continue only if it can be recalculated keeping the structure, under the same authorization and limits.
             // Windows with confirmed maximums shrink their frames by that much and give the space to uncapped windows.
             constraints = knowledge.constraints(for: ids, spaceID: snapshot.spaceID, workArea: snapshot.workArea)
+            // Minimums learned while writing can make the tiles overlap beside the region; the region gives way first, as before planning.
+            dropRegionUnlessTilesFitBesideIt(plan.layout, area: snapshot.workArea, constraints: constraints, maximums: knowledge.maximums(for: ids, workArea: snapshot.workArea))
             switch Planner.fit(plan.layout, in: snapshot.workArea, constraints: constraints, options: options, maximums: knowledge.maximums(for: ids, workArea: snapshot.workArea), focused: focused) {
             case .fits(let replanned):
                 plan = replanned
@@ -887,7 +906,8 @@ public final class ArrangeOperation {
             let apps = snapshot.unobservedApps.map(displayName).joined(separator: Copy.listSeparator)
             if unanswered == .reclaim {
                 // The layout without those apps' windows is committed; the windows stay where they are (the caller remembers them to return).
-                resultingLayout = zoomed == nil ? plan.layout.normalized().packing(rects: plan.rects) : finalLayout.normalized()
+                resultingLayout = zoomed == nil ? plan.layout.packing(rects: plan.rects, shape: plan.shape).normalized() : finalLayout.normalized()
+                resultingShape = zoomed == nil ? plan.shape : nil
                 return builder.finish(outcome: .complete, stopReason: nil,
                                       message: L(.arrangeOperationArrangedUnobservedLeft(windows: statuses.count, apps)),
                                       finishedAt: finishedAt, wallMs: elapsedMs())
@@ -896,7 +916,8 @@ public final class ArrangeOperation {
             return builder.finish(outcome: .partial, stopReason: .appUnresponsive, message: message, finishedAt: finishedAt, wallMs: elapsedMs())
         }
         if allGood {
-            resultingLayout = zoomed == nil ? plan.layout.normalized().packing(rects: plan.rects) : finalLayout.normalized()
+            resultingLayout = zoomed == nil ? plan.layout.packing(rects: plan.rects, shape: plan.shape).normalized() : finalLayout.normalized()
+            resultingShape = zoomed == nil ? plan.shape : nil
             let placementNote = dialogPlacementMessage()
             let note = overflowSuffix(builder) + (placementNote.isEmpty ? "" : Copy.sentenceSeparator + placementNote)
             return builder.finish(outcome: .complete, stopReason: nil, message: completeMessage(tiled: statuses.count, ids: ids, note: note), finishedAt: finishedAt, wallMs: elapsedMs())

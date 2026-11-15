@@ -18,15 +18,16 @@ final class PauseDuringWriteTests: XCTestCase {
     func testRollbackStopsAfterPauseDuringFirstRestore() {
         let area = CGRect(x: 0, y: 33, width: 800, height: 400)
         let s = FakeSystem(windows: [window(1, x: 0), window(2, x: 300)], area: area)
-        s.minimums[WindowID(1)] = CGSize(width: 500, height: 300)
-        s.minimums[WindowID(2)] = CGSize(width: 500, height: 300)
+        // Wider than the 770 a window gets beside one strip, so the edit cannot fit even overlapping and is rolled back.
+        s.minimums[WindowID(1)] = CGSize(width: 790, height: 300)
+        s.minimums[WindowID(2)] = CGSize(width: 790, height: 300)
         let control = OperationControl()
         var writesAtPause: Int?
         // Two writes, the same two again to confirm both minimums, then the first restore.
         s.onWrite = { _, count in
             if count == 5 { writesAtPause = count; control.paused = true }
         }
-        let result = ArrangeOperation(system: s, control: control, knowledge: ConstraintKnowledge(), limits: OperationLimits(settleDelay: 0), priorLayout: Planner.rowLayout([WindowID(1), WindowID(2)], rows: 1), kind: "edit:resize", transform: { layout, _ in layout }, sleep: { _ in }).run()
+        let result = ArrangeOperation(system: s, control: control, knowledge: ConstraintKnowledge(), limits: OperationLimits(settleDelay: 0), priorLayout: Planner.rowLayout([WindowID(1), WindowID(2)], rows: 1), kind: "edit:resize", transform: { layout, _, _ in layout }, sleep: { _ in }).run()
         XCTAssertEqual(writesAtPause, 5, "Fixture must reach rollback")
         XCTAssertEqual(s.writes.count, writesAtPause, "Rollback must not issue the next write after Pause")
         XCTAssertEqual(result.stopReason, .paused)
