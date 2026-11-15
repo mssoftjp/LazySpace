@@ -90,7 +90,7 @@ A few commands have their own conditions:
 | `spaceChanged` | The current Space changed. |
 | `permissionLost` | Accessibility access was lost. |
 | `targetsChanged` | The windows changed after the request: one closed, left the Space, or no longer matches its process or app. |
-| `appUnresponsive` | An app did not answer in time. |
+| `appUnresponsive` | An app did not answer in time, or answered without its windows. |
 | `cancelled` | LazySpace called the operation off (for example, automatic arrangement was turned off for the Space), or held a write back because a mouse button was down or automatic arrangement stopped being available. |
 
 ### Why a window is excluded
@@ -202,7 +202,7 @@ The change was not started, and nothing was changed.
 | `space-changed` | As above, but the current Space had changed. | Read `status` and `list-windows` again. |
 | `targets-changed` | As above, but the target window no longer matched (it closed, left the Space, or belongs to another process or app). From the menu: the selected window changed. | Read `list-windows` again. |
 | `permission-lost` | As above, but Accessibility access was lost. | Tell the user. |
-| `app-unresponsive` | As above, but the window's app did not answer in time. | Try again later, or tell the user. |
+| `app-unresponsive` | As above, but the window's app did not answer in time, or answered without its windows. | Try again later, or tell the user. |
 | `cancelled` | As above, but LazySpace had called pending work off (for example, a command replaced an automatic arrangement, or automatic arrangement was turned off for the Space). | Read the desktop again before deciding. |
 | `not-started` | This Space has no layout yet. | `arrange` creates one, if the user wants this Space arranged. |
 | `no-focused-window` | No focused window was found, and no `--window-id` was given. | Pass `--window-id`. |

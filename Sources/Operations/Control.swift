@@ -83,6 +83,8 @@ public struct OperationAuthorization {
     public func interruptionReason(system: WindowSystem, control: OperationControl) -> StopReason? {
         if !allowPaused && (paused || control.paused) { return .paused }
         if let reason = control.mismatchReason(captured: generation) { return reason }
+        // Accessibility shows no windows while the screen is locked: nothing is written, pruned, focused, or committed then.
+        if system.screenLocked { return .cancelled }
         if system.inputActivityCount != inputCount { return .userInput }
         return nil
     }

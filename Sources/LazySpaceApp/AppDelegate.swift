@@ -21,6 +21,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// The one pending later reading of the menu bar number.
     private var statusReread: DispatchWorkItem?
     private var trustToken: NSObjectProtocol?
+    private var lockToken: NSObjectProtocol?
     /// System Settings deactivating or quitting.
     private var systemSettingsTokens: [NSObjectProtocol] = []
     static let systemSettingsBundleID = "com.apple.systempreferences"
@@ -126,6 +127,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // Right after the permission changes, the old value may be returned, so reread after a short delay.
         trustToken = DistributedNotificationCenter.default().addObserver(forName: NSNotification.Name("com.apple.accessibility.api"), object: nil, queue: .main) { [weak self] _ in
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { self?.coordinator.checkTrust() }
+        }
+        // A lock stops in-flight arrangements at once; the next tick sees the lock and observes nothing until unlock.
+        lockToken = DistributedNotificationCenter.default().addObserver(forName: NSNotification.Name("com.apple.screenIsLocked"), object: nil, queue: .main) { [weak self] _ in
+            self?.coordinator.noteScreenLocked()
         }
         for name in [NSWorkspace.didDeactivateApplicationNotification, NSWorkspace.didTerminateApplicationNotification] {
             systemSettingsTokens.append(NSWorkspace.shared.notificationCenter.addObserver(forName: name, object: nil, queue: .main) { [weak self] note in

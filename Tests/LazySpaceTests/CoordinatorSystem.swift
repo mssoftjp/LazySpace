@@ -31,6 +31,7 @@ final class CoordinatorSystem: CoordinatorWindowSystem {
     }
     var stageManagerOn = false
     var displaysShareOneSpace = false
+    var screenLocked = false
     var anyMouseButtonHeld = false
     /// Displays as (frame, work area); nil means one display covering `area`.
     var displays: [(frame: CGRect, workArea: CGRect)]?

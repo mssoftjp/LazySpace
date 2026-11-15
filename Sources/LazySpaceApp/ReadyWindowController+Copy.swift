@@ -219,7 +219,7 @@ extension ReadyWindowController {
     static var verdictColumnTitle: String { L(.windowListVerdictColumnTitle) }
     static var waitingVerdict: String { L(.windowListWaitingVerdict) }
     static var noResponseVerdict: String {
-        L(.windowListNoResponseVerdict)
+        L(.windowListNoResponseCouldNotRead)
     }
 
     static func statusText(_ target: TargetReport) -> String {

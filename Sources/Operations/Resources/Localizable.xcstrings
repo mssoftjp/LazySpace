@@ -502,14 +502,14 @@
         }
       }
     },
-    "arrangeOperation.arrangedUnobservedLeft" : {
+    "arrangeOperation.arrangedNoWindowListLeft" : {
       "comment" : "Arguments: 1 = how many windows were arranged; 2 = the apps that did not answer, joined by copy.listSeparator.",
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%#@windows@ angeordnet. Die Fenster von %2$@ blieben, wo sie sind, weil nicht rechtzeitig eine Fensterliste kam."
+            "value" : "%#@windows@ angeordnet. Die Fenster von %2$@ blieben, wo sie sind, weil keine Fensterliste kam."
           },
           "substitutions" : {
             "windows" : {
@@ -537,7 +537,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Arranged %#@windows@. %2$@ didn't return a window list in time, so its windows were left where they are."
+            "value" : "Arranged %#@windows@. %2$@ didn't return a window list, so its windows were left where they are."
           },
           "substitutions" : {
             "windows" : {
@@ -565,7 +565,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%#@windows@. No se recibió a tiempo la lista de ventanas de %2$@, así que sus ventanas se quedaron donde están."
+            "value" : "%#@windows@. No se recibió la lista de ventanas de %2$@, así que sus ventanas se quedaron donde están."
           },
           "substitutions" : {
             "windows" : {
@@ -593,7 +593,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%#@windows@. %2$@ : pas de liste des fenêtres dans le délai imparti ; les fenêtres concernées sont restées en place."
+            "value" : "%#@windows@. %2$@ : pas de liste des fenêtres ; les fenêtres concernées sont restées en place."
           },
           "substitutions" : {
             "windows" : {
@@ -621,13 +621,13 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$lldつのウインドウを整列しました。%2$@がウインドウの一覧を期限内に返さなかったため、そのウインドウはそのままにしています。"
+            "value" : "%1$lldつのウインドウを整列しました。%2$@がウインドウの一覧を返さなかったため、そのウインドウはそのままにしています。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%#@windows@ 정렬했습니다. %2$@ 앱이 제한 시간 내에 윈도우 목록을 반환하지 않아 해당 앱의 윈도우는 현재 위치에 그대로 두었습니다."
+            "value" : "%#@windows@ 정렬했습니다. %2$@ 앱이 윈도우 목록을 반환하지 않아 해당 앱의 윈도우는 현재 위치에 그대로 두었습니다."
           },
           "substitutions" : {
             "windows" : {
@@ -649,7 +649,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%#@windows@. A lista de janelas de %2$@ não chegou a tempo, por isso as janelas correspondentes ficaram onde estão."
+            "value" : "%#@windows@. A lista de janelas de %2$@ não chegou, por isso as janelas correspondentes ficaram onde estão."
           },
           "substitutions" : {
             "windows" : {
@@ -683,7 +683,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "已排列%#@windows@。%2$@未能及时返回窗口列表，因此其窗口保持原位。"
+            "value" : "已排列%#@windows@。%2$@未返回窗口列表，因此其窗口保持原位。"
           },
           "substitutions" : {
             "windows" : {
@@ -705,7 +705,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "已排列%#@windows@。%2$@未及時傳回視窗列表，因此其視窗維持原位。"
+            "value" : "已排列%#@windows@。%2$@未傳回視窗列表，因此其視窗維持原位。"
           },
           "substitutions" : {
             "windows" : {
@@ -726,14 +726,14 @@
         }
       }
     },
-    "arrangeOperation.arrangedUnobservedUnconfirmed" : {
+    "arrangeOperation.arrangedNoWindowListUnconfirmed" : {
       "comment" : "Arguments: 1 = how many windows were arranged; 2 = the apps that did not answer, joined by copy.listSeparator.",
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%#@windows@ angeordnet, aber von %2$@ kam nicht rechtzeitig eine Fensterliste, daher konnte die Menge der Fenster nicht bestätigt werden. Ordne erneut an, sobald eine Antwort kommt."
+            "value" : "%#@windows@ angeordnet, aber von %2$@ kam keine Fensterliste, daher konnte die Menge der Fenster nicht bestätigt werden. Ordne erneut an, sobald eine Antwort kommt."
           },
           "substitutions" : {
             "windows" : {
@@ -761,7 +761,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Arranged %#@windows@, but %2$@ didn't return a window list in time, so the set of windows couldn't be confirmed. Arrange again once that app responds."
+            "value" : "Arranged %#@windows@, but %2$@ didn't return a window list, so the set of windows couldn't be confirmed. Arrange again once that app responds."
           },
           "substitutions" : {
             "windows" : {
@@ -789,7 +789,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%#@windows@, pero no se recibió a tiempo la lista de ventanas de %2$@, así que no se pudo confirmar el conjunto de ventanas. Vuelve a organizar cuando esa app responda."
+            "value" : "%#@windows@, pero no se recibió la lista de ventanas de %2$@, así que no se pudo confirmar el conjunto de ventanas. Vuelve a organizar cuando esa app responda."
           },
           "substitutions" : {
             "windows" : {
@@ -817,7 +817,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%#@windows@, mais l’ensemble des fenêtres n’a pas pu être confirmé (%2$@ : pas de liste des fenêtres dans le délai imparti). Organisez de nouveau une fois la réponse reçue."
+            "value" : "%#@windows@, mais l’ensemble des fenêtres n’a pas pu être confirmé (%2$@ : pas de liste des fenêtres). Organisez de nouveau une fois la réponse reçue."
           },
           "substitutions" : {
             "windows" : {
@@ -845,13 +845,13 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$lldつのウインドウを整列しましたが、%2$@がウインドウの一覧を期限内に返さなかったため対象を確定できませんでした。そのアプリが応答するようになってから再度整列してください。"
+            "value" : "%1$lldつのウインドウを整列しましたが、%2$@がウインドウの一覧を返さなかったため対象を確定できませんでした。そのアプリが応答するようになってから再度整列してください。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%#@windows@ 정렬했지만 %2$@ 앱이 제한 시간 내에 윈도우 목록을 반환하지 않아 정렬할 윈도우를 확정할 수 없었습니다. 해당 앱이 응답하면 다시 정렬하십시오."
+            "value" : "%#@windows@ 정렬했지만 %2$@ 앱이 윈도우 목록을 반환하지 않아 정렬할 윈도우를 확정할 수 없었습니다. 해당 앱이 응답하면 다시 정렬하십시오."
           },
           "substitutions" : {
             "windows" : {
@@ -873,7 +873,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%#@windows@, mas a lista de janelas de %2$@ não chegou a tempo, por isso não foi possível confirmar o conjunto de janelas. Organize de novo quando esse app responder."
+            "value" : "%#@windows@, mas a lista de janelas de %2$@ não chegou, por isso não foi possível confirmar o conjunto de janelas. Organize de novo quando esse app responder."
           },
           "substitutions" : {
             "windows" : {
@@ -907,7 +907,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "已排列%#@windows@，但%2$@未能及时返回窗口列表，因此无法确认要排列的窗口。请在该应用响应后再次排列。"
+            "value" : "已排列%#@windows@，但%2$@未返回窗口列表，因此无法确认要排列的窗口。请在该应用响应后再次排列。"
           },
           "substitutions" : {
             "windows" : {
@@ -929,7 +929,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "已排列%#@windows@，但%2$@未及時傳回視窗列表，因此無法確認要排列的視窗。請在該App回應後再排列一次。"
+            "value" : "已排列%#@windows@，但%2$@未傳回視窗列表，因此無法確認要排列的視窗。請在該App回應後再排列一次。"
           },
           "substitutions" : {
             "windows" : {
@@ -2107,66 +2107,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@未及時回應。"
-          }
-        }
-      }
-    },
-    "arrangeOperation.didntReturnAWindowList" : {
-      "comment" : "Arguments: 1 = `apps`.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Die Fenster von %@ blieben, wo sie sind, weil nicht rechtzeitig eine Fensterliste kam."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ didn't return a window list in time, so its windows were left where they are."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No se recibió a tiempo la lista de ventanas de %@, así que sus ventanas se quedaron donde están."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ : pas de liste des fenêtres dans le délai imparti ; les fenêtres concernées sont restées en place."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@がウインドウの一覧を期限内に返さなかったため、そのウインドウはそのままにしています。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ 앱이 제한 시간 내에 윈도우 목록을 반환하지 않아 해당 앱의 윈도우는 현재 위치에 그대로 두었습니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A lista de janelas de %@ não chegou a tempo, por isso as janelas correspondentes ficaram onde estão."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@未能及时返回窗口列表，因此其窗口保持原位。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@未及時傳回視窗列表，因此其視窗維持原位。"
           }
         }
       }
@@ -3802,6 +3742,66 @@
         }
       }
     },
+    "arrangeOperation.noWindowListLeftInPlace" : {
+      "comment" : "Arguments: 1 = `apps`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Fenster von %@ blieben, wo sie sind, weil keine Fensterliste kam."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ didn't return a window list, so its windows were left where they are."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se recibió la lista de ventanas de %@, así que sus ventanas se quedaron donde están."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ : pas de liste des fenêtres ; les fenêtres concernées sont restées en place."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@がウインドウの一覧を返さなかったため、そのウインドウはそのままにしています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 앱이 윈도우 목록을 반환하지 않아 해당 앱의 윈도우는 현재 위치에 그대로 두었습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A lista de janelas de %@ não chegou, por isso as janelas correspondentes ficaram onde estão."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@未返回窗口列表，因此其窗口保持原位。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@未傳回視窗列表，因此其視窗維持原位。"
+          }
+        }
+      }
+    },
     "arrangeOperation.noWindowsToArrange" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3980,62 +3980,62 @@
         }
       }
     },
-    "arrangeOperation.notArrangedDidntReturnA" : {
+    "arrangeOperation.notArrangedNoWindowList" : {
       "comment" : "Arguments: 1 = `apps`.",
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nicht angeordnet: Von %@ kam nicht rechtzeitig eine Fensterliste. Die automatische Anordnung wartet darauf."
+            "value" : "Nicht angeordnet: Von %@ kam keine Fensterliste. Die automatische Anordnung wartet darauf."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Not arranged: %@ didn't return a window list in time. Automatic arrangement waits for it."
+            "value" : "Not arranged: %@ didn't return a window list. Automatic arrangement waits for it."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No se organizó: no se recibió a tiempo la lista de ventanas de %@. La organización automática la espera."
+            "value" : "No se organizó: no se recibió la lista de ventanas de %@. La organización automática la espera."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Non organisées (%@ : pas de liste des fenêtres dans le délai imparti). L’organisation automatique attend cette liste."
+            "value" : "Non organisées (%@ : pas de liste des fenêtres). L’organisation automatique attend cette liste."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@がウインドウの一覧を期限内に返さなかったため、整列していません。自動整列はその応答を待ちます。"
+            "value" : "%@がウインドウの一覧を返さなかったため、整列していません。自動整列はその応答を待ちます。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "정렬하지 않음: %@ 앱이 제한 시간 내에 윈도우 목록을 반환하지 않았습니다. 자동 정렬은 응답을 기다립니다."
+            "value" : "정렬하지 않음: %@ 앱이 윈도우 목록을 반환하지 않았습니다. 자동 정렬은 응답을 기다립니다."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Não organizado: a lista de janelas de %@ não chegou a tempo. A organização automática aguarda essa lista."
+            "value" : "Não organizado: a lista de janelas de %@ não chegou. A organização automática aguarda essa lista."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "未排列：%@未能及时返回窗口列表。自动排列会等待其响应。"
+            "value" : "未排列：%@未返回窗口列表。自动排列会等待其响应。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "未排列：%@未及時傳回視窗列表。自動排列會等待其回應。"
+            "value" : "未排列：%@未傳回視窗列表。自動排列會等待其回應。"
           }
         }
       }

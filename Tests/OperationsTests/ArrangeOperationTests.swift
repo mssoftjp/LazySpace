@@ -1272,6 +1272,19 @@ final class ArrangeOperationTests: XCTestCase {
         XCTAssertEqual(op.resultingShape?.root?.box?.accordion, false)
     }
 
+    func testTheScreenLockStopsEveryAuthorization() {
+        let s = FakeSystem(windows: [window(1, app: "a")])
+        let authorization = OperationAuthorization(system: s, control: control)
+        XCTAssertNil(authorization.interruptionReason(system: s, control: control))
+        s.screenLocked = true
+        XCTAssertEqual(authorization.interruptionReason(system: s, control: control), .cancelled)
+        XCTAssertEqual(OperationAuthorization(system: s, control: control).interruptionReason(system: s, control: control), .cancelled,
+                       "one taken during the lock as well")
+        let r = makeOp(s).run()
+        XCTAssertEqual(r.stopReason, .cancelled)
+        XCTAssertEqual(s.writes.count, 0)
+    }
+
     func testSwitchingOverlappingAndTiledWhileTheWindowsDoNotFitMovesThem() {
         let s = FakeSystem(windows: [window(1, app: "a", x: 0), window(2, app: "b", x: 30)])
         s.focused = WindowID(2)
@@ -1494,8 +1507,8 @@ final class ArrangeOperationTests: XCTestCase {
     /// Portuguese counts 0 as one, so the messages that can report 0 arranged windows carry their own zero form.
     func testPortugueseReportsZeroArrangedWindowsInThePlural() {
         let zero = [L(.arrangeOperationArranged(windows: 0), in: .brazilianPortuguese),
-                    L(.arrangeOperationArrangedUnobservedLeft(windows: 0, "Mail"), in: .brazilianPortuguese),
-                    L(.arrangeOperationArrangedUnobservedUnconfirmed(windows: 0, "Mail"), in: .brazilianPortuguese)]
+                    L(.arrangeOperationArrangedNoWindowListLeft(windows: 0, "Mail"), in: .brazilianPortuguese),
+                    L(.arrangeOperationArrangedNoWindowListUnconfirmed(windows: 0, "Mail"), in: .brazilianPortuguese)]
         for text in zero { XCTAssertTrue(text.contains("0 janelas"), text) }
         XCTAssertTrue(L(.arrangeOperationArranged(windows: 1), in: .brazilianPortuguese).contains("1 janela "))
     }

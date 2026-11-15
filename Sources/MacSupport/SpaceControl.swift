@@ -2046,14 +2046,16 @@ final class FrontmostApplication {
 
     private let lock = NSLock()
     private var value: pid_t?
+    private var bundle: String?
     private var token: NSObjectProtocol?
 
     private init() {
         token = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: nil) { [weak self] note in
             // Apps missing from LaunchServices arrive with pid -1, so resolve to the pid of the app with focus.
-            self?.set(FrontmostApp.resolve(note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication))
+            let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
+            self?.set(FrontmostApp.resolve(app), bundle: app?.bundleIdentifier)
         }
-        let publish: () -> Void = { [weak self] in self?.set(FrontmostApp.pid()) }
+        let publish: () -> Void = { [weak self] in self?.set(FrontmostApp.pid(), bundle: NSWorkspace.shared.frontmostApplication?.bundleIdentifier) }
         if Thread.isMainThread { publish() } else { DispatchQueue.main.async(execute: publish) }
     }
 
@@ -2061,7 +2063,27 @@ final class FrontmostApplication {
         if let token { NSWorkspace.shared.notificationCenter.removeObserver(token) }
     }
 
-    private func set(_ pid: pid_t?) { lock.lock(); value = pid; lock.unlock() }
+    private func set(_ pid: pid_t?, bundle: String?) { lock.lock(); value = pid; self.bundle = bundle; lock.unlock() }
 
     var pid: pid_t? { lock.lock(); defer { lock.unlock() }; return value }
+    /// The front app's bundle identifier as activated; nil when unknown.
+    var bundleID: String? { lock.lock(); defer { lock.unlock() }; return bundle }
+}
+
+/// Whether the screen is locked, or another user's session is on the console. While it is, Accessibility returns no windows
+/// (an app answers with its application element), so nothing about the windows can be concluded.
+public enum ScreenLock {
+    /// The lock screen's app, which AeroSpace also treats as the sign of a locked screen.
+    static let lockScreenBundleID = "com.apple.loginwindow"
+
+    public static func isLocked() -> Bool {
+        locked(session: (CGSessionCopyCurrentDictionary() as? [String: Any]) ?? [:], frontBundleID: FrontmostApplication.shared.bundleID)
+    }
+
+    /// The decision from the session dictionary and the front app. An unreadable (empty) dictionary is no evidence.
+    public static func locked(session: [String: Any], frontBundleID: String?) -> Bool {
+        if (session["CGSSessionScreenIsLocked"] as? Bool) == true { return true }
+        if let onConsole = session[kCGSessionOnConsoleKey as String] as? Bool, !onConsole { return true }
+        return frontBundleID == lockScreenBundleID
+    }
 }

@@ -23,6 +23,7 @@ final class FakeSystem: WindowSystem {
     var inputActivityCount: UInt64 = 0
     var space: UInt64? = 7
     var focused: WindowID?
+    var screenLocked = false
     var focusCalls: [WindowID] = []
     var delayedFocus = false
     var pendingActivations: [() -> Void] = []

@@ -94,6 +94,7 @@ final class OtherSpaceWindowSystem: WindowSystem {
     /// Reports that Space as current only while it stays valid; operation gates see Space changes through this.
     func currentSpaceID() -> UInt64? { stillValid() ? space : nil }
     var inputActivityCount: UInt64 { base.inputActivityCount }
+    var screenLocked: Bool { base.screenLocked }
     var mouseButtonDown: Bool { base.mouseButtonDown }
 
     func readFrame(_ id: WindowID) -> FrameRead {

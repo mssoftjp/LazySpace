@@ -72,6 +72,7 @@ public final class MacWindowSystem: WindowSystem {
 
     public var inputActivityCount: UInt64 { input.count }
     public var mouseButtonDown: Bool { input.leftMouseDown }
+    public var screenLocked: Bool { ScreenLock.isLocked() }
 
     /// Work area of the display showing the Space, or the main display if the Space is unknown.
     public func workArea(forSpace spaceID: UInt64?) -> CGRect {
@@ -123,6 +124,8 @@ public final class MacWindowSystem: WindowSystem {
             return Snapshot(trusted: false, spaceID: active, workArea: workArea, windows: [], spaceObservationAvailable: spaceObservationAvailable)
         }
         // Record whether the full window list was read. If not, it is treated as empty but never as evidence of closing.
+        // A lock during the observation makes it incomplete too: Accessibility shows no windows then.
+        let lockedAtStart = ScreenLock.isLocked()
         let fullList = WindowList.allIfAvailable()
         let cgWindows = fullList ?? [:]
         let stackOrder = WindowList.onScreenOrder()
@@ -200,7 +203,11 @@ public final class MacWindowSystem: WindowSystem {
                 self.lock.lock(); self.listedPIDs.insert(pid); self.unlistedFailures[pid] = nil; self.lock.unlock()
                 for w in axWindows {
                     guard limit(w) else { out.unresponsive = true; break }
-                    guard let wid = w.windowID() else { continue }
+                    guard let wid = w.windowID() else {
+                        // While the screen is locked, an app answers with its application element instead of its windows: that is no answer.
+                        if Self.answersWithApplication(role: w.string(kAXRoleAttribute)) { out.unresponsive = true; break }
+                        continue
+                    }
                     let id = WindowID(wid)
                     // Narrow by window, not just by pid; this also drops the same app's windows on other Spaces.
                     if let ids, !ids.contains(id) { continue }
@@ -271,8 +278,11 @@ public final class MacWindowSystem: WindowSystem {
         for id in Self.closedCacheEntries(Set(cache.keys), allWindows: fullList.map { Set($0.keys) }) { cache[id] = nil }
         lock.unlock()
         return Snapshot(trusted: true, spaceID: active, workArea: workArea, windows: windows, spaceObservationAvailable: spaceObservationAvailable, unobservedApps: unobserved,
-                        windowListAvailable: fullList != nil)
+                        windowListAvailable: fullList != nil && !lockedAtStart && !ScreenLock.isLocked())
     }
+
+    /// An entry of an app's window list that is its application element (seen while the screen is locked) means the app did not list its windows.
+    static func answersWithApplication(role: String?) -> Bool { role == (kAXApplicationRole as String) }
 
     /// Windows absent from the full window list (closed). Returns nothing if the list could not be read.
     static func closedCacheEntries(_ cached: Set<WindowID>, allWindows: Set<CGWindowID>?) -> Set<WindowID> {
@@ -619,7 +629,7 @@ public final class MacWindowSystem: WindowSystem {
                                           detail: "\(role)/\(subrole) layer=\(record.layer) hidden-space", subrole: subrole, stackOrder: Int.max, title: ""))
         }
         return Snapshot(trusted: true, spaceID: space, workArea: display.workArea, windows: windows, spaceObservationAvailable: true, unobservedApps: unobserved,
-                        windowListAvailable: fullList != nil)
+                        windowListAvailable: fullList != nil && !ScreenLock.isLocked())
     }
 
     /// Frame of a window on a Space other than the current one, using only elements observed on that Space; not read after the deadline.

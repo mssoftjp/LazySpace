@@ -226,6 +226,8 @@ public protocol WindowSystem: AnyObject {
     var inputActivityCount: UInt64 { get }
     /// True while the left button is down (default false). Used to adopt mouse edits.
     var mouseButtonDown: Bool { get }
+    /// True while the screen is locked or another session is on the console: arrangements stop and write nothing (default false).
+    var screenLocked: Bool { get }
     /// The front app's focused window; nil when unconfirmed.
     func focusedWindowID() -> WindowID?
     /// After raise, the app is activated on the main thread only if `activateIf` is true, so no activation runs after the operation has ended.
@@ -250,6 +252,7 @@ public enum WindowStateAttribute: Equatable {
 }
 
 public extension WindowSystem {
+    var screenLocked: Bool { false }
     /// Refuses by default (the hidden-Space writer and test implementations do not write position alone).
     func writePosition(_ id: WindowID, origin: CGPoint, timeout: TimeInterval, shouldContinue: @escaping () -> Bool) -> WriteResult {
         .rejected(L(.windowSystemMovingAWindowWithoutResizing))

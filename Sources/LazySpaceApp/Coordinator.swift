@@ -543,6 +543,8 @@ final class Coordinator {
     private var removalHolds: [WindowID: Date] = [:]
     /// A Space where redistribution was deferred on arrival because a managed window could not be confirmed. Its automatic arrangement stops until confirmed. Operations queue.
     private var removalGate: String?
+    /// Whether the last tick saw the screen locked. Operations queue.
+    private var screenWasLocked = false
     /// Limit for waiting on unconfirmed windows. Past it, redistribute without treating them as closed (focus does not move).
     let removalHold: TimeInterval = 1.0
     /// Attempts at redistributing to repair partial writes during this arrival. Operations queue.
@@ -3302,6 +3304,7 @@ final class Coordinator {
                   !snap.windows.contains(where: { $0.kind == .unknownRole }) else { return refuse() }
             let unseen = ids.subtracting(snap.windows.map(\.id))
             if !unseen.isEmpty {
+                guard snap.windowListAvailable else { return refuse() }
                 // Missing from the AX list alone is not closing. Only windows gone from the full window list, or confirmed by SkyLight to have moved to one other Space
                 // (including entering full screen; an app's AX list does not return windows on other Spaces), leave the layout.
                 guard let records = system.windowRecords(unseen),
@@ -3423,6 +3426,42 @@ final class Coordinator {
         autoTimer = t
     }
 
+    /// The start of a lock (the distributed notification): in-flight operations stop at their next gate and are not committed. Any thread.
+    func noteScreenLocked() {
+        control.invalidate()
+    }
+
+    /// While the screen is locked, Accessibility shows no windows, so the tick observes and decides nothing, as when automatic arrangement is
+    /// unavailable: no removal, arrangement, or correction starts, and observation starts again after unlock as after launch. Status, attention,
+    /// and notifications do not change. The last work areas and pending display refits are kept. True while locked. Operations queue.
+    private func waitOutScreenLock() -> Bool {
+        guard system.screenLocked else {
+            if screenWasLocked {
+                screenWasLocked = false
+                // Presses and drags on the lock screen are not edits of these windows.
+                lastCompletedMouseDrags = system.input.completedMouseDrags
+                dragPresses = system.input.completedDragPresses
+                clearPendingMouseEdit()
+            }
+            return false
+        }
+        if !screenWasLocked {
+            screenWasLocked = true
+            control.invalidate()
+        }
+        nextTickDeadline = .now() + tickInterval
+        baseline = nil
+        lastSeen = nil
+        removalHolds.removeAll()
+        removalGate = nil
+        pendingDepartedRefit = nil
+        mouseHeld = false
+        dragQuietPending = false
+        clearPendingMouseEdit()
+        publishFocusFrame(nil)
+        return true
+    }
+
     /// Brings the next tick forward (right after an observed change or an AX hint), unless one is already scheduled sooner.
     /// Called on the operations queue.
     private func scheduleNextTick(after delay: TimeInterval) {
@@ -3534,6 +3573,7 @@ final class Coordinator {
     func tick() {
         if servicesStarted { checkConfigFile() }
         observeTrust()
+        if waitOutScreenLock() { return }
         reviewAttention()
         // Process launch times are reread per observation (so a stale cache never misses pid reuse).
         processStarts.removeAll()
@@ -3682,6 +3722,12 @@ final class Coordinator {
         }
         noteArrivalsFromOtherSpaces(current, spaceKey: spaceKey)
         guard let prev = baseline else {
+            // A census showing none of the saved layout's windows (right after unlock, or a transition) does not become the baseline
+            // unless they are firmly gone, so a slow recovery never owes their removal.
+            if current.windows.isEmpty {
+                lock.lock(); let saved = state.layouts[spaceKey]?.windowIDs ?? []; lock.unlock()
+                if !saved.isEmpty, assessRemovals(saved, pids: [:], spaceID: spaceBefore, expires: false).held { return }
+            }
             baseline = current
             oweUnobservedDepartures(current: current, spaceKey: spaceKey)
             // Windows present since launch never show as differences; before taking the baseline unstarted, judge once with the current count.
@@ -3691,8 +3737,14 @@ final class Coordinator {
             return
         }
 
-        // A lock, or an observation where windows suddenly drop to zero, does not break the layout.
-        if current.windows.isEmpty, prev.windows.count >= 2 { return }
+        // An observation where windows suddenly drop to zero (a lock not yet reported, a transition) does not break the layout: it is waited out
+        // without the `removalHold` expiry, unless every missing managed window has firm evidence (closed, fading, on one other Space, minimized,
+        // or its app hidden), as when windows closed while the screen was locked.
+        if current.windows.isEmpty, prev.windows.count >= 2 {
+            lock.lock(); let managedNow = Set(state.layouts[spaceKey]?.windowIDs ?? []); lock.unlock()
+            let missing = prev.windows.keys.filter { managedNow.contains($0) }.sorted()
+            if !missing.isEmpty, assessRemovals(missing, pids: prev.windows, spaceID: spaceBefore, expires: false).held { return }
+        }
 
         if adoptTabSwitch(previous: prev, current: current, spaceKey: spaceKey) {
             baseline = current
@@ -4289,7 +4341,8 @@ final class Coordinator {
 
     /// Judges vanished managed windows together. `held` if any window must be waited for; returns windows seen closed or fading. Operations queue.
     /// Windows decided by the list and membership are not queried through AX; minimize checks get at most 0.3 s for the whole judgment.
-    private func assessRemovals(_ gone: [WindowID], pids: [WindowID: Int32], spaceID: UInt64) -> (held: Bool, closed: Set<WindowID>) {
+    /// `expires` false waits for every window without firm evidence, however long it has been held (the empty-census guard).
+    private func assessRemovals(_ gone: [WindowID], pids: [WindowID: Int32], spaceID: UInt64, expires: Bool = true) -> (held: Bool, closed: Set<WindowID>) {
         let exited = Set(gone.filter { id in pids[id].map(system.processExited) ?? false })
         let rest = Set(gone).subtracting(exited)
         guard !rest.isEmpty else {
@@ -4314,7 +4367,7 @@ final class Coordinator {
             }
             func verdict(minimized: Bool?) -> RemovalVerdict {
                 Self.removalVerdict(listAvailable: records != nil, record: record, expectedPID: pids[id], spaces: spaces,
-                                    currentSpace: spaceID, minimized: minimized, appHidden: hidden, heldSince: removalHolds[id], now: now, hold: removalHold)
+                                    currentSpace: spaceID, minimized: minimized, appHidden: hidden, heldSince: removalHolds[id], now: now, hold: expires ? removalHold : .infinity)
             }
             // The hidden app is checked before the minimized state, so it never spends the AX budget.
             var result = verdict(minimized: nil)

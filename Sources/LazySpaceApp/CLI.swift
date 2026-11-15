@@ -728,7 +728,7 @@ enum CLI {
         // IDs as `--window-id` takes them.
         for t in ins.targets { row(String(t.id.raw), ReadyWindowController.shownApp(t.app, name: name), sizeText(t.frame), ReadyWindowController.eligibleVerdict) }
         for e in ins.excluded { row(String(e.window.id.raw), ReadyWindowController.shownApp(e.window.app, name: name), sizeText(e.window.frame), ReadyWindowController.exclusionText(e)) }
-        for a in ins.snapshot.unobservedApps { row("-", ReadyWindowController.shownApp(a, name: name), "?", L(.cliNoResponseCouldNotRead)) }
+        for a in ins.snapshot.unobservedApps { row("-", ReadyWindowController.shownApp(a, name: name), "?", L(.cliNoResponseCouldNotReadWindows)) }
         if ins.targets.isEmpty && ins.excluded.isEmpty { lines.append(ins.snapshot.trusted ? L(.cliNoWindows) : L(.cliCannotReadWindowsWithoutThe(AccessPane.name()))) }
         let unobserved = ins.snapshot.unobservedApps.count
         lines.append(unobserved == 0

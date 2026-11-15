@@ -293,7 +293,7 @@ public final class ArrangeOperation {
             let apps = snapshot.unobservedApps.map(displayName).joined(separator: Copy.listSeparator)
             return builder.finish(
                 outcome: .nothingToDo, stopReason: .appUnresponsive,
-                message: L(.arrangeOperationNotArrangedDidntReturnA(apps)),
+                message: L(.arrangeOperationNotArrangedNoWindowList(apps)),
                 finishedAt: now(), wallMs: elapsedMs())
         }
         guard !inspection.targets.isEmpty else {
@@ -320,7 +320,7 @@ public final class ArrangeOperation {
                 let note = dialogPlacementMessage()
                 let apps = snapshot.unobservedApps.map(displayName).joined(separator: Copy.listSeparator)
                 let none = reclaiming
-                    ? L(.arrangeOperationDidntReturnAWindowList(apps))
+                    ? L(.arrangeOperationNoWindowListLeftInPlace(apps))
                     : L(.arrangeOperationNoWindowsToArrange)
                 return builder.finish(outcome: .complete, stopReason: nil,
                                       message: note.isEmpty ? none : note,
@@ -909,10 +909,10 @@ public final class ArrangeOperation {
                 resultingLayout = zoomed == nil ? plan.layout.packing(rects: plan.rects, shape: plan.shape).normalized() : finalLayout.normalized()
                 resultingShape = zoomed == nil ? plan.shape : nil
                 return builder.finish(outcome: .complete, stopReason: nil,
-                                      message: L(.arrangeOperationArrangedUnobservedLeft(windows: statuses.count, apps)),
+                                      message: L(.arrangeOperationArrangedNoWindowListLeft(windows: statuses.count, apps)),
                                       finishedAt: finishedAt, wallMs: elapsedMs())
             }
-            let message = L(.arrangeOperationArrangedUnobservedUnconfirmed(windows: statuses.count, apps))
+            let message = L(.arrangeOperationArrangedNoWindowListUnconfirmed(windows: statuses.count, apps))
             return builder.finish(outcome: .partial, stopReason: .appUnresponsive, message: message, finishedAt: finishedAt, wallMs: elapsedMs())
         }
         if allGood {
