@@ -476,6 +476,142 @@ final class DialogRegionCoordinatorTests: XCTestCase {
         XCTAssertEqual(max(system.frames[WindowID(1)]!.maxX, system.frames[WindowID(2)]!.maxX), system.area.maxX, accuracy: 1)
     }
 
+    /// Some apps keep a dialog after it is closed: it leaves the screen but stays in the full window list and on the Space.
+    /// It leaves the strip after `removalHold`, as a tile would, and the tiles expand. Within the wait the strip is kept.
+    func testADialogKeptHiddenAfterClosingLeavesTheStripAfterTheWait() throws {
+        try make()
+        ticks()
+        XCTAssertEqual(coordinator.state.dialogRegions?["7"]?.members.map(\.id), [WindowID(5)])
+        system.hiddenFromCensus.insert(WindowID(5))
+        // The first observation only notes the change; the region decision first sees it missing on the next one.
+        for _ in 0..<4 { tick(after: 0.4) }
+        XCTAssertEqual(coordinator.state.dialogRegions?["7"]?.members.map(\.id), [WindowID(5)], "kept 0.8 s into the wait")
+        ticks(2)
+        XCTAssertNil(coordinator.state.dialogRegions?["7"])
+        XCTAssertEqual(max(system.frames[WindowID(1)]!.maxX, system.frames[WindowID(2)]!.maxX), system.area.maxX, accuracy: 1)
+    }
+
+    /// A dialog whose app is hidden leaves the strip without waiting, as a tile would.
+    func testADialogOfAHiddenAppLeavesTheStripAtOnce() throws {
+        try make()
+        ticks()
+        XCTAssertNotNil(coordinator.state.dialogRegions?["7"])
+        system.hiddenFromCensus.insert(WindowID(5))
+        system.hiddenPIDs.insert(105)
+        for _ in 0..<3 { tick(after: 0.3) }
+        XCTAssertNil(coordinator.state.dialogRegions?["7"], "left before the wait ran out")
+        XCTAssertEqual(max(system.frames[WindowID(1)]!.maxX, system.frames[WindowID(2)]!.maxX), system.area.maxX, accuracy: 1)
+    }
+
+    /// The wait starts over when the dialog shows again, so short absences never add up, and the tiles never move.
+    func testShortAbsencesOfAStripDialogDoNotAddUp() throws {
+        try make()
+        ticks()
+        let writes = system.writes
+        for _ in 0..<3 {
+            // Each absence reaches the region decision at 0, 0.3, and 0.6 s into the wait.
+            system.hiddenFromCensus.insert(WindowID(5))
+            for _ in 0..<4 { tick(after: 0.3) }
+            system.hiddenFromCensus.remove(WindowID(5))
+            tick(after: 0.3)
+        }
+        XCTAssertEqual(coordinator.state.dialogRegions?["7"]?.members.map(\.id), [WindowID(5)])
+        XCTAssertEqual(system.writes, writes)
+    }
+
+    /// A dialog that left the strip while hidden joins it again once it shows and another window is in front.
+    func testAHiddenDialogThatShowsAgainRejoinsTheStrip() throws {
+        try make()
+        ticks()
+        system.hiddenFromCensus.insert(WindowID(5))
+        ticks()
+        XCTAssertNil(coordinator.state.dialogRegions?["7"])
+        system.hiddenFromCensus.remove(WindowID(5))
+        ticks()
+        XCTAssertEqual(coordinator.state.dialogRegions?["7"]?.members.map(\.id), [WindowID(5)])
+        let dialog = try XCTUnwrap(system.frames[WindowID(5)])
+        XCTAssertLessThanOrEqual(max(system.frames[WindowID(1)]!.maxX, system.frames[WindowID(2)]!.maxX), dialog.minX + 1)
+    }
+
+    /// An observation that loses every window for longer than the wait (a transition, right after unlock) changes nothing:
+    /// the strip keeps its dialog and no tile moves. Here the missing tiles stop the observation before the region decision.
+    func testAnObservationWithoutAnyWindowKeepsTheStrip() throws {
+        try make()
+        ticks()
+        let region = coordinator.state.dialogRegions?["7"]
+        XCTAssertNotNil(region)
+        let writes = system.writes
+        system.hiddenFromCensus.formUnion([WindowID(1), WindowID(2), WindowID(5)])
+        ticks(5)
+        system.hiddenFromCensus.removeAll()
+        ticks()
+        XCTAssertEqual(coordinator.state.dialogRegions?["7"], region)
+        XCTAssertEqual(coordinator.state.layouts["7"]?.windowIDs.sorted { $0.raw < $1.raw }, [WindowID(1), WindowID(2)])
+        XCTAssertEqual(system.writes, writes)
+    }
+
+    /// Both tiles closed and dialog 5 in the strip, with dialog 9 of the first app in front. Returns the saved region.
+    private func stripWithoutTiles() throws -> DialogRegion? {
+        try make()
+        for id in [WindowID(1), WindowID(2)] { system.frames[id] = nil; system.spaceOf[id] = nil }
+        system.frames[WindowID(9)] = CGRect(x: 0, y: 0, width: 200, height: 200)
+        system.spaceOf[WindowID(9)] = 7
+        system.pids[WindowID(9)] = 101
+        system.apps[WindowID(9)] = "com.example.a"
+        system.kindOf[WindowID(9)] = .dialog
+        system.focused = WindowID(9)
+        ticks(10)
+        let region = coordinator.state.dialogRegions?["7"]
+        XCTAssertEqual(region?.members.map(\.id), [WindowID(5)])
+        XCTAssertEqual(coordinator.state.layouts["7"]?.windowIDs, [])
+        return region
+    }
+
+    /// With no tile left, nothing stops an observation listing no window before the region decision: a strip dialog missing for longer than
+    /// the wait leaves even in such a blank (a transition, right after unlock), and joins again in the same place once it is listed.
+    /// Accepted: with one dialog nothing moves; with several, they may be packed again in a new order.
+    func testABlankWithoutTilesDropsTheStripAndItFormsAgain() throws {
+        let region = try stripWithoutTiles()
+        let placed = system.positionWrites.count
+        system.hiddenFromCensus.formUnion([WindowID(5), WindowID(9)])
+        ticks(5)
+        XCTAssertNil(coordinator.state.dialogRegions?["7"], "left during the blank")
+        system.hiddenFromCensus.removeAll()
+        ticks()
+        XCTAssertEqual(coordinator.state.dialogRegions?["7"], region)
+        XCTAssertEqual(system.positionWrites.count, placed, "already in place")
+    }
+
+    /// A strip dialog that was the last window listed leaves after the wait, and the strip goes.
+    func testAStripDialogThatWasTheLastWindowLeavesAfterTheWait() throws {
+        _ = try stripWithoutTiles()
+        system.hiddenFromCensus.insert(WindowID(9))
+        ticks(3)
+        XCTAssertEqual(coordinator.state.dialogRegions?["7"]?.members.map(\.id), [WindowID(5)])
+        system.hiddenFromCensus.insert(WindowID(5))
+        for _ in 0..<3 { tick(after: 0.4) }
+        XCTAssertEqual(coordinator.state.dialogRegions?["7"]?.members.map(\.id), [WindowID(5)], "kept within the wait")
+        ticks(4)
+        XCTAssertNil(coordinator.state.dialogRegions?["7"])
+    }
+
+    /// A lock starts the wait over, as it does for tiles: a dialog missing before the lock gets the whole wait again after unlock.
+    func testALockStartsTheWaitOver() throws {
+        try make()
+        ticks()
+        system.hiddenFromCensus.insert(WindowID(5))
+        for _ in 0..<3 { tick(after: 0.4) }
+        XCTAssertEqual(coordinator.state.dialogRegions?["7"]?.members.map(\.id), [WindowID(5)])
+        system.screenLocked = true
+        ticks(5)
+        system.screenLocked = false
+        // Observation starts again as after launch; the region decision first runs about 1 s after unlock.
+        for _ in 0..<4 { tick(after: 0.4) }
+        XCTAssertEqual(coordinator.state.dialogRegions?["7"]?.members.map(\.id), [WindowID(5)], "a new wait after unlock")
+        ticks(4)
+        XCTAssertNil(coordinator.state.dialogRegions?["7"])
+    }
+
     /// Windows with unreadable evidence stay out, and so do resizable (standard) windows.
     func testUnreadableOrResizableWindowsStayOut() throws {
         try make()

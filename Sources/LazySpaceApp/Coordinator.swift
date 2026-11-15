@@ -394,6 +394,8 @@ final class Coordinator {
     private var router = WindowRouter()
     /// Assessments of dialog-region candidates and members. Only the operations queue touches it.
     private var regionObservations: [WindowID: RegionObservation] = [:]
+    /// When each strip member was first found missing from the on-screen census; dropped once it shows again. Operations queue.
+    private var regionMissingSince: [WindowID: Date] = [:]
     /// Ledger of placed positions (window -> owner, written position, input count at write, count, differing frame being checked). Read and written under lock.
     private var regionLedger: [WindowID: RegionLedgerEntry] = [:]
     /// Windows that refused position writes or could not be read back are retried after an interval (window -> owner, next allowed time, failures). Read and written under lock.
@@ -3453,6 +3455,7 @@ final class Coordinator {
         baseline = nil
         lastSeen = nil
         removalHolds.removeAll()
+        regionMissingSince.removeAll()
         removalGate = nil
         pendingDepartedRefit = nil
         mouseHeld = false
@@ -3667,6 +3670,8 @@ final class Coordinator {
         }
         // New-window rules (classification and sending), with gates separate from automatic arrangement.
         routeNewWindows(current, space: spaceBefore)
+        // A strip member seen again starts its wait over, even in an observation that never reaches the region decision.
+        regionMissingSince = regionMissingSince.filter { current.windows[$0.key] == nil }
         // Clean up pending arrivals (remove entries integrated, floated, gone, or moved to another Space).
         _ = pendingArrivalPresent(in: current)
         // Windows reconciling, classifying, or sending are hidden from every placement path in this observation (enrollment, integration, correction).
@@ -4100,6 +4105,7 @@ final class Coordinator {
         let authorization = authorization ?? OperationAuthorization(system: system, control: control)
         pendingDepartedRefit = nil
         removalHolds.removeAll()
+        regionMissingSince.removeAll()
         removalGate = nil
         // A Space we returned to is handled here, not by the hidden-Space redistribution.
         hiddenRefits[spaceKey] = nil
@@ -5173,6 +5179,7 @@ final class Coordinator {
         // The region is inactive: if a region is saved, drop the reservation and rearrange (tiles expand; dialogs stay where they are).
         guard active else {
             regionObservations.removeAll()
+            regionMissingSince.removeAll()
             if saved != nil {
                 _ = arrange(source: "auto", kind: "auto-dialog-region", authorization: decision,
                             region: RegionApply(plan: nil, placements: [], gate: gate(false), generation: generation, requireActive: false))
@@ -5248,6 +5255,9 @@ final class Coordinator {
         var sizes: [WindowID: CGSize] = [:]
         let missing = (saved?.members ?? []).filter { current.windows[$0.id] == nil }
         let records = missing.isEmpty ? [:] : system.windowRecords(Set(missing.map(\.id)))
+        // Only members missing now keep a wait (one that showed again was dropped when observed).
+        let missingIDs = Set(missing.map(\.id))
+        regionMissingSince = regionMissingSince.filter { missingIDs.contains($0.key) }
         for member in saved?.members ?? [] {
             if excluded[member.id]?.same(pid: member.pid, start: member.processStart) == true || layoutIDs.contains(member.id) { departed.insert(member.id); continue }
             if let pid = current.windows[member.id] {
@@ -5279,14 +5289,10 @@ final class Coordinator {
                 case .unknown?, nil: pinned.insert(member.id)
                 }
                 if member.id == front { pinned.insert(member.id) }
-            } else if system.processExited(member.pid) || (records.map { $0[member.id] == nil } ?? false) {
-                departed.insert(member.id)
-            } else if let membership = system.spacesOf(member.id), membership.count == 1, membership[0] != space {
-                departed.insert(member.id)
-            } else if readMinimizedQuick(member.id) == true {
-                departed.insert(member.id)
-            } else {
+            } else if missingMemberVerdict(member, records: records, space: space, now: now) == .held {
                 pinned.insert(member.id)
+            } else {
+                departed.insert(member.id)
             }
             // Members awaiting a rewrite (mid-interval, or being checked for being put back) are not moved by this decision.
             // Packing the others while only skipping the write would stack them onto a place not yet vacated, so the plan protects it.
@@ -5363,6 +5369,25 @@ final class Coordinator {
                                         switched: result.switched || (saved == nil && next != nil && remembered != nil && remembered?.edge != next?.edge),
                                         generation: generation, requireActive: true,
                                         frontSharesProcess: current.frontmostPID.map { pid in toPlace.contains { $0.pid == pid } } ?? false))
+    }
+
+    /// A strip member missing from the on-screen census is judged as a missing tile is (`removalVerdict`), with its own wait of `removalHold`:
+    /// `held` keeps its place; anything else means it left the strip. Some apps keep a dialog after it is closed (still in the full window list
+    /// and on the Space, only not shown), so without the wait its place would be kept for good. Operations queue.
+    private func missingMemberVerdict(_ member: DialogRegion.Member, records: [WindowID: CGWindowRecord]?, space: UInt64, now: Date) -> RemovalVerdict {
+        if system.processExited(member.pid) { return .closed }
+        let record = records?[member.id]
+        let spaces = record == nil ? nil : system.spacesOf(member.id)
+        let since = regionMissingSince[member.id] ?? now
+        regionMissingSince[member.id] = since
+        func verdict(minimized: Bool?) -> RemovalVerdict {
+            Self.removalVerdict(listAvailable: records != nil, record: record, expectedPID: member.pid, spaces: spaces, currentSpace: space,
+                                minimized: minimized, appHidden: record.flatMap { system.appHidden(pid: $0.pid) }, heldSince: since, now: now, hold: removalHold)
+        }
+        let result = verdict(minimized: nil)
+        // The minimized state is read only for a member that would otherwise keep its place.
+        guard result == .held, record != nil else { return result }
+        return verdict(minimized: readMinimizedQuick(member.id))
     }
 
     /// Check right before writing: slow reads (identity, kind) first, then a fresh observation for front and size, and finally the cheap checks (settings, work area, Space, button).
