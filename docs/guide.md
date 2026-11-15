@@ -4,7 +4,7 @@ This guide covers LazySpace from installation to the configuration file. For an 
 
 ## Install
 
-LazySpace needs macOS 14 or later and Apple Silicon. Install it with Homebrew:
+LazySpace needs macOS 27 or later and Apple Silicon. Install it with Homebrew:
 
 ```bash
 brew install --cask mssoftjp/tap/lazyspace
@@ -36,7 +36,7 @@ sudo ln -s /Applications/LazySpace.app/Contents/Resources/bin/lazyspace /usr/loc
 ## Getting started
 
 1. Open LazySpace. Its icon appears in the menu bar.
-2. The first time, macOS asks for access and Settings › General opens. Click **Open System Settings…** and turn on LazySpace in Privacy & Security › **Device Control and Data Access** (**Accessibility** before macOS 27). You can come back to this later from **Check Windows…** › **Show Fix…** › **Open General Settings**.
+2. The first time, macOS asks for access and Settings › General opens. Click **Open System Settings…** and turn on LazySpace in Privacy & Security › **Device Control and Data Access**. You can come back to this later from **Check Windows…** › **Show Fix…** › **Open General Settings**.
 3. Go to a Space and keep working. After you stay there for about a second without input, LazySpace tiles its windows. A single window fills the work area (the screen minus the menu bar and Dock).
 4. Open more windows. Each one joins beside the window you were using.
 
@@ -101,8 +101,8 @@ Clicking alone never changes the layout. If a tiled window is resized another wa
 ### Spaces
 
 - `⌥1`–`⌥9` (or `lazyspace space N`) switch to a numbered desktop, counted in Mission Control order. Full-screen and Split View Spaces are not numbered. With more than one display, numbers count the desktops of each display, and these shortcuts use the display with the focused window.
-- `⌥⇧1`–`⌥⇧9` (or `lazyspace move-to-space N`) send the focused window to another desktop while you stay where you are. This needs macOS 27. Add `--follow` on the command line to go with it. To reach a desktop of another display, use the menu or add `--display N` on the command line (the display's position in `lazyspace list-spaces`). macOS gives focus to the window on that display; LazySpace brings back the window that was in front before it so you stay on this display, and if there is none, or it cannot be brought back, focus stays with the sent window.
-- To go with the window when you use the shortcuts or the menu, turn on **When moving a window to another Space, switch to that Space** in Settings › Shortcuts (`follow-moved-window` in the file). `⌥⇥` takes you back. The command line is not affected: `lazyspace move-to-space N` always stays, and `--follow` always goes with the window. Before macOS 27, the shortcuts and the menu move a window only with this on: LazySpace holds the window by its title bar while it switches, so the pointer moves for a moment, and a window whose title bar cannot be dragged is not moved.
+- `⌥⇧1`–`⌥⇧9` (or `lazyspace move-to-space N`) send the focused window to another desktop while you stay where you are. Add `--follow` on the command line to go with it. To reach a desktop of another display, use the menu or add `--display N` on the command line (the display's position in `lazyspace list-spaces`). macOS gives focus to the window on that display; LazySpace brings back the window that was in front before it so you stay on this display, and if there is none, or it cannot be brought back, focus stays with the sent window.
+- To go with the window when you use the shortcuts or the menu, turn on **When moving a window to another Space, switch to that Space** in Settings › Shortcuts (`follow-moved-window` in the file). `⌥⇥` takes you back. The command line is not affected: `lazyspace move-to-space N` always stays, and `--follow` always goes with the window.
 - Switching uses what your Mac already has: the macOS shortcut **Switch to Desktop N** when it is on, a window or app on the destination, and otherwise the Mission Control shortcuts **Move left a Space** and **Move right a Space** (on by default). LazySpace never changes these shortcuts, and sends nothing when one it needs is off.
 - For numbers that do not change, turn off **Automatically rearrange Spaces based on most recent use** in System Settings › Desktop & Dock.
 - Pressing a key or the mouse while LazySpace is switching stops the operation.
@@ -237,7 +237,8 @@ The default shortcuts follow AeroSpace's where LazySpace has the same action. Di
 
 - **A window is not tiled.** Choose **Check Windows…**, or run `lazyspace list-windows`. It says why, for example a fixed-size window, a full-screen window, or an app rule.
 - **Nothing happens when I press a shortcut.** Run `lazyspace status` and look at **Latest notice**. LazySpace does not show a message when a shortcut is refused.
-- **Automatic arrangement is unavailable.** **Check Windows…** shows **Show Fix…** with the setting to change. To hear about it when it happens, turn on the notification in Settings › **General**.
+- **Automatic arrangement is unavailable.** **Check Windows…** shows **Show Fix…** with the setting to change, or says that LazySpace tries again by itself. To hear about it when it happens, turn on the notification in Settings › **General**.
+- **Automatic arrangement is off because LazySpace is turned off in Input Monitoring.** Turn on LazySpace in System Settings › Privacy & Security › **Input Monitoring**. **Check Windows…** › **Show Fix…** › **Open Input Monitoring Settings** opens that pane. LazySpace never asks for this permission, so most Macs have no entry for it. While the entry is off, LazySpace cannot tell when you use the mouse or keyboard.
 - **`⌥1`–`⌥9` go to the wrong desktop.** Turn off **Automatically rearrange Spaces based on most recent use**.
 - **Switching to the next Space does not work.** Check Settings › Shortcuts: it shows a warning with the fix when something is wrong. If it says macOS is not responding, log out of your Mac and back in.
 - **A shortcut types a character.** Choose other keys in Settings › Shortcuts.

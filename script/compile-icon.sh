@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Compile the editable Icon Composer source, including the macOS 14/15 fallback.
+# Compile the editable Icon Composer source.
 # Usage: script/compile-icon.sh /path/to/LazySpace.app (before signing)
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

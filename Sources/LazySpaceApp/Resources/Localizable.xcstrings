@@ -12289,62 +12289,121 @@
         }
       }
     },
-    "coordinator.automaticArrangementIsOffBecause" : {
-      "comment" : "Arguments: 1 = `AccessPane.name()`.",
+    "coordinator.automaticArrangementIsOffBecauseInputCannot" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Die automatische Anordnung ist aus, weil Eingaben nicht beobachtet werden können und sich Fenster sonst bewegen könnten, während du sie benutzt. Prüfe die Berechtigung „%@“."
+            "value" : "Die automatische Anordnung ist aus, weil Eingaben nicht beobachtet werden können und sich Fenster sonst bewegen könnten, während du sie benutzt. LazySpace versucht es alle paar Sekunden erneut."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Automatic arrangement is off because input cannot be observed, so windows could move while you use them. Check the %@ permission."
+            "value" : "Automatic arrangement is off because input cannot be observed, so windows could move while you use them. LazySpace tries again every few seconds."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La organización automática está desactivada porque no se puede observar la entrada, así que las ventanas podrían moverse mientras las usas. Comprueba el permiso “%@”."
+            "value" : "La organización automática está desactivada porque no se puede observar la entrada, así que las ventanas podrían moverse mientras las usas. LazySpace vuelve a intentarlo cada pocos segundos."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "L’organisation automatique est désactivée parce que la saisie ne peut pas être observée : les fenêtres pourraient bouger pendant que vous les utilisez. Vérifiez l’autorisation « %@ »."
+            "value" : "L’organisation automatique est désactivée parce que la saisie ne peut pas être observée : les fenêtres pourraient bouger pendant que vous les utilisez. LazySpace réessaie toutes les quelques secondes."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "入力を観測できないため、自動整列を止めています。操作中のウインドウを動かさないためです。「%@」の許可を確認してください。"
+            "value" : "入力を観測できないため、自動整列を止めています。操作中のウインドウを動かさないためです。数秒ごとにやり直します。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "입력을 관찰할 수 없어 사용 중인 윈도우가 움직일 수 있으므로 자동 정렬이 꺼져 있습니다. ‘%@’ 권한을 확인하십시오."
+            "value" : "입력을 관찰할 수 없어 사용 중인 윈도우가 움직일 수 있으므로 자동 정렬이 꺼져 있습니다. LazySpace가 몇 초마다 다시 시도합니다."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A organização automática está desativada porque a entrada não pode ser observada e as janelas poderiam se mover enquanto você as usa. Verifique a permissão “%@”."
+            "value" : "A organização automática está desativada porque a entrada não pode ser observada e as janelas poderiam se mover enquanto você as usa. O LazySpace tenta de novo a cada poucos segundos."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "由于无法观测输入，自动排列已关闭，以免窗口在你使用时移动。请检查“%@”权限。"
+            "value" : "由于无法观测输入，自动排列已关闭，以免窗口在你使用时移动。LazySpace每隔几秒会重试。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "由於無法觀察輸入，視窗可能會在你使用時被移動，因此自動排列已關閉。請檢查「%@」權限。"
+            "value" : "由於無法觀察輸入，視窗可能會在你使用時被移動，因此自動排列已關閉。LazySpace每隔幾秒會重試。"
+          }
+        }
+      }
+    },
+    "coordinator.automaticArrangementIsOffBecauseInputMonitoring" : {
+      "comment" : "Arguments: 1 = `MacItem.inputMonitoring`; 2 = `MacItem.inputMonitoring`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die automatische Anordnung ist aus, weil LazySpace unter „%@“ ausgeschaltet ist und daher nicht erkennen kann, wann du Maus oder Tastatur benutzt. Schalte LazySpace unter Datenschutz & Sicherheit › %@ ein."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatic arrangement is off because LazySpace is turned off in %@, so it cannot tell when you use the mouse or keyboard. Turn on LazySpace in Privacy & Security › %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La organización automática está desactivada porque LazySpace está desactivado en “%@”, así que no puede saber cuándo usas el ratón o el teclado. Activa LazySpace en Privacidad y seguridad › %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’organisation automatique est désactivée parce que LazySpace est désactivé dans « %@ » : il ne peut donc pas savoir quand vous utilisez la souris ou le clavier. Activez LazySpace dans Confidentialité et sécurité › %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」でLazySpaceがオフになっているため、マウスやキーボードの操作が分からず、自動整列を止めています。プライバシーとセキュリティ › %@でLazySpaceをオンにしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "‘%@’에서 LazySpace가 꺼져 있어 마우스나 키보드를 언제 사용하는지 알 수 없으므로 자동 정렬이 꺼져 있습니다. 개인정보 보호 및 보안 › %@에서 LazySpace를 켜십시오."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A organização automática está desativada porque o LazySpace está desativado em “%@”, por isso ele não consegue saber quando você usa o mouse ou o teclado. Ative o LazySpace em Privacidade e Segurança › %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "由于LazySpace在“%@”中已关闭，无法得知你何时使用鼠标或键盘，因此自动排列已关闭。请在隐私与安全 › %@中打开LazySpace。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "由於LazySpace在「%@」中已關閉，無法得知你何時使用滑鼠或鍵盤，因此自動排列已關閉。請在「隱私權與安全性」›「%@」中開啟LazySpace。"
           }
         }
       }
@@ -40187,62 +40246,62 @@
         }
       }
     },
-    "windowList.inputObservationIsUnavailableSo" : {
-      "comment" : "Arguments: 1 = `AccessPane.name()`.",
+    "windowList.inputMonitoringShort" : {
+      "comment" : "Arguments: 1 = `MacItem.inputMonitoring`.",
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Die Eingabebeobachtung ist nicht verfügbar, daher bleibt die automatische Anordnung aus. Öffne die Einstellungen für „%@“ und erlaube LazySpace."
+            "value" : "LazySpace ist unter „%@“ ausgeschaltet."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Input observation is unavailable, so automatic arrangement stays off. Open %@ settings and allow LazySpace."
+            "value" : "LazySpace is turned off in %@."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La observación de la entrada no está disponible, así que la organización automática sigue desactivada. Abre los ajustes de “%@” y permite LazySpace."
+            "value" : "LazySpace está desactivado en “%@”."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "L’observation de la saisie est indisponible ; l’organisation automatique reste donc désactivée. Ouvrez les réglages « %@ » et autorisez LazySpace."
+            "value" : "LazySpace est désactivé dans « %@ »."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "入力を観測できないため、自動整列はオフのままです。「%@」でLazySpaceを許可してください。"
+            "value" : "「%@」でLazySpaceがオフになっています。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "입력을 관찰할 수 없어 자동 정렬이 꺼진 상태입니다. ‘%@’ 설정을 열고 LazySpace를 허용하십시오."
+            "value" : "‘%@’에서 LazySpace가 꺼져 있습니다."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A observação da entrada não está disponível, por isso a organização automática continua desativada. Abra os ajustes de “%@” e permita o LazySpace."
+            "value" : "O LazySpace está desativado em “%@”."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "无法观测输入，因此自动排列保持关闭。请打开“%@”设置并允许LazySpace。"
+            "value" : "LazySpace在“%@”中已关闭。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "無法觀察輸入，因此自動排列會維持關閉。請打開「%@」設定並允許LazySpace。"
+            "value" : "LazySpace在「%@」中已關閉。"
           }
         }
       }
@@ -40361,6 +40420,66 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已中斷"
+          }
+        }
+      }
+    },
+    "windowList.lazySpaceIsTurnedOffIn" : {
+      "comment" : "Arguments: 1 = `MacItem.inputMonitoring`; 2 = `MacItem.inputMonitoring`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace ist unter „%@“ ausgeschaltet, daher kann es nicht erkennen, wann du Maus oder Tastatur benutzt, und die automatische Anordnung bleibt aus. Schalte LazySpace unter Datenschutz & Sicherheit › %@ ein."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace is turned off in %@, so it cannot tell when you use the mouse or keyboard, and automatic arrangement stays off. Turn on LazySpace in Privacy & Security › %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace está desactivado en “%@”, así que no puede saber cuándo usas el ratón o el teclado, y la organización automática sigue desactivada. Activa LazySpace en Privacidad y seguridad › %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace est désactivé dans « %@ » : il ne peut donc pas savoir quand vous utilisez la souris ou le clavier, et l’organisation automatique reste désactivée. Activez LazySpace dans Confidentialité et sécurité › %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」でLazySpaceがオフになっているため、マウスやキーボードの操作が分からず、自動整列はオフのままです。プライバシーとセキュリティ › %@でLazySpaceをオンにしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "‘%@’에서 LazySpace가 꺼져 있어 마우스나 키보드를 언제 사용하는지 알 수 없으므로 자동 정렬이 꺼진 상태입니다. 개인정보 보호 및 보안 › %@에서 LazySpace를 켜십시오."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O LazySpace está desativado em “%@”, por isso ele não consegue saber quando você usa o mouse ou o teclado, e a organização automática continua desativada. Ative o LazySpace em Privacidade e Segurança › %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace在“%@”中已关闭，无法得知你何时使用鼠标或键盘，因此自动排列保持关闭。请在隐私与安全 › %@中打开LazySpace。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace在「%@」中已關閉，無法得知你何時使用滑鼠或鍵盤，因此自動排列會維持關閉。請在「隱私權與安全性」›「%@」中開啟LazySpace。"
           }
         }
       }
@@ -40779,7 +40898,7 @@
       }
     },
     "windowList.openAppSettings" : {
-      "comment" : "Arguments: 1 = `AccessPane.name()`.",
+      "comment" : "Arguments: 1 = `MacItem.inputMonitoring`.",
       "extractionState" : "manual",
       "localizations" : {
         "de" : {

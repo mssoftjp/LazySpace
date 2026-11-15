@@ -110,7 +110,8 @@ A `standard` window on the `current` Space can still be excluded: by a rule in t
 |---|---|
 | `accessibility` | Accessibility access is not granted (`trusted` is false). |
 | `spaceObservation` | LazySpace cannot detect Spaces on this Mac (`spaceObservation` is false). |
-| `inputObservation` | LazySpace cannot observe keyboard and mouse input. |
+| `inputMonitoring` | LazySpace is listed in Input Monitoring and turned off, so it cannot observe keyboard and mouse input. |
+| `inputObservation` | LazySpace cannot observe keyboard and mouse input for another reason. It tries again every few seconds. |
 | `configNotApplied` | No configuration file has been applied since launch, because the file could not be read or had an error then (`configError`). |
 | `stageManager` | Stage Manager is on. |
 | `sharedSpaces` | More than one display is connected and "Displays have separate Spaces" is off. |

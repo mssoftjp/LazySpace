@@ -357,7 +357,7 @@ final class FollowMovedWindowTests: XCTestCase {
         }
     }
 
-    // MARK: - Without the direct move (before macOS 27)
+    // MARK: - Without the direct move
 
     func testWithoutTheDirectMoveTheSettingMakesShortcutsWork() throws {
         try make()

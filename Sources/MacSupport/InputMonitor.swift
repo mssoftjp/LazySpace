@@ -35,6 +35,16 @@ public final class InputMonitor {
     /// Serializes start and stop. Separate from `lock`, which the tap callback uses.
     private let lifecycle = NSLock()
 
+    /// How the monitor reaches macOS for its tap. Tests replace it.
+    struct TapControl {
+        var isEnabled: (CFMachPort) -> Bool = { CGEvent.tapIsEnabled(tap: $0) }
+        var enable: (CFMachPort) -> Void = { CGEvent.tapEnable(tap: $0, enable: true) }
+        var disable: (CFMachPort) -> Void = { CGEvent.tapEnable(tap: $0, enable: false) }
+        var leftButtonDown: () -> Bool = { CGEventSource.buttonState(.combinedSessionState, button: .left) }
+        var tapList: () -> [CGEventTapInformation]? = InputMonitor.readTapList
+    }
+    var tapControl = TapControl()
+
     /// Passed to the tap callback. Holds the monitor weakly, so it never dangles if the monitor is freed first.
     private final class TapContext {
         weak var monitor: InputMonitor?
@@ -146,18 +156,19 @@ public final class InputMonitor {
         released?()
     }
 
-    /// Starts. If a tap including key input cannot be created, retries with the mouse only.
+    /// Starts. If a tap including key input cannot be created, retries with the mouse only. Keys count as observed only once macOS
+    /// reports them in the tap's effective mask (`keysDelivered`); until then, and when it does not, the mode is `mouseOnly`.
     public func start() -> Mode {
         lifecycle.lock(); defer { lifecycle.unlock() }
         if currentTap() != nil { return mode }
-        let full: CGEventMask = mask([.leftMouseDown, .leftMouseUp, .rightMouseDown, .otherMouseDown, .leftMouseDragged, .rightMouseDragged, .otherMouseDragged, .keyDown, .flagsChanged, .scrollWheel])
+        let fullMask: CGEventMask = mask([.leftMouseDown, .leftMouseUp, .rightMouseDown, .otherMouseDown, .leftMouseDragged, .rightMouseDragged, .otherMouseDragged, .keyDown, .flagsChanged, .scrollWheel])
         let mouse: CGEventMask = mask([.leftMouseDown, .leftMouseUp, .rightMouseDown, .otherMouseDown, .leftMouseDragged, .rightMouseDragged, .otherMouseDragged, .scrollWheel])
         // The callback gets the context, retained until the tap thread leaves its run loop.
         let info = Unmanaged.passRetained(TapContext(self)).toOpaque()
         let created: CFMachPort
-        let started: Mode
-        if let t = createTap(full, info: info) { created = t; started = .mouseAndKeyboard }
-        else if let t = createTap(mouse, info: info) { created = t; started = .mouseOnly }
+        let full: Bool
+        if let t = createTap(fullMask, info: info) { created = t; full = true }
+        else if let t = createTap(mouse, info: info) { created = t; full = false }
         else {
             Unmanaged<TapContext>.fromOpaque(info).release()
             lock.lock(); _mode = .unavailable; lock.unlock()
@@ -178,10 +189,42 @@ public final class InputMonitor {
             done.signal()
         }
         t.name = "LazySpace.InputMonitor"
-        lock.lock(); tap = created; thread = t; finished = done; _mode = started; lock.unlock()
+        lock.lock(); tap = created; thread = t; finished = done; _mode = .mouseOnly; lock.unlock()
         t.start()
         _ = ready.wait(timeout: .now() + 2)
+        guard full, Self.keysDelivered(in: tapControl.tapList(), pid: getpid()) else { return .mouseOnly }
+        lock.lock(); defer { lock.unlock() }
+        if tap === created { _mode = .mouseAndKeyboard }
+        return _mode
+    }
+
+    /// Replaces the running tap with a new one, for when macOS may deliver keys now. The moment without a tap counts as input.
+    /// It drops a drag in progress, so the coordinator replaces only while no mouse button is held.
+    @discardableResult
+    public func replace() -> Mode {
+        stop()
+        let started = start()
+        noteObservationGap(sampling: tapControl.leftButtonDown)
         return started
+    }
+
+    /// Whether macOS delivers keys to this process's listen-only session tap, from the tap list. The pass-through tap is active and on the
+    /// annotated-session point, so it never matches. Only exactly one matching record that includes keyDown counts; an unreadable list,
+    /// no match, or several matches count as no keys.
+    static func keysDelivered(in taps: [CGEventTapInformation]?, pid: pid_t) -> Bool {
+        let ours = (taps ?? []).filter { $0.tappingProcess == pid && $0.options == .listenOnly && $0.tapPoint == .cgSessionEventTap }
+        guard ours.count == 1 else { return false }
+        return ours[0].eventsOfInterest & (CGEventMask(1) << CGEventMask(CGEventType.keyDown.rawValue)) != 0
+    }
+
+    /// Every event tap in the session with its effective mask; nil when macOS does not answer.
+    static func readTapList() -> [CGEventTapInformation]? {
+        var count: UInt32 = 0
+        guard CGGetEventTapList(0, nil, &count) == .success else { return nil }
+        var list = [CGEventTapInformation](repeating: CGEventTapInformation(), count: Int(count) + 4)
+        var filled: UInt32 = 0
+        guard CGGetEventTapList(UInt32(list.count), &list, &filled) == .success else { return nil }
+        return Array(list.prefix(Int(filled)))
     }
 
     /// Re-enables the tap if it stayed disabled (the disable notice never reached the callback). If that fails, stops and reports unobservable.
@@ -189,18 +232,49 @@ public final class InputMonitor {
     @discardableResult
     public func reviveIfDisabled() -> Bool {
         guard let tap = currentTap() else { return mode != .unavailable }
-        if CGEvent.tapIsEnabled(tap: tap) { return true }
-        CGEvent.tapEnable(tap: tap, enable: true)
-        guard CGEvent.tapIsEnabled(tap: tap) else { stop(); return false }
-        noteObservationGap(leftButtonDown: CGEventSource.buttonState(.combinedSessionState, button: .left))
-        return true
+        if tapControl.isEnabled(tap) { return true }
+        if recoverDisabled(tap) { return true }
+        // Replaced meanwhile: the new tap is not this one's failure.
+        guard currentTap() === tap else { return mode != .unavailable }
+        stop()
+        return false
+    }
+
+    /// Brings a disabled tap back. Under the lock that recording takes, and only while `tap` is still the current tap and still disabled,
+    /// the unobserved gap counts as input and the left button is matched to its state now; the tap is enabled only after that. So a release
+    /// delivered once the tap is enabled is never overwritten by this sample, a recovery the other path already finished changes nothing,
+    /// and two recoveries at once count twice at most. Returns whether the tap is enabled afterward; false for a tap that is no longer current.
+    func recoverDisabled(_ tap: CFMachPort) -> Bool {
+        lock.lock()
+        guard self.tap === tap else { lock.unlock(); return false }
+        if tapControl.isEnabled(tap) { lock.unlock(); return true }
+        _count += 1
+        _leftMouseDown = tapControl.leftButtonDown()
+        leftDragInProgress = false
+        lock.unlock()
+        tapControl.enable(tap)
+        return tapControl.isEnabled(tap)
+    }
+
+    /// The tap callback's work: a disable notice recovers the tap; anything else is recorded.
+    func handleTapEvent(_ type: CGEventType, event: CGEvent) {
+        if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+            if let tap = currentTap() { _ = recoverDisabled(tap) }
+        } else {
+            record(type, event: event)
+        }
+    }
+
+    func installForTesting(_ tap: CFMachPort, mode: Mode) {
+        lock.lock(); self.tap = tap; _mode = mode; lock.unlock()
     }
 
     /// Input during the unobserved gap is unknown: count it as input, match the left button to its current state, and drop any drag in progress.
-    func noteObservationGap(leftButtonDown: Bool) {
+    /// The button is sampled under the recording lock, so a release recorded after the sample is never overwritten by it.
+    func noteObservationGap(sampling leftButtonDown: () -> Bool) {
         lock.lock()
         _count += 1
-        _leftMouseDown = leftButtonDown
+        _leftMouseDown = leftButtonDown()
         leftDragInProgress = false
         lock.unlock()
     }
@@ -224,7 +298,7 @@ public final class InputMonitor {
         leftDragInProgress = false
         lock.unlock()
         if let oldTap {
-            CGEvent.tapEnable(tap: oldTap, enable: false)
+            tapControl.disable(oldTap)
             CFMachPortInvalidate(oldTap)
         }
         if let oldLoop { CFRunLoopStop(oldLoop) }
@@ -252,11 +326,7 @@ public final class InputMonitor {
                 guard let info,
                       let monitor = Unmanaged<TapContext>.fromOpaque(info).takeUnretainedValue().monitor
                 else { return Unmanaged.passUnretained(event) }
-                if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
-                    if let tap = monitor.currentTap() { CGEvent.tapEnable(tap: tap, enable: true) }
-                } else {
-                    monitor.record(type, event: event)
-                }
+                monitor.handleTapEvent(type, event: event)
                 return Unmanaged.passUnretained(event)
             },
             userInfo: info)

@@ -1068,6 +1068,66 @@
         }
       }
     },
+    "spaceControl.lazySpaceIsTurnedOffIn" : {
+      "comment" : "Arguments: 1 = `MacItem.inputMonitoring`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace ist unter „%@“ ausgeschaltet, daher kann es nicht erkennen, wann du Maus oder Tastatur benutzt, und macht nicht weiter."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace is turned off in %@, so it cannot tell when you use the mouse or keyboard, and will not continue."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace está desactivado en “%@”, así que no puede saber cuándo usas el ratón o el teclado, y no continuará."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace est désactivé dans « %@ » : il ne peut donc pas savoir quand vous utilisez la souris ou le clavier, et ne continuera pas."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」でLazySpaceがオフになっているため、マウスやキーボードの操作が分からず、操作しません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "‘%@’에서 LazySpace가 꺼져 있어 마우스나 키보드를 언제 사용하는지 알 수 없으므로 LazySpace가 작업을 계속하지 않습니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O LazySpace está desativado em “%@”, por isso ele não consegue saber quando você usa o mouse ou o teclado, e não vai continuar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace在“%@”中已关闭，无法得知你何时使用鼠标或键盘，因此不会继续。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LazySpace在「%@」中已關閉，無法得知你何時使用滑鼠或鍵盤，因此不會繼續。"
+          }
+        }
+      }
+    },
     "spaceControl.mouseAndKeyboardInputObservation" : {
       "extractionState" : "manual",
       "localizations" : {

@@ -54,14 +54,14 @@ MACOS_NAMES = {
     "autoRearrange": (EXTENSIONS / "DesktopSettings.appex/Contents/Resources/Localizable.loctable",
                       "Automatically rearrange Spaces based on most recent use"),
     "deviceControlAndDataAccess": (EXTENSIONS / "SecurityPrivacyExtension.appex/Contents/Resources/Localizable.loctable", "ACCESSIBILITY"),
-    "accessibility": (EXTENSIONS / "LockScreen.appex/Contents/Resources/Localizable.loctable", "Accessibility"),
+    "inputMonitoring": (EXTENSIONS / "SecurityPrivacyExtension.appex/Contents/Resources/Localizable.loctable", "LISTEN_EVENT"),
     "moveLeftASpace": (SHORTCUTS, "Move to previous space"),
     "moveRightASpace": (SHORTCUTS, "Move to next space"),
     "switchToDesktop3": (SHORTCUTS, "Switch to Space 3"),
 }
 # Copy entries filled from those names. switchToDesktop and desktop are templates with %@ for the number.
 COPY_ENTRIES = {
-    "copy.accessibility": "accessibility", "copy.deviceControlAndDataAccess": "deviceControlAndDataAccess",
+    "copy.deviceControlAndDataAccess": "deviceControlAndDataAccess", "copy.inputMonitoring": "inputMonitoring",
     "copy.loginItemsExtensions": "loginItemsExtensions", "copy.openAtLogin": "openAtLogin", "copy.stageManager": "stageManager",
     "copy.separateSpaces": "separateSpaces", "copy.moveLeftASpace": "moveLeftASpace", "copy.moveRightASpace": "moveRightASpace",
 }
@@ -280,8 +280,9 @@ def table(path):
 
 
 def macos_value(name, lang):
+    """Without soft hyphens: macOS 27.2 added one to German "Systemeinstellungen" as a hyphenation point, and LazySpace does not write them."""
     path, key = MACOS_NAMES[name]
-    return table(path)[TABLE_CODE.get(lang, lang)][key]
+    return table(path)[TABLE_CODE.get(lang, lang)][key].replace("\u00ad", "")
 
 
 # Names macOS writes only inside a Dock sentence: glossary id -> (Dock key, the name in each language). The glossary
@@ -387,8 +388,6 @@ def fixed(lang):
     glossary = load_glossary()
     names = glossary["macosNames"]
     values = {("Copy", key): unit(names[name][lang]) for key, name in COPY_ENTRIES.items()}
-    # Pre-15 "Login Items" cannot be read on macOS 27; the glossary keeps it.
-    values[("Copy", "copy.loginItems")] = unit(glossary["fixed"]["loginItems"][lang])
     switch = names["switchToDesktop3"][lang].replace("3", "%@", 1)
     if lang == "ko":
         # macOS varies the particle by the number's sound; after an unknown value Apple writes (으)로.

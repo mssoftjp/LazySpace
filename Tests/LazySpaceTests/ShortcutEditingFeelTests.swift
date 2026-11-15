@@ -450,7 +450,7 @@ final class ShortcutEditingFeelTests: XCTestCase {
     func testUnresolvedShortcutFailureStaysUntilRecovery() throws {
         try load(Config())
         try select(.keys)
-        let original = try String(contentsOf: coordinator.configURL)
+        let original = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         try "gap = 9\n".write(to: coordinator.configURL, atomically: true, encoding: .utf8)
         var table = try shortcutTable()
         selectShortcutRow(try XCTUnwrap(row(labeled: "Arrange This Space", in: table)), in: table)
@@ -676,8 +676,7 @@ final class ShortcutEditingFeelTests: XCTestCase {
         let point = view.convert(local, to: nil)
         let down = try XCTUnwrap(NSEvent.mouseEvent(with: .leftMouseDown, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber, context: nil, eventNumber: 1, clickCount: 1, pressure: 1), file: file, line: line)
         let up = try XCTUnwrap(NSEvent.mouseEvent(with: .leftMouseUp, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber, context: nil, eventNumber: 1, clickCount: 1, pressure: 1), file: file, line: line)
-        window.sendEvent(down)
-        window.sendEvent(up)
+        TestWindows.click(down, up, in: window)
         return ClickProbe(point: point, hit: "")
     }
 

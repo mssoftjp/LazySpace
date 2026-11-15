@@ -32,8 +32,8 @@ final class HookRunnerTests: XCTestCase {
         var problems: [String] = []
         HookRunner.run(["sh", "-c", "printf %s \"$LAZYSPACE_MODE\" > \"$OUT\""], environment: ["LAZYSPACE_MODE": "resize", "OUT": out]) { problems.append($0) }
         let deadline = Date().addingTimeInterval(5)
-        while (try? String(contentsOfFile: out)) != "resize", Date() < deadline { usleep(20_000) }
-        XCTAssertEqual(try String(contentsOfFile: out), "resize")
+        while (try? String(contentsOfFile: out, encoding: .utf8)) != "resize", Date() < deadline { usleep(20_000) }
+        XCTAssertEqual(try String(contentsOfFile: out, encoding: .utf8), "resize")
         XCTAssertEqual(problems, [])
     }
 

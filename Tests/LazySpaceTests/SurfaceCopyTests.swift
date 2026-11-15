@@ -156,11 +156,10 @@ final class SurfaceCopyTests: XCTestCase {
         var paused = crowded
         paused.paused = true
         XCTAssertEqual(StatusMenuCopy.topEntries(status: paused, spaceCount: 3, modeCount: 2).map(\.kind), [.globalPause, .settings, .status, .quit])
-        XCTAssertEqual(AccessPane.name(osMajor: 26), "Accessibility")
-        XCTAssertEqual(AccessPane.name(osMajor: 27), "Device Control and Data Access")
+        XCTAssertEqual(AccessPane.name(), "Device Control and Data Access")
+        XCTAssertEqual(MacItem.inputMonitoring, "Input Monitoring")
         XCTAssertEqual(MacItem.openAtLogin, "Open at Login")
-        XCTAssertEqual(MacItem.loginItems(osMajor: 14), "Login Items")
-        XCTAssertEqual(MacItem.loginItems(osMajor: 27), "Login Items & Extensions")
+        XCTAssertEqual(MacItem.loginItems(), "Login Items & Extensions")
         var untrusted = sampleStatus()
         untrusted.trusted = false
         let blocked = StatusMenuCopy.topEntries(status: untrusted, spaceCount: 1, modeCount: 1)

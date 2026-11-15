@@ -120,11 +120,11 @@ final class SettingsRefinementTests: XCTestCase {
         XCTAssertEqual(recording, [true, false])
         XCTAssertEqual(try messageText(), "")
 
-        let before = try String(contentsOf: coordinator.configURL)
+        let before = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         cell = try self.valueCell(command: "arrange")
         cell.onChange?()
         sendKey(53)
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), before)
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), before)
         XCTAssertEqual(coordinator.config.keys["arrange"], Config.defaultKeys["arrange"])
         XCTAssertEqual(try messageText(), "")
 
@@ -132,7 +132,7 @@ final class SettingsRefinementTests: XCTestCase {
         cell.onChange?()
         sendKey(51)
         XCTAssertNil(coordinator.config.keys["arrange"])
-        let removed = try String(contentsOf: coordinator.configURL)
+        let removed = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertTrue(removed.contains("arrange = \"none\""), removed)
         XCTAssertEqual(try messageText(), "")
         XCTAssertFalse(try messageText().contains("Not applied."))
@@ -168,7 +168,7 @@ final class SettingsRefinementTests: XCTestCase {
         cell.onRemove?()
         XCTAssertFalse(try messageText().contains("Removed the shortcut"))
         XCTAssertEqual(coordinator.config.keys["arrange"], active.keys["arrange"])
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), "gap = 9\n")
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), "gap = 9\n")
         let recovery = try XCTUnwrap(views().compactMap { $0 as? NSTextField }.first { $0.accessibilityLabel() == "Settings Recovery" })
         XCTAssertFalse(recovery.stringValue.isEmpty)
 
@@ -180,7 +180,7 @@ final class SettingsRefinementTests: XCTestCase {
         sendKey(117)
         XCTAssertFalse(try messageText().contains("Removed the shortcut"))
         XCTAssertEqual(coordinator.config.keys["integrate"], recorded.keys["integrate"])
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), "gap = 4\n")
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), "gap = 4\n")
     }
 
     func testClickingTheShortcutTextReachesTheCell() throws {

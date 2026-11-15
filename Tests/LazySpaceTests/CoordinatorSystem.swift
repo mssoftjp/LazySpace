@@ -12,8 +12,23 @@ final class CoordinatorSystem: CoordinatorWindowSystem {
     var mouseButtonDown: Bool { input.leftMouseDown }
     var trusted = true
     var axTrusted: Bool { trusted }
-    var inputAvailable = true
+    var inputMode: InputMonitor.Mode = .mouseAndKeyboard
+    var inputAvailable: Bool {
+        get { inputMode != .unavailable }
+        set { inputMode = newValue ? .mouseAndKeyboard : .unavailable }
+    }
     var inputObservationAvailable: Bool { inputAvailable }
+    var listenAccess = true
+    private(set) var listenAccessReads = 0
+    var listenAccessGranted: Bool { listenAccessReads += 1; return listenAccess }
+    /// `replacing` of every start, in order. The mode becomes `startResult` when it is set, and does not change otherwise.
+    private(set) var inputStarts: [Bool] = []
+    var startResult: InputMonitor.Mode?
+    func startInput(replacing: Bool) -> InputMonitor.Mode {
+        inputStarts.append(replacing)
+        if let startResult { inputMode = startResult }
+        return inputMode
+    }
     var stageManagerOn = false
     var displaysShareOneSpace = false
     var anyMouseButtonHeld = false

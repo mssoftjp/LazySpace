@@ -424,6 +424,8 @@ public final class SpaceControl {
     private let spaces: SpaceObserving
     private let inputCount: () -> UInt64
     private let inputAvailable: () -> Bool
+    /// Accessibility granted and listening refused: switched off in Input Monitoring. Read only when refusing, because the read is slow.
+    private let inputMonitoringOff: () -> Bool
     private let now: () -> Date
     private let sleep: (TimeInterval) -> Void
     private let cursorPosition: () -> CGPoint
@@ -442,6 +444,7 @@ public final class SpaceControl {
         // Start reading the copy of the front app on the creating (main) thread; notifications update it, and the operations queue reads it under a lock.
         _ = FrontmostApplication.shared
         self.init(spaces: spaces, inputCount: { input.count }, inputAvailable: { input.mode == .mouseAndKeyboard },
+                  inputMonitoringOff: { AXIsProcessTrusted() && !CGPreflightListenEventAccess() },
                   hotkey: { PrivateSymbols.symbolicHotKey($0) },
                   commandConflicts: { code, flags in input.matchesCommand(keyCode: Int64(code), flags: flags) },
                   passThroughTap: SystemPassThroughTap())
@@ -450,6 +453,7 @@ public final class SpaceControl {
     /// Tests replace observation, clock, event posting, and hotkey reads, and issue no real input.
     init(spaces: SpaceObserving, inputCount: @escaping () -> UInt64,
          inputAvailable: @escaping () -> Bool = { true },
+         inputMonitoringOff: @escaping () -> Bool = { false },
          now: @escaping () -> Date = Date.init,
          sleep: @escaping (TimeInterval) -> Void = { Thread.sleep(forTimeInterval: $0) },
          cursorPosition: @escaping () -> CGPoint = { CGEvent(source: nil)?.location ?? .zero },
@@ -463,6 +467,7 @@ public final class SpaceControl {
         self.spaces = spaces
         self.inputCount = inputCount
         self.inputAvailable = inputAvailable
+        self.inputMonitoringOff = inputMonitoringOff
         self.now = now
         self.sleep = sleep
         self.cursorPosition = cursorPosition
@@ -587,7 +592,7 @@ public final class SpaceControl {
         let steps = stepPlan(from: active, to: target)
         guard steps != nil || record(of: target) != nil else { return .failure(.noSuchSpace) }
         let baseline = inputCount()
-        guard inputAvailable() else { return .failure(.unavailable(L(.spaceControlMouseAndKeyboardInputObservation))) }
+        guard inputAvailable() else { return .failure(.unavailable(inputRefusal())) }
         // This one baseline decides interruption across candidate search, activation, settle waits, and stepping.
         let canContinue = { self.inputAvailable() && shouldContinue() && self.inputCount() == baseline }
         let gates = Gates(canContinue: canContinue)
@@ -1070,6 +1075,11 @@ public final class SpaceControl {
     /// Whether the bridged move is available (`move-to-space` without follow is refused without it; dragging switches Spaces, so it is no substitute).
     public var canSendWithoutFollowing: Bool { direct?.move != nil }
 
+    /// Why Space control refuses without mouse and keyboard observation: Input Monitoring when that is the cause, else the general reason.
+    private func inputRefusal() -> String {
+        inputMonitoringOff() ? L(.spaceControlLazySpaceIsTurnedOffIn(MacItem.inputMonitoring)) : L(.spaceControlMouseAndKeyboardInputObservation)
+    }
+
     /// Changes only the window's membership, without switching (no follow) or activation. After issuing, waits up to 1 s for membership to become only the target.
     /// Gates are split around issuing: `beforeIssue` right before issuing (may include being on the source Space), `afterIssue` while waiting afterward
     /// (input, cancellation, pause; the source Space is not required). If macOS changes the current Space while waiting, it is not an interruption (the caller observes and reports it, without reverting).
@@ -1089,7 +1099,7 @@ public final class SpaceControl {
         guard let entry = record(of: target) else { return .notIssued(.noSuchSpace) }
         guard entry.type == 0 else { return .notIssued(.unavailable(L(.spaceControlAWindowCanBeSent))) }
         guard spaces.spaces(for: wid) == [active] else { return .notIssued(.unavailable(L(.spaceControlTheWindowMovedToA))) }
-        guard inputAvailable() else { return .notIssued(.unavailable(L(.spaceControlMouseAndKeyboardInputObservation))) }
+        guard inputAvailable() else { return .notIssued(.unavailable(inputRefusal())) }
         let inputQuiet = { self.inputAvailable() && self.inputCount() == baseline }
         let canContinue = { inputQuiet() && afterIssue() }
         // Right before issuing, the cheap gates and the current Space once more.
@@ -1152,7 +1162,7 @@ public final class SpaceControl {
 
         // Interruption conditions are the same on both paths: input observation available, caller authorization holds, no user input.
         let baseline = inputCount()
-        guard inputAvailable() else { return .failure(.unavailable(L(.spaceControlMouseAndKeyboardInputObservation))) }
+        guard inputAvailable() else { return .failure(.unavailable(inputRefusal())) }
         let canContinue = { self.inputAvailable() && shouldContinue() && self.inputCount() == baseline }
         let gates = Gates(canContinue: canContinue)
 

@@ -3,7 +3,7 @@ import Copy
 import Settings
 
 /// Shows the current mode's keys while a modifier is held. Never takes focus.
-/// Backed by the system glass on macOS 26 and later, and by the popover material before that.
+/// Backed by the system glass.
 final class KeyCheatsheet {
     private let panel = NSPanel(
         contentRect: NSRect(x: 0, y: 0, width: 360, height: 280),
@@ -201,24 +201,11 @@ final class KeyCheatsheet {
 
     private func install(_ root: NSView, size: NSSize) {
         root.frame = NSRect(origin: .zero, size: size)
-        if #available(macOS 26.0, *) {
-            let glass = NSGlassEffectView(frame: root.frame)
-            glass.style = .regular
-            glass.cornerRadius = Self.cornerRadius
-            glass.contentView = root
-            panel.contentView = glass
-        } else {
-            let effect = NSVisualEffectView(frame: root.frame)
-            effect.material = .popover
-            effect.blendingMode = .behindWindow
-            effect.state = .active
-            effect.wantsLayer = true
-            effect.layer?.cornerRadius = Self.cornerRadius
-            effect.layer?.masksToBounds = true
-            effect.autoresizesSubviews = true
-            effect.addSubview(root)
-            panel.contentView = effect
-        }
+        let glass = NSGlassEffectView(frame: root.frame)
+        glass.style = .regular
+        glass.cornerRadius = Self.cornerRadius
+        glass.contentView = root
+        panel.contentView = glass
     }
 }
 

@@ -11,6 +11,12 @@ protocol CoordinatorWindowSystem: WindowSystem {
     var spaceObservationAvailable: Bool { get }
     /// Whether input can be observed. Without it, collisions between user actions and automatic arrangement cannot be prevented.
     var inputObservationAvailable: Bool { get }
+    /// What input observation sees now.
+    var inputMode: InputMonitor.Mode { get }
+    /// Whether macOS lets LazySpace listen to input (`CGPreflightListenEventAccess`; a slow read, so never per tick).
+    var listenAccessGranted: Bool { get }
+    /// Starts input observation if it is not running, or replaces the running tap.
+    func startInput(replacing: Bool) -> InputMonitor.Mode
     /// Work area of the display showing the current Space.
     func currentWorkArea() -> CGRect
     /// Title of one observed window, without querying every app.
@@ -81,6 +87,8 @@ extension CoordinatorWindowSystem {
 
 /// Why automatic arrangement is off. Stable across languages; the text comes from `Coordinator.AutoGate.reason(for:)`.
 enum AutoGateCause: Equatable {
+    /// The tap was refused while Accessibility is granted and macOS does not let LazySpace listen: switched off in Input Monitoring.
+    case inputMonitoringOff
     case inputUnobservable
     case configUnapplied
     case stageManager
@@ -89,6 +97,9 @@ enum AutoGateCause: Equatable {
 
 extension MacWindowSystem: CoordinatorWindowSystem {
     var inputObservationAvailable: Bool { input.mode != .unavailable }
+    var inputMode: InputMonitor.Mode { input.mode }
+    var listenAccessGranted: Bool { CGPreflightListenEventAccess() }
+    func startInput(replacing: Bool) -> InputMonitor.Mode { replacing ? input.replace() : input.start() }
     var stageManagerOn: Bool {
         (CFPreferencesCopyAppValue("GloballyEnabled" as CFString, "com.apple.WindowManager" as CFString) as? Bool) ?? false
     }
@@ -105,6 +116,7 @@ extension MacWindowSystem: CoordinatorWindowSystem {
 enum AutoUnavailableCause: String, CaseIterable {
     case accessibility
     case spaceObservation
+    case inputMonitoring
     case inputObservation
     case configNotApplied
     case stageManager
@@ -112,6 +124,7 @@ enum AutoUnavailableCause: String, CaseIterable {
 
     init(_ gate: AutoGateCause) {
         switch gate {
+        case .inputMonitoringOff: self = .inputMonitoring
         case .inputUnobservable: self = .inputObservation
         case .configUnapplied: self = .configNotApplied
         case .stageManager: self = .stageManager
@@ -427,6 +440,12 @@ final class Coordinator {
     private var servicesStarted = false
     /// When input observation was last restarted. If launched before permission, it is recreated after permission is granted.
     private var lastInputRestart = Date.distantPast
+    /// Whether macOS lets LazySpace listen, kept while input is not fully observed; nil when not read yet, or dropped. Under `lock`.
+    private var listenAccess: Bool?
+    private var lastListenRead: Date?
+    /// When a mouse-only tap is next replaced, and the wait after that (5 s doubling to 5 minutes). Operations queue.
+    private var nextInputReplace: Date?
+    private var inputReplaceDelay: TimeInterval = 5
     /// When the current Space was reached. Right after arriving or while passing through, arrival is no reason to move windows.
     private var spaceArrivedAt = Date.distantPast
     let arrivalDwell: TimeInterval = 1.0
@@ -1004,8 +1023,10 @@ final class Coordinator {
 
         static func reason(for cause: AutoGateCause) -> String {
             switch cause {
+            case .inputMonitoringOff:
+                L(.coordinatorAutomaticArrangementIsOffBecauseInputMonitoring(MacItem.inputMonitoring, MacItem.inputMonitoring))
             case .inputUnobservable:
-                L(.coordinatorAutomaticArrangementIsOffBecause(AccessPane.name()))
+                L(.coordinatorAutomaticArrangementIsOffBecauseInputCannot)
             case .configUnapplied:
                 L(.coordinatorAutomaticArrangementIsOffBecauseThe)
             case .stageManager:
@@ -1018,12 +1039,14 @@ final class Coordinator {
 
     /// Automatic arrangement is available when input can be observed, on top of Accessibility and Space observation (the manual arrangement conditions). Exclusions come from rules.
     func autoGate() -> AutoGate {
-        lock.lock(); let unapplied = unappliedSinceLaunch; lock.unlock()
-        return AutoGate(cause: gateCause(unapplied: unapplied))
+        lock.lock(); let unapplied = unappliedSinceLaunch; let listening = listenAccess; lock.unlock()
+        return AutoGate(cause: gateCause(unapplied: unapplied, listening: listening))
     }
 
-    private func gateCause(unapplied: Bool) -> AutoGateCause? {
-        guard system.inputObservationAvailable else { return .inputUnobservable }
+    private func gateCause(unapplied: Bool, listening: Bool?) -> AutoGateCause? {
+        guard system.inputObservationAvailable else {
+            return listening == false && system.axTrusted && system.inputMode == .unavailable ? .inputMonitoringOff : .inputUnobservable
+        }
         guard !unapplied else { return .configUnapplied }
         if system.stageManagerOn { return .stageManager }
         if system.displaysShareOneSpace { return .sharedSpaces }
@@ -1040,13 +1063,14 @@ final class Coordinator {
         let notify = config.notifications.needsAttention
         let broken = configError != nil
         let unapplied = unappliedSinceLaunch
+        let listening = listenAccess
         lock.unlock()
         let trusted = system.axTrusted
         if trusted { everTrusted = true }
         if !trusted, everTrusted { return (.accessibility, notify) }
         if broken { return (.configuration, notify) }
         guard trusted else { return (nil, notify) }
-        return (gateCause(unapplied: unapplied).map(AttentionReason.automaticArrangement), notify)
+        return (gateCause(unapplied: unapplied, listening: listening).map(AttentionReason.automaticArrangement), notify)
     }
 
     /// Publishes the problem and the checkbox when either changed. Operations queue.
@@ -1166,7 +1190,7 @@ final class Coordinator {
             autoAvailable: autoOK, autoReason: manual ? gate.reason : manualReason, autoUnavailableCause: autoCause?.rawValue,
             currentSpaceManaged: managed,
             trusted: trusted, spaceObservation: spaceOK,
-            inputObservation: system.input.mode.rawValue,
+            inputObservation: system.inputMode.rawValue,
             paused: paused, progress: progress,
             progressText: busy ? (paused ? L(.coordinatorPausingCheckingWindowsThatHad) : progressText) : "",
             waiting: (waitingBySpace[spaceKey] ?? []).sorted(),
@@ -3322,10 +3346,12 @@ final class Coordinator {
         if trusted { everTrusted = true }
         guard trusted != lastTrusted else { return }
         lastTrusted = trusted
+        // An answer read under the other trust state says nothing about this one.
+        dropListenAccess()
         if servicesStarted {
             if trusted {
                 lastInputRestart = Date()
-                _ = system.input.start()
+                _ = system.startInput(replacing: false)
             } else {
                 system.input.stop()
             }
@@ -3334,6 +3360,53 @@ final class Coordinator {
             self.onTrustChange?(trusted)
             self.onChange?()
         }
+    }
+
+    /// Keeps whether macOS lets LazySpace listen while input is not fully observed (at once, then at most every 5 s), and creates the tap
+    /// again: every 5 s while unavailable; while mouse only and listening is allowed, at once and then after a growing wait (5 s doubling to
+    /// 5 minutes), started over when the answer turns true again, and never while a mouse button is held (replacing drops a drag in progress).
+    /// With mouse and keyboard observed, nothing is read and the answer is dropped, including right after a start that brings them back.
+    func refreshInputObservation(now: Date = Date()) {
+        let mode = system.inputMode
+        guard mode != .mouseAndKeyboard else {
+            dropListenAccess()
+            nextInputReplace = nil
+            inputReplaceDelay = 5
+            return
+        }
+        lock.lock()
+        let readDue = lastListenRead.map { now.timeIntervalSince($0) >= 5 } ?? true
+        var granted = listenAccess
+        lock.unlock()
+        if readDue {
+            let answer = system.listenAccessGranted
+            if answer, granted != true { nextInputReplace = now; inputReplaceDelay = 5 }
+            granted = answer
+            lock.lock(); listenAccess = answer; lastListenRead = now; lock.unlock()
+        }
+        let started: InputMonitor.Mode
+        switch mode {
+        case .unavailable:
+            guard now.timeIntervalSince(lastInputRestart) >= 5 else { return }
+            lastInputRestart = now
+            started = system.startInput(replacing: false)
+        case .mouseOnly:
+            guard granted == true, let due = nextInputReplace, now >= due, !system.anyMouseButtonHeld, !system.mouseButtonDown else { return }
+            nextInputReplace = now.addingTimeInterval(inputReplaceDelay)
+            inputReplaceDelay = min(inputReplaceDelay * 2, 300)
+            started = system.startInput(replacing: true)
+        case .mouseAndKeyboard:
+            return
+        }
+        if started == .mouseAndKeyboard {
+            dropListenAccess()
+            nextInputReplace = nil
+            inputReplaceDelay = 5
+        }
+    }
+
+    private func dropListenAccess() {
+        lock.lock(); listenAccess = nil; lastListenRead = nil; lock.unlock()
     }
 
     // MARK: - Auto loop
@@ -3512,12 +3585,11 @@ final class Coordinator {
         // Recheck membership of windows from sends with uncertain results (no writes; only whether to lift the exclusion).
         reconcileHolds()
 
-        guard system.axTrusted else { baseline = nil; lastSeen = nil; publishFocusFrame(nil); return }
+        guard system.axTrusted else { dropListenAccess(); baseline = nil; lastSeen = nil; publishFocusFrame(nil); return }
         // A disabled tap may not notify its callback; check every time, and if it cannot be re-enabled, recreate it as unobservable.
-        if servicesStarted { system.input.reviveIfDisabled() }
-        if servicesStarted, !system.inputObservationAvailable, Date().timeIntervalSince(lastInputRestart) >= 5 {
-            lastInputRestart = Date()
-            _ = system.input.start()
+        if servicesStarted {
+            system.input.reviveIfDisabled()
+            refreshInputObservation()
         }
         let settledOnSpace = Date().timeIntervalSince(spaceArrivedAt) >= arrivalDwell
 

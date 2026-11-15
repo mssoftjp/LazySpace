@@ -72,6 +72,7 @@ private final class SpaceHarness {
     var time = Date(timeIntervalSince1970: 0)
     var inputs: UInt64 = 0
     var inputAvailable = true
+    var inputMonitoringOff = false
     var allowed = true
     var events: [CGEvent] = []
     /// Keys at the moment of posting; modifiers become flagsChanged.
@@ -101,7 +102,7 @@ private final class SpaceHarness {
     /// The pass-through tap, ready by default (every hotkey post goes through it).
     lazy var tap = StubPassThroughTap(now: { self.time })
     let cursor = CGPoint(x: 900, y: 600)
-    lazy var control = SpaceControl(spaces: spaces, inputCount: { self.inputs }, inputAvailable: { self.inputAvailable }, now: { self.time },
+    lazy var control = SpaceControl(spaces: spaces, inputCount: { self.inputs }, inputAvailable: { self.inputAvailable }, inputMonitoringOff: { self.inputMonitoringOff }, now: { self.time },
         sleep: { self.time.addTimeInterval($0); self.onSleep?($0) }, cursorPosition: { self.cursor },
         warpCursor: { self.warps.append($0) }, postEvent: { event in
             self.events.append(event)
@@ -123,7 +124,7 @@ private final class SpaceHarness {
     static let ownPID: pid_t = 600
     /// A control with the same replacements but a different observer.
     func control(with observer: SpaceObserving) -> SpaceControl {
-        SpaceControl(spaces: observer, inputCount: { self.inputs }, inputAvailable: { self.inputAvailable }, now: { self.time },
+        SpaceControl(spaces: observer, inputCount: { self.inputs }, inputAvailable: { self.inputAvailable }, inputMonitoringOff: { self.inputMonitoringOff }, now: { self.time },
                      sleep: { self.time.addTimeInterval($0); self.onSleep?($0) }, cursorPosition: { self.cursor },
                      warpCursor: { self.warps.append($0) }, postEvent: { self.events.append($0) },
                      hotkey: { id in self.hotkeyReads.append(id); return self.hotkey(id) }, commandConflicts: { _, _ in false }, frontmostPID: { self.frontmost },
@@ -2488,6 +2489,19 @@ final class SpaceControlTests: XCTestCase {
         guard case .failure(.unavailable) = h.control.switchTo(spaceID: 2) else { return XCTFail("Switch proceeded without input monitoring") }
         XCTAssertTrue(h.events.isEmpty)
         XCTAssertTrue(h.warps.isEmpty)
+    }
+
+    /// The refusal names Input Monitoring only when that is the cause (Accessibility granted, listening refused).
+    func testTheRefusalNamesInputMonitoringWhenItIsSwitchedOff() {
+        let h = SpaceHarness(); h.inputAvailable = false
+        guard case .failure(.unavailable(let general)) = h.control.switchTo(spaceID: 2) else { return XCTFail() }
+        XCTAssertEqual(general, "Mouse and keyboard input observation is unavailable, so LazySpace will not continue.")
+        h.inputMonitoringOff = true
+        guard case .failure(.unavailable(let named)) = h.control.switchTo(spaceID: 2) else { return XCTFail() }
+        XCTAssertEqual(named, "LazySpace is turned off in Input Monitoring, so it cannot tell when you use the mouse or keyboard, and will not continue.")
+        guard case .failure(.unavailable(let moved)) = h.move() else { return XCTFail() }
+        XCTAssertEqual(moved, named)
+        XCTAssertTrue(h.events.isEmpty)
     }
 
     func testMonitoringLossDuringDragReleasesMouse() {

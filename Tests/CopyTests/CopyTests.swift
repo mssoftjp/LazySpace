@@ -97,12 +97,14 @@ final class CopyTests: XCTestCase {
     }()
 
     /// A value from one of macOS's own tables: a .loctable keyed by language, or the Dock's per-language .strings (`<lproj>`).
+    /// Without soft hyphens: macOS 27.2 added one to German "Systemeinstellungen" as a hyphenation point, and LazySpace does not write them.
     static func macOSValue(_ path: String, _ key: String, _ language: Language) -> String? {
         let codes = glossary["tableCodes"] as? [String: String] ?? [:]
         let code = codes[language.rawValue] ?? language.rawValue
         guard let data = FileManager.default.contents(atPath: path.replacingOccurrences(of: "<lproj>", with: code)),
               let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else { return nil }
-        return path.contains("<lproj>") ? plist[key] as? String : (plist[code] as? [String: Any])?[key] as? String
+        let value = path.contains("<lproj>") ? plist[key] as? String : (plist[code] as? [String: Any])?[key] as? String
+        return value?.replacingOccurrences(of: "\u{AD}", with: "")
     }
 
     /// Every macOS name LazySpace writes reads as macOS 27 shows it, in every shipped language, compared with macOS's own
@@ -129,10 +131,10 @@ final class CopyTests: XCTestCase {
             XCTAssertEqual(MacItem.moveSpace(right: false), table("moveLeftASpace"), lang)
             XCTAssertEqual(MacItem.stageManager, table("stageManager"), lang)
             XCTAssertEqual(MacItem.openAtLogin, table("openAtLogin"), lang)
-            XCTAssertEqual(MacItem.loginItems(osMajor: 15), table("loginItemsExtensions"), lang)
+            XCTAssertEqual(MacItem.loginItems(), table("loginItemsExtensions"), lang)
             XCTAssertEqual(MacItem.separateSpaces, table("separateSpaces"), lang)
-            XCTAssertEqual(AccessPane.name(osMajor: 27), table("deviceControlAndDataAccess"), lang)
-            XCTAssertEqual(AccessPane.name(osMajor: 26), table("accessibility"), lang)
+            XCTAssertEqual(AccessPane.name(), table("deviceControlAndDataAccess"), lang)
+            XCTAssertEqual(MacItem.inputMonitoring, table("inputMonitoring"), lang)
             for number in [1, 3, 10] {
                 XCTAssertEqual(Copy.desktop(number), table("desktop")?.replacingOccurrences(of: "%@", with: String(number)), lang)
             }

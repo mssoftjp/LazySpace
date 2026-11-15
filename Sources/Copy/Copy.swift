@@ -65,13 +65,9 @@ public enum Copy {
     }
 }
 
-/// The System Settings pane that grants window control. Renamed from "Accessibility" in macOS 27.
+/// The System Settings pane that grants window control.
 public enum AccessPane {
-    public static func name(osMajor: Int = ProcessInfo.processInfo.operatingSystemVersion.majorVersion) -> String {
-        osMajor >= 27
-            ? L(.copyDeviceControlAndDataAccess)
-            : L(.copyAccessibility)
-    }
+    public static func name() -> String { L(.copyDeviceControlAndDataAccess) }
 }
 
 /// macOS item names as shown in macOS 27.0, without quotes.
@@ -91,13 +87,14 @@ public enum MacItem {
     /// The login item switch. LazySpace's own setting uses the same words.
     public static var openAtLogin: String { L(.copyOpenAtLogin) }
 
-    /// System Settings › General pane, renamed from "Login Items" in macOS 15.
-    public static func loginItems(osMajor: Int = ProcessInfo.processInfo.operatingSystemVersion.majorVersion) -> String {
-        osMajor >= 15 ? L(.copyLoginItemsExtensions) : L(.copyLoginItems)
-    }
+    /// The System Settings › General pane for login items.
+    public static func loginItems() -> String { L(.copyLoginItemsExtensions) }
 
     /// The Mission Control option.
     public static var separateSpaces: String { L(.copySeparateSpaces) }
+
+    /// The Privacy & Security pane LazySpace never asks for; an entry switched off there refuses input observation.
+    public static var inputMonitoring: String { L(.copyInputMonitoring) }
 }
 
 extension Copy {

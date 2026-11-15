@@ -12,7 +12,7 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
     private let readLive: () -> WindowInspectLive
     private let markReady: () -> Void
     private let openGeneralSettings: () -> Void
-    private let openAccessSettings: () -> Void
+    private let openInputMonitoringSettings: () -> Void
 
     private let spaceHeading = NSTextField(labelWithString: "")
     private let updatedLabel = NSTextField(labelWithString: "")
@@ -59,20 +59,20 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
             readLive: { Self.live(from: Coordinator.shared) },
             markReady: { Coordinator.shared.markFirstLaunchDone() },
             openGeneralSettings: openGeneralSettings,
-            openAccessSettings: { AXTrust.openSystemSettings() })
+            openInputMonitoringSettings: { AXTrust.openInputMonitoringSettings() })
     }
 
     init(loadInspection: @escaping (@escaping (Inspection) -> Void) -> Void,
          readLive: @escaping () -> WindowInspectLive,
          markReady: @escaping () -> Void,
          openGeneralSettings: @escaping () -> Void,
-         openAccessSettings: @escaping () -> Void,
+         openInputMonitoringSettings: @escaping () -> Void,
          scrollerStyle: NSScroller.Style = NSScroller.preferredScrollerStyle) {
         self.loadInspection = loadInspection
         self.readLive = readLive
         self.markReady = markReady
         self.openGeneralSettings = openGeneralSettings
-        self.openAccessSettings = openAccessSettings
+        self.openInputMonitoringSettings = openInputMonitoringSettings
         self.scrollerStyle = scrollerStyle
         // Scroll bars that are always shown take their width from the table; open that much wider so the columns are
         // the same as with overlay scroll bars.
@@ -420,17 +420,18 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
             title: Self.remediationSheetTitle,
             body: Self.remediationDetail(status),
             choices: choices,
-            on: window) { [weak self] kind in
-                guard let self else { return }
-                switch kind {
-                case .close:
-                    break
-                case .openGeneralSettings:
-                    self.openGeneralSettings()
-                case .openSettings:
-                    self.openAccessSettings()
-                }
-            }
+            on: window) { [weak self] kind in self?.performRemediation(kind) }
+    }
+
+    func performRemediation(_ kind: DetailSheet.Choice.Kind) {
+        switch kind {
+        case .close:
+            break
+        case .openGeneralSettings:
+            openGeneralSettings()
+        case .openInputMonitoringSettings:
+            openInputMonitoringSettings()
+        }
     }
 
     func visibleRows() -> [(app: String, eligibility: String)] {

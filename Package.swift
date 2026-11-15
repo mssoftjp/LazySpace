@@ -5,7 +5,7 @@ let package = Package(
     name: "LazySpace",
     // Every module's String Catalog uses English as its source language.
     defaultLocalization: "en",
-    platforms: [.macOS(.v14)],
+    platforms: [.macOS("27.0")],
     dependencies: [
         // Update checks and installation for the distributed app.
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.10.0"),

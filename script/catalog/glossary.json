@@ -34,17 +34,6 @@
       "zh-Hans": "",
       "zh-Hant": ""
     },
-    "loginItems": {
-      "de": "Anmeldeobjekte",
-      "en": "Login Items",
-      "es": "Ítems de inicio",
-      "fr": "Ouverture",
-      "ja": "ログイン項目",
-      "ko": "로그인 항목",
-      "pt-BR": "Itens de Início de Sessão",
-      "zh-Hans": "登录项",
-      "zh-Hant": "登入項目"
-    },
     "settings.labelColon": {
       "de": "%@:",
       "en": "%@:",
@@ -56,9 +45,6 @@
       "zh-Hans": "%@：",
       "zh-Hant": "%@："
     }
-  },
-  "fixedNotes": {
-    "loginItems": "The pane's name before macOS 15. Not readable on macOS 27; taken from the current name without its second part."
   },
   "forbidden": {
     "ko": [
@@ -105,17 +91,6 @@
     "splitView"
   ],
   "macosNames": {
-    "accessibility": {
-      "de": "Bedienungshilfen",
-      "en": "Accessibility",
-      "es": "Accesibilidad",
-      "fr": "Accessibilité",
-      "ja": "アクセシビリティ",
-      "ko": "손쉬운 사용",
-      "pt-BR": "Acessibilidade",
-      "zh-Hans": "无障碍",
-      "zh-Hant": "輔助使用"
-    },
     "autoRearrange": {
       "de": "Spaces automatisch anhand der letzten Verwendung ausrichten",
       "en": "Automatically rearrange Spaces based on most recent use",
@@ -170,6 +145,17 @@
       "pt-BR": "Geral",
       "zh-Hans": "通用",
       "zh-Hant": "一般"
+    },
+    "inputMonitoring": {
+      "de": "Eingabeüberwachung",
+      "en": "Input Monitoring",
+      "es": "Monitorización de los dispositivos de entrada",
+      "fr": "Surveillance de l’entrée",
+      "ja": "入力監視",
+      "ko": "입력 모니터링",
+      "pt-BR": "Monitoração de Entrada",
+      "zh-Hans": "输入监控",
+      "zh-Hant": "輸入監控"
     },
     "keyboard": {
       "de": "Tastatur",
@@ -327,10 +313,6 @@
     }
   },
   "macosSources": {
-    "accessibility": [
-      "/System/Library/ExtensionKit/Extensions/LockScreen.appex/Contents/Resources/Localizable.loctable",
-      "Accessibility"
-    ],
     "autoRearrange": [
       "/System/Library/ExtensionKit/Extensions/DesktopSettings.appex/Contents/Resources/Localizable.loctable",
       "Automatically rearrange Spaces based on most recent use"
@@ -350,6 +332,10 @@
     "general": [
       "/System/Applications/System Settings.app/Contents/Resources/Localizable.loctable",
       "General"
+    ],
+    "inputMonitoring": [
+      "/System/Library/ExtensionKit/Extensions/SecurityPrivacyExtension.appex/Contents/Resources/Localizable.loctable",
+      "LISTEN_EVENT"
     ],
     "keyboard": [
       "/System/Applications/System Settings.app/Contents/Resources/Localizable.loctable",

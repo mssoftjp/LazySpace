@@ -56,6 +56,7 @@ extension ReadyWindowController {
         guard showsRemediation(status) else { return nil }
         if !status.trusted { return accessibilityShort }
         if !status.spaceObservation || !status.manualAvailable { return spaceShort }
+        if inputMonitoringOff(status) { return L(.windowListInputMonitoringShort(MacItem.inputMonitoring)) }
         if status.inputObservation == InputMonitor.Mode.unavailable.rawValue { return inputShort }
         // The configuration file, Stage Manager, and display setup reuse the sentence that explains why automatic arrangement stopped.
         return status.autoReason
@@ -65,8 +66,10 @@ extension ReadyWindowController {
         var choices = [DetailSheet.closeChoice]
         if !status.trusted {
             choices.append(DetailSheet.Choice(kind: .openGeneralSettings, title: L(.windowListOpenGeneralSettings)))
+        } else if inputMonitoringOff(status) {
+            choices.append(DetailSheet.Choice(kind: .openInputMonitoringSettings, title: L(.windowListOpenAppSettings(MacItem.inputMonitoring))))
         } else if status.inputObservation == InputMonitor.Mode.unavailable.rawValue {
-            choices.append(DetailSheet.Choice(kind: .openSettings, title: L(.windowListOpenAppSettings(AccessPane.name()))))
+            // The cause is unknown and LazySpace keeps trying, so there is no setting to open.
         } else if status.configError != nil {
             choices.append(DetailSheet.Choice(kind: .openGeneralSettings, title: L(.windowListOpenSettings)))
         }
@@ -80,10 +83,15 @@ extension ReadyWindowController {
         if !status.spaceObservation || !status.manualAvailable {
             return L(.windowListTheCurrentSpaceCantBe)
         }
-        if status.inputObservation == InputMonitor.Mode.unavailable.rawValue {
-            return L(.windowListInputObservationIsUnavailableSo(AccessPane.name()))
+        if inputMonitoringOff(status) {
+            return L(.windowListLazySpaceIsTurnedOffIn(MacItem.inputMonitoring, MacItem.inputMonitoring))
         }
         return status.autoReason
+    }
+
+    /// LazySpace is switched off in Input Monitoring, so input observation was refused.
+    static func inputMonitoringOff(_ status: AppStatus) -> Bool {
+        status.autoUnavailableCause == AutoUnavailableCause.inputMonitoring.rawValue
     }
 
     /// Only an unfinished recent operation, never a Space move, and not after 30 minutes even while managed.

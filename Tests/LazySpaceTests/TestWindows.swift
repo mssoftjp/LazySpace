@@ -11,6 +11,19 @@ enum TestWindows {
         window.animationBehavior = .none
     }
 
+    /// Delivers a synthesized click as Settings, which is key, receives it. A test window never becomes key (the test app does
+    /// not activate), and since macOS 27.2 a single click on a table in a window that is not key only focuses the table; in
+    /// Settings the same click also selects the row. So for a single click on a table
+    /// in a window that is not key, the clicked row is selected as the key window would select it.
+    static func click(_ down: NSEvent, _ up: NSEvent, in window: NSWindow) {
+        let hit = window.contentView.flatMap { $0.hitTest($0.superview?.convert(down.locationInWindow, from: nil) ?? down.locationInWindow) }
+        window.sendEvent(down)
+        window.sendEvent(up)
+        guard !window.isKeyWindow, down.clickCount == 1, let table = hit as? NSTableView else { return }
+        let row = table.row(at: table.convert(down.locationInWindow, from: nil))
+        if row >= 0, table.selectedRow != row { table.selectRowIndexes([row], byExtendingSelection: false) }
+    }
+
     static func settings(coordinator: Coordinator, preferences: UserDefaults) -> SettingsWindowController {
         let controller = SettingsWindowController(coordinator: coordinator, preferences: preferences)
         conceal(controller.window)
@@ -21,11 +34,11 @@ enum TestWindows {
                           readLive: @escaping () -> WindowInspectLive,
                           markReady: @escaping () -> Void,
                           openGeneralSettings: @escaping () -> Void,
-                          openAccessSettings: @escaping () -> Void,
+                          openInputMonitoringSettings: @escaping () -> Void = {},
                           scrollerStyle: NSScroller.Style = .overlay) -> ReadyWindowController {
         let controller = ReadyWindowController(
             loadInspection: loadInspection, readLive: readLive, markReady: markReady,
-            openGeneralSettings: openGeneralSettings, openAccessSettings: openAccessSettings, scrollerStyle: scrollerStyle)
+            openGeneralSettings: openGeneralSettings, openInputMonitoringSettings: openInputMonitoringSettings, scrollerStyle: scrollerStyle)
         conceal(controller.window)
         return controller
     }

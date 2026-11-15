@@ -2,6 +2,7 @@ import AppKit
 import XCTest
 import Copy
 import LayoutCore
+import MacSupport
 @testable import Operations
 @testable import LazySpaceApp
 
@@ -54,15 +55,41 @@ final class WindowInspectorTests: XCTestCase {
         XCTAssertFalse(ReadyWindowController.remediationReason(space)!.contains("paragraph"))
         XCTAssertEqual(ReadyWindowController.remediationChoices(space).map(\.kind), [.close])
 
+        // The cause is unknown: LazySpace keeps trying, and no setting is offered that could not help.
         let input = inspectorStatus(
             autoAvailable: false,
             inputObservation: "unavailable",
-            autoReason: "Automatic arrangement is off because input cannot be observed, so windows could move while you use them.")
+            autoReason: Coordinator.AutoGate.reason(for: .inputUnobservable))
         XCTAssertEqual(ReadyWindowController.remediationReason(input), "Input observation is unavailable.")
         XCTAssertFalse(ReadyWindowController.remediationReason(input)!.contains("could move"))
-        XCTAssertEqual(ReadyWindowController.remediationChoices(input).map(\.kind), [.close, .openSettings])
-        XCTAssertTrue(ReadyWindowController.remediationDetail(input).contains("Input observation is unavailable"))
-        XCTAssertFalse(ReadyWindowController.remediationDetail(input).localizedCaseInsensitiveContains("check"))
+        XCTAssertEqual(ReadyWindowController.remediationChoices(input).map(\.kind), [.close])
+        XCTAssertEqual(ReadyWindowController.remediationDetail(input),
+                       "Automatic arrangement is off because input cannot be observed, so windows could move while you use them. LazySpace tries again every few seconds.")
+        XCTAssertFalse(ReadyWindowController.remediationDetail(input).contains(AccessPane.name()))
+
+        // Switched off in Input Monitoring: said in the reason and the detail, with the button that opens that pane.
+        let off = inputMonitoringOffStatus()
+        XCTAssertEqual(ReadyWindowController.remediationReason(off), "LazySpace is turned off in Input Monitoring.")
+        XCTAssertEqual(ReadyWindowController.remediationChoices(off),
+                       [DetailSheet.closeChoice, DetailSheet.Choice(kind: .openInputMonitoringSettings, title: "Open Input Monitoring Settings")])
+        XCTAssertEqual(ReadyWindowController.remediationDetail(off),
+                       "LazySpace is turned off in Input Monitoring, so it cannot tell when you use the mouse or keyboard, and automatic arrangement stays off. Turn on LazySpace in Privacy & Security › Input Monitoring.")
+        XCTAssertEqual(off.autoReason,
+                       "Automatic arrangement is off because LazySpace is turned off in Input Monitoring, so it cannot tell when you use the mouse or keyboard. Turn on LazySpace in Privacy & Security › Input Monitoring.")
+    }
+
+    /// The button opens Privacy & Security › Input Monitoring, not another pane.
+    func testTheInputMonitoringButtonOpensThatPane() {
+        var opened: [String] = []
+        let live = WindowInspectLive(spaceID: 1, trusted: true, spaceObservationAvailable: true, waiting: [],
+                                     status: inputMonitoringOffStatus(), firstLaunchDone: true)
+        let controller = TestWindows.inspector(
+            loadInspection: { _ in }, readLive: { live }, markReady: {},
+            openGeneralSettings: { opened.append("general") }, openInputMonitoringSettings: { opened.append("inputMonitoring") })
+        defer { controller.close() }
+        controller.performRemediation(.openInputMonitoringSettings)
+        XCTAssertEqual(opened, ["inputMonitoring"])
+        XCTAssertEqual(AXTrust.inputMonitoringSettingsURL.absoluteString, "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent")
     }
 
     func testPreviousOperationIsRecentAndIncompleteOnly() {
@@ -264,7 +291,7 @@ final class WindowInspectorTests: XCTestCase {
             readLive: { live },
             markReady: {},
             openGeneralSettings: {},
-            openAccessSettings: {})
+            openInputMonitoringSettings: {})
         defer { controller.close() }
         controller.showWindow(nil)
         let fit = controller.testingFitAtMinimumContentWidth()
@@ -290,7 +317,7 @@ final class WindowInspectorTests: XCTestCase {
             readLive: { live },
             markReady: { marks += 1 },
             openGeneralSettings: {},
-            openAccessSettings: {})
+            openInputMonitoringSettings: {})
         defer { controller.close() }
         let surface = controller.surface()
         XCTAssertEqual(surface.title, "LazySpace — Windows")
@@ -334,7 +361,7 @@ final class WindowInspectorTests: XCTestCase {
             readLive: { live },
             markReady: { marks += 1; live.firstLaunchDone = true },
             openGeneralSettings: {},
-            openAccessSettings: {})
+            openInputMonitoringSettings: {})
         defer { controller.close() }
         controller.refreshTargets()
         controller.refreshTargets()
@@ -381,7 +408,7 @@ final class WindowInspectorTests: XCTestCase {
             readLive: { live },
             markReady: {},
             openGeneralSettings: {},
-            openAccessSettings: {})
+            openInputMonitoringSettings: {})
         controller.refreshTargets()
         completions[0](inspection(space: 4, trusted: true, apps: ["Unexpected"]))
         XCTAssertEqual(completions.count, 2)
@@ -405,7 +432,7 @@ final class WindowInspectorTests: XCTestCase {
             readLive: { live },
             markReady: {},
             openGeneralSettings: { access += 1 },
-            openAccessSettings: {})
+            openInputMonitoringSettings: {})
         defer { controller.close() }
         controller.testingTimerFired()
         XCTAssertEqual(loads, 0, "A hidden inspector must not read status on the timer")
@@ -444,7 +471,7 @@ final class WindowInspectorTests: XCTestCase {
             readLive: { live },
             markReady: { marks += 1; live.firstLaunchDone = true },
             openGeneralSettings: {},
-            openAccessSettings: {})
+            openInputMonitoringSettings: {})
         defer { controller.close() }
         controller.refreshTargets()
         completions[0](inspection(space: nil, trusted: true, apps: [], spaceObservation: false))
@@ -466,7 +493,7 @@ final class WindowInspectorTests: XCTestCase {
     }
 
     func testDetailSheetKeepsLongTextSelectableAndCloseIsDefault() {
-        let failed = inspectorStatus(autoAvailable: false, inputObservation: "unavailable")
+        let failed = inputMonitoringOffStatus()
         let body = String(repeating: "Recorded target note.\n", count: 40)
         let sheet = DetailSheet.assemble(
             title: ReadyWindowController.remediationSheetTitle,
@@ -475,7 +502,7 @@ final class WindowInspectorTests: XCTestCase {
         XCTAssertEqual(sheet.alert.messageText, "Resolve Arrangement Issue")
         XCTAssertEqual(sheet.alert.buttons.first?.title, "Close")
         XCTAssertEqual(sheet.actions[.alertFirstButtonReturn], .close)
-        XCTAssertEqual(sheet.actions[.alertSecondButtonReturn], .openSettings)
+        XCTAssertEqual(sheet.actions[.alertSecondButtonReturn], .openInputMonitoringSettings)
         XCTAssertEqual(sheet.alert.buttons.first?.keyEquivalent, "\r")
         XCTAssertEqual(sheet.alert.buttons.dropFirst().first?.keyEquivalent, "")
         XCTAssertNotEqual(sheet.alert.buttons.first?.keyEquivalent, "\u{1b}")
@@ -525,7 +552,7 @@ final class WindowInspectorTests: XCTestCase {
             readLive: { live },
             markReady: {},
             openGeneralSettings: {},
-            openAccessSettings: {})
+            openInputMonitoringSettings: {})
         let window = controller.window
         controller.showWindow(nil)
         XCTAssertEqual(completions.count, 1)
@@ -550,7 +577,7 @@ final class WindowInspectorTests: XCTestCase {
             readLive: { live },
             markReady: {},
             openGeneralSettings: {},
-            openAccessSettings: {})
+            openInputMonitoringSettings: {})
         defer { controller.close() }
         XCTAssertNil(controller.testingPollTimer)
         controller.showWindow(nil)
@@ -579,7 +606,7 @@ final class WindowInspectorTests: XCTestCase {
             readLive: { live },
             markReady: {},
             openGeneralSettings: {},
-            openAccessSettings: {})
+            openInputMonitoringSettings: {})
         defer { controller.close() }
         controller.showWindow(nil)
         controller.close()
@@ -592,6 +619,13 @@ final class WindowInspectorTests: XCTestCase {
         XCTAssertEqual(completions.count, 2)
         XCTAssertFalse(controller.visibleRows().isEmpty)
     }
+}
+
+private func inputMonitoringOffStatus() -> AppStatus {
+    var status = inspectorStatus(autoAvailable: false, inputObservation: "unavailable",
+                                 autoReason: Coordinator.AutoGate.reason(for: .inputMonitoringOff))
+    status.autoUnavailableCause = AutoUnavailableCause.inputMonitoring.rawValue
+    return status
 }
 
 private func inspectorStatus(

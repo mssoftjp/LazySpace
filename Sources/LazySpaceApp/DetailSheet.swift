@@ -8,7 +8,7 @@ enum DetailSheet {
         enum Kind: Equatable {
             case close
             case openGeneralSettings
-            case openSettings
+            case openInputMonitoringSettings
         }
         var kind: Kind
         var title: String

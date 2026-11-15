@@ -21,10 +21,10 @@ brew install --cask mssoftjp/tap/lazyspace
 Or download the DMG from [Releases](https://github.com/mssoftjp/LazySpace/releases) and drag LazySpace.app to Applications.
 
 1. Open LazySpace. Its icon appears in the menu bar.
-2. macOS asks for access. Turn on LazySpace in System Settings › Privacy & Security › **Device Control and Data Access** (**Accessibility** before macOS 27).
+2. macOS asks for access. Turn on LazySpace in System Settings › Privacy & Security › **Device Control and Data Access**.
 3. That is all. Go back to what you were doing.
 
-LazySpace needs macOS 14 or later and Apple Silicon. To build it yourself, see [Build from source](docs/guide.md#build-from-source).
+LazySpace needs macOS 27 or later and Apple Silicon. To build it yourself, see [Build from source](docs/guide.md#build-from-source).
 
 ## What it does while you work
 
@@ -55,7 +55,7 @@ When you want more, the shortcuts are ready. Many of the defaults are the same a
 | `⌥Z` | Zoom the window to fill the work area, or restore it |
 | `⌥F` | Take the window out of tiling, or put it back |
 | `⌥1` … `⌥9` | Switch to Desktop 1–9 |
-| `⌥⇧1` … `⌥⇧9` | Send the window to Desktop 1–9 and stay here (needs macOS 27). A setting in Settings › Shortcuts takes you there with it |
+| `⌥⇧1` … `⌥⇧9` | Send the window to Desktop 1–9 and stay here. A setting in Settings › Shortcuts takes you there with it |
 | `⌥⇥` | Go back to the previous Space |
 
 Everything the shortcuts do is also a command:

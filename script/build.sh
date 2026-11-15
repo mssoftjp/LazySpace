@@ -72,7 +72,7 @@ stage() { # name exe bundle_id ui_element
 <key>NSHumanReadableCopyright</key><string>© 2026 Musashino Software</string>
 <key>CFBundleVersion</key><string>$(date +%Y%m%d%H%M)</string>
 <key>CFBundleAllowMixedLocalizations</key><true/>
-<key>LSMinimumSystemVersion</key><string>14.0</string>
+<key>LSMinimumSystemVersion</key><string>27.0</string>
 <key>LSUIElement</key><$uielement/>
 <key>NSPrincipalClass</key><string>NSApplication</string>
 <key>NSHighResolutionCapable</key><true/>

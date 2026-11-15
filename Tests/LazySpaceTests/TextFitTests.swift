@@ -191,7 +191,7 @@ final class TextFitTests: XCTestCase {
             let inspection = CLILayoutTests.inspection()
             let list = TestWindows.inspector(loadInspection: { $0(inspection) }, readLive: { WindowInspectLive(
                 spaceID: 1, trusted: true, spaceObservationAvailable: true, waiting: [], status: self.coordinator.status(), firstLaunchDone: true) },
-                markReady: {}, openGeneralSettings: {}, openAccessSettings: {})
+                markReady: {}, openGeneralSettings: {}, openInputMonitoringSettings: {})
             defer { list.close() }
             list.showWindow(nil)
             try save(try XCTUnwrap(list.window?.contentView), "\(language.rawValue)-window-list")
@@ -205,7 +205,7 @@ final class TextFitTests: XCTestCase {
             let inspection = CLILayoutTests.inspection()
             let controller = TestWindows.inspector(loadInspection: { $0(inspection) }, readLive: { WindowInspectLive(
                 spaceID: 1, trusted: true, spaceObservationAvailable: true, waiting: [], status: self.coordinator.status(), firstLaunchDone: true) },
-                markReady: {}, openGeneralSettings: {}, openAccessSettings: {})
+                markReady: {}, openGeneralSettings: {}, openInputMonitoringSettings: {})
             defer { controller.close() }
             controller.showWindow(nil)
             let content = try XCTUnwrap(controller.window?.contentView)
@@ -243,7 +243,7 @@ final class TextFitTests: XCTestCase {
                 XCTAssertFalse(inspection.excluded.contains { $0.reason.isEmpty })
                 let controller = TestWindows.inspector(loadInspection: { $0(inspection) }, readLive: { WindowInspectLive(
                     spaceID: 1, trusted: true, spaceObservationAvailable: true, waiting: [], status: self.coordinator.status(), firstLaunchDone: true) },
-                    markReady: {}, openGeneralSettings: {}, openAccessSettings: {}, scrollerStyle: scrollerStyle)
+                    markReady: {}, openGeneralSettings: {}, openInputMonitoringSettings: {}, scrollerStyle: scrollerStyle)
                 defer { controller.close() }
                 controller.showWindow(nil)
                 // At the default width, tall enough that every row has a view.

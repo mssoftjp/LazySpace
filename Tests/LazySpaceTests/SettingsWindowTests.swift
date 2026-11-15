@@ -42,7 +42,7 @@ final class SettingsWindowTests: XCTestCase {
         controller.showWindow(nil)
         let inspector = TestWindows.inspector(loadInspection: { _ in }, readLive: { WindowInspectLive(
             spaceID: 1, trusted: true, spaceObservationAvailable: true, waiting: [], status: self.coordinator.status(), firstLaunchDone: true) },
-            markReady: {}, openGeneralSettings: {}, openAccessSettings: {})
+            markReady: {}, openGeneralSettings: {}, openInputMonitoringSettings: {})
         defer { inspector.close() }
         inspector.showWindow(nil)
         for window in [controller.window, inspector.window].compactMap({ $0 }) {
@@ -155,18 +155,18 @@ final class SettingsWindowTests: XCTestCase {
         config.execOnSpaceChange = ["/usr/bin/true"]
         config.rules = [.init(app: "com.example.*", action: .float, title: "Inspector")]
         try load(config)
-        let original = try String(contentsOf: coordinator.configURL)
+        let original = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         let automatic = try dialogsBesideButton()
         automatic.performClick(nil)
         config.placeDialogsBeside = true
         XCTAssertEqual(coordinator.config, config, "A completed choice is saved without touching hidden or file-only preferences")
         XCTAssertNil(coordinator.config.startAtLogin)
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL.appendingPathExtension("bak")), original)
-        let saved = try String(contentsOf: coordinator.configURL)
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL.appendingPathExtension("bak"), encoding: .utf8), original)
+        let saved = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertTrue(saved.contains("place-dialogs-beside = true"), saved)
         XCTAssertTrue(saved.contains("quiet-interval = 2.3"), saved)
         try select(.general)
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), saved)
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), saved)
         assertNoGlobalSaveControls()
     }
 
@@ -176,14 +176,14 @@ final class SettingsWindowTests: XCTestCase {
         let table = try shortcutTable()
         assertRow("Send Window to Desktop 3", in: table)
         assertRow("Sends the window and stays on the current Space.", in: table)
-        let original = try String(contentsOf: coordinator.configURL)
+        let original = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         let box = try button(SettingsCopy.followMovedWindowTitle)
         XCTAssertEqual(box.state, .off)
         box.performClick(nil)
         var expected = Config()
         expected.followMovedWindow = true
         XCTAssertEqual(coordinator.config, expected, "only this choice changes")
-        let saved = try String(contentsOf: coordinator.configURL)
+        let saved = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertEqual(saved, original.replacingOccurrences(of: "follow-moved-window = false", with: "follow-moved-window = true"))
         let on = try shortcutTable()
         assertRow("Move Window to Desktop 3 and Follow", in: on)
@@ -223,7 +223,7 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertEqual(coordinator.config, config)
         XCTAssertEqual(coordinator.config.preferredMinimum, CGSize(width: 400, height: 300))
         XCTAssertEqual(coordinator.config.accordionPadding, 44)
-        let saved = try String(contentsOf: coordinator.configURL)
+        let saved = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertTrue(saved.contains("width = 7"), saved)
         XCTAssertTrue(saved.contains("#12345678"), saved)
         XCTAssertFalse(controller.window?.isDocumentEdited == true)
@@ -278,7 +278,7 @@ final class SettingsWindowTests: XCTestCase {
 
         box.performClick(nil)
         XCTAssertTrue(coordinator.config.notifications.needsAttention)
-        XCTAssertTrue(try String(contentsOf: coordinator.configURL).contains("needs-attention = true"))
+        XCTAssertTrue(try String(contentsOf: coordinator.configURL, encoding: .utf8).contains("needs-attention = true"))
         XCTAssertTrue(visibleTexts().contains(denied))
         XCTAssertEqual(try notificationButton().title, "Open System Settings…")
         try notificationButton().performClick(nil)
@@ -517,7 +517,7 @@ final class SettingsWindowTests: XCTestCase {
             try assertRecoveryAttached(again)
             XCTAssertEqual(again.stringValue, recovery.stringValue)
         }
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), "gap = 9\n")
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), "gap = 9\n")
         XCTAssertNotEqual(coordinator.config.gap, 9)
         let retry = try button("Try Again")
         let reload = try button("Reload")
@@ -550,7 +550,7 @@ final class SettingsWindowTests: XCTestCase {
         let commented = source.replacingOccurrences(of: "# 隙間", with: "# 余白")
         try commented.write(to: coordinator.configURL, atomically: true, encoding: .utf8)
         try dialogsBesideButton().performClick(nil)
-        let saved = try String(contentsOf: coordinator.configURL)
+        let saved = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertTrue(saved.contains("# 余白"), saved)
         XCTAssertTrue(saved.contains("preferred-minimum = [500, 320] # 希望\n"), saved)
         XCTAssertTrue(saved.contains("place-dialogs-beside = true"), saved)
@@ -565,7 +565,7 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertEqual(try numberField("Window spacing in points").stringValue, "nope")
         XCTAssertEqual(try dialogsBesideButton().state, .on)
         try dialogsBesideButton().performClick(nil)
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), external)
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), external)
         XCTAssertEqual(try numberField("Window spacing in points").stringValue, "nope")
         let recovery = try recoveryLabel()
         XCTAssertTrue(recovery.stringValue.contains("Nothing was saved"), recovery.stringValue)
@@ -574,7 +574,7 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertEqual(try dialogsBesideButton().state, .on)
         XCTAssertEqual(try numberField("Window spacing in points").stringValue, "9")
         try dialogsBesideButton().performClick(nil)
-        let recovered = try String(contentsOf: coordinator.configURL)
+        let recovered = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertTrue(recovered.contains("gap = 9"), recovered)
         XCTAssertTrue(recovered.contains("# 余白"), recovered)
         XCTAssertTrue(recovered.contains("place-dialogs-beside = false"), recovered)
@@ -585,13 +585,13 @@ final class SettingsWindowTests: XCTestCase {
         let broken = "this is [ not\n"
         try broken.write(to: coordinator.configURL, atomically: true, encoding: .utf8)
         try dialogsBesideButton().performClick(nil)
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), broken)
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), broken)
         XCTAssertEqual(try dialogsBesideButton().state, .on)
         XCTAssertFalse(coordinator.config.placeDialogsBeside)
         let failure = try recoveryLabel().stringValue
         XCTAssertTrue(failure.contains("Nothing was saved") || failure.contains("not replaced"), failure)
         try button("Reload").performClick(nil)
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), broken)
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), broken)
         XCTAssertFalse(coordinator.config.placeDialogsBeside)
         XCTAssertEqual(try dialogsBesideButton().state, .off)
         XCTAssertFalse(controller.window?.isDocumentEdited == true)
@@ -603,7 +603,7 @@ final class SettingsWindowTests: XCTestCase {
         _ = coordinator.reloadConfig(source: "test")
         XCTAssertNil(coordinator.saveConfig(coordinator.config, baseline: coordinator.config, source: "test"))
         XCTAssertFalse(FileManager.default.fileExists(atPath: coordinator.configURL.appendingPathExtension("bak").path))
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), text)
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), text)
 
         let real = root.appendingPathComponent("real.toml")
         try text.write(to: real, atomically: true, encoding: .utf8)
@@ -614,7 +614,7 @@ final class SettingsWindowTests: XCTestCase {
         draft.gap = 4
         XCTAssertNil(coordinator.saveConfig(draft, baseline: coordinator.config, source: "test"))
         _ = try FileManager.default.destinationOfSymbolicLink(atPath: coordinator.configURL.path)
-        let written = try String(contentsOf: real)
+        let written = try String(contentsOf: real, encoding: .utf8)
         XCTAssertTrue(written.contains("gap = 4 # 隙間"), written)
         XCTAssertTrue(FileManager.default.fileExists(atPath: coordinator.configURL.appendingPathExtension("bak").path))
     }
@@ -634,13 +634,13 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertEqual(coordinator.config.gapVertical, 3)
         try select(.layout)
         try setNumberField("Window spacing in points", "3")
-        var saved = try String(contentsOf: coordinator.configURL)
+        var saved = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertTrue(saved.contains("inner-horizontal = 3 # wide\n"), saved)
         XCTAssertTrue(saved.contains("inner-vertical = 3 # tall\n"), saved)
         XCTAssertEqual(coordinator.config.gap, 3)
         XCTAssertNil(coordinator.config.gapVertical)
         try dialogsBesideButton().performClick(nil)
-        saved = try String(contentsOf: coordinator.configURL)
+        saved = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertTrue(saved.contains("inner-vertical = 3 # tall\n"), saved)
         XCTAssertTrue(saved.contains("place-dialogs-beside = true"), saved)
     }
@@ -660,19 +660,19 @@ final class SettingsWindowTests: XCTestCase {
         let field = try numberField("Window spacing in points")
         field.stringValue = "3"
         controller.controlTextDidChange(Notification(name: NSControl.textDidChangeNotification, object: field))
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), source)
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), source)
         XCTAssertEqual(coordinator.config.gapVertical, 3)
         XCTAssertFalse(controller.window?.isDocumentEdited == true)
         field.stringValue = "9"
         controller.controlTextDidChange(Notification(name: NSControl.textDidChangeNotification, object: field))
         try dialogsBesideButton().performClick(nil)
-        var saved = try String(contentsOf: coordinator.configURL)
+        var saved = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertTrue(saved.contains("inner-horizontal = 8 # wide\n"), saved)
         XCTAssertTrue(saved.contains("inner-vertical = 3 # tall\n"), saved)
         XCTAssertTrue(saved.contains("place-dialogs-beside = true"), saved)
         XCTAssertEqual(field.stringValue, "9")
         controller.controlTextDidEndEditing(Notification(name: NSControl.textDidEndEditingNotification, object: field))
-        saved = try String(contentsOf: coordinator.configURL)
+        saved = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertTrue(saved.contains("inner-horizontal = 9 # wide\n"), saved)
         XCTAssertTrue(saved.contains("inner-vertical = 3 # tall\n"), saved)
         XCTAssertEqual(coordinator.config.gap, 9)
@@ -681,7 +681,7 @@ final class SettingsWindowTests: XCTestCase {
 
         field.stringValue = "9"
         controller.controlTextDidEndEditing(Notification(name: NSControl.textDidEndEditingNotification, object: field))
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), saved)
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), saved)
     }
 
     func testSaveErrorsStayReadableInEnglishAndJapanese() throws {
@@ -694,11 +694,11 @@ final class SettingsWindowTests: XCTestCase {
         var error = try recoveryLabel()
         try assertReadable(error)
         XCTAssertEqual(error.stringValue, "The file changed. Choose Reload to load it. Nothing was saved.")
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), "gap = 9 # keep\n")
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), "gap = 9 # keep\n")
         XCTAssertEqual(try dialogsBesideButton().state, .on)
         XCTAssertNotEqual(coordinator.config.placeDialogsBeside, true)
         try button("Try Again").performClick(nil)
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), "gap = 9 # keep\n")
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), "gap = 9 # keep\n")
 
         Copy.language = .japanese
         controller.refresh()
@@ -722,9 +722,9 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertTrue(error.stringValue.contains("Nothing was saved"), error.stringValue)
         XCTAssertTrue(error.stringValue.contains("[gaps]"), error.stringValue)
         XCTAssertEqual(try numberField("Window spacing in points").stringValue, "1")
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), "gaps = { inner-horizontal = 4 }\n")
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), "gaps = { inner-horizontal = 4 }\n")
         try button("Try Again").performClick(nil)
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), "gaps = { inner-horizontal = 4 }\n")
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), "gaps = { inner-horizontal = 4 }\n")
 
         Copy.language = .japanese
         controller.refresh()
@@ -735,7 +735,7 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertTrue(error.stringValue.contains("保存していません"), error.stringValue)
         XCTAssertTrue(error.stringValue.contains("[gaps]"), error.stringValue)
         XCTAssertEqual(try numberField("ウインドウの間隔（ポイント）").stringValue, "1")
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), "gaps = { inner-horizontal = 4 }\n")
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), "gaps = { inner-horizontal = 4 }\n")
     }
 
     private func setNumberField(_ label: String, _ value: String) throws {
@@ -859,7 +859,7 @@ final class SettingsWindowTests: XCTestCase {
         table.selectRowIndexes(IndexSet(integer: space3), byExtendingSelection: false)
         try performShortcutAction(2)
         XCTAssertEqual(shortcutText(in: table, row: try XCTUnwrap(row(labeled: "Switch to Desktop 3", in: table))), "")
-        var saved = try String(contentsOf: coordinator.configURL)
+        var saved = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertTrue(saved.contains("space-3 = \"none\""), saved)
         XCTAssertTrue(saved.contains("space-next = \"alt-shift-tab\""), saved)
         XCTAssertFalse(controller.window?.isDocumentEdited == true)
@@ -867,7 +867,7 @@ final class SettingsWindowTests: XCTestCase {
         let next = try XCTUnwrap(row(labeled: "Switch to Next Space", in: table))
         table.selectRowIndexes(IndexSet(integer: next), byExtendingSelection: false)
         try performShortcutAction(2)
-        saved = try String(contentsOf: coordinator.configURL)
+        saved = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertTrue(saved.contains("space-next = \"none\""), saved)
         XCTAssertTrue(saved.contains("space-3 = \"none\""), saved)
         XCTAssertTrue(saved.contains("focus-left = \"alt-h\""), saved)
@@ -930,27 +930,27 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertEqual(field.stringValue, "20")
         XCTAssertTrue(views().contains { ($0 as? NSTextField)?.stringValue == "Enter a number from 1 to 12." })
         XCTAssertTrue(controller.window?.isDocumentEdited == true)
-        let original = try String(contentsOf: coordinator.configURL)
+        let original = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertFalse(original.contains("width = 20"))
         XCTAssertFalse(views().contains { ($0 as? NSTextField)?.stringValue == "Settings saved." })
         controller.leavePrompt = { .retry }
         XCTAssertFalse(controller.resolveLeave())
         XCTAssertEqual(field.stringValue, "20")
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), original)
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), original)
         controller.leavePrompt = { .cancel }
         XCTAssertFalse(controller.resolveLeave())
         controller.leavePrompt = { .discard }
         XCTAssertTrue(controller.resolveLeave())
         XCTAssertEqual(try numberField("Border width in points").stringValue, "3")
         XCTAssertFalse(controller.window?.isDocumentEdited == true)
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), original)
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), original)
     }
 
     func testExternalFileChangePreservesTheDraftAndABrokenFileShowsOnEveryPane() throws {
         try load(Config())
         try select(.layout)
         try setNumberField("Window spacing in points", "nope")
-        let edited = try String(contentsOf: coordinator.configURL).replacingOccurrences(of: "gap = 0", with: "gap = 12")
+        let edited = try String(contentsOf: coordinator.configURL, encoding: .utf8).replacingOccurrences(of: "gap = 0", with: "gap = 12")
         try edited.write(to: coordinator.configURL, atomically: true, encoding: .utf8)
         _ = coordinator.reloadConfig(source: "test")
         controller.refresh()
@@ -962,7 +962,7 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(notice.frame.height, needed - 1)
         XCTAssertEqual(try numberField("Window spacing in points").stringValue, "nope")
         XCTAssertEqual(coordinator.config.gap, 12)
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), edited)
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), edited)
         try button("Reload").performClick(nil)
         XCTAssertEqual(coordinator.config.gap, 12)
         XCTAssertEqual(try numberField("Window spacing in points").stringValue, "12")
@@ -984,7 +984,7 @@ final class SettingsWindowTests: XCTestCase {
         try button("Show Details").performClick(nil)
         XCTAssertEqual(controller.window?.title, "Advanced")
         XCTAssertTrue(views().compactMap { $0 as? NSTextField }.contains { $0.textColor == .systemRed && !$0.stringValue.isEmpty })
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), broken)
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), broken)
     }
 
     func testAppsEmptyStateMinusButtonAndFloatingRules() throws {
@@ -1042,7 +1042,7 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertEqual(coordinator.config.accordionPadding, 44)
         XCTAssertEqual(coordinator.config.modes["resize"]?.keys["focus-left"]?.key, "h")
         XCTAssertEqual(coordinator.config.placeDialogsBeside, true)
-        let rendered = try String(contentsOf: coordinator.configURL)
+        let rendered = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertTrue(rendered.contains("accordion-padding = 44"), rendered)
         XCTAssertTrue(rendered.contains("[mode.resize]"), rendered)
         XCTAssertFalse(rendered.contains("space-next ="))
@@ -1098,7 +1098,7 @@ final class SettingsWindowTests: XCTestCase {
         let configured = try switchingStatus()
         XCTAssertTrue(configured.contains("With these settings"), configured)
         XCTAssertFalse(configured.contains("After you save"), configured)
-        let configuredFile = try String(contentsOf: coordinator.configURL)
+        let configuredFile = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertTrue(configuredFile.contains("ctrl-left"), configuredFile)
         XCTAssertTrue(configured.contains("left"), configured)
         XCTAssertFalse(configured.contains("to the right won't work"))
@@ -1106,7 +1106,7 @@ final class SettingsWindowTests: XCTestCase {
         selectShortcutRow(focus, in: table)
         try performShortcutAction(2)
         XCTAssertNil(shownSwitchingStatus(), "removing the conflicting key empties the area")
-        let removedFile = try String(contentsOf: coordinator.configURL)
+        let removedFile = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertFalse(removedFile.contains("ctrl-left"), removedFile)
     }
 
@@ -1553,7 +1553,7 @@ final class SettingsWindowTests: XCTestCase {
         try load(lowercase)
         try exerciseBorderColorWithoutEditingIt()
         XCTAssertFalse(controller.window?.isDocumentEdited == true)
-        XCTAssertTrue(try String(contentsOf: coordinator.configURL).contains("#4c8dff"))
+        XCTAssertTrue(try String(contentsOf: coordinator.configURL, encoding: .utf8).contains("#4c8dff"))
 
         var opaque = Config()
         opaque.focusBorder.enabled = true
@@ -1561,13 +1561,13 @@ final class SettingsWindowTests: XCTestCase {
         try load(opaque)
         try exerciseBorderColorWithoutEditingIt()
         XCTAssertFalse(controller.window?.isDocumentEdited == true)
-        XCTAssertTrue(try String(contentsOf: coordinator.configURL).contains("#4C8DFFFF"))
+        XCTAssertTrue(try String(contentsOf: coordinator.configURL, encoding: .utf8).contains("#4C8DFFFF"))
 
         try select(.layout)
         let well = try XCTUnwrap(views().compactMap { $0 as? NSColorWell }.first)
         well.color = NSColor(srgbRed: 0, green: 0, blue: 1, alpha: 1)
         _ = controller.perform(try XCTUnwrap(well.action), with: well)
-        let saved = try String(contentsOf: coordinator.configURL)
+        let saved = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertTrue(saved.contains("#0000FF"), saved)
         XCTAssertFalse(saved.contains("#4C8DFFFF"))
     }
@@ -1590,7 +1590,7 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertTrue(try messageText().contains("Fill Work Area"))
         XCTAssertEqual(coordinator.config.keys["float"], Config.Key(modifiers: ["alt"], key: "f"))
         XCTAssertNil(coordinator.config.keys["zoom"])
-        let saved = try String(contentsOf: coordinator.configURL)
+        let saved = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertEqual(saved.components(separatedBy: "alt-f").count - 1, 1, saved)
         XCTAssertFalse(saved.contains("could not keep"))
     }
@@ -1639,7 +1639,7 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertEqual(coordinator.config.modes["service"]?.keys["mode-main"]?.key, "esc")
         XCTAssertNil(coordinator.config.modes["service"]?.keys["join-left"])
         XCTAssertEqual(coordinator.config.gap, 8)
-        let saved = try String(contentsOf: coordinator.configURL)
+        let saved = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertTrue(saved.contains("gap = 8 # keep"), saved)
         XCTAssertTrue(saved.contains("focus-left = \"h\" # mode key"), saved)
         XCTAssertTrue(saved.contains("mode-main = \"esc\" # stay"), saved)
@@ -1652,13 +1652,13 @@ final class SettingsWindowTests: XCTestCase {
         var changed = Config()
         changed.keys["zoom"] = nil
         try load(changed)
-        let beforeCancel = try String(contentsOf: coordinator.configURL)
+        let beforeCancel = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         confirmed = 0
         controller.confirmMainShortcutReset = { confirmed += 1; return false }
         try select(.keys)
         try button("Restore Defaults").performClick(nil)
         XCTAssertEqual(confirmed, 1)
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), beforeCancel)
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), beforeCancel)
         XCTAssertNil(coordinator.config.keys["zoom"])
 
         Copy.language = .japanese
@@ -1697,7 +1697,7 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertEqual(coordinator.config.modes["service"]?.returnToMain, false)
         XCTAssertEqual(coordinator.config.modes["service"]?.keys["reload"]?.key, "esc")
         XCTAssertFalse(try button("Restore Defaults").isEnabled)
-        let saved = try String(contentsOf: coordinator.configURL)
+        let saved = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertTrue(saved.contains("mode-review = \"alt-g\""), saved)
         XCTAssertTrue(saved.contains("mode-service = \"alt-o\""), saved)
         XCTAssertTrue(saved.contains("[mode.review]"), saved)
@@ -1713,7 +1713,7 @@ final class SettingsWindowTests: XCTestCase {
         try select(.keys)
         XCTAssertNil(coordinator.config.keys["focus-left"])
         XCTAssertTrue(try button("Restore Defaults").isEnabled)
-        let before = try String(contentsOf: coordinator.configURL)
+        let before = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         confirmed = 0
         controller.confirmMainShortcutReset = { confirmed += 1; return true }
         try button("Restore Defaults").performClick(nil)
@@ -1722,7 +1722,7 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertTrue(message.contains("Enter Mode review"), message)
         XCTAssertTrue(message.contains("Focus Left"), message)
         XCTAssertFalse(message.contains("Restored default shortcuts"), message)
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), before)
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), before)
         XCTAssertNil(coordinator.config.keys["focus-left"])
         XCTAssertNil(coordinator.config.keys["zoom"])
         XCTAssertEqual(coordinator.config.keys["mode-review"]?.configText, "alt-h")
@@ -1905,7 +1905,7 @@ final class SettingsWindowTests: XCTestCase {
         try chooseDirection(in: table, row: 0, pattern: "arrows")
         XCTAssertFalse(try messageText().contains("After you save"))
         XCTAssertTrue(try switchingStatus().contains("With these settings"))
-        let arrowFile = try String(contentsOf: coordinator.configURL)
+        let arrowFile = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertTrue(arrowFile.contains("ctrl-left"), arrowFile)
 
         try chooseDirection(in: table, row: 0, modifier: "alt")
@@ -1928,7 +1928,7 @@ final class SettingsWindowTests: XCTestCase {
         try performShortcutAction(2)
         XCTAssertEqual(try messageText(), "")
         XCTAssertFalse(try switchingStatus().contains("After you save"))
-        XCTAssertFalse(try String(contentsOf: coordinator.configURL).contains("ctrl-left"))
+        XCTAssertFalse(try String(contentsOf: coordinator.configURL, encoding: .utf8).contains("ctrl-left"))
 
         try chooseDirection(in: table, row: 0, modifier: "ctrl")
         try chooseDirection(in: table, row: 0, pattern: "arrows")
@@ -1938,7 +1938,7 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertEqual(try messageText(), "")
         XCTAssertEqual(shortcutText(in: table, row: try XCTUnwrap(row(labeled: "Switch to Desktop 3", in: table))), "")
         XCTAssertTrue(try switchingStatus().contains("With these settings"))
-        XCTAssertTrue(try String(contentsOf: coordinator.configURL).contains("space-3 = \"none\""))
+        XCTAssertTrue(try String(contentsOf: coordinator.configURL, encoding: .utf8).contains("space-3 = \"none\""))
     }
 
     func testInvalidNumberDoesNotChangeWindowHeight() throws {
@@ -1952,12 +1952,12 @@ final class SettingsWindowTests: XCTestCase {
         assertNoGlobalSaveControls()
         let field = try numberField("Window spacing in points")
         let responderBefore = controller.window?.firstResponder
-        let original = try String(contentsOf: coordinator.configURL)
+        let original = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         field.stringValue = "999"
         controller.controlTextDidChange(Notification(name: NSControl.textDidChangeNotification, object: field))
         content.layoutSubtreeIfNeeded()
         XCTAssertEqual(content.bounds.height, before, accuracy: 1)
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), original)
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), original)
         let scroll = try XCTUnwrap(field.enclosingScrollView)
         try assertPaneIsTopAligned()
         let error = try XCTUnwrap(views().compactMap { $0 as? NSTextField }.first { $0.stringValue.contains("Enter a number from 0 to 200") })
@@ -2001,16 +2001,16 @@ final class SettingsWindowTests: XCTestCase {
         try load(Config())
         try select(.layout)
         let field = try numberField("Window spacing in points")
-        let original = try String(contentsOf: coordinator.configURL)
+        let original = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         field.stringValue = "12"
         controller.controlTextDidChange(Notification(name: NSControl.textDidChangeNotification, object: field))
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), original)
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), original)
         var asked = false
         controller.leavePrompt = { asked = true; return .cancel }
         XCTAssertTrue(controller.resolveLeave())
         XCTAssertFalse(asked)
         XCTAssertEqual(coordinator.config.gap, 12)
-        XCTAssertNotEqual(try String(contentsOf: coordinator.configURL), original)
+        XCTAssertNotEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), original)
 
         field.stringValue = "15"
         controller.controlTextDidChange(Notification(name: NSControl.textDidChangeNotification, object: field))
@@ -2080,7 +2080,7 @@ final class SettingsWindowTests: XCTestCase {
         controller.refresh()
         XCTAssertEqual(field.stringValue, "com.example.mail")
         controller.controlTextDidEndEditing(Notification(name: NSControl.textDidEndEditingNotification, object: field))
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), externalText)
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), externalText)
         XCTAssertEqual(coordinator.config.rules.map(\.app), ["com.example.new", "com.apple.calculator", "com.apple.Safari"])
         XCTAssertEqual(try appIdentifierField(containing: "com.example.mail").stringValue, "com.example.mail")
         XCTAssertEqual(try appIdentifierField(containing: "com.apple.Safari").stringValue, "com.apple.Safari")
@@ -2104,7 +2104,7 @@ final class SettingsWindowTests: XCTestCase {
         try button("−").performClick(nil)
         XCTAssertEqual(coordinator.config.rules.map(\.app), ["com.apple.calculator"])
         XCTAssertEqual(try appIdentifierField(containing: "not an id").stringValue, "not an id")
-        let saved = try String(contentsOf: coordinator.configURL)
+        let saved = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertFalse(saved.contains("not an id"), saved)
         XCTAssertFalse(saved.contains("com.apple.Safari"), saved)
         XCTAssertTrue(saved.contains("com.apple.calculator"), saved)
@@ -2128,7 +2128,7 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertEqual(coordinator.config.rules.map(\.title), ["One", "Two"])
         XCTAssertEqual(coordinator.config.rules.map(\.app), ["com.example.one", "com.example.changed"])
         XCTAssertEqual(coordinator.config.rules.map(\.action), [.ignore, .float])
-        let saved = try String(contentsOf: coordinator.configURL)
+        let saved = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         let firstApp = try XCTUnwrap(saved.range(of: "app = \"com.example.one\""))
         let changedApp = try XCTUnwrap(saved.range(of: "app = \"com.example.changed\""))
         XCTAssertLessThan(firstApp.lowerBound, changedApp.lowerBound)
@@ -2152,7 +2152,7 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertEqual(coordinator.config.rules.map(\.app), ["com.example.changed"])
         XCTAssertEqual(coordinator.config.rules.map(\.title), ["Two"])
         XCTAssertEqual(coordinator.config.rules.map(\.action), [.float])
-        let afterDelete = try String(contentsOf: coordinator.configURL)
+        let afterDelete = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertTrue(afterDelete.contains("com.example.changed"), afterDelete)
         XCTAssertFalse(afterDelete.contains("title = \"One\""), afterDelete)
         XCTAssertTrue(afterDelete.contains("title = \"Two\""), afterDelete)
@@ -2190,7 +2190,7 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertEqual(coordinator.config.rules.map(\.app), ["com.example.one", "com.example.two"])
         XCTAssertEqual(coordinator.config.rules.map(\.title), ["One", "Two"])
         XCTAssertEqual(coordinator.config.rules.map(\.action), [.ignore, .float])
-        let saved = try String(contentsOf: coordinator.configURL)
+        let saved = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertFalse(saved.contains("com.example.changed"), saved)
         XCTAssertFalse(saved.contains("not an id"), saved)
         XCTAssertEqual(try appIdentifierField(row: 0).stringValue, "not an id")
@@ -2210,7 +2210,7 @@ final class SettingsWindowTests: XCTestCase {
         field.stringValue = "com.example.mail"
         controller.controlTextDidEndEditing(Notification(name: NSControl.textDidEndEditingNotification, object: field))
         XCTAssertEqual(coordinator.config.rules.map(\.app), ["com.example.mail", "com.apple.calculator"])
-        let written = try String(contentsOf: coordinator.configURL)
+        let written = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         XCTAssertTrue(written.contains("com.example.mail"), written)
         XCTAssertFalse(written.contains("com.apple.Safari"), written)
 
@@ -2223,7 +2223,7 @@ final class SettingsWindowTests: XCTestCase {
 
         renamed.stringValue = "not an id"
         controller.controlTextDidEndEditing(Notification(name: NSControl.textDidEndEditingNotification, object: renamed))
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), written)
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), written)
         try select(.general)
         try select(.apps)
         XCTAssertEqual(try appIdentifierField(containing: "not an id").stringValue, "not an id")
@@ -2319,7 +2319,7 @@ final class SettingsWindowTests: XCTestCase {
             for name in DirectionGroup.focus.commands {
                 XCTAssertEqual(coordinator.config.keys[name], Config.defaultKeys[name])
             }
-            let saved = try String(contentsOf: coordinator.configURL)
+            let saved = try String(contentsOf: coordinator.configURL, encoding: .utf8)
             XCTAssertEqual(try Config.load(toml: saved).keys, coordinator.config.keys)
             XCTAssertFalse(saved.isEmpty)
             selectShortcutRow(arrange, in: table)
@@ -2334,14 +2334,14 @@ final class SettingsWindowTests: XCTestCase {
         try load(config)
         try select(.keys)
         let table = try shortcutTable()
-        let before = try String(contentsOf: coordinator.configURL)
+        let before = try String(contentsOf: coordinator.configURL, encoding: .utf8)
         for label in ["Windows", "Arrange This Space", "Close Window", "Focus"] {
             selectShortcutRow(try XCTUnwrap(row(labeled: label, in: table)), in: table)
             XCTAssertFalse(try shortcutActionEnabled(3))
             for code in [UInt16(51), 117] {
                 table.keyDown(with: try keyEvent(code, modifiers: .option))
                 XCTAssertEqual(coordinator.config.keys, config.keys)
-                XCTAssertEqual(try String(contentsOf: coordinator.configURL), before)
+                XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), before)
             }
         }
         selectShortcutRow(try XCTUnwrap(row(labeled: "Toggle Tiling for Window", in: table)), in: table)
@@ -2349,7 +2349,7 @@ final class SettingsWindowTests: XCTestCase {
         for code in [UInt16(51), 117] {
             table.keyDown(with: try keyEvent(code, modifiers: .option, repeatDown: true))
             XCTAssertEqual(coordinator.config.keys, config.keys)
-            XCTAssertEqual(try String(contentsOf: coordinator.configURL), before)
+            XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), before)
         }
     }
 
@@ -2997,8 +2997,7 @@ final class SettingsWindowTests: XCTestCase {
         let point = table.convert(localInTable, to: nil)
         let down = try XCTUnwrap(NSEvent.mouseEvent(with: .leftMouseDown, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber, context: nil, eventNumber: clickCount, clickCount: clickCount, pressure: 1))
         let up = try XCTUnwrap(NSEvent.mouseEvent(with: .leftMouseUp, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber, context: nil, eventNumber: clickCount, clickCount: clickCount, pressure: 1))
-        window.sendEvent(down)
-        window.sendEvent(up)
+        TestWindows.click(down, up, in: window)
     }
 
     private func keyEvent(_ code: UInt16, characters: String = "\r", modifiers: NSEvent.ModifierFlags = [], repeatDown: Bool = false) throws -> NSEvent {
@@ -3238,7 +3237,7 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertFalse(message.contains("Assigned"), message)
         XCTAssertFalse(message.contains("Removed"), message)
         XCTAssertEqual(coordinator.config, active)
-        XCTAssertEqual(try String(contentsOf: coordinator.configURL), file)
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), file)
         let recovery = try recoveryLabel()
         XCTAssertTrue(recovery.stringValue.contains("Nothing was saved"), recovery.stringValue)
         try assertRecoveryAttached(recovery)

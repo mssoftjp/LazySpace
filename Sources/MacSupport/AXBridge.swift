@@ -16,6 +16,13 @@ public enum AXTrust {
             NSWorkspace.shared.open(url)
         }
     }
+
+    public static let inputMonitoringSettingsURL = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent")!
+
+    /// Privacy & Security › Input Monitoring.
+    public static func openInputMonitoringSettings() {
+        NSWorkspace.shared.open(inputMonitoringSettingsURL)
+    }
 }
 
 public enum AXFailure: Error, Equatable {
