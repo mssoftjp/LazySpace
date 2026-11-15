@@ -289,10 +289,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     item.isEnabled = sp.isCurrent || (canAct && coordinator.canApplyEdit(command, focused: s.focusedWindow))
                     menu.addItem(item)
                 }
-                if menuSpaces.reordersByRecentUse {
-                    let note = NSMenuItem(title: StatusMenuCopy.spaceReorderNote, action: nil, keyEquivalent: "")
-                    note.isEnabled = false
-                    menu.addItem(note)
+                if menuSpaces.numbersCanChange {
+                    menu.addItem(SpaceOverviewMenu.keepNumbersFixedItem(action: #selector(openRearrangingSettingsAction), target: self))
                 }
                 menu.addItem(.separator())
             case .accessibility, .configError:
@@ -441,7 +439,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     /// `follow` (`follow-moved-window` as the menu opens) decides each row's command once; an open menu keeps it, like its shortcuts.
-    private func spaceMenuItem(bindings: [HotkeyBinding], menuSpaces: (entries: [SpaceMenuEntry], reordersByRecentUse: Bool), window: MenuWindowTarget?, follow: Bool) -> NSMenuItem? {
+    private func spaceMenuItem(bindings: [HotkeyBinding], menuSpaces: (entries: [SpaceMenuEntry], numbersCanChange: Bool), window: MenuWindowTarget?, follow: Bool) -> NSMenuItem? {
         let spaces = menuSpaces.entries.filter { $0.index != nil }
         guard spaces.count > 1 else { return nil }
         let title = StatusMenuCopy.moveWindowToSpaceTitle
@@ -528,6 +526,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var modifierHold: DispatchWorkItem?
     private var cheatsheetGeneration: UInt64 = 0
     @objc private func showSettingsAction() { showSettings(pane: nil) }
+    @objc private func openRearrangingSettingsAction() { NSWorkspace.shared.open(SpaceOverview.rearrangingSettingsURL) }
     /// Installing quits LazySpace, so a pending Settings edit is settled first.
     @objc private func updateAction() {
         if settings?.resolveLeave() == false { return }

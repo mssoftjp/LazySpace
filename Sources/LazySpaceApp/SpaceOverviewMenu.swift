@@ -23,6 +23,14 @@ enum SpaceOverviewMenu {
         return item
     }
 
+    /// Under the list while rearranging can change the numbers: what is happening, and the way to the setting. No warning icon, since someone may keep the setting on.
+    static func keepNumbersFixedItem(action: Selector, target: AnyObject) -> NSMenuItem {
+        let item = NSMenuItem(title: StatusMenuCopy.keepDesktopNumbersFixed, action: action, keyEquivalent: "")
+        item.subtitle = StatusMenuCopy.keepDesktopNumbersFixedDetail
+        item.target = target
+        return item
+    }
+
     /// The display's name above its first row, when Spaces are grouped by display.
     static func header(before offset: Int, in entries: [SpaceMenuEntry]) -> NSMenuItem? {
         guard let name = entries[offset].displayName, offset == 0 || entries[offset - 1].displayName != name else { return nil }

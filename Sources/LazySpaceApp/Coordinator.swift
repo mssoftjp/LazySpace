@@ -2305,18 +2305,18 @@ final class Coordinator {
     }
 
     /// The menu's Space list: window counts, app names, and whether numbers change with recent use.
-    func spaceMenu() -> (entries: [SpaceMenuEntry], reordersByRecentUse: Bool) {
+    func spaceMenu() -> (entries: [SpaceMenuEntry], numbersCanChange: Bool) {
         Self.spaceMenu(list: spaceList(), overview: takeOverview())
     }
 
-    static func spaceMenu(list: [SpaceListItem], overview: SpaceOverview?) -> (entries: [SpaceMenuEntry], reordersByRecentUse: Bool) {
+    static func spaceMenu(list: [SpaceListItem], overview: SpaceOverview?) -> (entries: [SpaceMenuEntry], numbersCanChange: Bool) {
         let byID = Dictionary((overview?.spaces ?? []).map { ($0.spaceID, $0) }, uniquingKeysWith: { a, _ in a })
         let entries = list.map { sp in
             let e = overview == nil ? nil : byID[sp.id]
             return SpaceMenuEntry(index: sp.index, id: sp.id, isCurrent: sp.isCurrent, windows: e?.type == 4 ? nil : e?.windowIDs.count,
                                   apps: e?.apps, fullScreen: e?.type == 4, isShown: sp.isShown, displayName: sp.displayName, otherDisplay: sp.otherDisplay)
         }
-        return (entries, overview?.reordersByRecentUse ?? false)
+        return (entries, overview?.desktopNumbersCanChange ?? false)
     }
 
     /// The Space the source's display now shows, when it is not the source. Nil when that cannot be read.

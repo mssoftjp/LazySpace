@@ -3906,6 +3906,65 @@
         }
       }
     },
+    "cli.desktopNumbersFollowRecentUse" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hinweis: Solange „Spaces automatisch anhand der letzten Verwendung ausrichten“ eingeschaltet ist, folgen die Nummern der Schreibtische der letzten Verwendung. Für feste Nummern schalte die Option unter Systemeinstellungen › Schreibtisch & Dock aus."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note: desktop numbers follow recent use while “Automatically rearrange Spaces based on most recent use” is on. For fixed numbers, turn it off in System Settings › Desktop & Dock."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nota: los números de los escritorios siguen el uso reciente mientras la opción “Reordenar Spaces automáticamente en función del uso más reciente” está activada. Para que los números sean fijos, desactívala en Ajustes del Sistema › Escritorio y Dock."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remarque : les numéros des bureaux suivent l’utilisation récente tant que l’option « Réarranger automatiquement les Spaces en fonction de votre utilisation la plus récente » est activée. Pour des numéros fixes, désactivez-la dans Réglages Système › Bureau et Dock."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "注意: 「最新の使用状況に基づいて操作スペースを自動的に並べ替える」がオンのあいだ、デスクトップの番号は使用状況で入れ替わります。番号を固定するには、システム設定 › デスクトップとDockでオフにしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "참고: ‘Spaces를 최근 사용 내역에 따라 자동으로 재정렬’이 켜져 있는 동안 데스크탑 번호는 최근 사용 내역에 따라 바뀝니다. 번호를 고정하려면 시스템 설정 › 데스크탑 및 Dock에서 끄십시오."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nota: os números das mesas seguem o uso recente enquanto a opção “Reorganizar Spaces automaticamente com base no uso mais recente” estiver ativada. Para números fixos, desative-a em Ajustes do Sistema › Mesa e Dock."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "注意：“根据最近使用情况自动重新排列空间”打开时，桌面编号会随最近使用情况而改变。要固定编号，请在系统设置 › 桌面与程序坞中将其关闭。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "注意：「根據最近的使用情況自動重新排列空間」開啟時，桌面編號會依最近的使用情況而變動。若要固定編號，請在「系統設定」›「桌面與Dock」中將其關閉。"
+          }
+        }
+      }
+    },
     "cli.desktopShortcuts" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5027,65 +5086,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未授權"
-          }
-        }
-      }
-    },
-    "cli.noteMissionControlsAutomaticallyRearrange" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hinweis: In Mission Control ist „Spaces automatisch anhand der letzten Verwendung ausrichten“ eingeschaltet. Die Reihenfolge ändert sich beim Wechseln, daher sind die Nummern der Spaces nicht stabil. Es wird empfohlen, die Option auszuschalten."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Note: Mission Control’s “Automatically rearrange Spaces based on most recent use” is on. The order changes as you switch, so space numbers are not stable. Turning it off is recommended."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nota: la opción “Reordenar Spaces automáticamente en función del uso más reciente” de Mission Control está activada. El orden cambia al cambiar de Space, así que los números de los Spaces no son estables. Se recomienda desactivarla."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remarque : l’option « Réarranger automatiquement les Spaces en fonction de votre utilisation la plus récente » de Mission Control est activée. L’ordre change à chaque changement de Space, les numéros des Spaces ne sont donc pas stables. Il est recommandé de la désactiver."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "注意: Mission Controlの「最新の使用状況に基づいて操作スペースを自動的に並べ替える」がオンです。切り替えのたびに並びが変わるため、デスクトップの番号は安定しません。オフを推奨します。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "참고: Mission Control의 ‘Spaces를 최근 사용 내역에 따라 자동으로 재정렬’이 켜져 있습니다. 전환할 때마다 순서가 바뀌므로 데스크탑 번호가 고정되지 않습니다. 끄는 것을 권장합니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nota: a opção “Reorganizar Spaces automaticamente com base no uso mais recente” do Mission Control está ativada. A ordem muda conforme você alterna, por isso os números dos Spaces não são estáveis. Recomenda-se desativá-la."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "注意：调度中心的“根据最近使用情况自动重新排列空间”已打开。切换时顺序会改变，因此桌面编号不固定。建议将其关闭。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "注意：「指揮中心」的「根據最近的使用情況自動重新排列空間」已開啟。順序會在切換時改變，因此桌面編號並不固定。建議將其關閉。"
           }
         }
       }
@@ -25317,6 +25317,124 @@
         }
       }
     },
+    "editCommands.keepDesktopNumbersFixed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schreibtischnummern beibehalten …"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep Desktop Numbers Fixed…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantener fijos los números de escritorio…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garder les numéros de bureau fixes…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "デスクトップの番号を固定…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "데스크탑 번호 고정…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manter os números das mesas fixos…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "固定桌面编号…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "固定桌面編號⋯"
+          }
+        }
+      }
+    },
+    "editCommands.keepDesktopNumbersFixedDetail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schreibtischnummern folgen der letzten Verwendung."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desktop numbers follow recent use."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los números de escritorio siguen el uso reciente."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les numéros de bureau suivent l’utilisation récente."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "デスクトップの番号は使用状況で入れ替わります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "데스크탑 번호는 최근 사용 내역에 따라 바뀝니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os números das mesas seguem o uso recente."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "桌面编号会随最近使用情况而改变。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "桌面編號會依最近的使用情況而變動。"
+          }
+        }
+      }
+    },
     "editCommands.minimizeWindow" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -27502,65 +27620,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "大小與佈局"
-          }
-        }
-      }
-    },
-    "editCommands.spaceReorderNote" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Die Nummern der Schreibtische folgen der letzten Verwendung und können sich ändern."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Desktop numbers follow recent use and can change."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Los números de los escritorios siguen el uso reciente y pueden cambiar."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Les numéros des bureaux suivent l’utilisation récente et peuvent changer."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "デスクトップの番号は使用状況で入れ替わります。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "데스크탑 번호는 최근 사용 내역에 따라 바뀔 수 있습니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Os números das mesas seguem o uso recente e podem mudar."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "桌面编号会随最近使用情况而改变。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "桌面編號會依最近的使用情況而變動。"
           }
         }
       }

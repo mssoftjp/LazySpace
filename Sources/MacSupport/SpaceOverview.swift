@@ -33,10 +33,18 @@ public struct SpaceOverview: Codable, Equatable {
     /// When on, the order changes with each switch, so `space N` numbers are unstable.
     public var reordersByRecentUse: Bool = false
 
+    /// Whether rearranging can change a desktop number: the setting is on and one display has two standard desktops to swap.
+    public var desktopNumbersCanChange: Bool {
+        reordersByRecentUse && Dictionary(grouping: spaces.filter { $0.type == 0 }, by: \.display).values.contains { $0.count > 1 }
+    }
+
     /// The Dock setting (mru-spaces); the macOS default (on) when the key is absent.
     public static func dockReordersByRecentUse() -> Bool {
         (CFPreferencesCopyAppValue("mru-spaces" as CFString, "com.apple.dock" as CFString) as? Bool) ?? true
     }
+
+    /// Desktop & Dock settings, scrolled so the setting is in view. An anchor macOS does not know opens the pane at the top.
+    public static let rearrangingSettingsURL = URL(string: "x-apple.systempreferences:com.apple.Desktop-Settings.extension?MissionControl")!
 
     /// Top-edge difference that still counts as the same row. Absorbs a few points from tile gaps and rounding, and is half the
     /// minimum counted window height (40 pt), so two windows stacked without overlapping are not one row on their own.

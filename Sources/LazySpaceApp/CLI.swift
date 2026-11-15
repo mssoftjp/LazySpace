@@ -761,8 +761,8 @@ enum CLI {
         if !overview.unknown.isEmpty { lines.append(L(.cliWindowsInAnUnknownSpace(overview.unknown.count))) }
         lines.append(L(.cliCurrentSpaceOnlyOrdinaryDesktops))
         if grouped { lines.append(L(.cliForADesktopOfAnother)) }
-        if overview.reordersByRecentUse {
-            lines.append(L(.cliNoteMissionControlsAutomaticallyRearrange))
+        if overview.desktopNumbersCanChange {
+            lines.append(L(.cliDesktopNumbersFollowRecentUse))
         }
         return lines.joined(separator: "\n")
     }

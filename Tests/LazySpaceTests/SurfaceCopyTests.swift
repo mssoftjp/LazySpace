@@ -332,11 +332,17 @@ final class SurfaceCopyTests: XCTestCase {
             .init(spaceID: 12, type: 4, isCurrent: false, windowIDs: [WindowID(2)], apps: [app("Keynote", 2)]),
         ], unknown: [], reordersByRecentUse: true)
         let menu = Coordinator.spaceMenu(list: [item(1, 11, true), item(nil, 12, false), item(2, 13, false)], overview: overview)
-        XCTAssertTrue(menu.reordersByRecentUse)
+        XCTAssertFalse(menu.numbersCanChange, "one desktop and a full-screen Space: no number can change")
         XCTAssertEqual(menu.entries.map(\.apps?.first?.name), ["Finder", "Keynote", nil])
         XCTAssertEqual(menu.entries.map(\.fullScreen), [false, true, false])
         XCTAssertNil(menu.entries[2].apps, "An unread Space is not reported as empty")
         XCTAssertEqual(Coordinator.spaceMenu(list: [item(1, 11, true)], overview: nil).entries.first?.apps, nil)
+        XCTAssertFalse(Coordinator.spaceMenu(list: [item(1, 11, true)], overview: nil).numbersCanChange)
+        let twoDesktops = SpaceOverview(spaces: [
+            .init(spaceID: 11, type: 0, isCurrent: true, windowIDs: []),
+            .init(spaceID: 13, type: 0, isCurrent: false, windowIDs: []),
+        ], unknown: [], reordersByRecentUse: true)
+        XCTAssertTrue(Coordinator.spaceMenu(list: [item(1, 11, true), item(2, 13, false)], overview: twoDesktops).numbersCanChange)
     }
 
     func testSpaceOverviewOrdersAppsInReadingOrder() {

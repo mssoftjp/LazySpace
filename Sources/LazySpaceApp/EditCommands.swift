@@ -313,7 +313,8 @@ enum StatusMenuCopy {
         return names.joined(separator: Copy.listSeparator)
     }
 
-    static var spaceReorderNote: String { L(.editCommandsSpaceReorderNote) }
+    static var keepDesktopNumbersFixed: String { L(.editCommandsKeepDesktopNumbersFixed) }
+    static var keepDesktopNumbersFixedDetail: String { L(.editCommandsKeepDesktopNumbersFixedDetail) }
 
     static func startHint(arrangeKey: String?) -> String {
         let title = arrangeTitle

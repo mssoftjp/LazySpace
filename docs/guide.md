@@ -48,6 +48,7 @@ If a Space should be left alone, uncheck **Automatically Arrange This Space** in
 
 | Item | What it does |
 |---|---|
+| **Keep Desktop Numbers Fixed…** | Opens System Settings › Desktop & Dock at **Automatically rearrange Spaces based on most recent use**. Turn it off and desktop numbers stop changing. Shown only while it is on and a display has two or more desktops |
 | **Move Window to Space** | Sends the focused window to another desktop, on this display or another one. The Space you are on does not change unless **When moving a window to another Space, switch to that Space** is on in Settings › Shortcuts (see the note on other displays below). Shown when there are two or more desktops, except on a full-screen Space |
 | **Edit Layout** | Layout actions for the focused window |
 | **Automatically Arrange This Space** | Turns automatic arrangement on or off for the current Space |

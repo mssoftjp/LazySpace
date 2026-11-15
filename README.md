@@ -58,6 +58,8 @@ When you want more, the shortcuts are ready. Many of the defaults are the same a
 | `⌥⇧1` … `⌥⇧9` | Send the window to Desktop 1–9 and stay here. A setting in Settings › Shortcuts takes you there with it |
 | `⌥⇥` | Go back to the previous Space |
 
+For numbers that do not change, turn off **Automatically rearrange Spaces based on most recent use** in System Settings › Desktop & Dock.
+
 Everything the shortcuts do is also a command:
 
 ```bash

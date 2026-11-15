@@ -29,6 +29,7 @@ final class DesktopSpaceTests: XCTestCase {
     private var coordinator: Coordinator!
     private var listing: MixedSpaceListing!
     private var destinations: [UInt64] = []
+    private var reorders = false
 
     override func setUp() {
         Copy.language = .english
@@ -37,8 +38,9 @@ final class DesktopSpaceTests: XCTestCase {
         system.existingSpaces = [7, 70, 8, 80, 9]
         listing = MixedSpaceListing()
         coordinator = Coordinator(system: system, store: StateStore(root: root), configURL: root.appendingPathComponent("config.toml"),
-                                  takeCensus: system.census, takeOverview: { [listing] in
-            SpaceOverview(spaces: listing!.order.map { .init(spaceID: $0.id, type: $0.type, isCurrent: $0.id == listing!.active, windowIDs: [], apps: []) }, unknown: [])
+                                  takeCensus: system.census, takeOverview: { [unowned self, listing] in
+            SpaceOverview(spaces: listing!.order.map { .init(spaceID: $0.id, type: $0.type, isCurrent: $0.id == listing!.active, windowIDs: [], apps: []) },
+                          unknown: [], reordersByRecentUse: reorders)
         }, takeInventory: { nil })
         coordinator.spaceListingOverride = listing
         coordinator.spaceSwitcherOverride = { [unowned self] dest, _, _ in
@@ -190,6 +192,94 @@ final class DesktopSpaceTests: XCTestCase {
         XCTAssertTrue(text.contains("2. 8"), text)
         XCTAssertFalse(text.contains("2. 70"), text)
         XCTAssertFalse(text.contains("3. 8"), text)
+    }
+
+    private func overview(reorders: Bool, _ spaces: [(id: UInt64, type: Int32?, display: String?)]) -> SpaceOverview {
+        SpaceOverview(spaces: spaces.map { .init(spaceID: $0.id, type: $0.type, isCurrent: false, windowIDs: [], display: $0.display) },
+                      unknown: [], reordersByRecentUse: reorders)
+    }
+
+    /// Rearranging can change a number only when one display has two standard desktops to swap.
+    func testDesktopNumbersCanChangeOnlyWithTwoDesktopsOnOneDisplay() {
+        XCTAssertFalse(overview(reorders: false, [(1, 0, "A"), (2, 0, "A")]).desktopNumbersCanChange, "the setting is off")
+        XCTAssertFalse(overview(reorders: true, []).desktopNumbersCanChange)
+        XCTAssertFalse(overview(reorders: true, [(1, 0, "A")]).desktopNumbersCanChange, "one desktop")
+        XCTAssertFalse(overview(reorders: true, [(1, 0, "A"), (2, 4, "A")]).desktopNumbersCanChange, "full screen has no number")
+        XCTAssertFalse(overview(reorders: true, [(1, 0, "A"), (2, nil, "A")]).desktopNumbersCanChange, "an unknown type has no number")
+        XCTAssertFalse(overview(reorders: true, [(1, 0, "A"), (2, 0, "B")]).desktopNumbersCanChange, "each display counts its own")
+        XCTAssertTrue(overview(reorders: true, [(1, 0, "A"), (2, 0, "A")]).desktopNumbersCanChange)
+        XCTAssertTrue(overview(reorders: true, [(1, 0, "A"), (2, 0, "B"), (3, 0, "B")]).desktopNumbersCanChange, "one of the displays is enough")
+        XCTAssertTrue(overview(reorders: true, [(1, 0, nil), (2, 0, nil)]).desktopNumbersCanChange, "an unread display is still one group")
+    }
+
+    /// The row under the list says what is happening and opens the setting. It stays away when numbers cannot change.
+    func testMenuOffersTheSettingOnlyWhileNumbersCanChange() throws {
+        func menu() -> NSMenu {
+            let menu = NSMenu()
+            AppDelegate(showReadyAtLaunch: false, coordinator: coordinator).menuNeedsUpdate(menu)
+            return menu
+        }
+        let title = "Keep Desktop Numbers Fixed…"
+        XCTAssertFalse(menu().items.contains { $0.title == title }, "the setting is off")
+
+        reorders = true
+        let delegate = AppDelegate(showReadyAtLaunch: false, coordinator: coordinator)
+        let shown = NSMenu()
+        delegate.menuNeedsUpdate(shown)
+        let row = try XCTUnwrap(shown.items.first { $0.title == title })
+        XCTAssertEqual(row.subtitle, "Desktop numbers follow recent use.")
+        XCTAssertTrue(row.isEnabled)
+        XCTAssertNotNil(row.action)
+        XCTAssertTrue(row.target === delegate)
+        XCTAssertEqual(row.keyEquivalent, "")
+        XCTAssertNil(row.image, "no warning icon: someone may keep the setting on")
+        let position = shown.index(of: row)
+        XCTAssertNotNil(shown.items[position - 1].representedObject as? EditCommandBox, "right under the Space list")
+        XCTAssertTrue(shown.items[position + 1].isSeparatorItem)
+
+        // The list still shows one desktop and a full-screen Space, but no number can change.
+        listing.order = [(7, 0), (70, 4)]
+        let single = menu()
+        XCTAssertTrue(single.items.contains { ($0.representedObject as? EditCommandBox)?.command == .space(.id(70)) }, "the list is shown")
+        XCTAssertFalse(single.items.contains { $0.title == title })
+    }
+
+    /// Two lines at most, and no wider than the one-line note it replaced, in every language.
+    func testKeepNumbersFixedRowStaysSmallInEveryLanguage() {
+        func size(_ item: NSMenuItem) -> NSSize {
+            let menu = NSMenu()
+            menu.addItem(item)
+            return menu.size
+        }
+        let oneLine = NSMenuItem(title: "x", action: nil, keyEquivalent: "")
+        oneLine.subtitle = "x"
+        for language in Language.allCases {
+            Copy.language = language
+            let row = SpaceOverviewMenu.keepNumbersFixedItem(action: #selector(NSObject.description), target: NSObject())
+            XCTAssertFalse(row.title.isEmpty, language.rawValue)
+            XCTAssertFalse(row.subtitle?.isEmpty ?? true, language.rawValue)
+            XCTAssertLessThanOrEqual(size(row).width, 350, language.rawValue)
+            XCTAssertEqual(size(row).height, size(oneLine.copy() as! NSMenuItem).height, "\(language.rawValue): the subtitle stays on one line")
+        }
+    }
+
+    func testRearrangingSettingsOpenAtMissionControl() throws {
+        XCTAssertEqual(SpaceOverview.rearrangingSettingsURL.absoluteString, "x-apple.systempreferences:com.apple.Desktop-Settings.extension?MissionControl")
+        let pane = "/System/Library/ExtensionKit/Extensions/DesktopSettings.appex"
+        guard let bundle = Bundle(path: pane) else { throw XCTSkip("no \(pane) on this macOS") }
+        XCTAssertEqual(bundle.bundleIdentifier, "com.apple.Desktop-Settings.extension", "the pane's identifier in the URL")
+    }
+
+    /// `list-spaces` states the fact and the way to fix the numbers, without telling anyone what they should prefer.
+    func testListSpacesNamesTheSettingOnlyWhileNumbersCanChange() {
+        let name = "Automatically rearrange Spaces based on most recent use"
+        let text = CLI.spacesText(overview(reorders: true, [(1, 0, nil), (2, 0, nil)]))
+        XCTAssertTrue(text.contains(name), text)
+        XCTAssertTrue(text.contains("System Settings › Desktop & Dock"), text)
+        XCTAssertFalse(text.lowercased().contains("recommend"), text)
+        XCTAssertFalse(CLI.spacesText(overview(reorders: true, [(1, 0, nil)])).contains(name))
+        XCTAssertFalse(CLI.spacesText(overview(reorders: true, [(1, 0, nil), (2, 4, nil)])).contains(name))
+        XCTAssertFalse(CLI.spacesText(overview(reorders: false, [(1, 0, nil), (2, 0, nil)])).contains(name))
     }
 
     /// A Space menu row is number, app icons, then app names. Icons sit between the number and the names, not as the row image.
