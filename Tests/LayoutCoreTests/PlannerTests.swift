@@ -395,6 +395,11 @@ final class PlannerTests: XCTestCase {
         }
     }
 
+    /// A child held at its minimum leaves the others a whole number; floating-point error in their share does not move a point to the last child.
+    func testDistributeGivesTheRestWholeBesideAChildAtItsMinimum() {
+        XCTAssertEqual(Planner.distribute(available: 1920, ratios: [0.5520833333333334, 0.4479166666666667], minimums: [120, 960]), [960, 960])
+    }
+
     func testDistributeIsIntegerAndSumsToAvailable() {
         let lengths = Planner.distribute(available: 1001, ratios: [1, 1, 1], minimums: [0, 0, 0])!
         XCTAssertEqual(lengths.reduce(0, +), 1001)

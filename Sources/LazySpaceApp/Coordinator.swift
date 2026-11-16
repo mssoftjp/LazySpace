@@ -1412,6 +1412,7 @@ final class Coordinator {
     @discardableResult
     func arrange(source: String, kind: String = "arrange", heldOut: [WindowID: String] = [:],
                  transform: ArrangeOperation.Transform? = nil, transformFailure: String = L(.coordinatorThisLayoutChangeCannotBe),
+                 shareEdit: (window: WindowID, axes: [Axis])? = nil,
                  layoutOverride: Layout? = nil, ignoreZoom: Bool = false,
                  adding: Set<WindowID> = [], automaticFront: WindowID? = nil,
                  editState: EditState? = nil,
@@ -1479,7 +1480,7 @@ final class Coordinator {
         } ?? system
         let op = ArrangeOperation(system: opSystem, control: control, knowledge: knowledge, limits: limits, options: options, priorLayout: prior, adoptObservedProportions: layoutOverride == nil && kind != EditCommand.toggleZoom.kind, heldOut: held, allowedWindows: allowedWindows,
                                   adding: kind.hasPrefix("auto-") ? adding : [], kind: kind, unanswered: automatic ? unanswered : .arrangeAround,
-                                  transform: transform, transformFailure: transformFailure, zoomed: zoomed, appRule: { [config] window in config.tilingExclusionReason(bundleID: window.app, title: window.title) },
+                                  transform: transform, transformFailure: transformFailure, shareEdit: shareEdit, zoomed: zoomed, appRule: { [config] window in config.tilingExclusionReason(bundleID: window.app, title: window.title) },
                                   displayName: AppNames.localized, authorization: authorization, observedWindows: observed, probeMaximums: probeMaximums, pressedAt: pressedAt)
         if options.reservesRegion {
             var fallback = options
@@ -1568,14 +1569,8 @@ final class Coordinator {
                 result.stopReason = result.stopReason ?? .cancelled
                 result.message = L(.coordinatorTheSituationChangedBeforeThe)
             }
-            if result.outcome == .complete, var layout = op.resultingLayout, let sid = result.spaceID {
+            if result.outcome == .complete, let layout = op.resultingLayout, let sid = result.spaceID {
                 let key = String(sid)
-                // A share edit that moved no tile pressed against a window held at its minimum; its ratios lie past what can show.
-                // The saved layout stays, so the intent does not move against the press and undo gets no step that shows nothing.
-                if kind == "edit:resize" || kind == "mouse-resize", let saved = state.layouts[key], saved.windowIDs == layout.windowIDs, let placed = lastPlans[key],
-                   result.targets.allSatisfy({ target in target.after.map { placed[target.id]?.matches($0, tolerance: limits.tolerance) == true } ?? false }) {
-                    layout = saved
-                }
                 // Undo history: only completions where a user edit changed structure or ratios.
                 // Automatic arrangement (windows coming and going), undo itself, and float are not pushed (undo restores only the layout tree and leaves float state alone).
                 if let before = state.layouts[key], before != layout, kind != EditCommand.undo.kind, kind != EditCommand.toggleFloat.kind, !kind.hasPrefix("auto-") {
@@ -2135,13 +2130,14 @@ final class Coordinator {
             return wrap(arrange(source: source, kind: command.kind, transform: transform,
                                 transformFailure: axis == .horizontal
                                     ? L(.coordinatorTheWidthCannotChangeBecause)
-                                    : L(.coordinatorTheHeightCannotChangeBecause), ignoreZoom: true, authorization: authorization, pressedAt: acceptedAt))
+                                    : L(.coordinatorTheHeightCannotChangeBecause), shareEdit: (focused, [axis]), ignoreZoom: true, authorization: authorization, pressedAt: acceptedAt))
 
         case .resizeSmart(let delta):
             if let why = requireManaged() { return why.accept }
             guard let axis = layout.parentAxis(of: focused) else { return .refused(L(.coordinatorTheShareCannotChangeBecause), code: .singleWindow) }
             let transform: ArrangeOperation.Transform = { current, _, _ in LayoutEdit.resize(focused, axis: axis, by: delta, in: current) }
-            return wrap(arrange(source: source, kind: command.kind, transform: transform, transformFailure: L(.coordinatorTheShareCannotChangeBecauseNo), ignoreZoom: true, authorization: authorization, pressedAt: acceptedAt))
+            return wrap(arrange(source: source, kind: command.kind, transform: transform, transformFailure: L(.coordinatorTheShareCannotChangeBecauseNo),
+                                shareEdit: (focused, [axis]), ignoreZoom: true, authorization: authorization, pressedAt: acceptedAt))
 
         case .balance:
             let transform: ArrangeOperation.Transform = { current, _, _ in
@@ -3298,6 +3294,8 @@ final class Coordinator {
         let key = String(sid)
         lock.lock(); let prior = state.layouts[key]; lock.unlock()
         var adopted = prior
+        // The frames adopted and the tree they are shown as: the last plan from now on, which a drag is measured from.
+        var adoptedFrames: (rects: [WindowID: CGRect], shape: Layout)?
         if let prior {
             // While waiting on AX, keep Pause and the saved layout, without locking the UI's state reads.
             let ids = Set(prior.windowIDs)
@@ -3320,7 +3318,18 @@ final class Coordinator {
             }
             let targets = snap.windows.filter { $0.kind == .standard && ($0.membership == .current || $0.membership == .unknown) }
             let layout = prior.removing(ids.subtracting(targets.map(\.id)))
-            adopted = layout.root == nil ? nil : layout.packing(rects: Dictionary(uniqueKeysWithValues: targets.map { ($0.id, $0.frame) }), shape: shownShape(of: layout, spaceKey: key))
+            // Frames a window held at its minimum accounts for keep the intent; frames changed while paused are taken into the ratios.
+            let limits = (constraints: knowledge.constraints(for: layout.windowIDs, spaceID: sid, workArea: snap.workArea), options: plannerOptions(forSpaceKey: key))
+            let frames = Dictionary(uniqueKeysWithValues: targets.map { ($0.id, $0.frame) })
+            adopted = layout.root == nil ? nil : layout.packing(rects: frames, shape: shownShape(of: layout, spaceKey: key), limits: limits, tolerance: self.limits.tolerance)
+            // Where the windows sit as the adopted layout's tiles, those frames are the last plan from now on. A window resized while paused
+            // that leaves a gap or overlap does not sit as a tile; the last plan stays, and the next look corrects the drift, as before.
+            if let adopted, case .fits(let plan) = Planner.fit(adopted, in: snap.workArea, constraints: limits.constraints, options: limits.options,
+                                                               maximums: knowledge.maximums(for: adopted.windowIDs, workArea: snap.workArea),
+                                                               focused: system.focusedWindowID()),
+               plan.rects.allSatisfy({ id, rect in frames[id]?.matches(rect, tolerance: self.limits.tolerance) == true }) {
+                adoptedFrames = (frames.filter { adopted.windowIDs.contains($0.key) }, plan.shape)
+            }
         }
         guard system.axTrusted, system.currentSpaceID() == sid,
               authorization.interruptionReason(system: system, control: control) == nil else { return refuse() }
@@ -3331,6 +3340,7 @@ final class Coordinator {
         }
         state.layouts[key] = adopted
         if adopted == nil { lastPlans[key] = nil; lastShapes[key] = nil; layoutHistory[key] = nil; state.dialogRegions?[key] = nil }
+        else if let adoptedFrames { lastPlans[key] = adoptedFrames.rects; lastShapes[key] = adoptedFrames.shape }
         // The adopted layout is where the windows are: a pending display or launch fit of this Space is done.
         displayRefitPending.remove(key)
         displayRefitFailures[key] = nil
@@ -5853,7 +5863,7 @@ final class Coordinator {
                 earlyMouseEditDeclined = true
                 return false
             }
-            switch applyManualEdit(first.edit, layout: layout, spaceKey: spaceKey, authorization: authorization) {
+            switch applyManualEdit(first.edit, frame: first.frame, layout: layout, spaceKey: spaceKey, authorization: authorization) {
             case .applied: clearPendingMouseEdit(); return true
             case .none: earlyMouseEditDeclined = true; return false
             // Input or a change arrived during this observation: the quiet path decides later.
@@ -5896,7 +5906,7 @@ final class Coordinator {
     /// nil when input, Pause, or a cancellation arrived during the reads (the drag waits for the quiet path); `complete` is false when the
     /// read budget ran out before every candidate was read.
     private func classifyManualEdits(current: Census, spaceKey: String, layout: Layout, managed: Set<WindowID>,
-                                     authorization: OperationAuthorization?) -> (edits: [(id: WindowID, edit: ManualEdit)], complete: Bool)? {
+                                     authorization: OperationAuthorization?) -> (edits: [(id: WindowID, edit: ManualEdit, frame: CGRect)], complete: Bool)? {
         lock.lock()
         let plan = lastPlans[spaceKey] ?? [:]
         let shape = lastShapes[spaceKey] ?? layout
@@ -5913,10 +5923,10 @@ final class Coordinator {
                                      interrupted: { [self] in authorization?.interruptionReason(system: system, control: control) != nil },
                                      read: { [self] id, deadline in system.readFrame(id, before: deadline) })
         guard case .frames(let frames, let complete) = read else { return nil }
-        let edits = candidates.compactMap { id -> (id: WindowID, edit: ManualEdit)? in
+        let edits = candidates.compactMap { id -> (id: WindowID, edit: ManualEdit, frame: CGRect)? in
             guard let actual = frames[id], let planned = plan[id],
                   let edit = ManualEdit.detect(id: id, planned: planned, actual: actual, layout: layout, shape: shape, plannedRects: plan, tolerance: limits.tolerance) else { return nil }
-            return (id, edit)
+            return (id, edit, actual)
         }
         return (edits, complete)
     }
@@ -5931,12 +5941,12 @@ final class Coordinator {
             return .interrupted
         }
         guard let first = evidence.edits.first else { return .none }
-        return applyManualEdit(first.edit, layout: layout, spaceKey: spaceKey, authorization: authorization)
+        return applyManualEdit(first.edit, frame: first.frame, layout: layout, spaceKey: spaceKey, authorization: authorization)
     }
 
     /// Starts the arrangement for a mouse edit. The edited layout is committed (with undo history) only when that arrangement completes.
     /// Nothing starts once input, Pause, cancellation, a Space change, or automatic arrangement becoming unavailable for this Space invalidated the observation.
-    private func applyManualEdit(_ edit: ManualEdit, layout: Layout, spaceKey: String, authorization: OperationAuthorization?) -> MouseEditOutcome {
+    private func applyManualEdit(_ edit: ManualEdit, frame dragged: CGRect, layout: Layout, spaceKey: String, authorization: OperationAuthorization?) -> MouseEditOutcome {
         if let authorization {
             guard authorization.interruptionReason(system: system, control: control) == nil,
                   system.currentSpaceID().map(String.init) == spaceKey, autoGate().allowed else { return .interrupted }
@@ -5955,16 +5965,45 @@ final class Coordinator {
         let accepted: Accept
         switch edit {
         case .resize(let w, let deltas):
-            // A drag moves a boundary from where the last arrangement placed it: where a window is held at its minimum, the saved ratios are the intent, not the tiles.
-            lock.lock(); let placed = lastPlans[spaceKey]; let placedShape = lastShapes[spaceKey]; let options = plannerOptionsLocked(forSpaceKey: spaceKey); lock.unlock()
-            let constraints = knowledge.constraints(for: layout.windowIDs, spaceID: system.currentSpaceID(), workArea: system.currentWorkArea())
-            let shown = placed.map { rects in
-                layout.windowIDs.allSatisfy { rects[$0] != nil } ? layout.shown(rects: rects, shape: placedShape ?? layout, limits: (constraints, options)) : layout
-            } ?? layout
-            var edited = shown
-            for (axis, delta, edge) in deltas { if let l = LayoutEdit.resize(w, axis: axis, by: delta, in: edited, edge: edge) { edited = l } }
-            if edited == shown { return .none }
-            accepted = arrange(source: "mouse", kind: "mouse-resize", layoutOverride: edited, ignoreZoom: true, authorization: authorization, completion: retry)
+            // A drag moves a boundary from where it was shown: the frames the last arrangement placed, which the drag was measured from.
+            // Where a window was held at its minimum there, the saved ratios are the intent, not those frames.
+            lock.lock(); let placed = lastPlans[spaceKey]; let placedShape = lastShapes[spaceKey]; lock.unlock()
+            let workArea = system.currentWorkArea()
+            let constraints = knowledge.constraints(for: layout.windowIDs, spaceID: system.currentSpaceID(), workArea: workArea)
+            let maximums = knowledge.maximums(for: layout.windowIDs, workArea: workArea)
+            let options = plannerOptions(forSpaceKey: spaceKey)
+            func tiles(_ l: Layout) -> Plan? {
+                guard case .fits(let plan) = Planner.fit(l, in: workArea, constraints: constraints, options: options, maximums: maximums) else { return nil }
+                return plan
+            }
+            // A dragged size below the window's known minimum or above its maximum shows the knowledge is out of date; the operation corrects it
+            // (`recordObservedSize`) and judges the drag then, so it is not judged here.
+            let known = constraints[w]?.size ?? .zero
+            let cap = maximums[w] ?? .zero
+            let judge = !(known.width > dragged.width || known.height > dragged.height
+                          || (cap.width > 0 && dragged.width > cap.width) || (cap.height > 0 && dragged.height > cap.height))
+            // Each axis of a corner drag moves its own split; a split whose boundary does not move keeps its saved ratios.
+            var edited = layout
+            var resized = false
+            for (axis, delta, edge) in deltas {
+                let start = placed.map { edited.shareEditStart(editing: w, along: [axis], rects: $0, shape: placedShape ?? layout, limits: nil, tolerance: limits.tolerance) }
+                guard let moved = LayoutEdit.resize(w, axis: axis, by: delta, in: start?.layout ?? edited, edge: edge) else { continue }
+                resized = true
+                // Pressed into a window at its minimum, this boundary moves no tile; its split keeps the saved ratios.
+                if judge, start?.tiled == true, let before = tiles(edited), tiles(moved)?.rects == before.rects { continue }
+                edited = moved
+            }
+            guard resized else { return .none }
+            if edited == layout {
+                // Every boundary was pressed into a window at its minimum: the dragged window goes back, and the saved layout stays as it was.
+                // As a share edit that changes nothing, so the dragged frame is not adopted and the layout is not divided by its sums again.
+                accepted = arrange(source: "mouse", kind: "mouse-return", transform: { _, _, _ in layout }, shareEdit: (w, deltas.map(\.0)),
+                                   ignoreZoom: true, authorization: authorization, completion: retry)
+            } else {
+                // As a share edit, so the operation keeps the saved layout if minimums it learns while writing leave every tile where it was.
+                accepted = arrange(source: "mouse", kind: "mouse-resize", transform: { _, _, _ in edited }, shareEdit: (w, deltas.map(\.0)),
+                                   ignoreZoom: true, authorization: authorization, completion: retry)
+            }
         case .dropOnto(let w, let target):
             accepted = arrange(source: "mouse", kind: "mouse-swap", layoutOverride: LayoutEdit.swap(w, target, in: layout), ignoreZoom: true,
                                authorization: authorization, completion: retry)

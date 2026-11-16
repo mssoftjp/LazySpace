@@ -447,10 +447,11 @@ public struct Layout: Equatable, Codable {
     /// Writes split ratios back from actual frames, so a distribution shrunk by caps becomes the intent for the next calculation.
     /// Only leaves with space below them in their column keep a height in leftoverHeights; leaves reaching the bottom are just split vertically.
     /// `shape` is the plan's tree as placed, node for node with this one: a split shown as an accordion (folded) keeps its ratios, as an accordion does.
-    /// A split whose ratios already give its frames keeps them. `limits` are the constraints and options of the plan the frames come from: with them,
-    /// the children's minimums count too, so a window held at its minimum does not become the intent. Without them (frames observed on screen),
-    /// only ratios that give the frames with no minimum stay.
-    public func packing(rects: [WindowID: CGRect], shape: Layout, limits: (constraints: [WindowID: SizeKnowledge], options: PlannerOptions)? = nil) -> Layout {
+    /// A split whose ratios already give its frames keeps them. `limits` are the constraints and options the frames are judged with: with them,
+    /// the children's minimums count too, so a window held at its minimum does not become the intent. Without them, only ratios that give the frames
+    /// with no minimum stay. `tolerance` is how far a frame read back from the screen may be from the length the ratios give (0 for a plan's own tiles).
+    public func packing(rects: [WindowID: CGRect], shape: Layout, limits: (constraints: [WindowID: SizeKnowledge], options: PlannerOptions)? = nil,
+                        tolerance: Double = 0) -> Layout {
         var heights = leftoverHeights
         let bottom = rects.values.map(\.maxY).max() ?? 0
         let accordionIDs = shape.accordionMembers
@@ -468,13 +469,44 @@ public struct Layout: Equatable, Codable {
                 heights[id] = nil
             }
         }
-        return Layout(root: root.map { Layout.read($0, shape: shape.root, rects: rects, limits: limits, reading: .packing) }, leftoverHeights: heights)
+        return Layout(root: root.map { Layout.pack($0, shape: shape.root, rects: rects, limits: limits, tolerance: tolerance) }, leftoverHeights: heights)
     }
 
-    /// The layout as its tiles show it, for an edit to start from: a split whose children's minimums hold its tiles away from its ratios takes
-    /// the ratios of its tiles, so the edit changes what is shown; every other split keeps its ratios, as `packing` saved them.
-    public func shown(rects: [WindowID: CGRect], shape: Layout, limits: (constraints: [WindowID: SizeKnowledge], options: PlannerOptions)) -> Layout {
-        Layout(root: root.map { Layout.read($0, shape: shape.root, rects: rects, limits: limits, reading: .showing) }, leftoverHeights: leftoverHeights)
+    /// Where a share edit of `id` starts, and whether the splits it moves tile by their ratios. The split it moves along each of `axes` is the nearest
+    /// split along that axis holding `id` and another window, as `LayoutEdit.resize` finds it. It takes the ratios of its tiles, for all of its
+    /// children, so the edit moves a boundary from where it is shown: with `limits`, where its children's minimums hold the tiles away from its ratios
+    /// (a plan's own tiles); without, wherever its ratios do not give the tiles within `tolerance` (frames a drag was measured from). Every other split
+    /// keeps its ratios. `tiled` is false when such a split is an accordion or shown as one (folded), whose tiles do not follow its ratios.
+    public func shareEditStart(editing id: WindowID, along axes: [Axis], rects: [WindowID: CGRect], shape: Layout,
+                               limits: (constraints: [WindowID: SizeKnowledge], options: PlannerOptions)?, tolerance: Double = 0) -> (layout: Layout, tiled: Bool) {
+        guard let root, let path = LayoutEdit.pathTo(id, in: root) else { return (self, false) }
+        var nodes = [root]
+        for index in path { if let children = nodes.last?.box?.children { nodes.append(children[index]) } }
+        let targets = Set(axes.compactMap { axis in
+            stride(from: path.count - 1, through: 0, by: -1).first { depth in
+                guard let box = nodes[depth].box else { return false }
+                return box.axis == axis && box.children.count >= 2
+            }.map { Array(path.prefix($0)) }
+        })
+        var tiled = !targets.isEmpty
+        func show(_ node: LayoutNode, shape: LayoutNode?, at path: [Int]) -> LayoutNode {
+            guard let box = node.box else { return node }
+            let shapes = shape?.box?.children
+            let inner = box.children.enumerated().map { index, child in
+                show(child, shape: shapes.flatMap { $0.count == box.children.count ? $0[index] : nil }, at: path + [index])
+            }
+            let same = LayoutNode.container(axis: box.axis, children: inner, ratios: box.ratios, accordion: box.accordion)
+            guard targets.contains(path) else { return same }
+            // An accordion, or a split shown as one (folded), does not tile by its ratios.
+            guard case .split(let axis, let children, let ratios) = node, !(shape?.box?.accordion == true && shape?.windowIDs == node.windowIDs) else {
+                tiled = false
+                return same
+            }
+            guard let reading = Layout.reading(children, ratios: ratios, along: axis, rects: rects, limits: limits, tolerance: tolerance),
+                  limits == nil ? !reading.given : reading.held else { return same }
+            return .split(axis, children: inner, ratios: reading.tiles)
+        }
+        return (Layout(root: show(root, shape: shape.root, at: []), leftoverHeights: leftoverHeights), tiled)
     }
 
     /// Windows inside an accordion. Remembering accordion overlap as free height would make the next calculation shrink the strips further.
@@ -491,11 +523,9 @@ public struct Layout: Equatable, Codable {
         }
     }
 
-    private enum Reading { case packing, showing }
-
     /// `shape` is the same node as placed; nil or a different structure counts as tiled as written.
-    private static func read(_ node: LayoutNode, shape: LayoutNode?, rects: [WindowID: CGRect], limits: (constraints: [WindowID: SizeKnowledge], options: PlannerOptions)?,
-                             reading: Reading) -> LayoutNode {
+    private static func pack(_ node: LayoutNode, shape: LayoutNode?, rects: [WindowID: CGRect], limits: (constraints: [WindowID: SizeKnowledge], options: PlannerOptions)?,
+                             tolerance: Double) -> LayoutNode {
         let shapes = shape?.box?.children
         func shapeOf(_ index: Int) -> LayoutNode? {
             guard let shapes, shapes.indices.contains(index), shapes.count == node.box?.children.count else { return nil }
@@ -505,33 +535,60 @@ public struct Layout: Equatable, Codable {
         case .leaf:
             return node
         case .accordion(let axis, let children, let ratios):
-            return .accordion(axis, children: children.enumerated().map { read($1, shape: shapeOf($0), rects: rects, limits: limits, reading: reading) }, ratios: ratios)
+            return .accordion(axis, children: children.enumerated().map { pack($1, shape: shapeOf($0), rects: rects, limits: limits, tolerance: tolerance) }, ratios: ratios)
         case .split(let axis, let children, let ratios):
-            let inner = children.enumerated().map { read($1, shape: shapeOf($0), rects: rects, limits: limits, reading: reading) }
+            let packed = children.enumerated().map { pack($1, shape: shapeOf($0), rects: rects, limits: limits, tolerance: tolerance) }
             // Shown as an accordion: its frames overlap and say nothing about the ratios.
             if shape?.box?.accordion == true, shape?.windowIDs == node.windowIDs {
-                return .split(axis, children: inner, ratios: ratios)
+                return .split(axis, children: packed, ratios: ratios)
             }
-            let lengths = children.map { span($0, along: axis, rects: rects) }
-            let total = lengths.reduce(0, +)
-            guard total > 0 else { return .split(axis, children: inner, ratios: ratios) }
-            // Read back from whole-point lengths, ratios lean toward the last child, more with every change of work-area size and back,
-            // and a window held at its minimum on a smaller area would keep the others from their shares on a larger one.
-            let given = Planner.distribute(available: total, ratios: ratios, minimums: lengths.map { _ in 0 }) == lengths
-            var assumed = Set<WindowID>()
-            let held = !given && limits.map { limits in
-                let minimums = children.map { child -> Double in
-                    let minimum = Planner.minimum(of: child, constraints: limits.constraints, options: limits.options, assumed: &assumed)
-                    return Double(axis == .horizontal ? minimum.width : minimum.height)
-                }
-                return Planner.distribute(available: total, ratios: ratios, minimums: minimums) == lengths
-            } == true
-            let tiles = lengths.map { $0 / total }
-            switch reading {
-            case .packing: return .split(axis, children: inner, ratios: given || held ? ratios : tiles)
-            case .showing: return .split(axis, children: inner, ratios: held ? tiles : ratios)
+            guard let reading = reading(children, ratios: ratios, along: axis, rects: rects, limits: limits, tolerance: tolerance) else {
+                return .split(axis, children: packed, ratios: ratios)
             }
+            return .split(axis, children: packed, ratios: reading.given || reading.held ? ratios : reading.tiles)
         }
+    }
+
+    /// How a split's ratios relate to its frames: `given` when they give these lengths with no minimum, `held` when they do only with the
+    /// children's known minimums (a window held at its minimum), and the ratios of the frames. nil when a child has no frame or the frames have no length.
+    /// Read back from whole-point lengths, ratios lean toward the last child, more with every change of work-area size and back, and a window
+    /// held at its minimum on a smaller area would keep the others from their shares on a larger one; so a split that is given or held keeps its ratios.
+    private static func reading(_ children: [LayoutNode], ratios: [Double], along axis: Axis, rects: [WindowID: CGRect],
+                                limits: (constraints: [WindowID: SizeKnowledge], options: PlannerOptions)?, tolerance: Double = 0) -> (given: Bool, held: Bool, tiles: [Double])? {
+        guard children.allSatisfy({ child in child.windowIDs.contains { rects[$0] != nil } }) else { return nil }
+        let lengths = children.map { span($0, along: axis, rects: rects) }
+        let total = lengths.reduce(0, +)
+        guard total > 0 else { return nil }
+        let tiles = lengths.map { $0 / total }
+        // Frames that leave a gap or overlap between children (a window resized on screen) do not show the ratios, whatever their lengths.
+        if let limits, !adjoin(children, along: axis, gap: limits.options.innerGap(along: axis), rects: rects, tolerance: tolerance) {
+            return (false, false, tiles)
+        }
+        func gives(_ distributed: [Double]?) -> Bool {
+            guard let distributed, distributed.count == lengths.count else { return false }
+            return zip(distributed, lengths).allSatisfy { abs($0 - $1) <= tolerance }
+        }
+        let given = gives(Planner.distribute(available: total, ratios: ratios, minimums: lengths.map { _ in 0 }))
+        var assumed = Set<WindowID>()
+        let held = !given && limits.map { limits in
+            let minimums = children.map { child -> Double in
+                let minimum = Planner.minimum(of: child, constraints: limits.constraints, options: limits.options, assumed: &assumed)
+                return Double(axis == .horizontal ? minimum.width : minimum.height)
+            }
+            return gives(Planner.distribute(available: total, ratios: ratios, minimums: minimums))
+        } == true
+        return (given, held, tiles)
+    }
+
+    /// Whether the children's frames follow one another along the axis, the inner gap apart.
+    private static func adjoin(_ children: [LayoutNode], along axis: Axis, gap: Double, rects: [WindowID: CGRect], tolerance: Double) -> Bool {
+        let extents = children.compactMap { child -> (start: Double, end: Double)? in
+            let frames = child.windowIDs.compactMap { rects[$0] }
+            guard !frames.isEmpty else { return nil }
+            return axis == .horizontal ? (Double(frames.map(\.minX).min()!), Double(frames.map(\.maxX).max()!))
+                : (Double(frames.map(\.minY).min()!), Double(frames.map(\.maxY).max()!))
+        }.sorted { $0.start < $1.start }
+        return zip(extents, extents.dropFirst()).allSatisfy { abs($1.start - $0.end - gap) <= tolerance }
     }
 
     private static func span(_ node: LayoutNode, along axis: Axis, rects: [WindowID: CGRect]) -> Double {

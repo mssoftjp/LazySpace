@@ -584,7 +584,8 @@ public enum Planner {
             }
             if !changed { break }
         }
-        var rounded = lengths.map { floor($0) }
+        // A share that is a whole number apart from floating-point error is that whole number.
+        var rounded = lengths.map { floor($0 + 1e-6) }
         var leftover = available - rounded.reduce(0, +)
         if !caps.contains(where: \.isFinite) {
             if let last = rounded.indices.last { rounded[last] += floor(leftover) }

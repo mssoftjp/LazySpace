@@ -108,14 +108,54 @@ final class WorkAreaChangeTests: XCTestCase {
     /// Without the plan's limits (frames observed on screen), ratios stay only where they give the frames with no minimum.
     func testFramesReadBackWithoutLimitsKeepOnlyRatiosThatGiveThem() {
         let even = Layout(root: .split(.horizontal, children: [.leaf(WindowID(1)), .leaf(WindowID(2)), .leaf(WindowID(3))], ratios: [1.0 / 3, 1.0 / 3, 1.0 / 3]))
-        let tiles: [WindowID: CGRect] = [WindowID(1): CGRect(x: 0, y: 0, width: 490, height: 900), WindowID(2): CGRect(x: 490, y: 0, width: 490, height: 900), WindowID(3): CGRect(x: 980, y: 0, width: 490, height: 900)]
+        // Thirds of 1471 points in whole points: the last tile takes the remaining point.
+        let tiles: [WindowID: CGRect] = [WindowID(1): CGRect(x: 0, y: 0, width: 490, height: 900), WindowID(2): CGRect(x: 490, y: 0, width: 490, height: 900), WindowID(3): CGRect(x: 980, y: 0, width: 491, height: 900)]
         guard case .split(_, _, let kept)? = even.packing(rects: tiles, shape: even).root else { return XCTFail() }
         XCTAssertEqual(kept, [1.0 / 3, 1.0 / 3, 1.0 / 3], "whole-point tiles the ratios give")
         var resized = tiles
         resized[WindowID(1)] = CGRect(x: 0, y: 0, width: 840, height: 900)
         resized[WindowID(2)] = CGRect(x: 840, y: 0, width: 315, height: 900)
-        resized[WindowID(3)] = CGRect(x: 1155, y: 0, width: 315, height: 900)
+        resized[WindowID(3)] = CGRect(x: 1155, y: 0, width: 316, height: 900)
         guard case .split(_, _, let read)? = even.packing(rects: resized, shape: even).root else { return XCTFail() }
-        XCTAssertEqual(read[0], 840.0 / 1470, accuracy: 1e-9, "a frame the ratios do not give is read back")
+        XCTAssertEqual(read[0], 840.0 / 1471, accuracy: 1e-9, "a frame the ratios do not give is read back")
+    }
+
+    /// A share edit starts from the tiles only in the split it moves, and only where a window is held at its minimum there.
+    func testAShareEditStartsFromTheTilesOfTheSplitItMovesOnly() {
+        let area = CGRect(x: 0, y: 0, width: 1710, height: 1000)
+        let constraints = minimums([1280, 300, 300, 300])
+        let rows = Layout(root: .split(.vertical, children: [
+            .split(.horizontal, children: [.leaf(WindowID(1)), .leaf(WindowID(2))], ratios: [0.5, 0.5]),
+            .split(.horizontal, children: [.leaf(WindowID(3)), .leaf(WindowID(4))], ratios: [0.5, 0.5]),
+        ], ratios: [0.5, 0.5]))
+        guard case .fits(let plan) = Planner.fit(rows, in: area, constraints: constraints) else { return XCTFail("does not fit") }
+        let lower = rows.shareEditStart(editing: WindowID(3), along: [.horizontal], rects: plan.rects, shape: plan.shape, limits: (constraints, PlannerOptions()))
+        XCTAssertEqual(lower.layout, rows, "nothing is held in the lower row")
+        XCTAssertTrue(lower.tiled)
+        let upper = rows.shareEditStart(editing: WindowID(2), along: [.horizontal], rects: plan.rects, shape: plan.shape, limits: (constraints, PlannerOptions()))
+        XCTAssertTrue(upper.tiled)
+        guard case .split(_, let row, let outer)? = upper.layout.root, case .split(_, _, let top) = row[0], case .split(_, _, let bottom) = row[1] else { return XCTFail("no rows") }
+        XCTAssertEqual(top, [1280.0 / 1710, 430.0 / 1710])
+        XCTAssertEqual(bottom, [0.5, 0.5])
+        XCTAssertEqual(outer, [0.5, 0.5])
+    }
+
+    /// Inside a real accordion, the split a share edit moves still starts from its tiles where a window is held at its minimum.
+    func testAShareEditInsideAnAccordionStartsFromTheTiles() {
+        let area = CGRect(x: 0, y: 0, width: 1710, height: 1000)
+        let constraints: [WindowID: SizeKnowledge] = [WindowID(1): .known(CGSize(width: 300, height: 120)), WindowID(2): .known(CGSize(width: 300, height: 120)),
+                                                      WindowID(3): .known(CGSize(width: 300, height: 700))]
+        let layout = Layout(root: .accordion(.horizontal, children: [
+            .leaf(WindowID(1)),
+            .split(.vertical, children: [.leaf(WindowID(2)), .leaf(WindowID(3))], ratios: [0.5, 0.5]),
+        ], ratios: [0.5, 0.5]))
+        guard case .fits(let plan) = Planner.fit(layout, in: area, constraints: constraints) else { return XCTFail("does not fit") }
+        let start = layout.shareEditStart(editing: WindowID(2), along: [.vertical], rects: plan.rects, shape: plan.shape, limits: (constraints, PlannerOptions()))
+        XCTAssertTrue(start.tiled)
+        guard case .accordion(_, let children, let outer)? = start.layout.root, case .split(_, _, let column) = children[1] else { return XCTFail("no column") }
+        XCTAssertEqual(column, [0.3, 0.7])
+        XCTAssertEqual(outer, [0.5, 0.5])
+        // The accordion itself does not tile by its ratios.
+        XCTAssertFalse(layout.shareEditStart(editing: WindowID(1), along: [.horizontal], rects: plan.rects, shape: plan.shape, limits: (constraints, PlannerOptions())).tiled)
     }
 }

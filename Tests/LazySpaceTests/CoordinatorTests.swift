@@ -2130,6 +2130,259 @@ final class CoordinatorTests: XCTestCase {
         drain()
         XCTAssertEqual(system.frames, frames)
         XCTAssertEqual(coordinator.state.layouts["7"], saved)
+        // ⌥- and ⌥= are bound to the smart share edit, which picks the axis.
+        _ = coordinator.edit(.resizeSmart(-0.05), source: "test")
+        drain()
+        XCTAssertEqual(system.frames[WindowID(1)], CGRect(x: 0, y: 0, width: 544, height: 1080))
+    }
+
+    /// A corner drag of the right column's top window: its outer right edge cannot move, its bottom edge can. The row beside a window held at its
+    /// minimum keeps its intent, and the column takes the drag.
+    func testACornerDragKeepsTheIntentOfTheSplitItDoesNotMove() {
+        var saved = store.load()
+        saved.layouts["7"] = Layout(root: .split(.horizontal, children: [
+            .leaf(WindowID(1)), .split(.vertical, children: [.leaf(WindowID(2)), .leaf(WindowID(3))], ratios: [0.5, 0.5]),
+        ], ratios: [0.5, 0.5]))
+        store.save(saved)
+        coordinator = Coordinator(system: system, store: store, configURL: coordinator.configURL, takeCensus: system.census, takeOverview: { nil })
+        coordinator.limits.settleDelay = 0
+        system.minimums[WindowID(1)] = CGSize(width: 1280, height: 300)
+        system.frames[WindowID(1)] = CGRect(x: 0, y: 0, width: 1280, height: 1000)
+        system.frames[WindowID(2)] = CGRect(x: 1280, y: 0, width: 640, height: 500)
+        system.frames[WindowID(3)] = CGRect(x: 1280, y: 540, width: 640, height: 500)
+        guard case .started = coordinator.arrange(source: "test") else { return XCTFail("arrange refused") }
+        drain()
+        XCTAssertEqual(system.frames[WindowID(2)], CGRect(x: 1280, y: 0, width: 640, height: 540))
+        // Dragged by its bottom-right corner: 20 points in, 100 points down.
+        system.frames[WindowID(2)] = CGRect(x: 1280, y: 0, width: 620, height: 640)
+        let layout = coordinator.state.layouts["7"]!
+        XCTAssertTrue(coordinator.detectManualEdit(current: system.census(7), spaceKey: "7", layout: layout, managed: Set(layout.windowIDs)))
+        drain()
+        XCTAssertEqual(coordinator.lastResult?.kind, "mouse-resize")
+        XCTAssertEqual(system.frames[WindowID(2)], CGRect(x: 1280, y: 0, width: 640, height: 640))
+        guard case .split(_, let children, let row)? = coordinator.state.layouts["7"]?.root else { return XCTFail("no split") }
+        XCTAssertEqual(row, [0.5, 0.5])
+        XCTAssertEqual(children.count, 2)
+    }
+
+    /// A drag into a window held at its minimum moves no tile: the dragged window goes back, the saved layout stays, and undo has nothing new to take back.
+    func testADragIntoAWindowHeldAtItsMinimumGoesBack() {
+        system.minimums[WindowID(2)] = CGSize(width: 1280, height: 300)
+        system.frames[WindowID(1)] = CGRect(x: 0, y: 0, width: 800, height: 1000)
+        system.frames[WindowID(2)] = CGRect(x: 600, y: 0, width: 1280, height: 1000)
+        guard case .started = coordinator.arrange(source: "test") else { return XCTFail("arrange refused") }
+        drain()
+        let saved = coordinator.state.layouts["7"]
+        let frames = system.frames
+        // The first window's right edge is dragged 100 points into the held window.
+        system.frames[WindowID(1)] = CGRect(x: 0, y: 0, width: 740, height: 1080)
+        XCTAssertTrue(coordinator.detectManualEdit(current: system.census(7), spaceKey: "7", layout: saved!, managed: Set(saved!.windowIDs)))
+        drain()
+        XCTAssertEqual(coordinator.lastResult?.kind, "mouse-return")
+        XCTAssertEqual(system.frames, frames)
+        XCTAssertEqual(coordinator.state.layouts["7"], saved)
+    }
+
+    /// A window resized while paused, leaving a gap beside a window held at its minimum, is taken into the ratios on Resume.
+    func testResumeTakesAResizeBesideAWindowHeldAtItsMinimum() {
+        system.minimums[WindowID(2)] = CGSize(width: 1280, height: 300)
+        system.frames[WindowID(1)] = CGRect(x: 0, y: 0, width: 800, height: 1000)
+        system.frames[WindowID(2)] = CGRect(x: 600, y: 0, width: 1280, height: 1000)
+        guard case .started = coordinator.arrange(source: "test") else { return XCTFail("arrange refused") }
+        drain()
+        coordinator.pause()
+        drain()
+        system.frames[WindowID(1)] = CGRect(x: 0, y: 0, width: 400, height: 1080)
+        coordinator.resume()
+        drain()
+        guard case .split(_, _, let ratios)? = coordinator.state.layouts["7"]?.root else { return XCTFail("no split") }
+        XCTAssertEqual(ratios[0], 400.0 / 1680, accuracy: 1e-9)
+    }
+
+    /// A corner drag whose side edge presses into a window exactly at its known minimum: that boundary moves no tile, so its split keeps the
+    /// saved ratios, and the column takes the drag.
+    func testACornerDragIntoAWindowExactlyAtItsMinimumKeepsTheRow() {
+        var saved = store.load()
+        saved.layouts["7"] = Layout(root: .split(.horizontal, children: [
+            .leaf(WindowID(1)), .split(.vertical, children: [.leaf(WindowID(2)), .leaf(WindowID(3))], ratios: [0.5, 0.5]),
+        ], ratios: [0.4, 0.6]))
+        store.save(saved)
+        coordinator = Coordinator(system: system, store: store, configURL: coordinator.configURL, takeCensus: system.census, takeOverview: { nil })
+        coordinator.limits.settleDelay = 0
+        system.minimums[WindowID(1)] = CGSize(width: 960, height: 300)
+        system.frames[WindowID(1)] = CGRect(x: 0, y: 0, width: 960, height: 1000)
+        system.frames[WindowID(2)] = CGRect(x: 960, y: 0, width: 960, height: 500)
+        system.frames[WindowID(3)] = CGRect(x: 960, y: 540, width: 960, height: 500)
+        guard case .started = coordinator.arrange(source: "test") else { return XCTFail("arrange refused") }
+        drain()
+        // The minimum is learned; balancing then puts the first window exactly at it.
+        _ = coordinator.edit(.balance, source: "test")
+        drain()
+        guard case .split(_, _, let even)? = coordinator.state.layouts["7"]?.root else { return XCTFail("no split") }
+        XCTAssertEqual(even, [0.5, 0.5])
+        XCTAssertEqual(system.frames[WindowID(2)], CGRect(x: 960, y: 0, width: 960, height: 540))
+        // Dragged by its bottom-left corner: 100 points into the first window, 100 points down.
+        system.frames[WindowID(2)] = CGRect(x: 860, y: 0, width: 1060, height: 640)
+        let layout = coordinator.state.layouts["7"]!
+        XCTAssertTrue(coordinator.detectManualEdit(current: system.census(7), spaceKey: "7", layout: layout, managed: Set(layout.windowIDs)))
+        drain()
+        XCTAssertEqual(system.frames[WindowID(2)], CGRect(x: 960, y: 0, width: 960, height: 640))
+        guard case .split(_, _, let row)? = coordinator.state.layouts["7"]?.root else { return XCTFail("no split") }
+        XCTAssertEqual(row, [0.5, 0.5])
+    }
+
+    /// A drag below a minimum the window no longer has (learned with a sidebar the app has since hidden) is taken as dragged.
+    func testADragBelowAStaleMinimumTakesEffect() {
+        var saved = store.load()
+        saved.layouts["7"] = Layout(root: .split(.horizontal, children: [.leaf(WindowID(1)), .leaf(WindowID(2))], ratios: [0.4, 0.6]))
+        store.save(saved)
+        coordinator = Coordinator(system: system, store: store, configURL: coordinator.configURL, takeCensus: system.census, takeOverview: { nil })
+        coordinator.limits.settleDelay = 0
+        system.minimums[WindowID(1)] = CGSize(width: 900, height: 300)
+        system.frames[WindowID(1)] = CGRect(x: 40, y: 40, width: 900, height: 800)
+        system.frames[WindowID(2)] = CGRect(x: 600, y: 80, width: 900, height: 800)
+        guard case .started = coordinator.arrange(source: "test") else { return XCTFail("arrange refused") }
+        drain()
+        XCTAssertEqual(system.frames[WindowID(1)]?.width, 900)
+        XCTAssertEqual(coordinator.knowledge.constraints(for: [WindowID(1)], spaceID: 7, workArea: system.area)[WindowID(1)]?.size?.width, 900, "the minimum is learned")
+        // The app hides its sidebar, and the user drags the window's right edge to 600.
+        system.minimums[WindowID(1)] = CGSize(width: 400, height: 300)
+        system.frames[WindowID(1)] = CGRect(x: 0, y: 0, width: 600, height: 1080)
+        let layout = coordinator.state.layouts["7"]!
+        XCTAssertTrue(coordinator.detectManualEdit(current: system.census(7), spaceKey: "7", layout: layout, managed: Set(layout.windowIDs)))
+        drain()
+        XCTAssertEqual(coordinator.lastResult?.kind, "mouse-resize")
+        XCTAssertEqual(system.frames[WindowID(1)], CGRect(x: 0, y: 0, width: 600, height: 1080))
+        XCTAssertEqual(system.frames[WindowID(2)], CGRect(x: 600, y: 0, width: 1320, height: 1080))
+        // The drag moved the boundary from where it was shown, 900, so the intent is where it was dropped.
+        guard case .split(_, _, let ratios)? = coordinator.state.layouts["7"]?.root else { return XCTFail("no split") }
+        XCTAssertEqual(ratios[0], 600.0 / 1920, accuracy: 1e-9)
+    }
+
+    /// A drag tried again after a stopped attempt already lowered the stale minimum still starts where the drag was measured from.
+    func testARetriedDragStartsWhereItWasMeasuredFrom() {
+        var saved = store.load()
+        saved.layouts["7"] = Layout(root: .split(.horizontal, children: [.leaf(WindowID(1)), .leaf(WindowID(2))], ratios: [0.4, 0.6]))
+        store.save(saved)
+        coordinator = Coordinator(system: system, store: store, configURL: coordinator.configURL, takeCensus: system.census, takeOverview: { nil })
+        coordinator.limits.settleDelay = 0
+        system.minimums[WindowID(1)] = CGSize(width: 900, height: 300)
+        system.frames[WindowID(1)] = CGRect(x: 40, y: 40, width: 900, height: 800)
+        system.frames[WindowID(2)] = CGRect(x: 600, y: 80, width: 900, height: 800)
+        guard case .started = coordinator.arrange(source: "test") else { return XCTFail("arrange refused") }
+        drain()
+        XCTAssertEqual(system.frames[WindowID(1)]?.width, 900)
+        system.minimums[WindowID(1)] = CGSize(width: 400, height: 300)
+        system.frames[WindowID(1)] = CGRect(x: 0, y: 0, width: 600, height: 1080)
+        // The stopped attempt saw the dragged frame and lowered the minimum; the frames of the last arrangement are unchanged.
+        coordinator.knowledge.recordObservedSize(id: WindowID(1), actual: CGSize(width: 600, height: 1080))
+        let layout = coordinator.state.layouts["7"]!
+        XCTAssertTrue(coordinator.detectManualEdit(current: system.census(7), spaceKey: "7", layout: layout, managed: Set(layout.windowIDs)))
+        drain()
+        XCTAssertEqual(system.frames[WindowID(1)], CGRect(x: 0, y: 0, width: 600, height: 1080))
+        guard case .split(_, _, let ratios)? = coordinator.state.layouts["7"]?.root else { return XCTFail("no split") }
+        XCTAssertEqual(ratios[0], 600.0 / 1920, accuracy: 1e-9)
+    }
+
+    /// With an inner gap, a drag into a window held at its minimum that closes the gap still goes back, and the saved layout stays as it was.
+    func testADragIntoAHeldWindowAcrossTheGapGoesBack() throws {
+        try "gap = 10\n".write(to: coordinator.configURL, atomically: true, encoding: .utf8)
+        _ = coordinator.reloadConfig(source: "test")
+        XCTAssertNil(coordinator.configError)
+        system.minimums[WindowID(2)] = CGSize(width: 1280, height: 300)
+        system.frames[WindowID(1)] = CGRect(x: 0, y: 0, width: 800, height: 1000)
+        system.frames[WindowID(2)] = CGRect(x: 600, y: 0, width: 1280, height: 1000)
+        guard case .started = coordinator.arrange(source: "test") else { return XCTFail("arrange refused") }
+        drain()
+        let saved = coordinator.state.layouts["7"]
+        let frames = system.frames
+        XCTAssertEqual(frames[WindowID(1)]?.maxX, 630)
+        // The first window's right edge is dragged across the gap to the held window.
+        system.frames[WindowID(1)] = CGRect(x: 0, y: 0, width: 640, height: 1080)
+        XCTAssertTrue(coordinator.detectManualEdit(current: system.census(7), spaceKey: "7", layout: saved!, managed: Set(saved!.windowIDs)))
+        drain()
+        XCTAssertEqual(coordinator.lastResult?.kind, "mouse-return")
+        XCTAssertEqual(system.frames, frames)
+        XCTAssertEqual(coordinator.state.layouts["7"], saved)
+    }
+
+    /// A drag right after Resume starts from the frames Resume adopted, not from those before the pause.
+    func testADragAfterResumeStartsFromTheAdoptedFrames() {
+        var saved = store.load()
+        saved.layouts["7"] = Layout(root: .split(.horizontal, children: [.leaf(WindowID(1)), .leaf(WindowID(2)), .leaf(WindowID(3))], ratios: [1.0 / 3, 1.0 / 3, 1.0 / 3]))
+        store.save(saved)
+        coordinator = Coordinator(system: system, store: store, configURL: coordinator.configURL, takeCensus: system.census, takeOverview: { nil })
+        coordinator.limits.settleDelay = 0
+        system.frames[WindowID(3)] = CGRect(x: 100, y: 100, width: 600, height: 400)
+        guard case .started = coordinator.arrange(source: "test") else { return XCTFail("arrange refused") }
+        drain()
+        XCTAssertEqual(system.frames[WindowID(2)], CGRect(x: 640, y: 0, width: 640, height: 1080))
+        coordinator.pause()
+        drain()
+        system.frames[WindowID(2)] = CGRect(x: 640, y: 0, width: 480, height: 1080)
+        system.frames[WindowID(3)] = CGRect(x: 1120, y: 0, width: 800, height: 1080)
+        coordinator.resume()
+        drain()
+        // The first window's right edge is dragged 60 points right.
+        system.frames[WindowID(1)] = CGRect(x: 0, y: 0, width: 700, height: 1080)
+        let layout = coordinator.state.layouts["7"]!
+        XCTAssertTrue(coordinator.detectManualEdit(current: system.census(7), spaceKey: "7", layout: layout, managed: Set(layout.windowIDs)))
+        drain()
+        XCTAssertEqual(system.frames[WindowID(1)], CGRect(x: 0, y: 0, width: 700, height: 1080))
+        XCTAssertEqual(system.frames[WindowID(2)], CGRect(x: 700, y: 0, width: 420, height: 1080))
+        XCTAssertEqual(system.frames[WindowID(3)], CGRect(x: 1120, y: 0, width: 800, height: 1080))
+    }
+
+    /// A window resized while paused that leaves a gap does not sit as a tile: Resume keeps the last plan, so the resize is read as an edit next.
+    func testResumeKeepsTheLastPlanWhenTheWindowsLeaveAGap() {
+        guard case .started = coordinator.arrange(source: "test") else { return XCTFail("arrange refused") }
+        drain()
+        let plan = coordinator.testingPlan(spaceKey: "7")
+        XCTAssertEqual(plan?[WindowID(1)], CGRect(x: 0, y: 0, width: 960, height: 1080))
+        coordinator.pause()
+        drain()
+        system.frames[WindowID(1)] = CGRect(x: 0, y: 0, width: 700, height: 1080)
+        XCTAssertNil(coordinator.resume())
+        drain()
+        guard case .split(_, _, let ratios)? = coordinator.state.layouts["7"]?.root else { return XCTFail("no split") }
+        XCTAssertEqual(ratios[0], 700.0 / 1660, accuracy: 1e-9, "the resize is adopted")
+        XCTAssertEqual(coordinator.testingPlan(spaceKey: "7"), plan)
+    }
+
+    /// A drag into a window exactly at a minimum LazySpace has not learned yet: the minimum comes to light while writing, no tile moves,
+    /// and the saved layout stays.
+    func testADragIntoAWindowAtAnUnknownMinimumKeepsTheSavedLayout() {
+        system.minimums[WindowID(2)] = CGSize(width: 960, height: 300)
+        guard case .started = coordinator.arrange(source: "test") else { return XCTFail("arrange refused") }
+        drain()
+        let saved = coordinator.state.layouts["7"]
+        let frames = system.frames
+        XCTAssertEqual(frames[WindowID(2)]?.width, 960)
+        // The first window's right edge is dragged 100 points into the second.
+        system.frames[WindowID(1)] = CGRect(x: 0, y: 0, width: 1060, height: 1080)
+        XCTAssertTrue(coordinator.detectManualEdit(current: system.census(7), spaceKey: "7", layout: saved!, managed: Set(saved!.windowIDs)))
+        drain()
+        XCTAssertEqual(coordinator.lastResult?.kind, "mouse-resize")
+        XCTAssertEqual(coordinator.lastResult?.outcome, .complete)
+        XCTAssertEqual(system.frames, frames)
+        XCTAssertEqual(coordinator.state.layouts["7"], saved)
+    }
+
+    /// Resume after a pause in which nothing moved keeps the intent beside a window held at its minimum.
+    func testResumeKeepsTheIntentBesideAWindowHeldAtItsMinimum() {
+        system.minimums[WindowID(2)] = CGSize(width: 1280, height: 300)
+        system.frames[WindowID(1)] = CGRect(x: 0, y: 0, width: 800, height: 1000)
+        system.frames[WindowID(2)] = CGRect(x: 600, y: 0, width: 1280, height: 1000)
+        guard case .started = coordinator.arrange(source: "test") else { return XCTFail("arrange refused") }
+        drain()
+        let saved = coordinator.state.layouts["7"]
+        coordinator.pause()
+        drain()
+        // The held window reads back a point wider than its tile, within the tolerance.
+        system.frames[WindowID(2)] = CGRect(x: 639, y: 0, width: 1281, height: 1080)
+        coordinator.resume()
+        drain()
+        XCTAssertEqual(coordinator.state.layouts["7"], saved)
     }
 
     /// The reflow after a focus command writes nothing while a mouse button is held (the user may be dragging).

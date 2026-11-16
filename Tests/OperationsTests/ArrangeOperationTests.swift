@@ -261,7 +261,8 @@ final class ArrangeOperationTests: XCTestCase {
         // Back on the small display, ⌥- on the first window gives the held window room at once.
         _ = arrange(on: small, prior: onSmall)
         let edit = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), priorLayout: onSmall,
-                                    kind: "edit:resize", transform: { current, _, _ in LayoutEdit.resize(WindowID(1), axis: .horizontal, by: -0.05, in: current) }, sleep: { _ in })
+                                    kind: "edit:resize", transform: { current, _, _ in LayoutEdit.resize(WindowID(1), axis: .horizontal, by: -0.05, in: current) },
+                                    shareEdit: (WindowID(1), [.horizontal]), sleep: { _ in })
         XCTAssertEqual(edit.run().outcome, .complete)
         XCTAssertEqual(s.frames[WindowID(1)]?.width, 400)
         guard case .split(_, _, let edited)? = edit.resultingLayout?.root else { return XCTFail() }
@@ -289,6 +290,112 @@ final class ArrangeOperationTests: XCTestCase {
         XCTAssertEqual(s.frames[WindowID(1)]?.width, 1504)
     }
 
+    /// A share edit in one row leaves another row's intent alone: a window held at its minimum there still gets its share back on a larger display.
+    func testAShareEditInOneRowKeepsTheIntentOfAnother() {
+        let small = CGRect(x: 0, y: 33, width: 1710, height: 1079)
+        let larger = CGRect(x: 0, y: 25, width: 3008, height: 1667)
+        let s = FakeSystem(windows: (1...4).map { window(UInt32($0), app: "app.\($0)", x: CGFloat($0) * 40) }, area: small)
+        s.minimums[WindowID(1)] = CGSize(width: 1280, height: 300)
+        for id in 2...4 { s.minimums[WindowID(UInt32(id))] = CGSize(width: 300, height: 300) }
+        let rows = Layout(root: .split(.vertical, children: [
+            .split(.horizontal, children: [.leaf(WindowID(1)), .leaf(WindowID(2))], ratios: [0.5, 0.5]),
+            .split(.horizontal, children: [.leaf(WindowID(3)), .leaf(WindowID(4))], ratios: [0.5, 0.5]),
+        ], ratios: [0.5, 0.5]))
+        let first = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), priorLayout: rows, sleep: { _ in })
+        XCTAssertEqual(first.run().outcome, .complete)
+        XCTAssertEqual(s.frames[WindowID(1)]?.width, 1280)
+        let edit = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), priorLayout: first.resultingLayout,
+                                    kind: "edit:resize", transform: { current, _, _ in LayoutEdit.resize(WindowID(3), axis: .horizontal, by: 0.05, in: current) },
+                                    shareEdit: (WindowID(3), [.horizontal]), sleep: { _ in })
+        XCTAssertEqual(edit.run().outcome, .complete)
+        XCTAssertEqual(s.frames[WindowID(3)]?.width, 940)
+        s.snap.workArea = larger
+        let moved = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), priorLayout: edit.resultingLayout, sleep: { _ in })
+        XCTAssertEqual(moved.run().outcome, .complete)
+        XCTAssertEqual(s.frames[WindowID(1)]?.width, 1504, "the top row's intent, not its tiles on the smaller display")
+    }
+
+    /// A window exactly at its minimum: ⌥= on its neighbor moves no tile, and the saved layout stays.
+    func testAShareEditAgainstAWindowExactlyAtItsMinimumKeepsTheSavedLayout() {
+        let s = FakeSystem(windows: [window(1, app: "a", x: 0), window(2, app: "b", x: 40)])
+        s.minimums[WindowID(2)] = CGSize(width: 960, height: 300)
+        s.frames[WindowID(2)] = CGRect(x: 40, y: 30, width: 960, height: 600)
+        let first = makeOp(s)
+        XCTAssertEqual(first.run().outcome, .complete)
+        XCTAssertEqual(s.frames[WindowID(2)]?.width, 960)
+        let frames = s.frames
+        // The minimum is learned from the press itself, so the press is made twice.
+        var layout = first.resultingLayout!
+        for _ in 0..<2 {
+            let edit = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), priorLayout: layout,
+                                        kind: "edit:resize", transform: { current, _, _ in LayoutEdit.resize(WindowID(1), axis: .horizontal, by: 0.05, in: current) },
+                                        shareEdit: (WindowID(1), [.horizontal]), sleep: { _ in })
+            XCTAssertEqual(edit.run().outcome, .complete)
+            layout = edit.resultingLayout!
+        }
+        XCTAssertEqual(s.frames, frames)
+        XCTAssertEqual(layout, first.resultingLayout)
+    }
+
+    /// A share edit that moves no tile saves the layout as it was, to the last bit, so undo gets no step: a row of three keeps its ratios exactly.
+    func testAShareEditThatMovesNoTileKeepsTheSavedRatiosExactly() {
+        let s = FakeSystem(windows: (1...5).map { window(UInt32($0), app: "app.\($0)", x: CGFloat($0) * 40) })
+        s.minimums[WindowID(5)] = CGSize(width: 1500, height: 300)
+        s.frames[WindowID(5)] = CGRect(x: 160, y: 30, width: 1500, height: 500)
+        let rows = Layout(root: .split(.vertical, children: [
+            .split(.horizontal, children: [.leaf(WindowID(1)), .leaf(WindowID(2)), .leaf(WindowID(3))], ratios: [501.0 / 1920, 507.0 / 1920, 912.0 / 1920]),
+            .split(.horizontal, children: [.leaf(WindowID(4)), .leaf(WindowID(5))], ratios: [0.5, 0.5]),
+        ], ratios: [0.5, 0.5]))
+        let first = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), priorLayout: rows, sleep: { _ in })
+        XCTAssertEqual(first.run().outcome, .complete)
+        XCTAssertEqual(s.frames[WindowID(5)]?.width, 1500)
+        var layout = first.resultingLayout!
+        for _ in 0..<20 {
+            let edit = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), priorLayout: layout,
+                                        kind: "edit:resize", transform: { current, _, _ in LayoutEdit.resize(WindowID(4), axis: .horizontal, by: 0.05, in: current) },
+                                        shareEdit: (WindowID(4), [.horizontal]), sleep: { _ in })
+            XCTAssertEqual(edit.run().outcome, .complete)
+            XCTAssertEqual(edit.resultingLayout, layout)
+            layout = edit.resultingLayout!
+        }
+    }
+
+    /// In a row that does not fit side by side, a share edit moves no tile but is kept: the row tiles with it once it fits.
+    func testAShareEditInAFoldedRowIsKept() {
+        let s = FakeSystem(windows: [window(1, app: "a", x: 0), window(2, app: "b", x: 40)])
+        s.minimums[WindowID(1)] = CGSize(width: 1100, height: 300)
+        s.minimums[WindowID(2)] = CGSize(width: 1100, height: 300)
+        let first = makeOp(s)
+        XCTAssertEqual(first.run().outcome, .complete)
+        let frames = s.frames
+        let edit = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), priorLayout: first.resultingLayout,
+                                    kind: "edit:resize", transform: { current, _, _ in LayoutEdit.resize(WindowID(1), axis: .horizontal, by: 0.05, in: current) },
+                                    shareEdit: (WindowID(1), [.horizontal]), sleep: { _ in })
+        XCTAssertEqual(edit.run().outcome, .complete)
+        XCTAssertEqual(s.frames, frames)
+        guard case .split(_, _, let ratios)? = edit.resultingLayout?.root else { return XCTFail() }
+        XCTAssertEqual(ratios[0], 0.55, accuracy: 1e-9)
+    }
+
+    /// The Dock coming in below leaves the windows taller than planned; adopting their proportions keeps the intent beside a window held at its minimum.
+    func testTallerFramesBesideAWindowHeldAtItsMinimumKeepTheIntent() {
+        let area = CGRect(x: 0, y: 33, width: 2056, height: 1296)
+        let s = FakeSystem(windows: [window(1, app: "a", x: 0), window(2, app: "b", x: 40)], area: area)
+        s.minimums[WindowID(1)] = CGSize(width: 400, height: 300)
+        s.minimums[WindowID(2)] = CGSize(width: 1280, height: 700)
+        let first = makeOp(s)
+        XCTAssertEqual(first.run().outcome, .complete)
+        XCTAssertEqual(s.frames[WindowID(1)]?.width, 776)
+        s.snap.workArea = CGRect(x: 0, y: 33, width: 2056, height: 1226)
+        // The held window reads back a point wider than its tile, within the tolerance.
+        s.frames[WindowID(2)] = CGRect(x: 775, y: 33, width: 1281, height: 1296)
+        let dock = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), priorLayout: first.resultingLayout, sleep: { _ in })
+        XCTAssertEqual(dock.run().outcome, .complete)
+        XCTAssertEqual(s.frames[WindowID(1)], CGRect(x: 0, y: 33, width: 776, height: 1226))
+        guard case .split(_, _, let ratios)? = dock.resultingLayout?.root else { return XCTFail() }
+        XCTAssertEqual(ratios, [0.5, 0.5])
+    }
+
     /// A share edit pressed against a minimum changes nothing on screen, and leaves nothing to undo: the first press the other way shows.
     func testShareEditsPressedAgainstAMinimumShowAtOnceTheOtherWay() {
         let area = CGRect(x: 0, y: 33, width: 1512, height: 949)
@@ -301,7 +408,8 @@ final class ArrangeOperationTests: XCTestCase {
         var widths: [Double] = []
         for delta in [-0.05, -0.05, -0.05, 0.05, 0.05] {
             let op = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0), priorLayout: layout,
-                                      kind: "edit:resize", transform: { current, _, _ in LayoutEdit.resize(WindowID(1), axis: .horizontal, by: delta, in: current) }, sleep: { _ in })
+                                      kind: "edit:resize", transform: { current, _, _ in LayoutEdit.resize(WindowID(1), axis: .horizontal, by: delta, in: current) },
+                                      shareEdit: (WindowID(1), [.horizontal]), sleep: { _ in })
             XCTAssertEqual(op.run().outcome, .complete)
             layout = op.resultingLayout!
             widths.append(s.frames[WindowID(1)]!.width)

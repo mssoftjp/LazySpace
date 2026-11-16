@@ -45,6 +45,10 @@ public final class ArrangeOperation {
     public typealias Transform = (Layout, [WindowID: CGRect], Layout) -> Layout?
     private let transform: Transform?
     private let transformFailure: String
+    /// A share edit (⌥- / ⌥=): the window whose share the transform changes and the axes it changes it along. It starts from where the boundary is shown.
+    private let shareEdit: (window: WindowID, axes: [Axis])?
+    /// The saved layout and its tiles before a share edit of a split that tiles by its ratios.
+    private var shareEditStart: (layout: Layout, rects: [WindowID: CGRect])?
     /// The temporarily zoomed window. If among the targets, only it fills the work area and the others stay put.
     private let zoomed: WindowID?
     /// Per-app rules: given the window, returns why it is excluded (nil means included).
@@ -208,6 +212,7 @@ public final class ArrangeOperation {
         unanswered: UnansweredPolicy = .arrangeAround,
         transform: Transform? = nil,
         transformFailure: String? = nil,
+        shareEdit: (window: WindowID, axes: [Axis])? = nil,
         zoomed: WindowID? = nil,
         appRule: ((ObservedWindow) -> String?)? = nil,
         protected: Set<WindowID> = [],
@@ -235,6 +240,7 @@ public final class ArrangeOperation {
         self.unanswered = unanswered
         self.transform = transform
         self.transformFailure = transformFailure ?? L(.arrangeOperationThisEditCantBePerformed)
+        self.shareEdit = shareEdit
         self.zoomed = zoomed
         self.appRule = appRule
         self.protected = protected
@@ -408,8 +414,13 @@ public final class ArrangeOperation {
             }
             // A share edit moves a boundary from where it is shown: where a window is held at its minimum, the saved ratios are the intent, not the tiles.
             // Other edits (swap, move, join) carry the intent.
-            let shown = kind == "edit:resize" && !baseRects.isEmpty ? baseLayout.shown(rects: baseRects, shape: baseShape, limits: (constraints, options)) : baseLayout
-            guard let edited = transform(shown, baseRects, baseShape) else {
+            var start = baseLayout
+            if let shareEdit, !baseRects.isEmpty {
+                let edit = baseLayout.shareEditStart(editing: shareEdit.window, along: shareEdit.axes, rects: baseRects, shape: baseShape, limits: (constraints, options))
+                if edit.tiled { shareEditStart = (baseLayout, baseRects) }
+                start = edit.layout
+            }
+            guard let edited = transform(start, baseRects, baseShape) else {
                 builder.markAllUnapplied(note: L(.arrangeOperationEditNotPossible))
                 return builder.finish(outcome: .notPossible, stopReason: nil, message: transformFailure, finishedAt: now(), wallMs: elapsedMs())
             }
@@ -431,7 +442,7 @@ public final class ArrangeOperation {
                 }
                 let current = Dictionary(uniqueKeysWithValues: inspection.targets.map { ($0.id, $0.frame) })
                 if grew, Self.covers(current.values.map { $0 }, along: axis, area: options.tilingArea(snapshot.workArea), tolerance: limits.tolerance) {
-                    baseLayout = baseLayout.packing(rects: current, shape: preview.shape)
+                    baseLayout = baseLayout.packing(rects: current, shape: preview.shape, limits: (constraints, options), tolerance: limits.tolerance)
                 }
             }
         }
@@ -1167,9 +1178,15 @@ public final class ArrangeOperation {
     }
 
     /// The layout to save. Its ratios are written back from the plan's tiles (`Layout.packing`), except where the plan's minimums account for them:
-    /// a window held at its minimum here does not take the others' shares on a larger area.
+    /// a window held at its minimum here does not take the others' shares on a larger area. A share edit of a split that tiles by its ratios and moved
+    /// no tile keeps the saved layout: its ratios lie past what can show, so they would move the intent against the press, and undo would get a step that shows nothing.
     private func intent(after plan: Plan, constraints: [WindowID: SizeKnowledge]) -> Layout {
-        plan.layout.packing(rects: plan.rects, shape: plan.shape, limits: (constraints, options)).normalized()
+        if let start = shareEditStart, plan.rects == start.rects {
+            // The saved layout itself: ratios divided again by their sum can differ in the last bit, and undo would get a step that shows nothing.
+            if let priorLayout, priorLayout.windowIDs == start.layout.windowIDs { return priorLayout }
+            return start.layout.normalized()
+        }
+        return plan.layout.packing(rects: plan.rects, shape: plan.shape, limits: (constraints, options)).normalized()
     }
 
     private func overflowSuffix(_ builder: ResultBuilder) -> String {
