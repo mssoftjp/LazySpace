@@ -1345,6 +1345,32 @@ final class ArrangeOperationTests: XCTestCase {
         }
     }
 
+    /// A window that joins at the front of a row and does not fit floats itself, not the last window of the row:
+    /// whether the minimums are known before planning or learned only while writing.
+    func testAWindowThatJoinsAtTheFrontAndDoesNotFitFloatsItself() {
+        for knownBefore in [false, true] {
+            let knowledge = ConstraintKnowledge()
+            let area = CGRect(x: 0, y: 30, width: 1080, height: 1890)
+            let s = FakeSystem(windows: [window(1, app: "wide.a"), window(2, app: "wide.b", x: 300), window(3, app: "small", x: 600)], area: area)
+            // 1021 fits at an end of a folded row (one strip), not between two windows (two strips).
+            for (id, width) in [(WindowID(1), 1021.0), (WindowID(2), 1021.0), (WindowID(3), 300.0)] {
+                s.frames[id] = CGRect(x: 0, y: 30, width: max(500, width), height: 600)
+                s.minimums[id] = CGSize(width: width, height: 200)
+                if knownBefore {
+                    knowledge.recordPushback(id: id, requested: CGRect(x: 0, y: 30, width: 100, height: 100), actual: CGRect(x: 0, y: 30, width: width, height: 200),
+                                             spaceID: s.snap.spaceID, workArea: area, tolerance: 1)
+                }
+            }
+            let joined = Layout(root: .split(.horizontal, children: [.leaf(WindowID(3)), .leaf(WindowID(1)), .leaf(WindowID(2))], ratios: [1.0 / 3, 1.0 / 3, 1.0 / 3]))
+            let op = ArrangeOperation(system: s, control: control, knowledge: knowledge, limits: OperationLimits(settleDelay: 0),
+                                      priorLayout: joined, adding: [WindowID(3)], kind: "auto-integrate", sleep: { _ in })
+            let r = op.run()
+            XCTAssertEqual(r.outcome, .complete, r.message)
+            XCTAssertEqual(r.excluded.filter { $0.code == .overflowFloat }.map(\.window.id), [WindowID(3)], "known before planning: \(knownBefore)")
+            XCTAssertEqual(op.resultingLayout?.windowIDs, [WindowID(1), WindowID(2)], "known before planning: \(knownBefore)")
+        }
+    }
+
     func testUnfitPairFloatsOneWindowInsteadOfRestoringTheOrigin() {
         let area = CGRect(x: 0, y: 33, width: 800, height: 400)
         let s = FakeSystem(windows: [window(1, app: "big.a"), window(2, app: "big.b", x: 40)], area: area)
@@ -1378,6 +1404,42 @@ final class ArrangeOperationTests: XCTestCase {
         XCTAssertTrue(r.message.contains("kept in place as floating"), r.message)
         XCTAssertEqual(op.resultingLayout?.windowIDs, [])
         XCTAssertTrue(s.writes.isEmpty, "\(s.writes)")
+    }
+
+    /// Relief drops the newly added window first, so a small window can be dropped before the two large ones that are the reason.
+    /// Once they are out it fits, so it stays tiled: a float is saved, and an unneeded one would keep the window out for good.
+    func testASmallWindowDroppedBeforeTwoLargeOnesIsPutBack() {
+        let area = CGRect(x: 0, y: 30, width: 1080, height: 1890)
+        let s = FakeSystem(windows: [window(1, app: "wide.a"), window(2, app: "small", x: 40), window(3, app: "wide.b", x: 80)], area: area)
+        for (id, width) in [(WindowID(1), 1280.0), (WindowID(2), 300.0), (WindowID(3), 1280.0)] {
+            s.frames[id] = CGRect(x: 0, y: 30, width: max(500, width), height: 700)
+            s.minimums[id] = CGSize(width: width, height: 200)
+        }
+        let op = makeOp(s)
+        let r = op.run()
+        XCTAssertEqual(r.outcome, .complete, r.message)
+        XCTAssertEqual(Set(r.excluded.filter { $0.code == .overflowFloat }.map(\.window.id)), [WindowID(1), WindowID(3)], r.message)
+        XCTAssertEqual(op.resultingLayout?.windowIDs, [WindowID(2)])
+        XCTAssertEqual(s.frames[WindowID(2)], area)
+        let reliefOnly = OverflowRelief.relieve(
+            Planner.rowLayout([WindowID(1), WindowID(2), WindowID(3)], rows: 1), in: area,
+            constraints: [WindowID(1): .known(CGSize(width: 1280, height: 200)), WindowID(2): .known(CGSize(width: 300, height: 200)), WindowID(3): .known(CGSize(width: 1280, height: 200))],
+            options: PlannerOptions(), maximums: [:], preferring: [WindowID(2), WindowID(1), WindowID(3)])
+        XCTAssertEqual(Set(reliefOnly.floated), [WindowID(1), WindowID(3)], "the small window is dropped first, then put back")
+        XCTAssertEqual(reliefOnly.layout.windowIDs, [WindowID(2)])
+    }
+
+    /// Two dropped windows that each fit back alone, but not together: the one relief dropped later comes back, so the one it prefers to drop stays out.
+    func testWhenOnlyOneOfTwoDroppedWindowsFitsBackTheLaterDroppedReturns() {
+        let area = CGRect(x: 0, y: 30, width: 1080, height: 1890)
+        // 1021 fits at an end of a folded row (one strip) but not between two windows (two strips); 1051 fits only alone.
+        let widths: [WindowID: Double] = [WindowID(1): 300, WindowID(2): 300, WindowID(3): 1051, WindowID(4): 1021]
+        let row = Layout(root: .split(.horizontal, children: [WindowID(1), WindowID(4), WindowID(2), WindowID(3)].map { .leaf($0) }, ratios: [0.25, 0.25, 0.25, 0.25]))
+        let relieved = OverflowRelief.relieve(
+            row, in: area, constraints: widths.mapValues { .known(CGSize(width: $0, height: 200)) },
+            options: PlannerOptions(), maximums: [:], preferring: [WindowID(1), WindowID(2), WindowID(3), WindowID(4)])
+        XCTAssertEqual(Set(relieved.floated), [WindowID(1), WindowID(3)])
+        XCTAssertEqual(relieved.layout.windowIDs, [WindowID(4), WindowID(2)])
     }
 
     func testResultRoundTripsThroughJSON() throws {
