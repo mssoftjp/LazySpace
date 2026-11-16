@@ -2088,6 +2088,50 @@ final class CoordinatorTests: XCTestCase {
         XCTAssertEqual(system.frames[WindowID(2)], CGRect(x: 0, y: 0, width: 1100, height: 1080))
         XCTAssertEqual(system.frames[WindowID(1)], CGRect(x: 820, y: 0, width: 1100, height: 1080))
     }
+    /// Beside a window held at its minimum, the saved ratios are the intent; a drag starts from the tiles shown, so it takes effect.
+    func testADragBesideAWindowHeldAtItsMinimumTakesEffect() {
+        system.minimums[WindowID(2)] = CGSize(width: 1280, height: 300)
+        system.frames[WindowID(1)] = CGRect(x: 0, y: 0, width: 800, height: 1000)
+        system.frames[WindowID(2)] = CGRect(x: 600, y: 0, width: 1280, height: 1000)
+        guard case .started = coordinator.arrange(source: "test") else { return XCTFail("arrange refused") }
+        drain()
+        XCTAssertEqual(system.frames[WindowID(1)]?.width, 640)
+        guard case .split(_, _, let ratios)? = coordinator.state.layouts["7"]?.root else { return XCTFail("no split") }
+        XCTAssertEqual(ratios, [0.5, 0.5])
+        // The first window's right edge is dragged 100 points to the left.
+        system.frames[WindowID(1)] = CGRect(x: 0, y: 0, width: 540, height: 1080)
+        let layout = coordinator.state.layouts["7"]!
+        XCTAssertTrue(coordinator.detectManualEdit(current: system.census(7), spaceKey: "7", layout: layout, managed: Set(layout.windowIDs)))
+        drain()
+        XCTAssertEqual(coordinator.lastResult?.kind, "mouse-resize")
+        XCTAssertEqual(system.frames[WindowID(1)], CGRect(x: 0, y: 0, width: 540, height: 1080))
+        XCTAssertEqual(system.frames[WindowID(2)], CGRect(x: 540, y: 0, width: 1380, height: 1080))
+    }
+
+    /// Beside a window held at its minimum, ⌥= that takes nothing from it moves no tile and keeps the saved layout (no undo step that shows nothing,
+    /// and no intent moved against the press); ⌥- gives it room at once, and one undo takes that back.
+    func testShareEditsBesideAWindowHeldAtItsMinimum() {
+        system.minimums[WindowID(2)] = CGSize(width: 1280, height: 300)
+        system.frames[WindowID(1)] = CGRect(x: 0, y: 0, width: 800, height: 1000)
+        system.frames[WindowID(2)] = CGRect(x: 600, y: 0, width: 1280, height: 1000)
+        guard case .started = coordinator.arrange(source: "test") else { return XCTFail("arrange refused") }
+        drain()
+        let saved = coordinator.state.layouts["7"]
+        let frames = system.frames
+        system.focused = WindowID(1)
+        _ = coordinator.edit(.resize(.horizontal, 0.05), source: "test")
+        drain()
+        XCTAssertEqual(system.frames, frames)
+        XCTAssertEqual(coordinator.state.layouts["7"], saved)
+        _ = coordinator.edit(.resize(.horizontal, -0.05), source: "test")
+        drain()
+        XCTAssertEqual(system.frames[WindowID(1)], CGRect(x: 0, y: 0, width: 544, height: 1080))
+        _ = coordinator.edit(.undo, source: "test")
+        drain()
+        XCTAssertEqual(system.frames, frames)
+        XCTAssertEqual(coordinator.state.layouts["7"], saved)
+    }
+
     /// The reflow after a focus command writes nothing while a mouse button is held (the user may be dragging).
     func testFocusInAccordionDoesNotReflowWhileAMouseButtonIsHeld() {
         system.frames[WindowID(3)] = CGRect(x: 100, y: 100, width: 600, height: 400)

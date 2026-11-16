@@ -406,7 +406,10 @@ public final class ArrangeOperation {
                 baseRects = p.rects
                 baseShape = p.shape
             }
-            guard let edited = transform(baseLayout, baseRects, baseShape) else {
+            // A share edit moves a boundary from where it is shown: where a window is held at its minimum, the saved ratios are the intent, not the tiles.
+            // Other edits (swap, move, join) carry the intent.
+            let shown = kind == "edit:resize" && !baseRects.isEmpty ? baseLayout.shown(rects: baseRects, shape: baseShape, limits: (constraints, options)) : baseLayout
+            guard let edited = transform(shown, baseRects, baseShape) else {
                 builder.markAllUnapplied(note: L(.arrangeOperationEditNotPossible))
                 return builder.finish(outcome: .notPossible, stopReason: nil, message: transformFailure, finishedAt: now(), wallMs: elapsedMs())
             }
@@ -906,7 +909,7 @@ public final class ArrangeOperation {
             let apps = snapshot.unobservedApps.map(displayName).joined(separator: Copy.listSeparator)
             if unanswered == .reclaim {
                 // The layout without those apps' windows is committed; the windows stay where they are (the caller remembers them to return).
-                resultingLayout = zoomed == nil ? plan.layout.packing(rects: plan.rects, shape: plan.shape).normalized() : finalLayout.normalized()
+                resultingLayout = zoomed == nil ? intent(after: plan, constraints: constraints) : finalLayout.normalized()
                 resultingShape = zoomed == nil ? plan.shape : nil
                 return builder.finish(outcome: .complete, stopReason: nil,
                                       message: L(.arrangeOperationArrangedNoWindowListLeft(windows: statuses.count, apps)),
@@ -916,7 +919,7 @@ public final class ArrangeOperation {
             return builder.finish(outcome: .partial, stopReason: .appUnresponsive, message: message, finishedAt: finishedAt, wallMs: elapsedMs())
         }
         if allGood {
-            resultingLayout = zoomed == nil ? plan.layout.packing(rects: plan.rects, shape: plan.shape).normalized() : finalLayout.normalized()
+            resultingLayout = zoomed == nil ? intent(after: plan, constraints: constraints) : finalLayout.normalized()
             resultingShape = zoomed == nil ? plan.shape : nil
             let placementNote = dialogPlacementMessage()
             let note = overflowSuffix(builder) + (placementNote.isEmpty ? "" : Copy.sentenceSeparator + placementNote)
@@ -1161,6 +1164,12 @@ public final class ArrangeOperation {
         builder.floatAside(moving.map(\.id), reason: Self.overflowFloatReason, code: Self.overflowFloatCode, windows: moving)
         inspection = builder.inspection
         return (reduced, ids)
+    }
+
+    /// The layout to save. Its ratios are written back from the plan's tiles (`Layout.packing`), except where the plan's minimums account for them:
+    /// a window held at its minimum here does not take the others' shares on a larger area.
+    private func intent(after plan: Plan, constraints: [WindowID: SizeKnowledge]) -> Layout {
+        plan.layout.packing(rects: plan.rects, shape: plan.shape, limits: (constraints, options)).normalized()
     }
 
     private func overflowSuffix(_ builder: ResultBuilder) -> String {

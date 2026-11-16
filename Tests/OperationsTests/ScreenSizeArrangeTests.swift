@@ -163,9 +163,8 @@ final class ScreenSizeArrangeTests: XCTestCase {
         "QHD display with a dialog strip: editor 840 + photos 800 + settings fixed 740",
     ]
 
-    /// As above; five windows of minimum 300 on a 1496-point row are found to be 4 points too wide in three passes.
+    /// As above, beside the strip.
     static let partialOneAtATime = [
-        "16-inch laptop, larger text, opened one at a time: 300 + 300 + 300 + 300 + 300, window 5",
         "QHD display with a dialog strip, opened one at a time: editor 840 + photos 800 + settings fixed 740, window 3",
         "QHD display with a dialog strip, opened one at a time: editor 840 + photos 800 + settings fixed 740 + store 1000, window 3",
     ]
@@ -244,6 +243,77 @@ final class ScreenSizeArrangeTests: XCTestCase {
         }
         XCTAssertTrue(failures.isEmpty, "\(failures.count) failures:\n" + failures.prefix(40).joined(separator: "\n"))
         XCTAssertEqual(partial, Self.partialOneAtATime, "first arrangements left partial")
+    }
+
+    /// The arrangement on another work area and back on the first, `trips` times; nil when it does not complete without floating a window.
+    static func roundTrips(_ apps: [App], from a: CGRect, trips: Int, other: (FakeSystem, ConstraintKnowledge, Layout?) -> (OperationResult, ArrangeOperation),
+                           back: (FakeSystem, ConstraintKnowledge, Layout?) -> (OperationResult, ArrangeOperation)) -> (before: [WindowID: CGRect], after: [[WindowID: CGRect]])? {
+        let s = system(apps, in: a)
+        let knowledge = ConstraintKnowledge()
+        var (r, op) = back(s, knowledge, nil)
+        guard r.outcome == .complete, floated(r).isEmpty else { return nil }
+        let before = s.frames
+        var after: [[WindowID: CGRect]] = []
+        for _ in 1...trips {
+            (r, op) = other(s, knowledge, op.resultingLayout)
+            guard r.outcome == .complete, floated(r).isEmpty else { return nil }
+            (r, op) = back(s, knowledge, op.resultingLayout)
+            guard r.outcome == .complete else { return nil }
+            after.append(s.frames)
+        }
+        return (before, after)
+    }
+
+    static func arrange(_ s: FakeSystem, _ knowledge: ConstraintKnowledge, _ prior: Layout?, in area: CGRect) -> (OperationResult, ArrangeOperation) {
+        // macOS keeps a window's place relative to its display.
+        let dx = area.minX - s.snap.workArea.minX, dy = area.minY - s.snap.workArea.minY
+        for (id, frame) in s.frames { s.frames[id] = frame.offsetBy(dx: dx, dy: dy) }
+        s.snap.workArea = area
+        let op = ArrangeOperation(system: s, control: OperationControl(), knowledge: knowledge, limits: OperationLimits(settleDelay: 0), priorLayout: prior, sleep: { _ in })
+        return (op.run(), op)
+    }
+
+    /// Another display and back, three times, with each screen and the next in the list and with a full HD display: the tiles before the
+    /// change come back, also where a window is held at its minimum on the other display. A fixed-width window is left out: its width is a cap,
+    /// and a split shaped by a cap takes the ratios of its tiles, which can lean by a point each time.
+    func testTilesComeBackAfterADisplayChangeAndBack() {
+        let fullHD = Self.screens.first { $0.name == "full HD display" }!
+        var failures: [String] = []
+        var compared = 0
+        for (index, a) in Self.screens.enumerated() {
+            for b in [Self.screens[(index + 1) % Self.screens.count], fullHD] where b.name != a.name {
+                for apps in Self.sets where apps.count > 1 && !apps.contains(where: \.fixedWidth) {
+                    guard let trips = Self.roundTrips(apps, from: a.area, trips: 3,
+                                                      other: { Self.arrange($0, $1, $2, in: b.area) }, back: { Self.arrange($0, $1, $2, in: a.area) }) else { continue }
+                    compared += 1
+                    if let trip = trips.after.firstIndex(where: { $0 != trips.before }) {
+                        failures.append("\(a.name) and \(b.name): \(apps.map(\.name).joined(separator: " + ")), trip \(trip + 1): \(trips.before.keys.sorted { $0.raw < $1.raw }.map { "\(trips.before[$0]!) now \(trips.after[trip][$0]!)" })")
+                    }
+                }
+            }
+        }
+        XCTAssertGreaterThan(compared, 400)
+        XCTAssertTrue(failures.isEmpty, "\(failures.count) failures:\n" + failures.prefix(30).joined(separator: "\n"))
+    }
+
+    /// A dialog strip reserved and released three times: the tiles before it come back, also where a window is held at its minimum beside it.
+    /// A fixed-width window is left out, as for a display change.
+    func testTilesComeBackAfterADialogStripComesAndGoes() {
+        var failures: [String] = []
+        var compared = 0
+        for screen in Self.screens {
+            for apps in Self.sets where apps.count > 1 && !apps.contains(where: \.fixedWidth) {
+                guard let trips = Self.roundTrips(apps, from: screen.area, trips: 3,
+                                                  other: { s, knowledge, prior in Self.arrangeBesideAStrip(s, knowledge: knowledge, prior: prior) },
+                                                  back: { Self.arrange($0, $1, $2, in: screen.area) }) else { continue }
+                compared += 1
+                if let trip = trips.after.firstIndex(where: { $0 != trips.before }) {
+                    failures.append("\(screen.name): \(apps.map(\.name).joined(separator: " + ")), cycle \(trip + 1): \(trips.before.keys.sorted { $0.raw < $1.raw }.map { "\(trips.before[$0]!) now \(trips.after[trip][$0]!)" })")
+                }
+            }
+        }
+        XCTAssertGreaterThan(compared, 200)
+        XCTAssertTrue(failures.isEmpty, "\(failures.count) failures:\n" + failures.prefix(30).joined(separator: "\n"))
     }
 
     /// Both lists of work areas are the same, so the planner and the arrangement are checked on the same screens.

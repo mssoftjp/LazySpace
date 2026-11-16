@@ -1568,8 +1568,14 @@ final class Coordinator {
                 result.stopReason = result.stopReason ?? .cancelled
                 result.message = L(.coordinatorTheSituationChangedBeforeThe)
             }
-            if result.outcome == .complete, let layout = op.resultingLayout, let sid = result.spaceID {
+            if result.outcome == .complete, var layout = op.resultingLayout, let sid = result.spaceID {
                 let key = String(sid)
+                // A share edit that moved no tile pressed against a window held at its minimum; its ratios lie past what can show.
+                // The saved layout stays, so the intent does not move against the press and undo gets no step that shows nothing.
+                if kind == "edit:resize" || kind == "mouse-resize", let saved = state.layouts[key], saved.windowIDs == layout.windowIDs, let placed = lastPlans[key],
+                   result.targets.allSatisfy({ target in target.after.map { placed[target.id]?.matches($0, tolerance: limits.tolerance) == true } ?? false }) {
+                    layout = saved
+                }
                 // Undo history: only completions where a user edit changed structure or ratios.
                 // Automatic arrangement (windows coming and going), undo itself, and float are not pushed (undo restores only the layout tree and leaves float state alone).
                 if let before = state.layouts[key], before != layout, kind != EditCommand.undo.kind, kind != EditCommand.toggleFloat.kind, !kind.hasPrefix("auto-") {
@@ -5949,9 +5955,15 @@ final class Coordinator {
         let accepted: Accept
         switch edit {
         case .resize(let w, let deltas):
-            var edited = layout
+            // A drag moves a boundary from where the last arrangement placed it: where a window is held at its minimum, the saved ratios are the intent, not the tiles.
+            lock.lock(); let placed = lastPlans[spaceKey]; let placedShape = lastShapes[spaceKey]; let options = plannerOptionsLocked(forSpaceKey: spaceKey); lock.unlock()
+            let constraints = knowledge.constraints(for: layout.windowIDs, spaceID: system.currentSpaceID(), workArea: system.currentWorkArea())
+            let shown = placed.map { rects in
+                layout.windowIDs.allSatisfy { rects[$0] != nil } ? layout.shown(rects: rects, shape: placedShape ?? layout, limits: (constraints, options)) : layout
+            } ?? layout
+            var edited = shown
             for (axis, delta, edge) in deltas { if let l = LayoutEdit.resize(w, axis: axis, by: delta, in: edited, edge: edge) { edited = l } }
-            if edited == layout { return .none }
+            if edited == shown { return .none }
             accepted = arrange(source: "mouse", kind: "mouse-resize", layoutOverride: edited, ignoreZoom: true, authorization: authorization, completion: retry)
         case .dropOnto(let w, let target):
             accepted = arrange(source: "mouse", kind: "mouse-swap", layoutOverride: LayoutEdit.swap(w, target, in: layout), ignoreZoom: true,

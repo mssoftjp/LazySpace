@@ -447,7 +447,10 @@ public struct Layout: Equatable, Codable {
     /// Writes split ratios back from actual frames, so a distribution shrunk by caps becomes the intent for the next calculation.
     /// Only leaves with space below them in their column keep a height in leftoverHeights; leaves reaching the bottom are just split vertically.
     /// `shape` is the plan's tree as placed, node for node with this one: a split shown as an accordion (folded) keeps its ratios, as an accordion does.
-    public func packing(rects: [WindowID: CGRect], shape: Layout) -> Layout {
+    /// A split whose ratios already give its frames keeps them. `limits` are the constraints and options of the plan the frames come from: with them,
+    /// the children's minimums count too, so a window held at its minimum does not become the intent. Without them (frames observed on screen),
+    /// only ratios that give the frames with no minimum stay.
+    public func packing(rects: [WindowID: CGRect], shape: Layout, limits: (constraints: [WindowID: SizeKnowledge], options: PlannerOptions)? = nil) -> Layout {
         var heights = leftoverHeights
         let bottom = rects.values.map(\.maxY).max() ?? 0
         let accordionIDs = shape.accordionMembers
@@ -465,7 +468,13 @@ public struct Layout: Equatable, Codable {
                 heights[id] = nil
             }
         }
-        return Layout(root: root.map { Layout.pack($0, shape: shape.root, rects: rects) }, leftoverHeights: heights)
+        return Layout(root: root.map { Layout.read($0, shape: shape.root, rects: rects, limits: limits, reading: .packing) }, leftoverHeights: heights)
+    }
+
+    /// The layout as its tiles show it, for an edit to start from: a split whose children's minimums hold its tiles away from its ratios takes
+    /// the ratios of its tiles, so the edit changes what is shown; every other split keeps its ratios, as `packing` saved them.
+    public func shown(rects: [WindowID: CGRect], shape: Layout, limits: (constraints: [WindowID: SizeKnowledge], options: PlannerOptions)) -> Layout {
+        Layout(root: root.map { Layout.read($0, shape: shape.root, rects: rects, limits: limits, reading: .showing) }, leftoverHeights: leftoverHeights)
     }
 
     /// Windows inside an accordion. Remembering accordion overlap as free height would make the next calculation shrink the strips further.
@@ -482,8 +491,11 @@ public struct Layout: Equatable, Codable {
         }
     }
 
+    private enum Reading { case packing, showing }
+
     /// `shape` is the same node as placed; nil or a different structure counts as tiled as written.
-    private static func pack(_ node: LayoutNode, shape: LayoutNode?, rects: [WindowID: CGRect]) -> LayoutNode {
+    private static func read(_ node: LayoutNode, shape: LayoutNode?, rects: [WindowID: CGRect], limits: (constraints: [WindowID: SizeKnowledge], options: PlannerOptions)?,
+                             reading: Reading) -> LayoutNode {
         let shapes = shape?.box?.children
         func shapeOf(_ index: Int) -> LayoutNode? {
             guard let shapes, shapes.indices.contains(index), shapes.count == node.box?.children.count else { return nil }
@@ -493,16 +505,32 @@ public struct Layout: Equatable, Codable {
         case .leaf:
             return node
         case .accordion(let axis, let children, let ratios):
-            return .accordion(axis, children: children.enumerated().map { pack($1, shape: shapeOf($0), rects: rects) }, ratios: ratios)
+            return .accordion(axis, children: children.enumerated().map { read($1, shape: shapeOf($0), rects: rects, limits: limits, reading: reading) }, ratios: ratios)
         case .split(let axis, let children, let ratios):
-            let packed = children.enumerated().map { pack($1, shape: shapeOf($0), rects: rects) }
+            let inner = children.enumerated().map { read($1, shape: shapeOf($0), rects: rects, limits: limits, reading: reading) }
             // Shown as an accordion: its frames overlap and say nothing about the ratios.
             if shape?.box?.accordion == true, shape?.windowIDs == node.windowIDs {
-                return .split(axis, children: packed, ratios: ratios)
+                return .split(axis, children: inner, ratios: ratios)
             }
             let lengths = children.map { span($0, along: axis, rects: rects) }
             let total = lengths.reduce(0, +)
-            return .split(axis, children: packed, ratios: total > 0 ? lengths.map { $0 / total } : ratios)
+            guard total > 0 else { return .split(axis, children: inner, ratios: ratios) }
+            // Read back from whole-point lengths, ratios lean toward the last child, more with every change of work-area size and back,
+            // and a window held at its minimum on a smaller area would keep the others from their shares on a larger one.
+            let given = Planner.distribute(available: total, ratios: ratios, minimums: lengths.map { _ in 0 }) == lengths
+            var assumed = Set<WindowID>()
+            let held = !given && limits.map { limits in
+                let minimums = children.map { child -> Double in
+                    let minimum = Planner.minimum(of: child, constraints: limits.constraints, options: limits.options, assumed: &assumed)
+                    return Double(axis == .horizontal ? minimum.width : minimum.height)
+                }
+                return Planner.distribute(available: total, ratios: ratios, minimums: minimums) == lengths
+            } == true
+            let tiles = lengths.map { $0 / total }
+            switch reading {
+            case .packing: return .split(axis, children: inner, ratios: given || held ? ratios : tiles)
+            case .showing: return .split(axis, children: inner, ratios: held ? tiles : ratios)
+            }
         }
     }
 
