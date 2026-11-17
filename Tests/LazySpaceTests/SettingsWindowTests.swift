@@ -387,6 +387,80 @@ final class SettingsWindowTests: XCTestCase {
         Copy.language = .english
     }
 
+    /// About is centered like a Mac About window: every line sits in the middle of the pane, with or without an updater and an offer.
+    func testAboutCentersEveryLine() throws {
+        try load(Config())
+        controller.bundleInfo = ["CFBundleShortVersionString": "0.5.0", "CFBundleVersion": "202610111200", "NSHumanReadableCopyright": "© 2026 Musashino Software"]
+        let updates = FakeUpdates()
+        for state in ["no updater", "no offer", "offer"] {
+            if state == "no offer" { controller.updates = updates }
+            if state == "offer" {
+                updates.offer = UpdateOffer(version: "0.5.1", build: "202611010000")
+                updates.onChange?()
+            }
+            try select(.about)
+            let content = try XCTUnwrap(controller.window?.contentView)
+            content.layoutSubtreeIfNeeded()
+            // A borderless button draws its title with a text field of its own.
+            let lines = views().filter { view in
+                !view.isHiddenOrHasHiddenAncestor && !(view.superview is NSButton) && (view is NSTextField || view is NSButton || view is NSImageView)
+                    && !(view is NSTextField && (view as! NSTextField).stringValue.isEmpty)
+            }
+            XCTAssertGreaterThanOrEqual(lines.count, state == "no updater" ? 5 : 7, state)
+            for view in lines {
+                let frame = view.superview!.convert(view.alignmentRect(forFrame: view.frame), to: content)
+                XCTAssertEqual(frame.midX, content.bounds.midX, accuracy: 1, "\(state): \(view)")
+                if let text = view as? NSTextField {
+                    XCTAssertEqual(text.alignment, .center, "\(state): \(text.stringValue)")
+                }
+            }
+        }
+    }
+
+    /// Apps reads as a table: in every row, with or without a badge, the name and the identifier sit in the middle of the row and start under their column headings.
+    func testAppsRowsLineUpWithAndWithoutBadges() throws {
+        var config = Config()
+        config.rules = [
+            .init(app: "com.apple.Stickies", action: .ignore),
+            .init(app: "us.zoom.xos", action: .float),
+            .init(app: "com.apple.Safari", action: .ignore, title: "Copy"),
+        ]
+        try load(config)
+        let table = try appsTable()
+        table.layoutSubtreeIfNeeded()
+        var identifierEdges: [CGFloat] = []
+        for row in 0..<table.numberOfRows {
+            let rowRect = table.rect(ofRow: row)
+            for column in 0..<table.numberOfColumns {
+                let cell = try XCTUnwrap(table.view(atColumn: column, row: row, makeIfNecessary: true))
+                cell.layoutSubtreeIfNeeded()
+                let text = try XCTUnwrap(descendants(cell).compactMap { $0 as? NSTextField }.first, "row \(row) column \(column)")
+                let frame = text.superview!.convert(text.frame, to: table)
+                // A field taller than its text draws the text at its top.
+                XCTAssertEqual(frame.height, text.intrinsicContentSize.height, accuracy: 1, "row \(row) column \(column)")
+                XCTAssertEqual(frame.midY, rowRect.midY, accuracy: 1, "row \(row) column \(column)")
+                // Where a field filling the cell starts, so the text lines up under the column heading.
+                XCTAssertEqual(frame.minX, table.frameOfCell(atColumn: column, row: row).minX, accuracy: 0.5, "row \(row) column \(column)")
+                if column == 1 { identifierEdges.append(frame.minX) }
+            }
+        }
+        XCTAssertEqual(identifierEdges.count, 3)
+        XCTAssertEqual(identifierEdges.max()! - identifierEdges.min()!, 0, accuracy: 0.5, "\(identifierEdges)")
+        // On the blue selection, the name, the identifier, and the badges turn white.
+        for row in 0..<table.numberOfRows {
+            table.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
+            let rowView = try XCTUnwrap(table.rowView(atRow: row, makeIfNecessary: true))
+            rowView.isEmphasized = true
+            XCTAssertEqual(rowView.interiorBackgroundStyle, .emphasized)
+            for column in 0..<table.numberOfColumns {
+                let cell = try XCTUnwrap(table.view(atColumn: column, row: row, makeIfNecessary: true))
+                for text in descendants(cell).compactMap({ $0 as? NSTextField }) {
+                    XCTAssertEqual(text.cell?.backgroundStyle, .emphasized, "row \(row) column \(column): \(text.stringValue)")
+                }
+            }
+        }
+    }
+
     /// A found update waits quietly in About; one button checks or updates, and the pane follows the updater while open.
     func testAboutShowsAnAvailableUpdateAndStartsItOnlyWhenChosen() throws {
         try load(Config())
@@ -999,7 +1073,10 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertLessThan(table.selectedRow, 0)
         XCTAssertFalse(try button("−").isEnabled)
         XCTAssertTrue(views().contains { ($0 as? NSTextField)?.stringValue == "No apps\nClick + to add one." })
-        XCTAssertNil(table.headerView)
+        // A table with column headings, like Shortcuts.
+        XCTAssertEqual(table.tableColumns.map(\.title), ["App", "Identifier"])
+        XCTAssertFalse(try XCTUnwrap(table.headerView).isHiddenOrHasHiddenAncestor)
+        XCTAssertGreaterThan(table.headerView?.bounds.height ?? 0, 1)
         XCTAssertTrue(controller.preparedAddRuleMenu().items.contains { $0.title == "Enter Bundle Identifier…" })
         try addListedApp()
         XCTAssertFalse(views().contains { ($0 as? NSTextField)?.stringValue == "No apps are excluded." })
@@ -1013,7 +1090,8 @@ final class SettingsWindowTests: XCTestCase {
         controller.refresh()
         try select(.apps)
         XCTAssertTrue(views().contains { ($0 as? NSTextField)?.stringValue == "アプリはありません\n＋ で追加します。" })
-        XCTAssertNil(try appsTable().headerView)
+        XCTAssertEqual(try appsTable().tableColumns.map(\.title), ["アプリ", "識別子"])
+        XCTAssertGreaterThan(try appsTable().headerView?.bounds.height ?? 0, 1)
         Copy.language = .english
         controller.refresh()
 
@@ -2422,11 +2500,14 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertFalse(group is InsetSelectionRowView)
         XCTAssertTrue(controller.tableView(table, isGroupRow: windows))
 
+        // Apps is a full-width striped table, like Activity Monitor; its selection spans the row.
         try select(.apps)
         try addListedApp()
         let apps = try appsTable()
+        XCTAssertEqual(apps.effectiveStyle, .fullWidth)
+        XCTAssertTrue(apps.usesAlternatingRowBackgroundColors)
         let appRow = try XCTUnwrap(apps.rowView(atRow: 0, makeIfNecessary: true))
-        XCTAssertTrue(appRow is InsetSelectionRowView)
+        XCTAssertFalse(appRow is InsetSelectionRowView)
     }
 
     func testDirectionPopupsUseTheValueTrailingInsetAndSelectedTextColor() throws {

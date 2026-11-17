@@ -907,9 +907,13 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         let updates = vstack([updateNotice, updateButton, automaticCheckBox])
         updates.detachesHiddenViews = true
         updateSection = updates
-        let column = vstack([icon, name, vstack([aboutVersion, aboutCopyright], spacing: 2), link, updates], spacing: 12)
+        let details = vstack([aboutVersion, aboutCopyright], spacing: 2)
+        let column = vstack([icon, name, details, link, updates], spacing: 12)
         column.setCustomSpacing(4, after: name)
         column.detachesHiddenViews = true
+        // Centered, like a Mac About window.
+        for stack in [column, details, updates] { stack.alignment = .centerX }
+        for label in [name, aboutVersion, aboutCopyright, updateNotice] { label.alignment = .center }
         refreshAbout()
         return SettingsPaneLayout.centered(column, width: SettingsForm.width)
     }
@@ -1085,7 +1089,6 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         removeColumns(rulesTable)
         column(rulesTable, "name", SettingsCopy.ruleAppColumn, width: 180)
         column(rulesTable, "app", SettingsCopy.ruleIdentifierColumn, width: 430)
-        rulesTable.headerView = nil
         configurePlusMinus(addRuleButton, add: true)
         addRuleButton.target = self
         addRuleButton.action = #selector(showAddRuleMenu)
@@ -1100,6 +1103,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         rulesEmptyLabel.font = .systemFont(ofSize: 12)
         rulesEmptyLabel.textColor = .secondaryLabelColor
         let table = tableScroll(rulesTable, minimumHeight: 160, rowHeight: 26)
+        rulesTable.usesAlternatingRowBackgroundColors = true
+        rulesTable.style = .fullWidth
         rulesScroll = table
         prepareMessage(ruleError)
         ruleError.textColor = .systemRed
@@ -2994,6 +2999,14 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         return title
     }
 
+    /// Every Apps cell is a stack centered in the row, so names, identifiers, and badges line up in rows with and without badges.
+    /// A stack places a text field by its alignment rect, 2 points inside its text; the inset puts the text under the column heading.
+    private func ruleCell(_ views: [NSView]) -> NSView {
+        let cell = hstack(views)
+        cell.edgeInsets.left = 2
+        return cell
+    }
+
     private func ruleAppCell(_ app: String, row: Int) -> NSView {
         let field = RuleTextField(string: ruleEdit?.row == row ? ruleEdit!.text : app)
         field.ruleIndex = row
@@ -3020,7 +3033,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
     }
 
     func tableView(_ tableView: NSTableView, rowViewForRow row: Int) -> NSTableRowView? {
-        guard tableView === keysTable || tableView === rulesTable else { return nil }
+        guard tableView === keysTable else { return nil }
         let group = tableView === keysTable && keyRows.indices.contains(row) && {
             if case .heading = keyRows[row] { return true }
             return false
@@ -3176,7 +3189,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
             }
         case rulesTable:
             let rule = draft.rules[row]
-            if id == "name" { return ruleNameCell(rule.app) }
+            if id == "name" { return ruleCell([ruleNameCell(rule.app)]) }
             var badges = [ruleAppCell(rule.app, row: row)]
             if rule.action == .float {
                 let floating = caption(L(.settingsWindowFloating))
@@ -3194,7 +3207,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
                 filter.toolTip = rule.title
                 badges.append(filter)
             }
-            return badges.count == 1 ? badges[0] : hstack(badges)
+            return ruleCell(badges)
         default: return nil
         }
     }

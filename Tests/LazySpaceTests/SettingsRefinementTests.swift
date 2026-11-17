@@ -357,6 +357,61 @@ final class SettingsRefinementTests: XCTestCase {
         }
     }
 
+    /// About with the update section, and Apps empty and with rules, including a floating rule and a title condition.
+    func testOptInAboutAndAppsContactSheet() throws {
+        guard let raw = ProcessInfo.processInfo.environment["LAZYSPACE_SETTINGS_CONTACT_SHEET"], !raw.isEmpty else { return }
+        let directory = URL(fileURLWithPath: raw, isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let previousKey = NSApp.keyWindow
+        defer {
+            controller?.window?.orderOut(nil)
+            if let previousKey, previousKey !== controller?.window { previousKey.makeKey() }
+            Copy.language = .english
+        }
+        var filled = Config()
+        filled.rules = [
+            .init(app: "com.apple.dt.Devices", action: .ignore),
+            .init(app: "com.apple.Stickies", action: .ignore),
+            .init(app: "us.zoom.xos", action: .float),
+            .init(app: "com.apple.Safari", action: .ignore, title: "Copy"),
+        ]
+        var names: [String] = []
+        for (language, code) in [(Language.english, "en"), (.japanese, "ja")] {
+            for (rules, state) in [([Config.Rule](), "empty"), (filled.rules, "rules")] {
+                controller?.window?.orderOut(nil)
+                var config = Config()
+                config.language = code
+                config.rules = rules
+                try load(config)
+                controller.bundleInfo = ["CFBundleShortVersionString": "0.5.0", "CFBundleVersion": "202610111200", "NSHumanReadableCopyright": "© 2026 Musashino Software"]
+                controller.updates = FakeUpdates()
+                Copy.language = language
+                controller.refresh()
+                try showCaptureWindow()
+                for (appearance, theme) in [(NSAppearance.Name.aqua, "light"), (.darkAqua, "dark")] {
+                    try applyAppearance(appearance)
+                    try select(.apps)
+                    names.append(try captureContent(named: "apps-\(code)-\(theme)-\(state)", to: directory))
+                    if state == "rules" {
+                        let table = try XCTUnwrap(views().compactMap { $0 as? NSTableView }.first)
+                        table.selectRowIndexes(IndexSet(integer: 1), byExtendingSelection: false)
+                        controller.window?.makeFirstResponder(table)
+                        names.append(try captureContent(named: "apps-\(code)-\(theme)-selected", to: directory))
+                        table.deselectAll(nil)
+                    }
+                    if state == "empty" {
+                        try select(.about)
+                        names.append(try captureContent(named: "about-\(code)-\(theme)", to: directory))
+                    }
+                }
+            }
+        }
+        let written = try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil).map(\.lastPathComponent)
+        for name in names {
+            XCTAssertTrue(written.contains(name), "missing \(name)")
+        }
+    }
+
     private func assertDifferentLanguages(_ prefix: String, state: String, theme: String, in directory: URL) throws {
         let english = try Data(contentsOf: directory.appendingPathComponent("\(prefix)-en-\(theme)-\(state).png"))
         let japanese = try Data(contentsOf: directory.appendingPathComponent("\(prefix)-ja-\(theme)-\(state).png"))
