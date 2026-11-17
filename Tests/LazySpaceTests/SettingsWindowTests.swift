@@ -429,6 +429,7 @@ final class SettingsWindowTests: XCTestCase {
         let table = try appsTable()
         table.layoutSubtreeIfNeeded()
         var identifierEdges: [CGFloat] = []
+        XCTAssertEqual(table.numberOfRows, 3)
         for row in 0..<table.numberOfRows {
             let rowRect = table.rect(ofRow: row)
             for column in 0..<table.numberOfColumns {
@@ -439,13 +440,15 @@ final class SettingsWindowTests: XCTestCase {
                 // A field taller than its text draws the text at its top.
                 XCTAssertEqual(frame.height, text.intrinsicContentSize.height, accuracy: 1, "row \(row) column \(column)")
                 XCTAssertEqual(frame.midY, rowRect.midY, accuracy: 1, "row \(row) column \(column)")
-                // Where a field filling the cell starts, so the text lines up under the column heading.
+                // Where a field filling the cell starts, as in AppKit's own cells, which line up under the column headings.
+                // The headings' own text inset is AppKit's and is not exposed; the Settings contact sheet shows both.
                 XCTAssertEqual(frame.minX, table.frameOfCell(atColumn: column, row: row).minX, accuracy: 0.5, "row \(row) column \(column)")
                 if column == 1 { identifierEdges.append(frame.minX) }
             }
         }
         XCTAssertEqual(identifierEdges.count, 3)
-        XCTAssertEqual(identifierEdges.max()! - identifierEdges.min()!, 0, accuracy: 0.5, "\(identifierEdges)")
+        let (first, last) = (try XCTUnwrap(identifierEdges.min()), try XCTUnwrap(identifierEdges.max()))
+        XCTAssertEqual(last - first, 0, accuracy: 0.5, "\(identifierEdges)")
         // On the blue selection, the name, the identifier, and the badges turn white.
         for row in 0..<table.numberOfRows {
             table.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)

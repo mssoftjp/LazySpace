@@ -276,14 +276,17 @@ public final class MacWindowSystem: WindowSystem {
                         // Running out of time leaves the app unobserved, as any read does; another failure adds nothing, as before.
                         case .failure(let e): if e == .cannotComplete { out.unresponsive = true }
                         case .success(let children):
-                            var childIDs: [CGWindowID?] = []
-                            for child in children {
+                            // Each window is observed as soon as it is found, and the scan stops once every missing window is found,
+                            // so a bounded observation does not spend its time on the rest of the children.
+                            var remaining = unlisted
+                            scan: for child in children {
                                 guard limit(child) else { out.unresponsive = true; break }
-                                childIDs.append(child.windowID())
-                            }
-                            if !out.unresponsive {
-                                for index in Self.childrenToObserve(childIDs, unlisted: unlisted) {
-                                    guard let wid = childIDs[index], observe(children[index], wid) else { out.unresponsive = true; break }
+                                switch Self.childStep(child.windowIDLookup(), remaining: &remaining) {
+                                case .skip: continue
+                                case .unobserved: out.unresponsive = true; break scan
+                                case .observe(let wid):
+                                    guard observe(child, wid) else { out.unresponsive = true; break scan }
+                                    if remaining.isEmpty { break scan }
                                 }
                             }
                         }
@@ -329,12 +332,20 @@ public final class MacWindowSystem: WindowSystem {
         }.map(\.id))
     }
 
-    /// Indices of the children to observe: each window left out of the list, once. Children without a window ID (Finder's menu bar and desktop) are not windows.
-    static func childrenToObserve(_ childIDs: [CGWindowID?], unlisted: Set<CGWindowID>) -> [Int] {
-        var taken: Set<CGWindowID> = []
-        return childIDs.indices.filter { index in
-            guard let id = childIDs[index], unlisted.contains(id) else { return false }
-            return taken.insert(id).inserted
+    enum ChildStep: Equatable {
+        case observe(CGWindowID)
+        case skip
+        case unobserved
+    }
+
+    /// What to do with one child, given its window ID lookup: observe a window still missing (taking it out of `remaining`, so each is observed once),
+    /// skip a child that is not a window (Finder's menu bar and desktop have no window ID) or not missing. A lookup that ran out of time leaves the app
+    /// unobserved: taken as "not a window", the missing window would drop out of a complete observation and could leave the saved layout.
+    static func childStep(_ lookup: Result<CGWindowID, AXFailure>, remaining: inout Set<CGWindowID>) -> ChildStep {
+        switch lookup {
+        case .failure(.cannotComplete): return .unobserved
+        case .failure: return .skip
+        case .success(let wid): return remaining.remove(wid) == nil ? .skip : .observe(wid)
         }
     }
 
@@ -376,9 +387,10 @@ public final class MacWindowSystem: WindowSystem {
             guard case .success(let axWindows) = appElement.windows() else { return }
             let bundleID = app.bundleIdentifier ?? "pid\(pid)"
             var retained: Set<WindowID> = []
-            /// Retains the wanted windows among `elements`; false once the time is up.
-            func retain(_ elements: [AXElement]) -> Bool {
+            /// Retains the wanted windows among `elements`, stopping once every window in `until` is retained; false once the time is up.
+            func retain(_ elements: [AXElement], until: Set<WindowID>? = nil) -> Bool {
                 for w in elements {
+                    if let until, until.isSubset(of: retained) { return true }
                     // If reading the list used up the time, give the next request (mapping window IDs) a short limit, or stop.
                     let left = deadline.timeIntervalSinceNow
                     guard left > 0.01 else { return false }
@@ -401,7 +413,8 @@ public final class MacWindowSystem: WindowSystem {
             guard left > 0.01 else { return }
             appElement.setMessagingTimeout(min(readTimeout, left))
             guard case .success(let children) = appElement.children() else { return }
-            _ = retain(children)
+            // Stop once the missing windows are found: a stalled lookup on another child would use up the time, and a Space switch meanwhile drops what was found.
+            _ = retain(children, until: missing)
         }
         guard spaces.activeSpace() == active else { return }
         lock.lock()

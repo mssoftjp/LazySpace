@@ -45,7 +45,8 @@ final class UnlistedWindowTests: XCTestCase {
         XCTAssertEqual(unlisted([], [record(1)], membership: [1: .current]), [1], "an empty list")
         XCTAssertEqual(unlisted([1], [record(1), record(2)], membership: [1: .current, 2: .current]), [2], "a list missing one window")
         XCTAssertEqual(unlisted([], [record(1)], membership: [1: .allSpaces]), [1], "on all Spaces")
-        XCTAssertEqual(unlisted([], [record(1)]), [1], "membership unknown, on screen")
+        XCTAssertEqual(unlisted([], [record(1)]), [1], "membership not read, on screen")
+        XCTAssertEqual(unlisted([], [record(1)], membership: [1: .unknown]), [1], "SkyLight gave no Space, on screen")
     }
 
     func testNothingIsLookedForWhenTheListHasEveryShownWindow() {
@@ -66,12 +67,22 @@ final class UnlistedWindowTests: XCTestCase {
         XCTAssertEqual(unlisted([], [record(1), record(2)], membership: [1: .current, 2: .current], ids: [WindowID(2)]), [2])
     }
 
-    func testOnlyChildrenWithAMissingWindowIDAreTaken() {
-        // Finder's children: the window, its menu bar, and the desktop's scroll area, which have no window ID.
-        XCTAssertEqual(MacWindowSystem.childrenToObserve([7, nil, nil], unlisted: [7]), [0])
-        XCTAssertEqual(MacWindowSystem.childrenToObserve([5, 7], unlisted: [7]), [1], "a child the list already has is not taken twice")
-        XCTAssertEqual(MacWindowSystem.childrenToObserve([7, 7], unlisted: [7]), [0], "the same window twice is taken once")
-        XCTAssertEqual(MacWindowSystem.childrenToObserve([nil], unlisted: [7]), [])
+    func testOnlyChildrenWithAMissingWindowIDAreObservedOnceEach() {
+        // Finder's children: the window, its menu bar, and the desktop's scroll area, which have no window ID (-25201).
+        let noWindow = Result<CGWindowID, AXFailure>.failure(.other(-25201))
+        var remaining: Set<CGWindowID> = [7]
+        XCTAssertEqual(MacWindowSystem.childStep(noWindow, remaining: &remaining), .skip)
+        XCTAssertEqual(MacWindowSystem.childStep(.success(5), remaining: &remaining), .skip, "a window the list already has")
+        XCTAssertEqual(MacWindowSystem.childStep(.success(7), remaining: &remaining), .observe(7))
+        XCTAssertEqual(remaining, [], "found, so the scan can stop")
+        XCTAssertEqual(MacWindowSystem.childStep(.success(7), remaining: &remaining), .skip, "the same window twice is observed once")
+    }
+
+    func testAWindowIDLookupThatRunsOutOfTimeLeavesTheAppUnobserved() {
+        // Taken as "not a window", the missing window would drop out of a complete observation and could leave the saved layout.
+        var remaining: Set<CGWindowID> = [7]
+        XCTAssertEqual(MacWindowSystem.childStep(.failure(.cannotComplete), remaining: &remaining), .unobserved)
+        XCTAssertEqual(remaining, [7])
     }
 }
 

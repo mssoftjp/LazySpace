@@ -158,10 +158,18 @@ public struct AXElement {
 
     /// CGWindowID; nil without the private `_AXUIElementGetWindow`.
     public func windowID() -> CGWindowID? {
-        guard let fn = PrivateSymbols.axUIElementGetWindow else { return nil }
+        if case .success(let wid) = windowIDLookup() { return wid }
+        return nil
+    }
+
+    /// CGWindowID, keeping why there is none: an element that is not a window and an app that did not answer in time (`cannotComplete`) differ.
+    public func windowIDLookup() -> Result<CGWindowID, AXFailure> {
+        guard let fn = PrivateSymbols.axUIElementGetWindow else { return .failure(.notImplemented) }
         var wid: CGWindowID = 0
-        guard fn(raw, &wid) == .success, wid != 0 else { return nil }
-        return wid
+        let err = fn(raw, &wid)
+        guard err == .success else { return .failure(AXFailure(err)) }
+        guard wid != 0 else { return .failure(.other(AXError.noValue.rawValue)) }
+        return .success(wid)
     }
 }
 
