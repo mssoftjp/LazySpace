@@ -201,39 +201,32 @@ public final class MacWindowSystem: WindowSystem {
                 out.unresponsive = Self.windowListUnobserved(e, listedBefore: listedBefore, failuresWithoutList: failures)
             case .success(let axWindows):
                 self.lock.lock(); self.listedPIDs.insert(pid); self.unlistedFailures[pid] = nil; self.lock.unlock()
-                for w in axWindows {
-                    guard limit(w) else { out.unresponsive = true; break }
-                    guard let wid = w.windowID() else {
-                        // While the screen is locked, an app answers with its application element instead of its windows: that is no answer.
-                        if Self.answersWithApplication(role: w.string(kAXRoleAttribute)) { out.unresponsive = true; break }
-                        continue
-                    }
+                /// Reads one window into the observation; false when a read ran out of time (the app is not finished).
+                func observe(_ w: AXElement, _ wid: CGWindowID) -> Bool {
                     let id = WindowID(wid)
-                    // Narrow by window, not just by pid; this also drops the same app's windows on other Spaces.
-                    if let ids, !ids.contains(id) { continue }
                     // In a bounded observation, each attribute read resets the limit to the remaining time; if it runs out, this window is not finished.
-                    guard limit(w) else { out.unresponsive = true; break }
+                    guard limit(w) else { return false }
                     let role = w.string(kAXRoleAttribute) ?? "?"
-                    guard limit(w) else { out.unresponsive = true; break }
+                    guard limit(w) else { return false }
                     let subrole = w.string(kAXSubroleAttribute) ?? "?"
                     let frame: CGRect
                     switch budget.frame(w) {
                     case .success(let f): frame = f
                     case .failure: frame = cgWindows[wid]?.bounds ?? .zero
                     }
-                    guard limit(w) else { out.unresponsive = true; break }
+                    guard limit(w) else { return false }
                     // A timed-out read leaves the app unobserved: a minimized window taken as not minimized would be tiled, and writing it restores it.
                     // Other failures keep counting as false (apps that do not implement the attribute answer with errors).
-                    guard let minimized = Self.boolUnlessTimedOut(w, kAXMinimizedAttribute) else { out.unresponsive = true; break }
-                    guard limit(w) else { out.unresponsive = true; break }
-                    guard let fullscreen = Self.boolUnlessTimedOut(w, "AXFullScreen") else { out.unresponsive = true; break }
+                    guard let minimized = Self.boolUnlessTimedOut(w, kAXMinimizedAttribute) else { return false }
+                    guard limit(w) else { return false }
+                    guard let fullscreen = Self.boolUnlessTimedOut(w, "AXFullScreen") else { return false }
                     let layer = cgWindows[wid]?.layer ?? 0
-                    guard limit(w) else { out.unresponsive = true; break }
+                    guard limit(w) else { return false }
                     let dialogHasZoom = subrole == kAXDialogSubrole && {
                         if case .success = w.copyAttribute(kAXZoomButtonAttribute) { return true }
                         return false
                     }()
-                    guard limit(w) else { out.unresponsive = true; break }
+                    guard limit(w) else { return false }
                     let fullscreenButtonEnabled = Self.fullscreenButtonEnabled(w, limit: { limit($0) })
                     // Only windows without an enabled full-screen button are checked for resizability (unreadable counts as not resizable).
                     let resizable = !fullscreenButtonEnabled && limit(w) && Self.isResizable(w, limit: { limit($0) }) == true
@@ -250,14 +243,51 @@ public final class MacWindowSystem: WindowSystem {
                         m = Self.membership(spaces.spaces(for: wid), active: active, frame: frame, sharedDisplay: sharedDisplay)
                     } else { m = .unknown }
 
-                    guard limit(w) else { out.unresponsive = true; break }
+                    guard limit(w) else { return false }
                     let title = w.string(kAXTitleAttribute) ?? ""
-                    guard limit(w) else { out.unresponsive = true; break }
+                    guard limit(w) else { return false }
                     let identifier = w.string(kAXIdentifierAttribute) ?? ""
                     out.windows.append(ObservedWindow(id: id, pid: pid, app: bundleID, frame: frame, membership: m, kind: kind, detail: "\(role)/\(subrole) layer=\(layer)", subrole: subrole, stackOrder: stackOrder[wid] ?? Int.max, title: title,
                                                       identifier: identifier, fullScreenButtonEnabled: fullscreenButtonEnabled))
                     out.cache[id] = Cached(element: budget.prepareForCaching(w), app: appElement, pid: pid, bundleID: bundleID,
                                            observedSpace: m == .current ? active : nil)
+                    return true
+                }
+                var listed: Set<CGWindowID> = []
+                for w in axWindows {
+                    guard limit(w) else { out.unresponsive = true; break }
+                    guard let wid = w.windowID() else {
+                        // While the screen is locked, an app answers with its application element instead of its windows: that is no answer.
+                        if Self.answersWithApplication(role: w.string(kAXRoleAttribute)) { out.unresponsive = true; break }
+                        continue
+                    }
+                    listed.insert(wid)
+                    // Narrow by window, not just by pid; this also drops the same app's windows on other Spaces.
+                    if let ids, !ids.contains(WindowID(wid)) { continue }
+                    guard observe(w, wid) else { out.unresponsive = true; break }
+                }
+                // A window shown on this Space that the list leaves out (Finder after running for days) is looked for among the app's children.
+                let unlisted = out.unresponsive ? [] : Self.unlistedWindows(listed: listed, pid: pid, windows: cgWindows, membership: membership, ids: ids)
+                if !unlisted.isEmpty {
+                    if !limit(appElement) {
+                        out.unresponsive = true
+                    } else {
+                        switch appElement.children() {
+                        // Running out of time leaves the app unobserved, as any read does; another failure adds nothing, as before.
+                        case .failure(let e): if e == .cannotComplete { out.unresponsive = true }
+                        case .success(let children):
+                            var childIDs: [CGWindowID?] = []
+                            for child in children {
+                                guard limit(child) else { out.unresponsive = true; break }
+                                childIDs.append(child.windowID())
+                            }
+                            if !out.unresponsive {
+                                for index in Self.childrenToObserve(childIDs, unlisted: unlisted) {
+                                    guard let wid = childIDs[index], observe(children[index], wid) else { out.unresponsive = true; break }
+                                }
+                            }
+                        }
+                    }
                 }
             }
             collect.lock(); observations[i] = out; collect.unlock()
@@ -283,6 +313,30 @@ public final class MacWindowSystem: WindowSystem {
 
     /// An entry of an app's window list that is its application element (seen while the screen is locked) means the app did not list its windows.
     static func answersWithApplication(role: String?) -> Bool { role == (kAXApplicationRole as String) }
+
+    /// The app's windows that CGWindowList shows on screen at layer 0 on this Space (current, on all Spaces, or unknown membership) and its window list leaves out.
+    /// Finder, after running for days, answered its window list empty while its window was among its children. Windows off screen (an app keeping a closed
+    /// window ordered out), on another Space or display, or outside `ids` are rightly left out and are not looked for.
+    static func unlistedWindows(listed: Set<CGWindowID>, pid: pid_t, windows: [CGWindowID: CGWindowRecord],
+                                membership: [CGWindowID: ObservedWindow.Membership], ids: Set<WindowID>?) -> Set<CGWindowID> {
+        Set(windows.values.filter { record in
+            guard record.pid == pid, record.layer == 0, record.onScreen, !listed.contains(record.id) else { return false }
+            if let ids, !ids.contains(WindowID(record.id)) { return false }
+            switch membership[record.id] {
+            case .current?, .allSpaces?, .unknown?, nil: return true
+            case .other?, .otherDisplay?: return false
+            }
+        }.map(\.id))
+    }
+
+    /// Indices of the children to observe: each window left out of the list, once. Children without a window ID (Finder's menu bar and desktop) are not windows.
+    static func childrenToObserve(_ childIDs: [CGWindowID?], unlisted: Set<CGWindowID>) -> [Int] {
+        var taken: Set<CGWindowID> = []
+        return childIDs.indices.filter { index in
+            guard let id = childIDs[index], unlisted.contains(id) else { return false }
+            return taken.insert(id).inserted
+        }
+    }
 
     /// Windows absent from the full window list (closed). Returns nothing if the list could not be read.
     static func closedCacheEntries(_ cached: Set<WindowID>, allWindows: Set<CGWindowID>?) -> Set<WindowID> {
@@ -321,19 +375,33 @@ public final class MacWindowSystem: WindowSystem {
             appElement.setMessagingTimeout(min(readTimeout, remaining))
             guard case .success(let axWindows) = appElement.windows() else { return }
             let bundleID = app.bundleIdentifier ?? "pid\(pid)"
-            for w in axWindows {
-                // If reading the list used up the time, give the next request (mapping window IDs) a short limit, or stop.
-                let left = deadline.timeIntervalSinceNow
-                guard left > 0.01 else { return }
-                appElement.setMessagingTimeout(min(readTimeout, left))
-                w.setMessagingTimeout(min(readTimeout, left))
-                let mapped = w.windowID()
-                // The element is retained, so do not leave the short limit on it (0 restores the default). Later raises and reads/writes set only the app-level limit.
-                w.setMessagingTimeout(0)
-                guard let wid = mapped, wanted.contains(WindowID(wid)) else { continue }
-                let entry = Cached(element: w, app: appElement, pid: pid, bundleID: bundleID, observedSpace: active)
-                collect.lock(); found[WindowID(wid)] = entry; collect.unlock()
+            var retained: Set<WindowID> = []
+            /// Retains the wanted windows among `elements`; false once the time is up.
+            func retain(_ elements: [AXElement]) -> Bool {
+                for w in elements {
+                    // If reading the list used up the time, give the next request (mapping window IDs) a short limit, or stop.
+                    let left = deadline.timeIntervalSinceNow
+                    guard left > 0.01 else { return false }
+                    appElement.setMessagingTimeout(min(readTimeout, left))
+                    w.setMessagingTimeout(min(readTimeout, left))
+                    let mapped = w.windowID()
+                    // The element is retained, so do not leave the short limit on it (0 restores the default). Later raises and reads/writes set only the app-level limit.
+                    w.setMessagingTimeout(0)
+                    guard let wid = mapped, wanted.contains(WindowID(wid)), retained.insert(WindowID(wid)).inserted else { continue }
+                    let entry = Cached(element: w, app: appElement, pid: pid, bundleID: bundleID, observedSpace: active)
+                    collect.lock(); found[WindowID(wid)] = entry; collect.unlock()
+                }
+                return true
             }
+            guard retain(axWindows) else { return }
+            // A wanted window the list leaves out (Finder after running for days) is looked for among the app's children.
+            let missing = wanted.filter { cgWindows[$0.raw]?.pid == pid && !retained.contains($0) }
+            guard !missing.isEmpty else { return }
+            let left = deadline.timeIntervalSinceNow
+            guard left > 0.01 else { return }
+            appElement.setMessagingTimeout(min(readTimeout, left))
+            guard case .success(let children) = appElement.children() else { return }
+            _ = retain(children)
         }
         guard spaces.activeSpace() == active else { return }
         lock.lock()
@@ -799,26 +867,35 @@ public final class MacWindowSystem: WindowSystem {
         }
         let app = AXElement.application(pid: pid)
         guard budget.prepare(app), case .success(let windows) = app.windows() else { return nil }
+        var found: AXElement?
         for window in windows {
             guard budget.prepare(window) else { return nil }
-            guard window.windowID() == id.raw else { continue }
-            var settable: DarwinBoolean = false
-            guard let roleValue = read(window, kAXRoleAttribute), let role = roleValue as? String,
-                  let subroleValue = read(window, kAXSubroleAttribute),
-                  let minimizedValue = read(window, kAXMinimizedAttribute),
-                  let fullscreenValue = read(window, "AXFullScreen"),
-                  let fullscreenButton = button(window, kAXFullScreenButtonAttribute, enabledWhenUnknown: true),
-                  let zoomButton = button(window, kAXZoomButtonAttribute, enabledWhenUnknown: false),
-                  let titleValue = read(window, kAXTitleAttribute),
-                  budget.prepare(window),
-                  AXUIElementIsAttributeSettable(window.raw, kAXSizeAttribute as CFString, &settable) == .success else { return nil }
-            return DialogEvidence(role: role, subrole: subroleValue as? String,
-                                  minimized: (minimizedValue as? NSNumber)?.boolValue ?? false,
-                                  fullscreen: (fullscreenValue as? NSNumber)?.boolValue ?? false,
-                                  fullscreenButton: fullscreenButton, zoomButton: zoomButton, sizeSettable: settable.boolValue,
-                                  title: titleValue as? String ?? "")
+            if window.windowID() == id.raw { found = window; break }
         }
-        return nil
+        if found == nil {
+            // A window the list leaves out (Finder after running for days) is looked for among the app's children.
+            guard budget.prepare(app), case .success(let children) = app.children() else { return nil }
+            for child in children {
+                guard budget.prepare(child) else { return nil }
+                if child.windowID() == id.raw { found = child; break }
+            }
+        }
+        guard let window = found else { return nil }
+        var settable: DarwinBoolean = false
+        guard let roleValue = read(window, kAXRoleAttribute), let role = roleValue as? String,
+              let subroleValue = read(window, kAXSubroleAttribute),
+              let minimizedValue = read(window, kAXMinimizedAttribute),
+              let fullscreenValue = read(window, "AXFullScreen"),
+              let fullscreenButton = button(window, kAXFullScreenButtonAttribute, enabledWhenUnknown: true),
+              let zoomButton = button(window, kAXZoomButtonAttribute, enabledWhenUnknown: false),
+              let titleValue = read(window, kAXTitleAttribute),
+              budget.prepare(window),
+              AXUIElementIsAttributeSettable(window.raw, kAXSizeAttribute as CFString, &settable) == .success else { return nil }
+        return DialogEvidence(role: role, subrole: subroleValue as? String,
+                              minimized: (minimizedValue as? NSNumber)?.boolValue ?? false,
+                              fullscreen: (fullscreenValue as? NSNumber)?.boolValue ?? false,
+                              fullscreenButton: fullscreenButton, zoomButton: zoomButton, sizeSettable: settable.boolValue,
+                              title: titleValue as? String ?? "")
     }
 
     /// Resizable: the size is writable and the zoom (green) button exists and is enabled; nil if any is unreadable.

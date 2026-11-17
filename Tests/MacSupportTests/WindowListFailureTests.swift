@@ -1,5 +1,7 @@
 import AppKit
 import ApplicationServices
+import LayoutCore
+import Operations
 import XCTest
 @testable import MacSupport
 
@@ -22,6 +24,54 @@ final class WindowListFailureTests: XCTestCase {
         XCTAssertTrue(MacWindowSystem.windowListUnobserved(failure, listedBefore: false, failuresWithoutList: 1))
         XCTAssertTrue(MacWindowSystem.windowListUnobserved(failure, listedBefore: false, failuresWithoutList: 2))
         XCTAssertFalse(MacWindowSystem.windowListUnobserved(failure, listedBefore: false, failuresWithoutList: 3))
+    }
+}
+
+/// An app's window list can leave out a window it shows: Finder, after running for days, answered its list empty while the window was among its children.
+/// Only such windows send LazySpace to the children, and only they are taken from there.
+final class UnlistedWindowTests: XCTestCase {
+    let finder: pid_t = 100
+    let other: pid_t = 200
+
+    func record(_ id: CGWindowID, pid: pid_t = 100, layer: Int = 0, onScreen: Bool = true) -> CGWindowRecord {
+        CGWindowRecord(id: id, pid: pid, layer: layer, bounds: CGRect(x: 0, y: 0, width: 800, height: 600), alpha: 1, onScreen: onScreen)
+    }
+
+    func unlisted(_ listed: Set<CGWindowID>, _ records: [CGWindowRecord], membership: [CGWindowID: ObservedWindow.Membership] = [:], ids: Set<WindowID>? = nil) -> Set<CGWindowID> {
+        MacWindowSystem.unlistedWindows(listed: listed, pid: finder, windows: Dictionary(uniqueKeysWithValues: records.map { ($0.id, $0) }), membership: membership, ids: ids)
+    }
+
+    func testAWindowShownOnTheCurrentSpaceButLeftOutOfTheListIsLookedFor() {
+        XCTAssertEqual(unlisted([], [record(1)], membership: [1: .current]), [1], "an empty list")
+        XCTAssertEqual(unlisted([1], [record(1), record(2)], membership: [1: .current, 2: .current]), [2], "a list missing one window")
+        XCTAssertEqual(unlisted([], [record(1)], membership: [1: .allSpaces]), [1], "on all Spaces")
+        XCTAssertEqual(unlisted([], [record(1)]), [1], "membership unknown, on screen")
+    }
+
+    func testNothingIsLookedForWhenTheListHasEveryShownWindow() {
+        XCTAssertEqual(unlisted([1, 2], [record(1), record(2)], membership: [1: .current, 2: .current]), [])
+        XCTAssertEqual(unlisted([], []), [], "no windows at all")
+    }
+
+    func testWindowsTheListRightlyLeavesOutAreNotLookedFor() {
+        // Off screen: an app keeping a closed window ordered out on its Space.
+        XCTAssertEqual(unlisted([], [record(1, onScreen: false)], membership: [1: .current]), [])
+        XCTAssertEqual(unlisted([], [record(1)], membership: [1: .other]), [], "on another Space")
+        XCTAssertEqual(unlisted([], [record(1)], membership: [1: .otherDisplay]), [], "on a display without the menu bar while displays share one Space")
+        XCTAssertEqual(unlisted([], [record(1, layer: 3)], membership: [1: .current]), [], "a floating layer")
+        XCTAssertEqual(unlisted([], [record(1, pid: other)], membership: [1: .current]), [], "another app's window")
+    }
+
+    func testOnlyRequestedWindowsAreLookedFor() {
+        XCTAssertEqual(unlisted([], [record(1), record(2)], membership: [1: .current, 2: .current], ids: [WindowID(2)]), [2])
+    }
+
+    func testOnlyChildrenWithAMissingWindowIDAreTaken() {
+        // Finder's children: the window, its menu bar, and the desktop's scroll area, which have no window ID.
+        XCTAssertEqual(MacWindowSystem.childrenToObserve([7, nil, nil], unlisted: [7]), [0])
+        XCTAssertEqual(MacWindowSystem.childrenToObserve([5, 7], unlisted: [7]), [1], "a child the list already has is not taken twice")
+        XCTAssertEqual(MacWindowSystem.childrenToObserve([7, 7], unlisted: [7]), [0], "the same window twice is taken once")
+        XCTAssertEqual(MacWindowSystem.childrenToObserve([nil], unlisted: [7]), [])
     }
 }
 

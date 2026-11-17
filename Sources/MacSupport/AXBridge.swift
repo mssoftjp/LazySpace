@@ -90,8 +90,13 @@ public struct AXElement {
         return nil
     }
 
-    public func windows() -> Result<[AXElement], AXFailure> {
-        switch copyAttribute(kAXWindowsAttribute) {
+    public func windows() -> Result<[AXElement], AXFailure> { elements(kAXWindowsAttribute) }
+
+    /// The element's children: for an app, its windows, menu bar, and the like. Finder can leave a window it shows out of its window list while the window is still among these.
+    public func children() -> Result<[AXElement], AXFailure> { elements(kAXChildrenAttribute) }
+
+    private func elements(_ name: String) -> Result<[AXElement], AXFailure> {
+        switch copyAttribute(name) {
         case .failure(let f): return .failure(f)
         case .success(let v):
             // Anything but a list of elements is a failed read, never "no windows" (which would let a saved layout lose this app's windows).
