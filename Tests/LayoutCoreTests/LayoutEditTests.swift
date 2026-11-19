@@ -466,6 +466,34 @@ final class ManualEditTests: XCTestCase {
         XCTAssertNil(ManualEdit.detect(id: a, planned: planned[a]!, actual: wider, layout: accordion, shape: accordion, plannedRects: planned))
     }
 
+    /// Dragged by its title bar, a window swaps with the tile under the pointer at release, not the one under its center (as AeroSpace).
+    func testADropIsJudgedAtThePointerTheWindowHolds() {
+        let r = rects(row)
+        let moved = r[a]!.offsetBy(dx: 700, dy: 0) // its center is over b
+        let pointer = CGPoint(x: r[a]!.minX + 620 + 700, y: r[a]!.minY + 10) // on its title bar, over c
+        XCTAssertEqual(ManualEdit.detect(id: a, planned: r[a]!, actual: moved, layout: row, plannedRects: r, pointer: pointer), .dropOnto(a, c))
+        XCTAssertEqual(ManualEdit.detect(id: a, planned: r[a]!, actual: moved, layout: row, plannedRects: r), .dropOnto(a, b), "no pointer: its center")
+        let outside = CGPoint(x: 1900, y: 1000)
+        XCTAssertEqual(ManualEdit.detect(id: a, planned: r[a]!, actual: moved, layout: row, plannedRects: r, pointer: outside), .dropOnto(a, b),
+                       "a pointer the window does not hold is not where it was dropped")
+    }
+
+    func testAPointerStillOverItsOwnTileIsNoDrop() {
+        let r = rects(row)
+        let moved = r[a]!.offsetBy(dx: 600, dy: 0) // its center is over b
+        let pointer = CGPoint(x: r[a]!.minX + 20 + 600, y: r[a]!.minY + 10) // still over a's own tile
+        XCTAssertEqual(ManualEdit.detect(id: a, planned: r[a]!, actual: moved, layout: row, plannedRects: r, pointer: pointer), .float(a))
+    }
+
+    /// A resize never looks at the pointer.
+    func testAResizeIgnoresThePointer() {
+        let r = rects(row)
+        let wider = CGRect(x: r[a]!.minX, y: r[a]!.minY, width: r[a]!.width + 100, height: r[a]!.height)
+        let edge = CGPoint(x: wider.maxX - 1, y: wider.midY)
+        XCTAssertEqual(ManualEdit.detect(id: a, planned: r[a]!, actual: wider, layout: row, plannedRects: r, pointer: edge),
+                       ManualEdit.detect(id: a, planned: r[a]!, actual: wider, layout: row, plannedRects: r))
+    }
+
     func testMoveToNowhereOrSnapBecomesFloat() {
         let r = rects(row)
         let nowhere = CGRect(x: 0, y: 3000, width: r[a]!.width, height: r[a]!.height)

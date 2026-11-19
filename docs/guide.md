@@ -94,8 +94,8 @@ Hold a modifier key for about a second to see the shortcuts (you can turn this o
 When automatic arrangement is on, you can edit tiled windows with the mouse:
 
 - Drag the edge between two windows to resize them.
-- Drop a window onto another tiled window to swap them.
-- Drop a window anywhere else to put it back.
+- Drag a window by its title bar and release the mouse button with the pointer over another tiled window to swap them.
+- Release it anywhere else to put the window back.
 
 Clicking alone never changes the layout. If a tiled window is resized another way, such as a double-click on its title bar or by the app itself, LazySpace puts it back. To fill the work area, press `⌥Z`.
 
@@ -150,7 +150,7 @@ You can change settings in the Settings window or in the file `~/.config/lazyspa
 | `accordion-padding` | `30` | Width of the strip shown for other windows in an accordion or in a row that does not fit, 0–200 points (rounded to whole points) |
 | `preferred-minimum` | `[400, 300]` | A size hint (each 0–100000 points) for how many rows to use, for whether a new window fits in the space below a short window, and for how narrow a window gets when a row does not fit. Not an enforced minimum |
 | `unknown-floor` | `[120, 120]` | Size assumed when an app does not report a window's minimum size (each 0–100000 points) |
-| `quiet-interval` | `0.6` | How long input must be quiet before automatic arrangement starts on a Space and after a mouse drag, in seconds (0.1–10). Ordinary window additions and removals do not always wait this long, and a mouse resize or swap can be adopted sooner once the windows stay still |
+| `quiet-interval` | `0.6` | How long input must be quiet before automatic arrangement starts on a Space and after a mouse drag, in seconds (0.1–10). Ordinary window additions and removals do not always wait this long, and a mouse resize, swap, or return of a window to its place can be adopted sooner once the windows stay still |
 | `per-app-timeout` | `2.0` | How long to wait for an app to respond, in seconds (0.2–30) |
 | `start-at-login` | not set | Open at Login. When unset, the macOS login item is left as it is |
 | `show-shortcut-guide` | `true` | Show the shortcut list after you hold a modifier key for about a second. Shortcuts work either way |

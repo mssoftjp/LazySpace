@@ -22,6 +22,9 @@ public final class InputMonitor {
     private var _leftMouseDown = false
     private var leftDragInProgress = false
     private var _completedMouseDrags: UInt64 = 0
+    /// Where and when the left button was released at the end of the last drag (global coordinates, top-left origin).
+    /// An unobserved gap forgets the point: it may have hidden a press or another drag.
+    private var _completedDragRelease: (point: CGPoint, at: Date)?
     private var tap: CFMachPort?
     private var thread: Thread?
     /// Signaled when the tap thread leaves its run loop; stop waits for it.
@@ -102,6 +105,11 @@ public final class InputMonitor {
     public var completedMouseDrags: UInt64 { lock.lock(); defer { lock.unlock() }; return _completedMouseDrags }
     /// Mouse-down count when the last drag ended; less than the current count once anything was pressed after it.
     public var completedDragPresses: UInt64 { lock.lock(); defer { lock.unlock() }; return _completedDragPresses }
+    /// The last completed drag: its count, the press count when it ended, and where and when the button was released, read together.
+    public var completedDrag: (count: UInt64, presses: UInt64, release: CGPoint?, releasedAt: Date?) {
+        lock.lock(); defer { lock.unlock() }
+        return (_completedMouseDrags, _completedDragPresses, _completedDragRelease?.point, _completedDragRelease?.at)
+    }
     public var breakdown: (mouseDown: UInt64, drag: UInt64, key: UInt64, scroll: UInt64) {
         lock.lock(); defer { lock.unlock() }
         return (_mouseDown, _drag, _key, _scroll)
@@ -142,7 +150,7 @@ public final class InputMonitor {
         case .rightMouseDown, .otherMouseDown: _mouseDown += 1
         case .leftMouseUp:
             _leftMouseDown = false
-            if leftDragInProgress { _completedMouseDrags &+= 1; _completedDragPresses = _mouseDown }
+            if leftDragInProgress { _completedMouseDrags &+= 1; _completedDragPresses = _mouseDown; _completedDragRelease = (event.location, Date()) }
             leftDragInProgress = false
         case .leftMouseDragged:
             leftDragInProgress = true
@@ -251,6 +259,7 @@ public final class InputMonitor {
         _count += 1
         _leftMouseDown = tapControl.leftButtonDown()
         leftDragInProgress = false
+        _completedDragRelease = nil
         lock.unlock()
         tapControl.enable(tap)
         return tapControl.isEnabled(tap)
@@ -276,6 +285,7 @@ public final class InputMonitor {
         _count += 1
         _leftMouseDown = leftButtonDown()
         leftDragInProgress = false
+        _completedDragRelease = nil
         lock.unlock()
     }
 

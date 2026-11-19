@@ -322,7 +322,9 @@ public enum ManualEdit: Equatable {
     /// Identifies one user edit from the difference between the planned and actual frames; nil when there is none.
     /// `layout` is the intent, and `shape` the plan's tree as placed, when it differs. Resizing along an accordion's axis, folded or not, is no edit.
     /// A drop never targets a sibling in a real accordion, whose frames do not tell where it landed; in a fold it swaps, as between tiles.
-    public static func detect(id: WindowID, planned: CGRect, actual: CGRect, layout: Layout, shape: Layout? = nil, plannedRects: [WindowID: CGRect], tolerance: Double = 1) -> ManualEdit? {
+    /// A drop is judged at `pointer`, where the button was released, when `actual` holds it (the window was dragged by it), otherwise at its center.
+    public static func detect(id: WindowID, planned: CGRect, actual: CGRect, layout: Layout, shape: Layout? = nil, plannedRects: [WindowID: CGRect], tolerance: Double = 1,
+                              pointer: CGPoint? = nil) -> ManualEdit? {
         if actual.matches(planned, tolerance: tolerance) { return nil }
         let sizeChanged = abs(actual.width - planned.width) > tolerance || abs(actual.height - planned.height) > tolerance
         let leftFixed = abs(actual.minX - planned.minX) <= tolerance, rightFixed = abs(actual.maxX - planned.maxX) <= tolerance
@@ -343,22 +345,23 @@ public enum ManualEdit: Equatable {
             return alongAccordion ? nil : .float(id)
         }
         if !sizeChanged {
-            let center = CGPoint(x: actual.midX, y: actual.midY)
+            // Where it was dropped: the pointer at release when the window holds it, otherwise the window's center.
+            let point = pointer.flatMap { actual.contains($0) ? $0 : nil } ?? CGPoint(x: actual.midX, y: actual.midY)
             let siblings = LayoutEdit.accordionSiblings(of: id, in: layout)
             let order = Dictionary(layout.windowIDs.enumerated().map { ($1, $0) }, uniquingKeysWith: { first, _ in first })
-            // Frames can overlap, so a center still over the window's own frame is no drop: any nudge in a fold would swap.
-            let under = planned.contains(center) ? [] : plannedRects.filter { $0.key != id && !siblings.contains($0.key) && $0.value.contains(center) }.map(\.key)
+            // Frames can overlap, so a drop point still over the window's own frame is no drop: any nudge in a fold would swap.
+            let under = planned.contains(point) ? [] : plannedRects.filter { $0.key != id && !siblings.contains($0.key) && $0.value.contains(point) }.map(\.key)
             // A real accordion counts once, by the first of its windows in the tree, which is the one in front while the dragged window has focus.
             let targets = under.filter { target in
                 !LayoutEdit.accordionSiblings(of: target, in: layout).contains { under.contains($0) && (order[$0] ?? Int.max) < (order[target] ?? Int.max) }
             }
-            // In a fold it lands on the window whose center is nearest; the first in the tree on a tie.
+            // In a fold it lands on the window whose center is nearest to the drop point; the first in the tree on a tie.
             func distance(_ target: WindowID) -> Double {
-                plannedRects[target].map { hypot($0.midX - center.x, $0.midY - center.y) } ?? .infinity
+                plannedRects[target].map { hypot($0.midX - point.x, $0.midY - point.y) } ?? .infinity
             }
             if let target = targets.min(by: { (distance($0), order[$0] ?? Int.max, $0.raw) < (distance($1), order[$1] ?? Int.max, $1.raw) }) { return .dropOnto(id, target) }
             // Still over its own accordion: no edit, and drift puts it back.
-            if siblings.contains(where: { plannedRects[$0]?.contains(center) ?? false }) { return nil }
+            if siblings.contains(where: { plannedRects[$0]?.contains(point) ?? false }) { return nil }
             return .float(id)
         }
         return .float(id)

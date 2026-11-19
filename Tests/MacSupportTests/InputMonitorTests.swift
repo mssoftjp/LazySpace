@@ -26,6 +26,29 @@ final class InputMonitorTests: XCTestCase {
         XCTAssertEqual(monitor.completedMouseDrags, 2)
     }
 
+    /// A completed drag keeps where the button was released, read with its count; a click afterwards does not replace it.
+    func testACompletedDragKeepsItsReleasePoint() {
+        let monitor = InputMonitor()
+        func record(_ type: CGEventType, at point: CGPoint) {
+            monitor.record(type, event: CGEvent(mouseEventSource: nil, mouseType: type, mouseCursorPosition: point, mouseButton: .left)!)
+        }
+        XCTAssertNil(monitor.completedDrag.release)
+        record(.leftMouseDown, at: CGPoint(x: 10, y: 20))
+        record(.leftMouseDragged, at: CGPoint(x: 150, y: 220))
+        record(.leftMouseUp, at: CGPoint(x: 300, y: 400))
+        XCTAssertEqual(monitor.completedDrag.count, 1)
+        XCTAssertEqual(monitor.completedDrag.release, CGPoint(x: 300, y: 400))
+        record(.leftMouseDown, at: CGPoint(x: 900, y: 900))
+        record(.leftMouseUp, at: CGPoint(x: 900, y: 900))
+        XCTAssertEqual(monitor.completedDrag.count, 1)
+        XCTAssertEqual(monitor.completedDrag.release, CGPoint(x: 300, y: 400), "a click is not a drag")
+        record(.leftMouseDown, at: CGPoint(x: 300, y: 400))
+        record(.leftMouseDragged, at: CGPoint(x: 400, y: 500))
+        record(.leftMouseUp, at: CGPoint(x: 500, y: 600))
+        XCTAssertEqual(monitor.completedDrag.count, 2)
+        XCTAssertEqual(monitor.completedDrag.release, CGPoint(x: 500, y: 600), "the next drag replaces it")
+    }
+
     /// Releasing a running monitor without stopping it, or starting and stopping it repeatedly, never lets the tap thread touch a freed monitor.
     func testReleasingOrRestartingARunningMonitorIsSafe() throws {
         for _ in 0..<20 {
@@ -51,6 +74,18 @@ final class InputGapTests: XCTestCase {
         monitor.noteObservationGap { false }
         XCTAssertFalse(monitor.leftMouseDown)
         XCTAssertGreaterThan(monitor.count, count)
+    }
+
+    /// Input during an unobserved gap may include a press or a drag: the last release point no longer describes the windows.
+    func testAnObservationGapForgetsTheReleasePoint() {
+        let monitor = InputMonitor()
+        for type in [CGEventType.leftMouseDown, .leftMouseDragged, .leftMouseUp] {
+            monitor.record(type, event: CGEvent(mouseEventSource: nil, mouseType: type, mouseCursorPosition: CGPoint(x: 300, y: 400), mouseButton: .left)!)
+        }
+        XCTAssertEqual(monitor.completedDrag.release, CGPoint(x: 300, y: 400))
+        monitor.noteObservationGap { false }
+        XCTAssertEqual(monitor.completedDrag.count, 1)
+        XCTAssertNil(monitor.completedDrag.release)
     }
 
     /// A release delivered while the gap samples the button is recorded after the sample, so it stands.

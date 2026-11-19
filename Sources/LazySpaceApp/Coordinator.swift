@@ -3613,16 +3613,16 @@ final class Coordinator {
         let buttonDown = leftButtonDown || system.anyMouseButtonHeld
         // This observation's automatic decisions use the input seen here as their baseline; input during the decision's reads also stops the operation.
         let decision = OperationAuthorization(system: system, control: control)
-        let completedDrags = system.input.completedMouseDrags
+        let completedDrag = system.input.completedDrag
         let presses = system.input.breakdown.mouseDown
-        let dragged = completedDrags != lastCompletedMouseDrags
+        let dragged = completedDrag.count != lastCompletedMouseDrags
         let pressSpace = system.currentSpaceID().map(String.init)
         if dragged {
-            lastCompletedMouseDrags = completedDrags
+            lastCompletedMouseDrags = completedDrag.count
             pendingMouseEdit = true
             dragQuietPending = true
             mouseEditSpace = pressSpace
-            dragPresses = system.input.completedDragPresses
+            dragPresses = completedDrag.presses
             earlyMouseEdit = !leftButtonDown
             mouseEditSample = nil
             earlyMouseEditDeclined = false
@@ -5957,9 +5957,20 @@ final class Coordinator {
                                      interrupted: { [self] in authorization?.interruptionReason(system: system, control: control) != nil },
                                      read: { [self] id, deadline in system.readFrame(id, before: deadline) })
         guard case .frames(let frames, let complete) = read else { return nil }
+        // A drop is judged where the button was released, but only for the drag being handled and while that point still describes it: no press
+        // since (a click, or the press of a drag whose release was missed), no unobserved gap (`InputMonitor` forgets the point), released after
+        // arriving on this Space, and held by exactly one changed window, every one of them read. Otherwise every drop is judged at its center.
+        let drag = system.input.completedDrag
+        var holder: WindowID?
+        if drag.count == lastCompletedMouseDrags, system.input.breakdown.mouseDown == dragPresses, let point = drag.release,
+           let at = drag.releasedAt, at > spaceArrivedAt, candidates.allSatisfy({ frames[$0] != nil }) {
+            let holders = candidates.filter { frames[$0]?.contains(point) == true }
+            if holders.count == 1 { holder = holders[0] }
+        }
         let edits = candidates.compactMap { id -> (id: WindowID, edit: ManualEdit, frame: CGRect)? in
             guard let actual = frames[id], let planned = plan[id],
-                  let edit = ManualEdit.detect(id: id, planned: planned, actual: actual, layout: layout, shape: shape, plannedRects: plan, tolerance: limits.tolerance) else { return nil }
+                  let edit = ManualEdit.detect(id: id, planned: planned, actual: actual, layout: layout, shape: shape, plannedRects: plan, tolerance: limits.tolerance,
+                                               pointer: id == holder ? drag.release : nil) else { return nil }
             return (id, edit, actual)
         }
         return (edits, complete, candidates.count)

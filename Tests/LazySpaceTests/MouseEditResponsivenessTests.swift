@@ -56,8 +56,8 @@ final class MouseEditResponsivenessTests: XCTestCase {
         return delay
     }
 
-    private func mouse(_ type: CGEventType) {
-        let event = CGEvent(mouseEventSource: nil, mouseType: type, mouseCursorPosition: .zero, mouseButton: .left)!
+    private func mouse(_ type: CGEventType, at point: CGPoint = .zero) {
+        let event = CGEvent(mouseEventSource: nil, mouseType: type, mouseCursorPosition: point, mouseButton: .left)!
         system.input.record(type, event: event)
         system.inputActivityCount += 1
     }
@@ -346,6 +346,103 @@ final class MouseEditResponsivenessTests: XCTestCase {
         tick()
         XCTAssertEqual(system.frames[WindowID(2)], placed2, "the quiet path still returns it")
         XCTAssertEqual(coordinator.lastResult?.kind, "mouse-return")
+    }
+
+    /// Window 2, dragged by its title bar, is released with the pointer over window 1 while its center is over no tile: it swaps.
+    func testADropSwapsWithTheTileUnderThePointer() {
+        mouse(.leftMouseDown, at: CGPoint(x: 1160, y: 20))
+        mouse(.leftMouseDragged, at: CGPoint(x: 900, y: 300))
+        system.frames[WindowID(2)] = CGRect(x: 500, y: 600, width: 960, height: 1080)
+        mouse(.leftMouseUp, at: CGPoint(x: 700, y: 620))
+        tick(); tick()
+        XCTAssertEqual(coordinator.lastResult?.kind, "mouse-swap")
+        XCTAssertEqual(coordinator.state.layouts["7"]?.windowIDs, [WindowID(2), WindowID(1)])
+        XCTAssertEqual(system.frames[WindowID(2)], CGRect(x: 0, y: 0, width: 960, height: 1080))
+    }
+
+    /// The same drop released with the pointer off the window it dragged: judged at its center, which is over no tile, so it returns.
+    func testAReleasePointOffTheDraggedWindowFallsBackToItsCenter() {
+        mouse(.leftMouseDown, at: CGPoint(x: 1160, y: 20))
+        mouse(.leftMouseDragged, at: CGPoint(x: 900, y: 300))
+        system.frames[WindowID(2)] = CGRect(x: 500, y: 600, width: 960, height: 1080)
+        mouse(.leftMouseUp, at: CGPoint(x: 100, y: 100))
+        tick(); tick()
+        XCTAssertEqual(coordinator.lastResult?.kind, "mouse-return")
+        XCTAssertEqual(system.frames[WindowID(2)], placed2)
+    }
+
+    /// Drags window 2 by its title bar and releases it with the pointer over window 1 while its center is over no tile.
+    private func dropWithThePointerOverWindow1() {
+        mouse(.leftMouseDown, at: CGPoint(x: 1160, y: 20))
+        mouse(.leftMouseDragged, at: CGPoint(x: 900, y: 300))
+        system.frames[WindowID(2)] = CGRect(x: 500, y: 600, width: 960, height: 1080)
+        mouse(.leftMouseUp, at: CGPoint(x: 700, y: 620))
+    }
+
+    /// A press after a drag (here a click, or the press of a drag whose release the tap missed) makes its release point stale:
+    /// a window moved since is judged at its center.
+    func testAPressAfterTheDragDropsItsReleasePoint() {
+        let layout = savedLayout
+        mouse(.leftMouseDown, at: CGPoint(x: 1300, y: 300))
+        mouse(.leftMouseDragged, at: CGPoint(x: 1100, y: 400))
+        mouse(.leftMouseUp, at: CGPoint(x: 1000, y: 500)) // e.g. selecting text in window 2
+        mouse(.leftMouseDown, at: CGPoint(x: 100, y: 20))
+        mouse(.leftMouseUp, at: CGPoint(x: 100, y: 20))
+        system.frames[WindowID(1)] = CGRect(x: 60, y: 0, width: 960, height: 1080) // holds (1000, 500); its center stays over its own tile
+        tick(); tick()
+        Thread.sleep(forTimeInterval: coordinator.quietInterval + 0.05)
+        tick()
+        XCTAssertNotEqual(coordinator.lastResult?.kind, "mouse-swap", "judged at its center, not at the earlier release")
+        XCTAssertEqual(savedLayout, layout)
+    }
+
+    /// A release before arriving on this Space happened on another Space: the drop is judged at the window's center.
+    func testAReleaseBeforeTheSpaceArrivalIsNotUsed() {
+        let layout = savedLayout
+        dropWithThePointerOverWindow1()
+        coordinator.operationsQueue.sync { coordinator.noteSpaceArrival() }
+        tick(); tick()
+        XCTAssertEqual(coordinator.lastResult?.kind, "mouse-return")
+        XCTAssertEqual(savedLayout, layout)
+    }
+
+    /// When two changed windows hold the release point, it does not tell which was dragged: both are judged at their centers.
+    func testAReleasePointHeldByTwoChangedWindowsIsNotUsed() {
+        let layout = savedLayout
+        mouse(.leftMouseDown, at: CGPoint(x: 1160, y: 20))
+        mouse(.leftMouseDragged, at: CGPoint(x: 900, y: 300))
+        system.frames[WindowID(1)] = CGRect(x: 60, y: 0, width: 960, height: 1080) // moved by its app; holds the point, over window 2
+        system.frames[WindowID(2)] = CGRect(x: 500, y: 600, width: 960, height: 1080)
+        mouse(.leftMouseUp, at: CGPoint(x: 1000, y: 650))
+        tick(); tick()
+        Thread.sleep(forTimeInterval: coordinator.quietInterval + 0.05)
+        tick()
+        XCTAssertEqual(coordinator.lastResult?.kind, "mouse-return", "both centers are over their own tile or none")
+        XCTAssertEqual(savedLayout, layout)
+    }
+
+    /// Another changed window that cannot be read might hold the release point too: the drop is judged at its center.
+    func testAReleasePointBesideAnUnreadChangedWindowIsNotUsed() {
+        system.unreadableFrames = [WindowID(1)]
+        system.frames[WindowID(1)] = CGRect(x: 60, y: 0, width: 960, height: 1080)
+        dropWithThePointerOverWindow1()
+        tick(); tick()
+        XCTAssertNotEqual(coordinator.lastResult?.kind, "mouse-swap")
+        XCTAssertEqual(coordinator.state.layouts["7"]?.windowIDs, [WindowID(1), WindowID(2)])
+    }
+
+    /// A pointer swap whose arrangement input stopped goes back to the quiet path and still swaps there.
+    func testAnInterruptedPointerSwapStillSwapsOnTheQuietPath() {
+        dropWithThePointerOverWindow1()
+        tick()
+        system.onSnapshot = { [unowned self] in system.onSnapshot = nil; system.inputActivityCount += 1 }
+        tick()
+        XCTAssertEqual(coordinator.state.layouts["7"]?.windowIDs, [WindowID(1), WindowID(2)], "the stopped arrangement committed nothing")
+        tick()
+        Thread.sleep(forTimeInterval: coordinator.quietInterval + 0.05)
+        tick()
+        XCTAssertEqual(coordinator.lastResult?.kind, "mouse-swap")
+        XCTAssertEqual(coordinator.state.layouts["7"]?.windowIDs, [WindowID(2), WindowID(1)])
     }
 
     /// Window 1 is resized while window 2 is dropped on empty space: the batch has a resize, so it keeps the quiet path.
