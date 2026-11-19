@@ -269,14 +269,108 @@ final class MouseEditResponsivenessTests: XCTestCase {
         XCTAssertFalse(adopted, "no early adoption while an addition is deferred")
     }
 
-    func testDropOnEmptySpaceKeepsTheQuietPath() {
+    private let placed2 = CGRect(x: 960, y: 0, width: 960, height: 1080)
+
+    /// Drags window 2 by its title bar and drops it where its center is over no other window.
+    private func dropOnEmptySpace() {
         mouse(.leftMouseDown)
         mouse(.leftMouseDragged)
-        system.frames[WindowID(2)] = CGRect(x: 1500, y: 700, width: 960, height: 1080) // its center is over no other window
+        system.frames[WindowID(2)] = CGRect(x: 1500, y: 700, width: 960, height: 1080)
+        mouse(.leftMouseUp)
+    }
+
+    private var savedLayout: Layout? { coordinator.state.layouts["7"] }
+    private var canUndo: Bool { coordinator.canApplyEdit(.undo, focused: nil) }
+
+    func testDropOnEmptySpaceReturnsOnTheSecondStillRead() {
+        let layout = savedLayout, undo = canUndo
+        let started = Date()
+        dropOnEmptySpace()
+        let writes = system.writes
+        tick()
+        XCTAssertEqual(system.writes, writes, "the first read after release is only a sample")
+        tick()
+        XCTAssertEqual(system.frames[WindowID(2)], placed2, "two equal reads after release return it")
+        XCTAssertEqual(coordinator.lastResult?.kind, "mouse-return")
+        XCTAssertLessThan(Date().timeIntervalSince(started), coordinator.quietInterval, "no wait for the input quiet time")
+        XCTAssertEqual(savedLayout, layout, "the layout, ratios included, is unchanged")
+        XCTAssertEqual(canUndo, undo, "no undo step, as on the quiet path")
+    }
+
+    func testDropOnEmptySpaceStillMovingKeepsWaiting() {
+        dropOnEmptySpace()
+        tick()
+        system.frames[WindowID(2)] = CGRect(x: 1600, y: 600, width: 960, height: 1080) // still moving, e.g. an OS snap
+        let writes = system.writes
+        tick()
+        XCTAssertEqual(system.writes, writes, "the bounds changed since the sample")
+        tick()
+        XCTAssertEqual(system.frames[WindowID(2)], placed2)
+    }
+
+    func testDropOnEmptySpaceWithAGeometryNotificationKeepsWaiting() {
+        dropOnEmptySpace()
+        geometryQuiet = false
+        let writes = system.writes
+        tick(); tick()
+        XCTAssertEqual(system.writes, writes, "the app reported a move since the sample")
+        geometryQuiet = true
+        tick()
+        XCTAssertEqual(system.frames[WindowID(2)], placed2)
+    }
+
+    func testDropOnEmptySpaceWithoutAnObserverKeepsTheQuietPath() {
+        let layout = savedLayout, undo = canUndo
+        geometryQuiet = nil
+        dropOnEmptySpace()
+        let writes = system.writes
+        tick(); tick(); tick()
+        XCTAssertEqual(system.writes, writes, "without notifications two equal reads are not enough evidence")
+        Thread.sleep(forTimeInterval: coordinator.quietInterval + 0.05)
+        tick()
+        XCTAssertEqual(system.frames[WindowID(2)], placed2, "the quiet path returns it as before")
+        XCTAssertEqual(coordinator.lastResult?.kind, "mouse-return")
+        XCTAssertEqual(savedLayout, layout)
+        XCTAssertEqual(canUndo, undo)
+    }
+
+    func testPressAfterADropOnEmptySpaceKeepsTheQuietPath() {
+        dropOnEmptySpace()
+        tick()
+        mouse(.leftMouseDown)
+        mouse(.leftMouseUp)
+        let writes = system.writes
+        tick(); tick()
+        XCTAssertEqual(system.writes, writes, "a click between reads makes the sample stale")
+        Thread.sleep(forTimeInterval: coordinator.quietInterval + 0.05)
+        tick()
+        XCTAssertEqual(system.frames[WindowID(2)], placed2, "the quiet path still returns it")
+        XCTAssertEqual(coordinator.lastResult?.kind, "mouse-return")
+    }
+
+    /// Window 1 is resized while window 2 is dropped on empty space: the batch has a resize, so it keeps the quiet path.
+    func testAReturnAmongOtherEditsKeepsTheQuietPath() {
+        mouse(.leftMouseDown)
+        mouse(.leftMouseDragged)
+        system.frames[WindowID(1)] = CGRect(x: 0, y: 0, width: 1100, height: 1080)
+        system.frames[WindowID(2)] = CGRect(x: 1500, y: 700, width: 960, height: 1080)
         mouse(.leftMouseUp)
         let writes = system.writes
         tick(); tick(); tick()
-        XCTAssertEqual(system.writes, writes, "returning a window to its place keeps the old timing")
+        XCTAssertEqual(system.writes, writes, "a resize beside a return is decided as before")
+    }
+
+    /// Another changed window that cannot be read may hold the first edit: the return waits for the quiet path.
+    func testAReturnBesideAnUnreadChangedWindowKeepsTheQuietPath() {
+        system.unreadableFrames = [WindowID(1)]
+        mouse(.leftMouseDown)
+        mouse(.leftMouseDragged)
+        system.frames[WindowID(1)] = CGRect(x: 0, y: 0, width: 1100, height: 1080)
+        system.frames[WindowID(2)] = CGRect(x: 1500, y: 700, width: 960, height: 1080)
+        mouse(.leftMouseUp)
+        let writes = system.writes
+        tick(); tick(); tick()
+        XCTAssertEqual(system.writes, writes, "window 1 was not read")
     }
 
     func testStillReadWithoutAnEditStopsShortTicks() {

@@ -3872,7 +3872,8 @@ final class Coordinator {
         // Decisions deferred for input are revisited when the quiet time is up (not at the next regular interval).
         if !out.deferredAdded.isEmpty || !out.deferredRemoved.isEmpty { scheduleNextTick(after: max(quietInterval - sinceInput, fastTickInterval)) }
         // After an actual drag, the edit is adopted once the managed windows are still after the release (two equal reads, no geometry
-        // notification in between), without waiting for the input quiet time; only when nothing else is pending and every change is a resize or a swap.
+        // notification in between), without waiting for the input quiet time; only when nothing else is pending and every change is a resize or a swap,
+        // or the only change is a drop on empty space (returned to its place). From the same frames it makes the decision the quiet path would make.
         if pendingMouseEdit, earlyMouseEdit, !quiet, !buttonDown, out.actions.isEmpty, out.deferredAdded.isEmpty, out.deferredRemoved.isEmpty,
            !holdingRemoval, removalGate == nil, !autoOff, let layout, !isBusy,
            adoptStillMouseEdit(current: current, spaceKey: spaceKey, layout: layout, managed: managed, authorization: decision) { return }
@@ -5866,7 +5867,8 @@ final class Coordinator {
     enum MouseEditOutcome { case applied, none, interrupted }
 
     /// The early path of a drag. Takes a sample on the first read after the release and looks again after the 50 ms floor; adopts on an equal read
-    /// when every changed window is a resize or a swap and every managed app has an observer that reported no geometry change since the sample.
+    /// when every changed window is a resize or a swap, or the one changed window, read, is a drop on empty space (a return), and every managed app
+    /// has an observer that reported no geometry change since the sample.
     /// Otherwise the quiet path decides as before. Returns true when an edit was adopted.
     private func adoptStillMouseEdit(current: Census, spaceKey: String, layout: Layout, managed: Set<WindowID>, authorization: OperationAuthorization) -> Bool {
         // Every managed window must be on screen: a missing one is a removal still to be assessed.
@@ -5887,7 +5889,11 @@ final class Coordinator {
                 return false
             }
             let edits = evidence.edits
-            guard evidence.complete, let first = edits.first, edits.allSatisfy({ if case .float = $0.edit { return false } else { return true } }) else {
+            // A drop on empty space (a return) is adopted only alone: it is the one window that differs from the plan, and it was read.
+            // With a return among other edits, or another changed window unread, the quiet path decides, so every resize or swap batch is as before.
+            let noReturn = edits.allSatisfy { if case .float = $0.edit { return false } else { return true } }
+            let loneReturn = evidence.changed == 1 && edits.count == 1
+            guard evidence.complete, let first = edits.first, noReturn || loneReturn else {
                 earlyMouseEditDeclined = true
                 return false
             }
@@ -5934,19 +5940,19 @@ final class Coordinator {
     /// nil when input, Pause, or a cancellation arrived during the reads (the drag waits for the quiet path); `complete` is false when the
     /// read budget ran out before every candidate was read.
     private func classifyManualEdits(current: Census, spaceKey: String, layout: Layout, managed: Set<WindowID>,
-                                     authorization: OperationAuthorization?) -> (edits: [(id: WindowID, edit: ManualEdit, frame: CGRect)], complete: Bool)? {
+                                     authorization: OperationAuthorization?) -> (edits: [(id: WindowID, edit: ManualEdit, frame: CGRect)], complete: Bool, changed: Int)? {
         lock.lock()
         let plan = lastPlans[spaceKey] ?? [:]
         let shape = lastShapes[spaceKey] ?? layout
         let floating = Set(state.floating[spaceKey] ?? [])
         let zoomed = state.zoomed[spaceKey]
         lock.unlock()
-        guard zoomed == nil else { return ([], true) }
+        guard zoomed == nil else { return ([], true, 0) }
         let candidates = plan.keys.sorted().filter { id in
             guard managed.contains(id), !floating.contains(id), let seen = current.bounds[id], let planned = plan[id] else { return false }
             return !seen.matches(planned, tolerance: limits.tolerance)
         }
-        guard !candidates.isEmpty else { return ([], true) }
+        guard !candidates.isEmpty else { return ([], true, 0) }
         let read = Self.readEvidence(candidates, deadline: Date().addingTimeInterval(Self.mouseEditReadBudget), now: Date.init,
                                      interrupted: { [self] in authorization?.interruptionReason(system: system, control: control) != nil },
                                      read: { [self] id, deadline in system.readFrame(id, before: deadline) })
@@ -5956,7 +5962,7 @@ final class Coordinator {
                   let edit = ManualEdit.detect(id: id, planned: planned, actual: actual, layout: layout, shape: shape, plannedRects: plan, tolerance: limits.tolerance) else { return nil }
             return (id, edit, actual)
         }
-        return (edits, complete)
+        return (edits, complete, candidates.count)
     }
 
     /// Adopts the first mouse edit (for tests and the quiet path); true when one was applied.
