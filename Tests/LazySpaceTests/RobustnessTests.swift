@@ -327,6 +327,158 @@ final class RobustnessTests: XCTestCase {
         XCTAssertFalse(coordinator.state.layouts["7"]?.windowIDs.contains(WindowID(3)) == true)
     }
 
+    /// Once the sweep confirms a failed window closed, its failures no longer make every observation ask the front app for its focused window.
+    func testAClosedWindowsFailuresDoNotKeepReadingFocus() {
+        let (coordinator, system, root) = make()
+        defer { try? FileManager.default.removeItem(at: root) }
+        system.frames[WindowID(3)] = CGRect(x: 300, y: 200, width: 500, height: 400)
+        var snapshots = 0
+        system.onSnapshot = {
+            snapshots += 1
+            system.kind = snapshots % 2 == 1 ? .standard : .dialog
+        }
+        for _ in 0..<10 {
+            _ = coordinator.operationsQueue.sync { coordinator.placeMissing(current: system.census(7), spaceKey: "7") }
+            drain(coordinator)
+        }
+        XCTAssertTrue(coordinator.waiting.contains(WindowID(3)), "two failures: it waits")
+        system.frames[WindowID(3)] = nil
+        for _ in 0..<4 {
+            coordinator.operationsQueue.sync { coordinator.tick() }
+            drain(coordinator)
+        }
+        XCTAssertFalse(coordinator.waiting.contains(WindowID(3)), "the sweep confirmed the close")
+        let reads = system.focusReads
+        for _ in 0..<20 {
+            _ = coordinator.operationsQueue.sync { coordinator.placeMissing(current: system.census(7), spaceKey: "7") }
+        }
+        XCTAssertEqual(system.focusReads, reads, "nothing unknown is on screen and the front window did not change")
+    }
+
+    /// A window that gave up stays given up while the user visits another Space and comes back: only its close forgets it.
+    func testAGivenUpWindowStaysGivenUpAcrossASpaceVisit() {
+        let (coordinator, system, root) = make()
+        defer { try? FileManager.default.removeItem(at: root) }
+        system.frames[WindowID(3)] = CGRect(x: 300, y: 200, width: 500, height: 400)
+        var snapshots = 0
+        system.onSnapshot = {
+            snapshots += 1
+            system.kind = snapshots % 2 == 1 ? .standard : .dialog
+        }
+        var starts = 0
+        func look(_ space: UInt64) {
+            system.space = space
+            if coordinator.operationsQueue.sync(execute: { coordinator.placeMissing(current: system.census(space), spaceKey: String(space)) }) { starts += 1 }
+            drain(coordinator)
+        }
+        for _ in 0..<10 { look(7) }
+        XCTAssertEqual(starts, 2, "two failures: it gave up")
+        system.spaceOf = [WindowID(1): 7, WindowID(2): 7, WindowID(3): 7]
+        for _ in 0..<3 { look(8) }
+        for _ in 0..<10 { look(7) }
+        XCTAssertEqual(starts, 2, "back on its Space, it is not tried again")
+    }
+
+    /// Focus is not followed while a failed window is away; coming back focused, the window counts as focused anew and is tried again.
+    func testAFailedWindowFocusedAgainAfterASpaceVisitIsTriedAgain() {
+        let (coordinator, system, root) = make()
+        defer { try? FileManager.default.removeItem(at: root) }
+        system.frames[WindowID(3)] = CGRect(x: 300, y: 200, width: 500, height: 400)
+        system.spaceOf = [WindowID(1): 7, WindowID(2): 7, WindowID(3): 7]
+        system.frontWindow = WindowID(1)
+        system.focused = WindowID(3)
+        var snapshots = 0
+        system.onSnapshot = {
+            snapshots += 1
+            system.kind = snapshots % 2 == 1 ? .standard : .dialog
+        }
+        var starts = 0
+        func look(_ space: UInt64) {
+            system.space = space
+            if coordinator.operationsQueue.sync(execute: { coordinator.placeMissing(current: system.census(space), spaceKey: String(space)) }) { starts += 1 }
+            drain(coordinator)
+        }
+        for _ in 0..<10 { look(7) }
+        XCTAssertEqual(starts, 2, "two failures while focused: it gave up")
+        system.focused = WindowID(9)
+        for _ in 0..<3 { look(8) }
+        system.focused = WindowID(3)
+        look(7)
+        XCTAssertEqual(starts, 3, "focused again on return: tried again, as when focus was followed while away")
+    }
+
+    /// A waiting window that failed once and closed leaves no failure behind for a later window with the same ID (the tracked sweep).
+    func testAClosedWindowsSingleFailureIsForgotten() {
+        let (coordinator, system, root) = make()
+        defer { try? FileManager.default.removeItem(at: root) }
+        coordinator.recordSweepInterval = .infinity
+        let frame = CGRect(x: 300, y: 200, width: 500, height: 400)
+        system.frames[WindowID(3)] = frame
+        var snapshots = 0
+        system.onSnapshot = {
+            snapshots += 1
+            system.kind = snapshots % 2 == 1 ? .standard : .dialog
+        }
+        var starts = 0
+        func look() {
+            if coordinator.operationsQueue.sync(execute: { coordinator.placeMissing(current: system.census(7), spaceKey: "7") }) { starts += 1 }
+            drain(coordinator)
+        }
+        look()
+        XCTAssertEqual(starts, 1)
+        XCTAssertTrue(coordinator.waiting.contains(WindowID(3)))
+        system.frames[WindowID(3)] = nil
+        for _ in 0..<4 {
+            coordinator.operationsQueue.sync { coordinator.tick() }
+            drain(coordinator)
+        }
+        system.frames[WindowID(3)] = frame
+        for _ in 0..<10 { look() }
+        XCTAssertEqual(starts, 3, "the window with the same ID gets its own two tries")
+    }
+
+    /// A failed window that left this Space stops waiting here but keeps its failure; when it closes there, the IDs-only sweep forgets
+    /// the failure, so a later window with the same ID gets its own two tries.
+    func testAFailedWindowThatClosedElsewhereIsForgottenByTheIDSweep() {
+        let (coordinator, system, root) = make()
+        defer { try? FileManager.default.removeItem(at: root) }
+        coordinator.recordSweepInterval = 0
+        let frame = CGRect(x: 300, y: 200, width: 500, height: 400)
+        system.hiddenSpaces = true
+        system.spaceOf = [WindowID(1): 7, WindowID(2): 7, WindowID(3): 7]
+        system.frames[WindowID(3)] = frame
+        var snapshots = 0
+        system.onSnapshot = {
+            snapshots += 1
+            system.kind = snapshots % 2 == 1 ? .standard : .dialog
+        }
+        var starts = 0
+        func look() {
+            if coordinator.operationsQueue.sync(execute: { coordinator.placeMissing(current: system.census(7), spaceKey: "7") }) { starts += 1 }
+            drain(coordinator)
+        }
+        func ticks() {
+            for _ in 0..<4 {
+                coordinator.operationsQueue.sync { coordinator.tick() }
+                drain(coordinator)
+            }
+        }
+        look()
+        XCTAssertEqual(starts, 1, "one failure")
+        system.spaceOf[WindowID(3)] = 8
+        ticks()
+        XCTAssertFalse(coordinator.waiting.contains(WindowID(3)), "on one other Space: no longer waiting here")
+        let reads = system.focusReads
+        _ = coordinator.operationsQueue.sync { coordinator.placeMissing(current: system.census(7), spaceKey: "7") }
+        XCTAssertEqual(system.focusReads, reads + 1, "its failure is kept while it is only away (and still reads focus, as before)")
+        system.frames[WindowID(3)] = nil
+        ticks()
+        system.spaceOf[WindowID(3)] = 7
+        system.frames[WindowID(3)] = frame
+        for _ in 0..<10 { look() }
+        XCTAssertEqual(starts, 3, "the window with the same ID gets its own two tries")
+    }
+
     func testWindowListIsCopiedOnlyForTrackedWindowsThatAreNotVisible() {
         XCTAssertTrue(Coordinator.windowsNeedingListCheck(tracked: [], visible: [WindowID(1)]).isEmpty)
         // A floating window visible on the current Space needs no full window list.

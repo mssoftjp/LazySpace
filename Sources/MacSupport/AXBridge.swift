@@ -250,6 +250,35 @@ public enum WindowList {
         return records(entries([.optionAll, .excludeDesktopElements]))
     }
 
+    /// The IDs of the full window list (the options of `allIfAvailable()`) without the windows' descriptions; nil when unavailable.
+    /// For checks that only ask whether a window is listed: copying every description took about half of the idle time.
+    public static func listedIDsIfAvailable() -> Set<CGWindowID>? {
+        guard let create = createList else { return allIfAvailable().map { Set($0.keys) } }
+        #if LAZYSPACE_PERF
+        ObservationMetrics.record("cgIDList")
+        #endif
+        let options: CGWindowListOption = [.optionAll, .excludeDesktopElements]
+        return listedIDs(create(options.rawValue, kCGNullWindowID)?.takeRetainedValue())
+    }
+
+    /// Whether `listedIDsIfAvailable()` reads the IDs alone (false only when the function could not be looked up).
+    public static var readsIDsOnly: Bool { createList != nil }
+
+    /// `CGWindowListCreate` is public API that Swift cannot call by name (`CF_SWIFT_UNAVAILABLE`), so it is looked up once.
+    private typealias CreateListFn = @convention(c) (UInt32, CGWindowID) -> Unmanaged<CFArray>?
+    private static let createList: CreateListFn? = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "CGWindowListCreate")
+        .map { unsafeBitCast($0, to: CreateListFn.self) }
+
+    /// The IDs in a `CGWindowListCreate` array, whose values are the IDs themselves, not objects (so never bridged); nil for no array.
+    static func listedIDs(_ array: CFArray?) -> Set<CGWindowID>? {
+        guard let array else { return nil }
+        var ids = Set<CGWindowID>()
+        for i in 0..<CFArrayGetCount(array) {
+            ids.insert(CGWindowID(truncatingIfNeeded: UInt(bitPattern: CFArrayGetValueAtIndex(array, i))))
+        }
+        return ids
+    }
+
     /// One window's record without copying the whole list; nil when it is not listed or the read failed.
     public static func record(_ id: CGWindowID) -> CGWindowRecord? {
         // The array holds the ID itself as a pointer-sized value; bridging a Swift array would box it into an object.

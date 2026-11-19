@@ -137,9 +137,10 @@ public final class WakeObserver {
         }
     }
 
-    /// Only window creation wakes for an app without a window in the census; its announcement is checked by the next observation.
-    static func wakes(created: Bool, pid: pid_t?, census: Set<pid_t>) -> Bool {
-        created || pid.map { $0 > 0 && census.contains($0) } ?? false
+    /// Only window creation and restoring a minimized window wake for an app without a window in the census (its only window coming back
+    /// from the Dock); a creation's announcement is checked by the next observation. A restore announces nothing.
+    static func wakes(created: Bool, restored: Bool, pid: pid_t?, census: Set<pid_t>) -> Bool {
+        created || restored || pid.map { $0 > 0 && census.contains($0) } ?? false
     }
 
     /// What main should observe now, from the current snapshots; quit processes are left out so a stale census cannot bring them back.
@@ -270,6 +271,7 @@ public final class WakeObserver {
                 guard let refcon else { return }
                 let me = Unmanaged<WakeObserver>.fromOpaque(refcon).takeUnretainedValue()
                 let isCreation = (notification as String) == (kAXWindowCreatedNotification as String)
+                let isRestore = (notification as String) == (kAXWindowDeminiaturizedNotification as String)
                 var owner: pid_t = 0
                 let pid: pid_t? = AXUIElementGetPid(element, &owner) == .success ? owner : nil
                 let isGeometry = [kAXWindowMovedNotification, kAXWindowResizedNotification].contains(notification as String)
@@ -277,7 +279,7 @@ public final class WakeObserver {
                 if isGeometry, let pid { me.geometryNotices[pid] = Date() }
                 let census = me.census
                 me.loopLock.unlock()
-                guard WakeObserver.wakes(created: isCreation, pid: pid, census: census) else { return }
+                guard WakeObserver.wakes(created: isCreation, restored: isRestore, pid: pid, census: census) else { return }
                 let announced = isCreation ? AXElement(raw: element).windowID().map(WindowID.init) : nil
                 // The observer is alive on the notification thread. Take the handler here so nothing touches it if it is freed after handing off to main.
                 let wake = me.onWake

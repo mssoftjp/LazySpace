@@ -1515,6 +1515,19 @@ final class CoordinatorTests: XCTestCase {
         drain()
     }
 
+    /// A single tiled window is never in an accordion, so the drift check reads no work area for realigning one (one of three reads per tick).
+    func testTheDriftCheckOfASingleWindowReadsNoWorkArea() {
+        system.frames[WindowID(2)] = nil
+        guard case .started = coordinator.arrange(source: "cli") else { return XCTFail("arrange should start") }
+        drain()
+        let layout = coordinator.state.layouts["7"]!
+        XCTAssertEqual(layout.windowIDs, [WindowID(1)])
+        system.focused = WindowID(1)
+        let reads = system.workAreaReads
+        XCTAssertFalse(coordinator.reconcileDrift(current: system.census(7), spaceKey: "7", layout: layout, managed: Set(layout.windowIDs)))
+        XCTAssertEqual(system.workAreaReads, reads)
+    }
+
     /// A single dialog-like window does not start, even with automatic start on.
     func testAutoStartIgnoresNonStandardSoloWindow() throws {
         dropLayout()

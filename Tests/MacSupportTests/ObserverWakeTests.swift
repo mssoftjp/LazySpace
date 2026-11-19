@@ -104,13 +104,16 @@ final class WatchSetTests: XCTestCase {
         XCTAssertEqual(WakeObserver.attachOrder([5, 7], front: nil, census: []), [5, 7])
     }
 
-    /// Only window creation wakes for an app without a window in the census, so moves of windows elsewhere add no observations.
-    func testOnlyWindowCreationWakesForAppsOutsideTheCensus() {
-        XCTAssertTrue(WakeObserver.wakes(created: true, pid: 40, census: [10]))
-        XCTAssertTrue(WakeObserver.wakes(created: true, pid: nil, census: [10]))
-        XCTAssertFalse(WakeObserver.wakes(created: false, pid: 40, census: [10]))
-        XCTAssertTrue(WakeObserver.wakes(created: false, pid: 10, census: [10]))
-        XCTAssertFalse(WakeObserver.wakes(created: false, pid: nil, census: [10]), "an unreadable owner is not in the census")
+    /// Only window creation and restoring a minimized window wake for an app without a window in the census, so moves of windows elsewhere
+    /// add no observations; an app whose only window comes back from the Dock is observed at once instead of at the next regular tick.
+    func testOnlyWindowCreationAndRestoreWakeForAppsOutsideTheCensus() {
+        XCTAssertTrue(WakeObserver.wakes(created: true, restored: false, pid: 40, census: [10]))
+        XCTAssertTrue(WakeObserver.wakes(created: true, restored: false, pid: nil, census: [10]))
+        XCTAssertTrue(WakeObserver.wakes(created: false, restored: true, pid: 40, census: [10]), "its only window came back from the Dock")
+        XCTAssertTrue(WakeObserver.wakes(created: false, restored: true, pid: nil, census: [10]))
+        XCTAssertFalse(WakeObserver.wakes(created: false, restored: false, pid: 40, census: [10]))
+        XCTAssertTrue(WakeObserver.wakes(created: false, restored: false, pid: 10, census: [10]))
+        XCTAssertFalse(WakeObserver.wakes(created: false, restored: false, pid: nil, census: [10]), "an unreadable owner is not in the census")
     }
 
     /// An app outside the census that keeps failing gives up at the 8 s step until it enters the census or is activated (`forget`).

@@ -208,4 +208,15 @@ final class WindowListReaderTests: XCTestCase {
         XCTAssertEqual(FrontmostApp.owners(nil), [])
         XCTAssertEqual(WindowCensus.census(nil, spaceID: 7, me: Self.me, frontmostPID: Self.front, isRegular: { _ in true }).windows, [:])
     }
+
+    /// `CGWindowListCreate` holds the IDs themselves as the array's values (not objects); they are read without bridging.
+    func testListedIDsAreTheRawValuesOfTheArray() {
+        func array(_ ids: [CGWindowID]) -> CFArray {
+            var values: [UnsafeRawPointer?] = ids.map { UnsafeRawPointer(bitPattern: UInt($0)) }
+            return CFArrayCreate(nil, &values, values.count, nil)
+        }
+        XCTAssertEqual(WindowList.listedIDs(array([3, 47087, 4294967291, 3])), [3, 47087, 4294967291])
+        XCTAssertEqual(WindowList.listedIDs(array([])), [], "an empty list is not an unavailable list")
+        XCTAssertNil(WindowList.listedIDs(nil), "no array is an unavailable list")
+    }
 }

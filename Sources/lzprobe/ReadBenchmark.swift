@@ -77,6 +77,7 @@ enum ReadBenchmark {
             ("all-records", { WindowList.allIfAvailable()?.count ?? -1 }),
             ("existing-ids", { WindowList.existingIDsIfAvailable()?.count ?? -1 }),
             ("on-screen-order", { WindowList.onScreenOrder().count }),
+            ("listed-ids", { WindowList.listedIDsIfAvailable()?.count ?? -1 }),
         ]
         func median(_ values: [Double]) -> Double { values.sorted()[values.count / 2] }
         var samples: [ListSample] = []
@@ -96,6 +97,29 @@ enum ReadBenchmark {
                                       medianWallMs: median(wall), meanWallMs: wall.reduce(0, +) / Double(iterations)))
         }
         _ = Report.write(samples, name: "list-benchmark", dir: outDir)
+        _ = Report.write(listParity(rounds: 50), name: "list-parity", dir: outDir)
+    }
+
+    struct ListParity: Codable {
+        /// Whether `CGWindowListCreate` was found (false: the IDs come from the full list itself, and the comparison proves nothing).
+        var idsOnlyRead: Bool
+        var rounds: Int
+        var unavailable: Int
+        /// Rounds whose two IDs-only reads (before and after the full list) differ: a window opened or closed meanwhile, so nothing is compared.
+        var listChanged: Int
+        /// Rounds where both IDs-only reads agree and the full list's records between them differ: the readers disagree, or a window
+        /// opened and closed between the reads. An upper bound on disagreement; zero is the conclusive result.
+        var differing: Int
+    }
+    /// Same-moment comparison of the IDs-only read with the full list's records, outside the timed loop.
+    static func listParity(rounds: Int) -> ListParity {
+        var out = ListParity(idsOnlyRead: WindowList.readsIDsOnly, rounds: rounds, unavailable: 0, listChanged: 0, differing: 0)
+        for _ in 0..<rounds {
+            guard let before = WindowList.listedIDsIfAvailable(), let full = WindowList.allIfAvailable().map({ Set($0.keys) }),
+                  let after = WindowList.listedIDsIfAvailable() else { out.unavailable += 1; continue }
+            if before != after { out.listChanged += 1 } else if before != full { out.differing += 1 }
+        }
+        return out
     }
 
     static func run(args: Args, outDir: String) {

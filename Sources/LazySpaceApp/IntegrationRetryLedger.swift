@@ -14,10 +14,12 @@ struct IntegrationRetryLedger {
     private var failures: [WindowID: Failure] = [:]
 
     var isEmpty: Bool { failures.isEmpty }
+    var windows: Set<WindowID> { Set(failures.keys) }
 
     mutating func clear(_ id: WindowID) {
         failures[id] = nil
     }
+
 
     func gaveUp(_ id: WindowID) -> Bool {
         (failures[id]?.count ?? 0) >= 2

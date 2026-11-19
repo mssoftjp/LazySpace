@@ -35,6 +35,8 @@ protocol CoordinatorWindowSystem: WindowSystem {
     func writeFrame(inSpace id: WindowID, space: UInt64, frame: CGRect, deadline: Date, shouldContinue: @escaping () -> Bool) -> WriteResult
     /// Full-window-list entries (including off-screen and other Spaces); nil if the list is unavailable. Missing windows have no key.
     func windowRecords(_ ids: Set<WindowID>) -> [WindowID: CGWindowRecord]?
+    /// The requested windows the full window list has, read from its IDs only; nil if the list is unavailable.
+    func listedWindows(_ ids: Set<WindowID>) -> Set<WindowID>?
     /// One window's entry without reading the full list; nil when not listed or unreadable.
     func windowRecord(_ id: WindowID) -> CGWindowRecord?
     /// Whether the app is hidden; nil when unknown.
@@ -74,6 +76,7 @@ extension CoordinatorWindowSystem {
     func readFrame(inSpace id: WindowID, space: UInt64, deadline: Date) -> FrameRead { .failed(OtherSpaceWindowSystem.refusal) }
     /// Defaults to "none", so vanished windows are treated as closed as before.
     func windowRecords(_ ids: Set<WindowID>) -> [WindowID: CGWindowRecord]? { [:] }
+    func listedWindows(_ ids: Set<WindowID>) -> Set<WindowID>? { windowRecords(ids).map { Set($0.keys) } }
     func windowRecord(_ id: WindowID) -> CGWindowRecord? { nil }
     func appHidden(pid: Int32) -> Bool? { nil }
     func readMinimized(_ id: WindowID, deadline: Date) -> Bool? { readWindowState(id, .minimized) }
@@ -588,6 +591,9 @@ final class Coordinator {
     private var reconcileAttempts: [String: Int] = [:]
     /// When invisible waiting, floating, or zoomed windows were last checked for disappearance against the full window list.
     private var lastAliveSweep = Date.distantPast
+    private var lastRecordSweep = Date.distantPast
+    /// How often records of windows not seen are looked for in the window list (replaced in tests).
+    var recordSweepInterval: TimeInterval = 3
     /// Frames right after a correction that wrote nothing; the correction is not redone while they stay the same.
     private var noopReconcileBounds: [String: [WindowID: CGRect]] = [:]
     /// Single-window correction attempts. Not reset when other operations finish; reset only when the window or work area changes.
@@ -3979,6 +3985,20 @@ final class Coordinator {
     }
 
     /// Forgets only waiting windows, floating windows, return targets, and zoom for windows confirmed closed. Read failures and being off screen are no evidence of disappearance.
+    /// Integration failures and classifications of windows not seen here are forgotten once the window list's IDs no longer have them
+    /// (every 3 s at most, by ID only), also for windows the tracked sweep does not follow (a failure recorded before the window was waiting).
+    /// A failure makes every observation read the focused window, so a closed window's failure would otherwise do so for good. Away windows keep theirs.
+    private func forgetRecordsOfClosedWindows(visible: Set<WindowID>) {
+        lock.lock(); let failed = integrateLedger.windows; lock.unlock()
+        let unseen = failed.union(lastUnclassified.keys).subtracting(visible)
+        guard !unseen.isEmpty, Date().timeIntervalSince(lastRecordSweep) >= recordSweepInterval else { return }
+        lastRecordSweep = Date()
+        guard let listed = system.listedWindows(unseen) else { return }
+        let closed = unseen.subtracting(listed)
+        for id in closed { lastUnclassified[id] = nil }
+        lock.lock(); for id in closed { integrateLedger.clear(id) }; lock.unlock()
+    }
+
     /// Waiting windows that joined this Space's layout or floating set, or that SkyLight confirms moved to one other Space, are removed too (even on Spaces with automatic arrangement off).
     private func forgetClosedTrackedWindows(current: Census, spaceKey: String) -> Bool {
         lock.lock()
@@ -3990,6 +4010,7 @@ final class Coordinator {
             .union(reclaimedWindows)
         if let zoomed = state.zoomed[spaceKey] { tracked.insert(zoomed) }
         lock.unlock()
+        forgetRecordsOfClosedWindows(visible: Set(current.windows.keys))
         let unseen = Self.windowsNeedingListCheck(tracked: tracked, visible: Set(current.windows.keys))
         guard !unseen.isEmpty, Date().timeIntervalSince(lastAliveSweep) >= 3 else { return !placedWaiting.isEmpty }
         lastAliveSweep = Date()
@@ -3999,7 +4020,10 @@ final class Coordinator {
             Set(records.keys.filter { id in waitingHere.contains(id) && (system.spacesOf(id).map { $0.count == 1 && $0[0] != sid } ?? false) })
         } ?? []
         guard !gone.isEmpty || !departedWaiting.isEmpty else { return !placedWaiting.isEmpty }
+        // A closed window's integration failure and classification go with it (a failure keeps every observation reading focus).
+        for id in gone { lastUnclassified[id] = nil }
         lock.lock(); defer { lock.unlock() }
+        for id in gone { integrateLedger.clear(id) }
         let waitingGone = (waitingBySpace[spaceKey] ?? []).intersection(gone.union(departedWaiting))
         setWaitingLocked((waitingBySpace[spaceKey] ?? []).subtracting(waitingGone), spaceKey: spaceKey)
         var stateChanged = false
@@ -5185,11 +5209,13 @@ final class Coordinator {
             }
         }
         // Forget records of closed windows (removed from the strip, ledger, intervals); a new window with the same ID is handled afresh.
+        // This runs on every decision while any such window is away (another Space, hidden, minimized), so it asks only whether the IDs are
+        // listed: reading every window's description for it took about half of the idle time after a day of use.
         lock.lock(); let tracked = Set(regionExcluded.keys).union(regionLedger.keys).union(regionRetryAfter.keys); lock.unlock()
         let gone = tracked.filter { current.windows[$0] == nil }
-        if !gone.isEmpty, let records = system.windowRecords(Set(gone)) {
+        if !gone.isEmpty, let listed = system.listedWindows(Set(gone)) {
             lock.lock()
-            for id in gone where records[id] == nil { regionExcluded[id] = nil; regionLedger[id] = nil; regionRetryAfter[id] = nil }
+            for id in gone where !listed.contains(id) { regionExcluded[id] = nil; regionLedger[id] = nil; regionRetryAfter[id] = nil }
             lock.unlock()
         }
         // The region is inactive: if a region is saved, drop the reservation and rearrange (tiles expand; dialogs stay where they are).
@@ -5799,6 +5825,8 @@ final class Coordinator {
     /// The focused window changing moves the accordion strips too; rewrite if they differ from the plan.
     private func reflowAccordion(current: Census, spaceKey: String, layout: Layout, authorization: OperationAuthorization?) -> Bool {
         guard let front = current.frontWindow, layout.windowIDs.contains(front) else { return false }
+        // A single window is never in an accordion, and planning it alone never makes one: no work-area read for it.
+        if case .leaf? = layout.root { return false }
         let workArea = system.currentWorkArea()
         let constraints = knowledge.constraints(for: layout.windowIDs, spaceID: current.spaceID, workArea: workArea)
         let maximums = knowledge.maximums(for: layout.windowIDs, workArea: workArea)

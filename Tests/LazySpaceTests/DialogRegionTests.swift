@@ -841,6 +841,32 @@ final class DialogRegionCoordinatorTests: XCTestCase {
         XCTAssertEqual(coordinator.state.dialogRegions?["7"]?.members.map(\.pid), [106])
     }
 
+    /// The records of a window that left the census are forgotten when the window list's IDs no longer have it
+    /// (the descriptions of every window are not read for that); a listed window keeps them.
+    func testRecordsOfAWindowAwayAreForgottenByTheListedIDs() throws {
+        try make()
+        system.rejectsPositionWrites = [WindowID(5)]
+        ticks(48)
+        XCTAssertEqual(system.positionWrites.count, 3, "tried again after 5 s and 10 s; the next try waits 20 s")
+        system.rejectsPositionWrites = []
+        func away(listed: Bool) {
+            system.hiddenFromCensus = [WindowID(5)]
+            system.unlistedByIDs = listed ? [] : [WindowID(5)]
+            let reads = system.listedReads.count
+            ticks(4)
+            XCTAssertTrue(system.listedReads[reads...].contains([WindowID(5)]), "the IDs were asked while it was away")
+            system.hiddenFromCensus = []
+            system.unlistedByIDs = []
+        }
+        away(listed: true)
+        ticks(10)
+        XCTAssertEqual(system.positionWrites.count, 3, "away but listed: the 20 s wait is kept")
+        away(listed: false)
+        ticks(10)
+        XCTAssertEqual(system.positionWrites.count, 4, "away and not listed: the wait was forgotten")
+        XCTAssertEqual(coordinator.state.dialogRegions?["7"]?.members.map(\.id), [WindowID(5)])
+    }
+
     /// An edit interrupted by a settings change commits neither layout nor floating state and does not report success.
     func testAnEditInterruptedByASettingsChangeSavesNothing() throws {
         try make("")

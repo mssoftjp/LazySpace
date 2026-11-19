@@ -624,6 +624,12 @@ public final class MacWindowSystem: WindowSystem {
         return out
     }
 
+    /// The requested windows the full window list has, from its IDs alone; nil when the list is unavailable.
+    public func listedWindows(_ ids: Set<WindowID>) -> Set<WindowID>? {
+        guard let listed = WindowList.listedIDsIfAvailable() else { return nil }
+        return ids.filter { listed.contains($0.raw) }
+    }
+
     /// Whether an observed window is minimized, read within the time left until the deadline without re-enumerating; nil when unreadable.
     public func readMinimized(_ id: WindowID, deadline: Date) -> Bool? {
         lock.lock(); let c = cache[id]; lock.unlock()

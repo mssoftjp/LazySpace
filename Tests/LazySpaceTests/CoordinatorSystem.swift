@@ -143,7 +143,8 @@ final class CoordinatorSystem: CoordinatorWindowSystem {
         onSpaceRead?()
         return observed
     }
-    func currentWorkArea() -> CGRect { workArea(of: space) }
+    var workAreaReads = 0
+    func currentWorkArea() -> CGRect { workAreaReads += 1; return workArea(of: space) }
     var focusReads = 0
     func focusedWindowID() -> WindowID? { focusReads += 1; return focused }
     private let frameLock = NSLock()
@@ -306,6 +307,14 @@ final class CoordinatorSystem: CoordinatorWindowSystem {
             out[id] = CGWindowRecord(id: id.raw, pid: pids[id] ?? 1, layer: 0, bounds: frame, alpha: vanishing.contains(id) ? 0 : 1, onScreen: !hiddenFromCensus.contains(id))
         }
         return out
+    }
+
+    /// Windows the IDs-only read leaves out although their records are still listed; only to tell which reader a decision used.
+    var unlistedByIDs: Set<WindowID> = []
+    var listedReads: [Set<WindowID>] = []
+    func listedWindows(_ ids: Set<WindowID>) -> Set<WindowID>? {
+        listedReads.append(ids)
+        return windowRecords(ids).map { Set($0.keys).subtracting(unlistedByIDs) }
     }
 
     /// Windows for which SkyLight still returns stale membership.
