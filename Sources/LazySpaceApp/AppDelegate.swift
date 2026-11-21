@@ -234,6 +234,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let step = cheatsheetHold.modifiersChanged(to: CheatsheetHold.carbonModifiers(flags), inputCount: inputCount, mode: mode,
                                                    bindings: HotkeyBinding.from(coordinator.config, mode: mode))
         guard coordinator.config.showShortcutGuide, !recordingShortcut, step == .wait else { cheatsheet.hide(); return }
+        // A list already shown follows the held set at once.
+        if cheatsheet.isVisible { cheatsheet.show(config: coordinator.config, mode: mode, held: cheatsheetHold.held); return }
         let generation = cheatsheetGeneration
         let work = DispatchWorkItem { [weak self] in
             guard let self, generation == self.cheatsheetGeneration,
@@ -241,7 +243,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let mode = self.coordinator.mode
             guard self.cheatsheetHold.showsAfterWait(inputCount: self.coordinator.system.input.guideInputCount, mode: mode,
                                                      bindings: HotkeyBinding.from(self.coordinator.config, mode: mode)) else { return }
-            self.cheatsheet.show(config: self.coordinator.config, mode: mode)
+            self.cheatsheet.show(config: self.coordinator.config, mode: mode, held: self.cheatsheetHold.held)
         }
         modifierHold = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8, execute: work)

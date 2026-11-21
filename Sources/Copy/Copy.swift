@@ -103,6 +103,16 @@ extension Copy {
         L(.copyDesktop(String(number)))
     }
 
+    /// A range of numbers in this language's form ("1–9" in English; other languages may use another mark).
+    public static func numberRange(_ first: String, _ last: String) -> String {
+        L(.copyNumberRange(first, last))
+    }
+
+    /// Numbered desktops from `first` to `last`, as one name ("Desktop 1–9").
+    public static func desktops(_ first: Int, _ last: Int) -> String {
+        L(.copyDesktop(numberRange(String(first), String(last))))
+    }
+
     /// Separator for sentences joined at run time: a space in English, nothing in Japanese.
     public static var sentenceSeparator: String { L(.copySentenceSeparator) }
 

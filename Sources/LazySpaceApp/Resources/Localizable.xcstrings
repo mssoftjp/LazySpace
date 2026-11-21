@@ -29583,6 +29583,66 @@
         }
       }
     },
+    "keyCheatsheet.focusEachDirection" : {
+      "comment" : "Shortcut list: one row for the four focus shortcuts, whose keys are listed in this order.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fenster links, darunter, darüber, rechts fokussieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Focus Left, Down, Up, Right"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activar la ventana de la izquierda, de abajo, de arriba o de la derecha"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activer la fenêtre de gauche, du dessous, du dessus ou de droite"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "左・下・上・右のウインドウに切り替え"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "왼쪽·아래쪽·위쪽·오른쪽 윈도우로 초점 이동"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Focar a janela à esquerda, abaixo, acima ou à direita"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将焦点移到左侧、下方、上方或右侧窗口"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移動焦點至左側、下方、上方或右側視窗"
+          }
+        }
+      }
+    },
     "keyCheatsheet.mode" : {
       "comment" : "Arguments: 1 = `mode`.",
       "extractionState" : "manual",
@@ -29639,6 +29699,126 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "模式%@"
+          }
+        }
+      }
+    },
+    "keyCheatsheet.reorderEachDirection" : {
+      "comment" : "Shortcut list: one row for the four reorder shortcuts, whose keys are listed in this order.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach links, unten, oben, rechts verschieben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reorder Left, Down, Up, Right"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reordenar hacia la izquierda, abajo, arriba o la derecha"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réordonner vers la gauche, le bas, le haut ou la droite"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "左・下・上・右へ並べ替える"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "왼쪽·아래·위·오른쪽으로 옮기기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reordenar para a esquerda, baixo, cima ou a direita"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "左移、下移、上移或右移"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "向左、向下、向上或向右重新排序"
+          }
+        }
+      }
+    },
+    "keyCheatsheet.swapEachDirection" : {
+      "comment" : "Shortcut list: one row for the four swap shortcuts, whose keys are listed in this order.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit Fenster links, darunter, darüber, rechts tauschen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swap with Window on Left, Below, Above, Right"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intercambiar con la ventana de la izquierda, de abajo, de arriba o de la derecha"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permuter avec la fenêtre de gauche, du dessous, du dessus ou de droite"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "左・下・上・右のウインドウと交換"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "왼쪽·아래쪽·위쪽·오른쪽 윈도우와 교환"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trocar com a janela à esquerda, abaixo, acima ou à direita"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与左侧、下方、上方或右侧窗口交换"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "與左側、下方、上方或右側視窗交換"
           }
         }
       }

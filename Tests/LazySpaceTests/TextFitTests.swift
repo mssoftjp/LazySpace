@@ -195,6 +195,14 @@ final class TextFitTests: XCTestCase {
             defer { list.close() }
             list.showWindow(nil)
             try save(try XCTUnwrap(list.window?.contentView), "\(language.rawValue)-window-list")
+            let (sheet, _) = try XCTUnwrap(KeyCheatsheet.content(config: Config(), mode: Config.mainModeName, held: 0x0800,
+                                                                 visible: NSRect(x: 0, y: 0, width: 1470, height: 918)))
+            // The panel's glass is not drawn here; a window background keeps the text readable in the image.
+            let backed = NSView(frame: sheet.frame)
+            backed.wantsLayer = true
+            backed.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+            backed.addSubview(sheet)
+            try save(backed, "\(language.rawValue)-shortcut-list")
         }
     }
 
@@ -257,6 +265,30 @@ final class TextFitTests: XCTestCase {
             }
         }
         XCTAssertEqual(found, [], "text that does not fit:\n" + found.joined(separator: "\n"))
+    }
+
+    /// The shortcut list with the default shortcuts, ⌥ held, on a laptop's screen: nothing cut in any language, and no scrolling.
+    func testShortcutListFitsInEveryLanguage() throws {
+        var found: [String] = []
+        let laptop = NSRect(x: 0, y: 0, width: 1470, height: 918)
+        for language in Language.allCases {
+            Copy.language = language
+            let (root, size) = try XCTUnwrap(KeyCheatsheet.content(config: Config(), mode: Config.mainModeName, held: 0x0800, visible: laptop))
+            // In a window that is never ordered front, so text past the window or the scroll view is measured too.
+            let window = NSWindow(contentRect: NSRect(origin: .zero, size: size), styleMask: [.borderless], backing: .buffered, defer: true)
+            window.isReleasedWhenClosed = false
+            window.contentView = root
+            defer { window.close() }
+            root.layoutSubtreeIfNeeded()
+            found += Self.clippedText(in: root).map { "\(language.rawValue): \($0)" }
+            let scroll = try XCTUnwrap(Self.descendants(root).compactMap { $0 as? NSScrollView }.first)
+            let document = try XCTUnwrap(scroll.documentView)
+            if document.frame.height > scroll.contentView.bounds.height + 0.5 {
+                found.append("\(language.rawValue): scrolls, \(Int(document.frame.height)) of \(Int(scroll.contentView.bounds.height)) pt (panel \(Int(size.width))×\(Int(size.height)))")
+            }
+        }
+        Copy.language = .english
+        XCTAssertEqual(found, [], "shortcut list:\n" + found.joined(separator: "\n"))
     }
 
     /// While recording a shortcut that has no keys yet, the cell shows its prompt in the field-like box: at the default
