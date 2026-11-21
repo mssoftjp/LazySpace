@@ -60,6 +60,8 @@ If a Space should be left alone, uncheck **Automatically Arrange This Space** in
 
 The number next to the icon is the desktop you are on. With more than one display, it shows the desktop each display is showing, in the order of the list below, such as `4|1`, and a Space without a number there (a full-screen Space, or one that cannot be read for a moment) shows as `–`. The display you are on is the one with the focused window; it is not marked.
 
+While LazySpace is paused, the icon and the number are dimmed. While LazySpace needs your attention (access turned off, a change to the configuration file that can't be applied, automatic arrangement stopped), a dot appears at the icon's top right, whether notifications are on or off, and goes away once that is fixed. Turning off automatic arrangement for this Space does not change the icon.
+
 The list at the top of the menu shows your Spaces and the apps in each. With more than one display, both lists are grouped under each display's name as macOS shows it (in System Settings › Displays), and the check mark is on the Space each display is showing. When two displays have the same name, a number in display order is added, such as "LG HDR 4K (1)". Choosing a Space of another display in the top list switches to it. Right-clicking a Space in the top list sends the focused window there, the same as choosing it in **Move Window to Space**.
 
 ### Keyboard shortcuts
@@ -125,7 +127,7 @@ Changes are saved as you make them. The language follows macOS unless you choose
 
 ### Notifications
 
-LazySpace sends no notifications unless you turn them on. Check **Notify when LazySpace needs your attention** in Settings › **General** to get a macOS notification when LazySpace stops arranging windows until you do something: its access is turned off, automatic arrangement stops (for example while Stage Manager is on), or a change to the configuration file cannot be applied. Nothing else sends a notification. When you turn it on, macOS asks once whether LazySpace may send notifications. Choose how they appear (**Temporary** or **Persistent**) in System Settings › Notifications. They make no sound. Clicking a notification opens the place where you fix the problem. A configuration file that is already broken when LazySpace starts is shown in the menu and in Settings, not as a notification.
+LazySpace sends no notifications unless you turn them on. Check **Notify when LazySpace needs your attention** in Settings › **General** to get a macOS notification when LazySpace needs your attention: its access is turned off, automatic arrangement stops (for example while Stage Manager is on), or a change to the configuration file cannot be applied. Nothing else sends a notification. When you turn it on, macOS asks once whether LazySpace may send notifications. Choose how they appear (**Temporary** or **Persistent**) in System Settings › Notifications. They make no sound. Clicking a notification opens the place where you fix the problem. A configuration file that is already broken when LazySpace starts is shown in the menu and in Settings, not as a notification.
 
 ## Updates
 

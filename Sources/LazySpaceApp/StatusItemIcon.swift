@@ -1,4 +1,5 @@
 import AppKit
+import Copy
 
 /// The app icon's three panels, uniformly scaled into an 18-point menu-bar template.
 /// The contours and spacing match Assets/LazySpace.icon/Assets exactly.
@@ -33,13 +34,18 @@ enum StatusItemIcon {
         return [left, center, left.copy(using: &mirror)!]
     }()
 
-    static let image: NSImage = {
+    static let image = make(marked: false)
+    /// The same mark with a dot at the top right, set apart from the right panel by a cleared ring: something needs the user.
+    static let markedImage = make(marked: true)
+
+    private static func make(marked: Bool) -> NSImage {
         let image = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { _ in
             guard let context = NSGraphicsContext.current?.cgContext else { return false }
             context.saveGState()
             defer { context.restoreGState() }
             context.setFillColor(NSColor.black.cgColor)
 
+            context.saveGState()
             // Fit the full 756-unit mark into 16.5 pt, keeping a 0.75 pt inset.
             // Use one scale for both axes and all panels, including the gaps.
             let scale: CGFloat = 16.5 / 756
@@ -50,10 +56,46 @@ enum StatusItemIcon {
                 context.addPath(panel)
                 context.fillPath()
             }
+            context.restoreGState()
+
+            if marked {
+                let center = CGPoint(x: 15.5, y: 15.5)
+                func circle(_ radius: CGFloat) -> CGRect {
+                    CGRect(x: center.x - radius, y: center.y - radius, width: radius * 2, height: radius * 2)
+                }
+                context.setBlendMode(.clear)
+                context.fillEllipse(in: circle(4))
+                context.setBlendMode(.normal)
+                context.fillEllipse(in: circle(2.5))
+            }
             return true
         }
         image.isTemplate = true
         image.accessibilityDescription = "LazySpace"
         return image
-    }()
+    }
+}
+
+/// What the menu bar item shows besides the desktop number. Only states the user must know about change it: a global pause
+/// dims it, and a problem LazySpace cannot get past without the user marks it. A Space whose automatic arrangement the user
+/// turned off changes nothing.
+struct StatusItemLook: Equatable {
+    var dimmed: Bool
+    var marked: Bool
+    /// Read by VoiceOver after the item's name: the problem first, since it needs action, else the pause.
+    var accessibilityValue: String?
+
+    init(dimmed: Bool, marked: Bool, accessibilityValue: String?) {
+        self.dimmed = dimmed
+        self.marked = marked
+        self.accessibilityValue = accessibilityValue
+    }
+
+    init(paused: Bool, attention: AttentionReason?) {
+        dimmed = paused
+        marked = attention != nil
+        accessibilityValue = attention.map(NotificationCopy.title) ?? (paused ? L(.editCommandsPausedInAllSpaces) : nil)
+    }
+
+    var image: NSImage { marked ? StatusItemIcon.markedImage : StatusItemIcon.image }
 }

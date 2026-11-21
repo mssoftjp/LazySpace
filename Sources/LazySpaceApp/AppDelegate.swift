@@ -34,6 +34,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// Set by `main.swift`, the only place that creates the notification center's notifier; nil in tests.
     var makeNotifier: (() -> Notifying?)?
     private var attention: AttentionNotifier?
+    /// The published problem, for the status item; kept whether or not a notifier is attached.
+    private var attentionReason: AttentionReason?
     /// Opens the place to fix a clicked notification's problem; tests replace it so no window opens.
     var openForAttention: ((AttentionReason.Kind) -> Void)?
 
@@ -41,8 +43,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         self.showReadyAtLaunch = showReadyAtLaunch
         self.coordinator = coordinator
         self.receipts = receipts
+        super.init()
         coordinator.onOperationID = { [receipts] id in receipts.claim(id) }
         coordinator.onTerminalResult = { [receipts] result in receipts.absorb(result) }
+        coordinator.onAttentionChange = { [weak self] state in self?.attentionChanged(state) }
     }
 
     /// At launch and in tests: the notification callbacks.
@@ -53,10 +57,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             guard let self, let kind = AttentionReason.Kind(rawValue: raw) else { return }
             if let open = openForAttention { open(kind) } else { openAttention(kind) }
         }
-        coordinator.onAttentionChange = { [weak attention] state in attention?.update(state) }
         settings?.attention = attention
         coordinator.requestAttentionReport()
     }
+
+    private func attentionChanged(_ state: AttentionState) {
+        attention?.update(state)
+        attentionReason = state.reason
+        applyStatusLook()
+    }
+
+    /// Dimmed while paused in all Spaces, marked while a problem is published.
+    var statusLook: StatusItemLook { StatusItemLook(paused: coordinator.control.paused, attention: attentionReason) }
 
     /// The same places the status menu opens for these problems.
     private func openAttention(_ kind: AttentionReason.Kind) {
@@ -209,14 +221,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// The menu bar shows the split icon and the desktop number (per display when there are several), plus the mode name in text for modes other than main.
     /// `reread`: the one later reading after a `–`; it never schedules another (a full-screen Space keeps its `–`).
     private func refreshStatusItem(reread: Bool = false) {
-        if statusItem.button?.image == nil {
-            statusItem.button?.image = StatusItemIcon.image
-            statusItem.button?.imagePosition = .imageLeading
-        }
+        statusItem.button?.imagePosition = .imageLeading
+        applyStatusLook()
         let number = StatusMenuCopy.barNumber(coordinator.spaceList())
         statusItem.button?.title = StatusMenuCopy.barTitle(mode: coordinator.mode, space: number)
         // A display's shown Space can be unreadable for a moment; read once more shortly after.
         if !reread, number?.contains("–") == true { scheduleStatusReread() }
+    }
+
+    /// Before launch finishes (and in tests) there is no status item yet; launch applies the look when it creates one.
+    private func applyStatusLook() {
+        guard let button = statusItem?.button else { return }
+        let look = statusLook
+        if button.image !== look.image { button.image = look.image }
+        button.appearsDisabled = look.dimmed
+        button.setAccessibilityValue(look.accessibilityValue)
     }
 
     private func scheduleStatusReread() {
