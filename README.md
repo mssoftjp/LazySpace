@@ -46,7 +46,7 @@ LazySpace needs macOS 27 or later and Apple Silicon. To build it yourself, see [
 
 The mouse is enough for everyday use. Drag the edge between two windows to resize them, or drop a window onto another to swap their places.
 
-When you want more, the shortcuts are ready. Many of the defaults are the same as AeroSpace's, so your fingers may already know them. Hold a modifier key for about a second to see the full list, and change them in Settings › Shortcuts.
+When you want more, the shortcuts are ready. Many of the defaults are the same as AeroSpace's, so your fingers may already know them. Hold ⌥, the modifier of the default shortcuts, for about a second to see the full list, and change them in Settings › Shortcuts.
 
 | Keys | Action |
 |---|---|

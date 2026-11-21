@@ -2,6 +2,43 @@ import AppKit
 import Copy
 import Settings
 
+/// When the shortcut list opens: after a set of modifiers is held, with nothing else pressed, for the wait.
+/// In main, only for a set some shortcut uses exactly, so ⇧ held while typing or ⌘ before another app's shortcut shows nothing;
+/// in another mode, whose keys may have no modifier, for any held modifier.
+struct CheatsheetHold {
+    enum Step: Equatable { case wait, hide }
+    private var held: UInt32 = 0
+    private var inputCount: UInt64 = 0
+
+    /// A change of the held modifiers, with the input count read along with it. `.hide` also hides a list already shown.
+    mutating func modifiersChanged(to held: UInt32, inputCount: UInt64, mode: String, bindings: [HotkeyBinding]) -> Step {
+        self.held = held
+        self.inputCount = inputCount
+        return Self.applies(held: held, mode: mode, bindings: bindings) ? .wait : .hide
+    }
+
+    /// When the wait ends: only if no key, click, drag, or scroll came meanwhile, and the set still applies to the current mode and shortcuts.
+    func showsAfterWait(inputCount: UInt64, mode: String, bindings: [HotkeyBinding]) -> Bool {
+        inputCount == self.inputCount && Self.applies(held: held, mode: mode, bindings: bindings)
+    }
+
+    static func applies(held: UInt32, mode: String, bindings: [HotkeyBinding]) -> Bool {
+        guard held != 0, !bindings.isEmpty else { return false }
+        if mode != Config.mainModeName { return true }
+        return bindings.contains { $0.modifiers == held }
+    }
+
+    /// The held modifiers as Carbon modifiers, the form `HotkeyBinding.modifiers` uses.
+    static func carbonModifiers(_ flags: CGEventFlags) -> UInt32 {
+        var m: UInt32 = 0
+        if flags.contains(.maskAlternate) { m |= 0x0800 }
+        if flags.contains(.maskShift) { m |= 0x0200 }
+        if flags.contains(.maskControl) { m |= 0x1000 }
+        if flags.contains(.maskCommand) { m |= 0x0100 }
+        return m
+    }
+}
+
 /// Shows the current mode's keys while a modifier is held. Never takes focus.
 /// Backed by the system glass.
 final class KeyCheatsheet {

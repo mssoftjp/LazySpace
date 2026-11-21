@@ -106,7 +106,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         _ = hotkeys?.register()
         syncCommandKeys()
-        coordinator.system.input.onFlagsChanged = { [weak self] flags in self?.scheduleCheatsheet(flags) }
+        coordinator.system.input.onFlagsChanged = { [weak self] flags, count in self?.scheduleCheatsheet(flags, inputCount: count) }
         focusBorder.apply(coordinator.config.focusBorder)
         coordinator.onFocusFrame = { [weak self] frame in self?.focusBorder.show(around: frame) }
         coordinator.onConfigChange = { [weak self] config in
@@ -226,17 +226,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: item)
     }
 
-    /// Holding a modifier for about 0.8 s shows the current mode's key list.
-    private func scheduleCheatsheet(_ flags: CGEventFlags) {
+    /// Holding the modifiers of a shortcut for about 0.8 s, with nothing else pressed, shows the current mode's key list (`CheatsheetHold`).
+    private func scheduleCheatsheet(_ flags: CGEventFlags, inputCount: UInt64) {
         modifierHold?.cancel()
         cheatsheetGeneration &+= 1
-        let held = flags.intersection([.maskAlternate, .maskCommand, .maskControl, .maskShift])
-        guard coordinator.config.showShortcutGuide, !recordingShortcut, !held.isEmpty else { cheatsheet.hide(); return }
+        let mode = coordinator.mode
+        let step = cheatsheetHold.modifiersChanged(to: CheatsheetHold.carbonModifiers(flags), inputCount: inputCount, mode: mode,
+                                                   bindings: HotkeyBinding.from(coordinator.config, mode: mode))
+        guard coordinator.config.showShortcutGuide, !recordingShortcut, step == .wait else { cheatsheet.hide(); return }
         let generation = cheatsheetGeneration
         let work = DispatchWorkItem { [weak self] in
             guard let self, generation == self.cheatsheetGeneration,
                   self.coordinator.config.showShortcutGuide, !self.recordingShortcut else { return }
-            self.cheatsheet.show(config: self.coordinator.config, mode: self.coordinator.mode)
+            let mode = self.coordinator.mode
+            guard self.cheatsheetHold.showsAfterWait(inputCount: self.coordinator.system.input.guideInputCount, mode: mode,
+                                                     bindings: HotkeyBinding.from(self.coordinator.config, mode: mode)) else { return }
+            self.cheatsheet.show(config: self.coordinator.config, mode: mode)
         }
         modifierHold = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8, execute: work)
@@ -523,6 +528,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func quitAction() { NSApp.terminate(nil) }
     private var settings: SettingsWindowController?
     private let cheatsheet = KeyCheatsheet()
+    private var cheatsheetHold = CheatsheetHold()
     private var modifierHold: DispatchWorkItem?
     private var cheatsheetGeneration: UInt64 = 0
     @objc private func showSettingsAction() { showSettings(pane: nil) }

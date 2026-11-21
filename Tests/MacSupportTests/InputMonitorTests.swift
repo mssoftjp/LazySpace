@@ -76,6 +76,28 @@ final class InputGapTests: XCTestCase {
         XCTAssertGreaterThan(monitor.count, count)
     }
 
+    /// LazySpace's own shortcuts are not input to automatic arrangement, but they do end a wait for the shortcut list,
+    /// and the value passed with a modifier change is the same one.
+    func testARegisteredShortcutAdvancesOnlyTheShortcutListCount() {
+        let monitor = InputMonitor()
+        monitor.setCommandKeys([InputMonitor.CommandKey(keyCode: 4, carbonModifiers: 0x0800)]) // ⌥H
+        let count = monitor.count, guide = monitor.guideInputCount
+        let press = CGEvent(keyboardEventSource: nil, virtualKey: 4, keyDown: true)!
+        press.flags = .maskAlternate
+        monitor.record(.keyDown, event: press)
+        XCTAssertEqual(monitor.count, count, "not input to automatic arrangement")
+        XCTAssertEqual(monitor.guideInputCount, guide + 1)
+        let delivered = expectation(description: "modifier change delivered")
+        monitor.onFlagsChanged = { _, value in
+            XCTAssertEqual(value, guide + 1)
+            delivered.fulfill()
+        }
+        let flags = CGEvent(keyboardEventSource: nil, virtualKey: 58, keyDown: true)!
+        flags.flags = .maskAlternate
+        monitor.record(.flagsChanged, event: flags)
+        wait(for: [delivered], timeout: 2)
+    }
+
     /// Input during an unobserved gap may include a press or a drag: the last release point no longer describes the windows.
     func testAnObservationGapForgetsTheReleasePoint() {
         let monitor = InputMonitor()

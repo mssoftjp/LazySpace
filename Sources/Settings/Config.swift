@@ -177,7 +177,7 @@ public struct Config: Equatable, Codable {
         public init(needsAttention: Bool = false) { self.needsAttention = needsAttention }
     }
     public var notifications = Notifications()
-    /// Shows the shortcut list after a modifier is held for about 0.8 s. Shortcuts work even when off.
+    /// Shows the shortcut list after the modifier keys of a shortcut are held, with nothing else pressed, for about 0.8 s. Shortcuts work even when off.
     public var showShortcutGuide = true
     public var preferredMinimum: CGSize = CGSize(width: 400, height: 300)
     public var unknownFloor: CGSize = CGSize(width: 120, height: 120)
@@ -544,7 +544,7 @@ public struct Config: Equatable, Codable {
         per-app-timeout = 2.0          # Maximum wait for an app request (seconds, 0.2–30)
         new-window-placement = "beside-focused"  # New window placement: beside-focused (next to the previously focused window) or end
         focus-after-close = true       # After closing the focused window, focus a nearby window if no window in this Space has focus
-        show-shortcut-guide = true     # Show shortcuts after a modifier key is held for about 0.8 seconds. false hides only that display; shortcuts still work.
+        show-shortcut-guide = true     # Show shortcuts after the modifier keys of a shortcut are held for about 0.8 seconds. false hides only that display; shortcuts still work.
         place-dialogs-beside = false   # After you switch away from a fixed-size window (such as Calculator or an alert), move it to a strip at the right or bottom edge; arranged windows use the rest. Its size does not change
         follow-moved-window = false    # After a shortcut or the menu moves a window to another Space, switch to that Space too. The command line needs --follow either way
 

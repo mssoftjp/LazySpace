@@ -64,7 +64,7 @@ The list at the top of the menu shows your Spaces and the apps in each. With mor
 
 ### Keyboard shortcuts
 
-Hold a modifier key for about a second to see the shortcuts (you can turn this off in Settings › Shortcuts). You can change the shortcuts there too.
+Hold the modifier keys of a shortcut (⌥ for the defaults) for about a second to see the shortcuts (you can turn this off in Settings › Shortcuts). Pressing anything else meanwhile shows nothing, and so do modifiers no shortcut uses (in a mode you declare, any modifier shows its keys). You can change the shortcuts there too.
 
 | Keys | Action | Name in Settings and the menu |
 |---|---|---|
@@ -153,7 +153,7 @@ You can change settings in the Settings window or in the file `~/.config/lazyspa
 | `quiet-interval` | `0.6` | How long input must be quiet before automatic arrangement starts on a Space and after a mouse drag, in seconds (0.1–10). Ordinary window additions and removals do not always wait this long, and a mouse resize, swap, or return of a window to its place can be adopted sooner once the windows stay still |
 | `per-app-timeout` | `2.0` | How long to wait for an app to respond, in seconds (0.2–30) |
 | `start-at-login` | not set | Open at Login. When unset, the macOS login item is left as it is |
-| `show-shortcut-guide` | `true` | Show the shortcut list after you hold a modifier key for about a second. Shortcuts work either way |
+| `show-shortcut-guide` | `true` | Show the shortcut list after you hold the modifier keys of a shortcut for about a second. Shortcuts work either way |
 | `[focus-border]` | off | `enabled`, `width` (1–12 points), `color` (`"#RRGGBB"` or `"#RRGGBBAA"`) |
 | `[notifications]` | off | `needs-attention`: a macOS notification when LazySpace needs your attention (see Notifications above) |
 | `[keys]` | the shortcuts above | Keyboard shortcuts. Set an action to `"none"` to remove its shortcut |

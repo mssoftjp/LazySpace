@@ -31,7 +31,9 @@ public final class InputMonitor {
     private var finished: DispatchSemaphore?
     private var runLoop: CFRunLoop?
     private var commandKeys: Set<CommandKey> = []
-    private var _onFlags: ((CGEventFlags) -> Void)?
+    /// Presses of LazySpace's own shortcuts. They are not input to automatic arrangement (`count`), but they do end a wait for the shortcut list.
+    private var _commandKeyDowns: UInt64 = 0
+    private var _onFlags: ((CGEventFlags, UInt64) -> Void)?
     private var _onLeftMouseUp: (() -> Void)?
     private var _mode: Mode = .unavailable
     public var mode: Mode { lock.lock(); defer { lock.unlock() }; return _mode }
@@ -55,7 +57,8 @@ public final class InputMonitor {
     }
 
     /// Modifier changes. Not counted as input; used to show the key list.
-    public var onFlagsChanged: ((CGEventFlags) -> Void)? {
+    /// Called on main with the new modifiers and `guideInputCount` read with them, so later input can be told apart from it.
+    public var onFlagsChanged: ((CGEventFlags, UInt64) -> Void)? {
         get { lock.lock(); defer { lock.unlock() }; return _onFlags }
         set { lock.lock(); _onFlags = newValue; lock.unlock() }
     }
@@ -100,6 +103,8 @@ public final class InputMonitor {
     public init() {}
 
     public var count: UInt64 { lock.lock(); defer { lock.unlock() }; return _count }
+    /// `count` plus presses of LazySpace's own shortcuts: any key, click, drag, or scroll, and any unobserved gap, advances it.
+    public var guideInputCount: UInt64 { lock.lock(); defer { lock.unlock() }; return _count &+ _commandKeyDowns }
     public var leftMouseDown: Bool { lock.lock(); defer { lock.unlock() }; return _leftMouseDown }
     /// Lets a drag that started and ended between observations be picked up once afterward.
     public var completedMouseDrags: UInt64 { lock.lock(); defer { lock.unlock() }; return _completedMouseDrags }
@@ -134,12 +139,13 @@ public final class InputMonitor {
         if type == .flagsChanged {
             lock.lock()
             let callback = _onFlags
+            let count = _count &+ _commandKeyDowns
             lock.unlock()
-            if let callback { DispatchQueue.main.async { callback(event.flags) } }
+            if let callback { DispatchQueue.main.async { callback(event.flags, count) } }
             return
         }
         lock.lock()
-        if type == .keyDown, commandKeys.contains(CommandKey(event: event)) { lock.unlock(); return }
+        if type == .keyDown, commandKeys.contains(CommandKey(event: event)) { _commandKeyDowns &+= 1; lock.unlock(); return }
         let released = type == .leftMouseUp ? _onLeftMouseUp : nil
         _count += 1
         switch type {
