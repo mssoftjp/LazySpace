@@ -189,6 +189,106 @@ final class ConfigDocumentTests: XCTestCase {
         XCTAssertTrue(editedAndRemoved.contains("# one\n"), editedAndRemoved)
     }
 
+    /// A rule changed to equal its neighbor is edited where it is: every block keeps its comments and place.
+    func testARuleThatComesToEqualItsNeighborIsEditedInPlace() throws {
+        let pair = """
+        # top
+        [[rule]]
+        app = "com.example.chat" # first
+        action = "ignore" # first action
+
+        [[rule]]
+        app = "com.example.chat" # second
+        action = "float" # second action
+
+        """
+        let lowerMatches = try patch(pair) { $0.rules[1].action = .ignore }
+        XCTAssertEqual(lowerMatches, pair.replacingOccurrences(of: "action = \"float\" # second action", with: "action = \"ignore\" # second action"))
+        let upperMatches = try patch(pair) { $0.rules[0].action = .float }
+        XCTAssertEqual(upperMatches, pair.replacingOccurrences(of: "action = \"ignore\" # first action", with: "action = \"float\" # first action"))
+
+        let three = """
+        [[rule]] # one
+        app = "com.example.chat"
+        action = "ignore"
+        [[rule]] # two
+        app = "com.example.chat"
+        action = "ignore"
+        [[rule]] # three
+        app = "com.example.chat"
+        action = "float"
+
+        """
+        let thirdMatches = try patch(three) { $0.rules[2].action = .ignore }
+        XCTAssertEqual(thirdMatches, three.replacingOccurrences(of: "action = \"float\"", with: "action = \"ignore\""))
+    }
+
+    /// Removing the upper of two identical rules keeps the lower block, as before the menu could change actions.
+    func testRemovingTheUpperOfTwoIdenticalRulesKeepsTheLowerBlock() throws {
+        let source = """
+        [[rule]] # first
+        app = "com.example.chat"
+        action = "ignore"
+        [[rule]] # second
+        app = "com.example.chat"
+        action = "ignore"
+
+        """
+        let patched = try patch(source) { $0.rules.remove(at: 0) }
+        XCTAssertTrue(patched.contains("[[rule]] # second\n"), patched)
+        XCTAssertFalse(patched.contains("[[rule]] # first"), patched)
+        XCTAssertEqual(try Config.load(toml: patched).rules.count, 1)
+    }
+
+    /// A removal and an addition at the same count stay a removal and an addition: comments never move to another app.
+    func testRemovingOneRuleAndAddingAnotherKeepsEachBlocksComments() throws {
+        let source = """
+        [[rule]]
+        app = "com.example.a" # a
+        action = "ignore"
+
+        [[rule]]
+        app = "com.example.c" # c
+        action = "ignore"
+
+        """
+        let patched = try patch(source) { config in
+            config.rules.remove(at: 0)
+            config.rules.append(.init(app: "com.example.b", action: .ignore))
+        }
+        XCTAssertTrue(patched.contains("app = \"com.example.c\" # c\n"), patched)
+        XCTAssertFalse(patched.contains("com.example.a"), patched)
+        XCTAssertFalse(patched.contains("app = \"com.example.b\" #"), patched)
+        XCTAssertEqual(try Config.load(toml: patched).rules.map(\.app), ["com.example.c", "com.example.b"])
+    }
+
+    /// A rule that stops opening on a desktop loses its `space` and `follow` lines even when `follow` is written as false,
+    /// since only a desktop rule may have them.
+    func testLeavingADesktopDropsAWrittenFollowFalse() throws {
+        let source = """
+        [[rule]]
+        app = "com.google.Chrome"
+        title = "Meet"                 # optional regular expression for the window title
+        action = "space"               # send new windows of this app to another Space
+        space = 3                      # desktop number
+        follow = false                 # true also switches to that Space
+
+        """
+        let floating = try patch(source) { $0.rules[0] = .init(app: "com.google.Chrome", action: .float, title: "Meet") }
+        XCTAssertEqual(floating, """
+        [[rule]]
+        app = "com.google.Chrome"
+        title = "Meet"                 # optional regular expression for the window title
+        action = "float"               # send new windows of this app to another Space
+        # desktop number
+        # true also switches to that Space
+
+        """)
+        XCTAssertEqual(try Config.load(toml: floating).rules, [.init(app: "com.google.Chrome", action: .float, title: "Meet")])
+        let otherDesktop = try patch(source) { $0.rules[0].space = 5 }
+        XCTAssertEqual(otherDesktop, source.replacingOccurrences(of: "space = 3 ", with: "space = 5 "))
+    }
+
     func testDeletedEntriesKeepTrailingComments() throws {
         let source = """
         [[rule]] # table note

@@ -17,6 +17,8 @@ public struct Config: Equatable, Codable {
         public var space: Int?
         /// Whether a `space` rule switches to that Space after sending (default false).
         public var follow: Bool
+        /// Desktop numbers a `space` rule accepts.
+        public static let spaceNumbers = 1...99
         public init(app: String, action: Action, title: String = "", space: Int? = nil, follow: Bool = false) {
             self.app = app
             self.action = action
@@ -374,7 +376,7 @@ public struct Config: Equatable, Codable {
                 if action == .space {
                     switch r["space"] {
                     case let n as Int:
-                        guard (1...99).contains(n) else { problems.append(L(.configRuleSpaceMustBeA(String(i)))); continue }
+                        guard Rule.spaceNumbers.contains(n) else { problems.append(L(.configRuleSpaceMustBeA(String(i)))); continue }
                         space = n
                     default:
                         problems.append(L(.configRuleActionSpaceNeedsSpace(String(i)))); continue

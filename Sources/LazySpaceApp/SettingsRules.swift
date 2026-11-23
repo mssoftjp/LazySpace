@@ -65,6 +65,15 @@ enum SettingsRules {
         return next
     }
 
+    /// `rule` with the action chosen from the Apps row menu. `app` and `title` stay. `follow` stays only when a desktop rule
+    /// moves to another desktop; any other change drops `space` and `follow`, which only a desktop rule may have. A desktop
+    /// rule needs a number the parser accepts; without one, `rule` comes back unchanged.
+    static func rule(_ rule: Config.Rule, choosing action: Config.Rule.Action, space: Int? = nil) -> Config.Rule {
+        guard action == .space else { return Config.Rule(app: rule.app, action: action, title: rule.title) }
+        guard let space, Config.Rule.spaceNumbers.contains(space) else { return rule }
+        return Config.Rule(app: rule.app, action: .space, title: rule.title, space: space, follow: rule.action == .space && rule.follow)
+    }
+
     static func appIdentifierMessage(_ app: String) -> String {
         if app.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return L(.settingsRulesEnterABundleIdentifier)

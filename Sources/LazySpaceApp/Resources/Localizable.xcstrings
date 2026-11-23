@@ -34980,6 +34980,66 @@
         }
       }
     },
+    "settingsWindow.newWindowsOfThisAppAreSent" : {
+      "comment" : "Arguments: 1 = `target`.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neue Fenster dieser App werden beim Öffnen zu %@ gesendet; dort wird das Fenster weiterhin als Kachel angeordnet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New windows of this app are sent to %@ when they open; the window is still tiled there."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las ventanas nuevas de esta app se envían a %@ al abrirse; allí la ventana sigue en mosaico."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les nouvelles fenêtres de cette app sont envoyées vers %@ à leur ouverture ; la fenêtre y est quand même en mosaïque."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このアプリの新しいウインドウを、開いたときに%@へ送ります（そこでは通常どおり整列します）。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 앱의 새 윈도우는 열릴 때 %@(으)로 보내지며, 해당 데스크탑에서도 배치됩니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As janelas novas deste app são enviadas para %@ ao abrir; lá a janela continua organizada em mosaico."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此应用的新窗口打开时会被移到%@；窗口在那里仍会平铺。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此App的新視窗打開時會傳送至%@；視窗在該處仍會並排。"
+          }
+        }
+      }
+    },
     "settingsWindow.noAppsClickToAdd" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -36638,6 +36698,124 @@
         }
       }
     },
+    "settingsWindow.ruleActionDontArrange" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht anordnen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Don't Arrange"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No organizar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne pas organiser"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "整列しない"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "정렬 안 함"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não organizar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不排列"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不排列"
+          }
+        }
+      }
+    },
+    "settingsWindow.ruleActionOpenOnDesktop" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf einem Schreibtisch öffnen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open on Desktop"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir en un escritorio"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir sur un bureau"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "デスクトップで開く"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "데스크탑에서 열기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir em uma mesa"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在桌面打开"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在桌面打開"
+          }
+        }
+      }
+    },
     "settingsWindow.ruleIdentifierColumn" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -36752,125 +36930,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "搜尋動作"
-          }
-        }
-      }
-    },
-    "settingsWindow.setInTheConfigurationFile" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "In der Konfigurationsdatei festgelegt. Das Fenster behält seine Position."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Set in the configuration file. The window keeps its position."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Definido en el archivo de configuración. La ventana conserva su posición."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Défini dans le fichier de configuration. La fenêtre garde sa position."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "設定ファイルで指定。位置を保ちます。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "설정 파일에서 지정되었습니다. 윈도우는 현재 위치를 유지합니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Definido no arquivo de configuração. A janela mantém a posição."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在配置文件中设定。窗口保持原位。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已在設定檔中設定。視窗會保持其位置。"
-          }
-        }
-      }
-    },
-    "settingsWindow.setInTheConfigurationFileNew" : {
-      "comment" : "Arguments: 1 = `target`.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "In der Konfigurationsdatei festgelegt. Neue Fenster dieser App werden beim Öffnen zu %@ gesendet; dort wird das Fenster weiterhin als Kachel angeordnet."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Set in the configuration file. New windows of this app are sent to %@ when they open; the window is still tiled there."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Definido en el archivo de configuración. Las ventanas nuevas de esta app se envían a %@ al abrirse; allí la ventana sigue en mosaico."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Défini dans le fichier de configuration. Les nouvelles fenêtres de cette app sont envoyées vers %@ à leur ouverture ; la fenêtre y est quand même en mosaïque."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "設定ファイルで指定。このアプリの新しいウインドウを、開いたときに%@へ送ります（そこでは通常どおり整列します）。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "설정 파일에서 지정되었습니다. 이 앱의 새 윈도우는 열릴 때 %@(으)로 보내지며, 해당 Space에서도 배치됩니다."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Definido no arquivo de configuração. As janelas novas deste app são enviadas para %@ ao abrir; lá a janela continua organizada em mosaico."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在配置文件中设定。此应用的新窗口打开时会被移到%@；窗口在那里仍会平铺。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已在設定檔中設定。此App的新視窗打開時會傳送至%@；視窗在該處仍會並排。"
           }
         }
       }
@@ -37639,6 +37698,65 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "與macOS的登入設定不一致。請檢查「%@」。"
+          }
+        }
+      }
+    },
+    "settingsWindow.theWindowKeepsItsPosition" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Fenster behält seine Position."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The window keeps its position."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La ventana conserva su posición."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La fenêtre garde sa position."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "位置を保ちます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "윈도우는 현재 위치를 유지합니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A janela mantém a posição."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "窗口保持原位。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "視窗會保持其位置。"
           }
         }
       }

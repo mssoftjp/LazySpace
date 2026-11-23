@@ -90,6 +90,12 @@ public enum ConfigDocument {
                     else { try self.updateField(block, "title", changed: true, value: ConfigDocument.literal(new.title)) }
                 }
                 try self.updateField(block, "action", changed: old.action != new.action, value: "\"\(new.action.rawValue)\"")
+                // Only a desktop rule may have `space` and `follow`, so leaving one drops them even when written as false.
+                guard new.action == .space else {
+                    self.retire(block.fields["space"])
+                    self.retire(block.fields["follow"])
+                    return
+                }
                 if old.space != new.space {
                     if let n = new.space { try self.updateField(block, "space", changed: true, value: String(n)) }
                     else { self.retire(block.fields["space"]) }
@@ -212,7 +218,7 @@ public enum ConfigDocument {
             guard blocks.count == previous.count else {
                 throw problem(L(.configDocumentSettingsCantUpdateEntriesWritten(label)))
             }
-            let plan = Self.diff(previous, next)
+            let plan = Self.singleEdit(previous, next) ?? Self.diff(previous, next)
             for step in plan.steps {
                 switch step {
                 case .edit(let old, let new):
@@ -537,6 +543,15 @@ public enum ConfigDocument {
             enum Step { case edit(Int, Int), delete(Int), insert(Int) }
             var steps: [Step]
             var pairs: [(Int, Int)]
+        }
+
+        /// One entry changed in place: that entry's block is edited, even when its new value equals a neighbor, which the
+        /// longest common subsequence would pair instead (moving comments to another block). nil for any other change.
+        private static func singleEdit<T: Equatable>(_ old: [T], _ new: [T]) -> Plan? {
+            guard old.count == new.count else { return nil }
+            let changed = old.indices.filter { old[$0] != new[$0] }
+            guard changed.count == 1 else { return nil }
+            return Plan(steps: [.edit(changed[0], changed[0])], pairs: old.indices.filter { $0 != changed[0] }.map { ($0, $0) })
         }
 
         private static func diff<T: Equatable>(_ old: [T], _ new: [T]) -> Plan {

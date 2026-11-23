@@ -2156,6 +2156,183 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertEqual(try appIdentifierField(containing: "com.example.editor").stringValue, "com.example.editor")
     }
 
+    // MARK: Apps row menu
+
+    private func appsMenu(row: Int) -> NSMenu { controller.rulesMenu(clickedRow: row) }
+
+    private func appsMenuItem(row: Int, _ title: String, desktop: String? = nil) throws -> NSMenuItem {
+        let item = try XCTUnwrap(appsMenu(row: row).items.first { $0.title == title }, title)
+        guard let desktop else { return item }
+        return try XCTUnwrap(item.submenu?.items.first { $0.title == desktop }, desktop)
+    }
+
+    private func choose(_ item: NSMenuItem) throws {
+        XCTAssertTrue(item.isEnabled, item.title)
+        _ = controller.perform(try XCTUnwrap(item.action), with: item)
+    }
+
+    /// The action chosen from the row menu keeps the app and the title; `follow` survives only a change of desktop.
+    func testChoosingARuleActionKeepsAppAndTitleAndFollowOnlyBetweenDesktops() {
+        let titled = Config.Rule(app: "com.example.chat", action: .ignore, title: "Meet")
+        XCTAssertEqual(SettingsRules.rule(titled, choosing: .float), .init(app: "com.example.chat", action: .float, title: "Meet"))
+        XCTAssertEqual(SettingsRules.rule(titled, choosing: .space, space: 3), .init(app: "com.example.chat", action: .space, title: "Meet", space: 3))
+        let following = Config.Rule(app: "com.example.mail", action: .space, space: 3, follow: true)
+        XCTAssertEqual(SettingsRules.rule(following, choosing: .space, space: 5), .init(app: "com.example.mail", action: .space, space: 5, follow: true))
+        XCTAssertEqual(SettingsRules.rule(following, choosing: .float), .init(app: "com.example.mail", action: .float))
+        XCTAssertEqual(SettingsRules.rule(following, choosing: .ignore), .init(app: "com.example.mail", action: .ignore))
+        XCTAssertEqual(SettingsRules.rule(titled, choosing: .space), titled, "a desktop rule always has a number")
+        XCTAssertEqual(SettingsRules.rule(titled, choosing: .space, space: 100), titled, "the parser accepts desktops 1 to 99")
+    }
+
+    /// Right-clicking a rule offers each action, with the rule's own action checked; a desktop above 9 is listed too.
+    func testAppsRowMenuChecksTheRulesAction() throws {
+        var config = Config()
+        config.rules = [
+            .init(app: "com.example.one", action: .ignore),
+            .init(app: "com.example.two", action: .float),
+            .init(app: "com.example.three", action: .space, space: 3),
+            .init(app: "com.example.four", action: .space, space: 12, follow: true),
+        ]
+        try load(config)
+        let table = try appsTable()
+        let desktops = (1...9).map { "Desktop \($0)" }
+        XCTAssertEqual(appsMenu(row: 0).items.map(\.title), ["Don't Arrange", "Floating", "Open on Desktop"])
+        XCTAssertEqual(appsMenu(row: 0).items.map(\.state), [.on, .off, .off])
+        XCTAssertFalse(appsMenu(row: 0).autoenablesItems)
+        XCTAssertEqual(try appsMenuItem(row: 0, "Open on Desktop").submenu?.items.map(\.title), desktops)
+        XCTAssertTrue(try appsMenuItem(row: 0, "Open on Desktop").submenu?.items.allSatisfy { $0.state == .off } == true)
+        XCTAssertEqual(appsMenu(row: 1).items.map(\.state), [.off, .on, .off])
+        XCTAssertEqual(appsMenu(row: 2).items.map(\.state), [.off, .off, .on])
+        XCTAssertEqual(try appsMenuItem(row: 2, "Open on Desktop").submenu?.items.filter { $0.state == .on }.map(\.title), ["Desktop 3"])
+        XCTAssertEqual(try appsMenuItem(row: 3, "Open on Desktop").submenu?.items.map(\.title), desktops + ["Desktop 12"])
+        XCTAssertEqual(try appsMenuItem(row: 3, "Open on Desktop").submenu?.items.filter { $0.state == .on }.map(\.title), ["Desktop 12"])
+        XCTAssertTrue(appsMenu(row: -1).items.isEmpty, "empty space below the rows has no menu")
+        XCTAssertTrue(appsMenu(row: 4).items.isEmpty)
+        XCTAssertLessThan(table.selectedRow, 0, "filling the menu selects nothing")
+    }
+
+    /// Each choice rewrites only that rule's lines: comments, the other rules, and an unchanged choice stay byte for byte.
+    func testChoosingARuleActionRewritesOnlyThatRuleInTheFile() throws {
+        let source = """
+        # Rules
+        [[rule]]
+        app = "com.example.chat" # chat
+        title = "Meet"
+        action = "ignore" # was ignore
+
+        [[rule]]
+        app = "com.example.chat"
+        action = "float"
+
+        [[rule]]
+        app = "com.example.mail"
+        action = "space" # mail
+        space = 3 # desktop
+        follow = true # go along
+
+        """
+        try source.write(to: coordinator.configURL, atomically: true, encoding: .utf8)
+        _ = coordinator.reloadConfig(source: "test")
+        controller = TestWindows.settings(coordinator: coordinator, preferences: preferences)
+        _ = try appsTable()
+        func file() throws -> String { try String(contentsOf: coordinator.configURL, encoding: .utf8) }
+
+        try choose(try appsMenuItem(row: 1, "Floating"))
+        XCTAssertEqual(try file(), source, "the current action writes nothing")
+
+        try choose(try appsMenuItem(row: 0, "Open on Desktop", desktop: "Desktop 4"))
+        let toDesktop = source.replacingOccurrences(of: "action = \"ignore\" # was ignore\n", with: "action = \"space\" # was ignore\nspace = 4\n")
+        XCTAssertEqual(try file(), toDesktop)
+
+        try choose(try appsMenuItem(row: 2, "Open on Desktop", desktop: "Desktop 5"))
+        let otherDesktop = toDesktop.replacingOccurrences(of: "space = 3 # desktop", with: "space = 5 # desktop")
+        XCTAssertEqual(try file(), otherDesktop)
+
+        try choose(try appsMenuItem(row: 2, "Floating"))
+        let floating = otherDesktop.replacingOccurrences(of: "action = \"space\" # mail\nspace = 5 # desktop\nfollow = true # go along\n", with: "action = \"float\" # mail\n# desktop\n# go along\n")
+        XCTAssertEqual(try file(), floating)
+
+        XCTAssertNil(coordinator.configError)
+        XCTAssertEqual(try Config.load(toml: try file()).rules, [
+            .init(app: "com.example.chat", action: .space, title: "Meet", space: 4),
+            .init(app: "com.example.chat", action: .float),
+            .init(app: "com.example.mail", action: .float),
+        ])
+        XCTAssertEqual(coordinator.config.rules, try Config.load(toml: try file()).rules)
+    }
+
+    /// A menu opened before the file changed acts on nothing once its row holds another rule.
+    func testAnAppsMenuChoiceDoesNothingOnceItsRowChanged() throws {
+        var config = Config()
+        config.rules = [.init(app: "com.example.one", action: .ignore), .init(app: "com.example.two", action: .ignore)]
+        try load(config)
+        let stale = try appsMenuItem(row: 1, "Floating")
+        var external = coordinator.config
+        external.rules = [.init(app: "com.example.two", action: .ignore), .init(app: "com.example.three", action: .ignore)]
+        let externalText = external.render()
+        try externalText.write(to: coordinator.configURL, atomically: true, encoding: .utf8)
+        _ = coordinator.reloadConfig(source: "test")
+        controller.refresh()
+        _ = controller.perform(try XCTUnwrap(stale.action), with: stale)
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), externalText)
+        XCTAssertEqual(coordinator.config.rules.map(\.action), [.ignore, .ignore])
+    }
+
+    /// The guide's sample desktop rule, with `follow = false` written out, can be turned into a floating rule.
+    func testTheGuidesSampleDesktopRuleCanFloat() throws {
+        let source = """
+        [[rule]]
+        app = "com.google.Chrome"
+        title = "Meet"                 # optional regular expression for the window title
+        action = "space"               # send new windows of this app to another Space
+        space = 3                      # desktop number
+        follow = false                 # true also switches to that Space
+
+        """
+        try source.write(to: coordinator.configURL, atomically: true, encoding: .utf8)
+        _ = coordinator.reloadConfig(source: "test")
+        controller = TestWindows.settings(coordinator: coordinator, preferences: preferences)
+        _ = try appsTable()
+        try choose(try appsMenuItem(row: 0, "Floating"))
+        XCTAssertNil(coordinator.configError)
+        XCTAssertEqual(coordinator.config.rules, [.init(app: "com.google.Chrome", action: .float, title: "Meet")])
+        XCTAssertEqual(try Config.load(toml: try String(contentsOf: coordinator.configURL, encoding: .utf8)).rules, coordinator.config.rules)
+    }
+
+    /// Choosing a row's checked action writes nothing, even while an earlier failed save is pending and would now succeed.
+    func testTheCheckedActionWritesNothingWhileASaveIsPending() throws {
+        var config = Config()
+        config.rules = [.init(app: "com.example.one", action: .ignore), .init(app: "com.example.two", action: .float)]
+        try load(config)
+        _ = try appsTable()
+        let original = try String(contentsOf: coordinator.configURL, encoding: .utf8)
+        var underneath = coordinator.config
+        underneath.gap = 7
+        try underneath.render().write(to: coordinator.configURL, atomically: true, encoding: .utf8)
+        try choose(try appsMenuItem(row: 0, "Floating"))
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), underneath.render(), "the first choice is refused")
+        XCTAssertEqual(coordinator.config.rules.map(\.action), [.ignore, .float])
+        try original.write(to: coordinator.configURL, atomically: true, encoding: .utf8)
+        try choose(try appsMenuItem(row: 1, "Floating"))
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), original)
+        XCTAssertEqual(coordinator.config.rules.map(\.action), [.ignore, .float])
+    }
+
+    /// The badges no longer say the action can be set only in the file.
+    func testAppsBadgeTipsDescribeTheActionOnly() throws {
+        var config = Config()
+        config.rules = [.init(app: "com.example.one", action: .float), .init(app: "com.example.two", action: .space, space: 3)]
+        try load(config)
+        let table = try appsTable()
+        func badge(row: Int, _ text: String) throws -> NSTextField {
+            let cell = try XCTUnwrap(table.view(atColumn: 1, row: row, makeIfNecessary: true))
+            return try XCTUnwrap(descendants(cell).compactMap { $0 as? NSTextField }.first { $0.stringValue == text }, text)
+        }
+        XCTAssertEqual(try badge(row: 0, "Floating").toolTip, "The window keeps its position.")
+        XCTAssertEqual(try badge(row: 1, "Opens on Desktop 3").toolTip,
+                       "New windows of this app are sent to Desktop 3 when they open; the window is still tiled there.")
+    }
+
     func testInProgressAppIdentifierSurvivesExternalReorder() throws {
         var config = Config()
         config.rules = [

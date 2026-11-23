@@ -161,6 +161,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
     private let keySearch = FocusingSearchField()
     private let shortcutInstruction = NSTextField.settingsText( "")
     private let shortcutContextMenu = NSMenu()
+    /// The Apps table's row menu. Each item carries the row and the rule it was filled from.
+    private let rulesContextMenu = NSMenu()
+    private struct RuleChoice { var row: Int; var rule: Config.Rule; var action: Config.Rule.Action; var space: Int? }
     private let messageDetailsButton = NSButton(title: "", target: nil, action: nil)
     private let restoreMainButton = NSButton(title: "", target: nil, action: nil)
     /// nil shows the confirmation dialog; tests return true / false to avoid the modal.
@@ -1105,6 +1108,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         let table = tableScroll(rulesTable, minimumHeight: 160, rowHeight: 26)
         rulesTable.usesAlternatingRowBackgroundColors = true
         rulesTable.style = .fullWidth
+        rulesContextMenu.autoenablesItems = false
+        rulesContextMenu.delegate = self
+        rulesTable.menu = rulesContextMenu
         rulesScroll = table
         prepareMessage(ruleError)
         ruleError.textColor = .systemRed
@@ -2774,6 +2780,51 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
         return shortcutContextMenu.items.first { $0.tag == tag }
     }
 
+    /// Lets tests fill the Apps row menu for a clicked row; real runs fill the same menu in `menuNeedsUpdate`.
+    func rulesMenu(clickedRow: Int) -> NSMenu {
+        fillRulesMenu(rulesContextMenu, row: clickedRow)
+        return rulesContextMenu
+    }
+
+    /// Don't Arrange, Floating, and Open on Desktop › Desktop 1–9 (and a rule's own desktop above 9), the rule's action checked.
+    /// Empty space below the rows gets no items, so no menu opens.
+    private func fillRulesMenu(_ menu: NSMenu, row: Int) {
+        menu.removeAllItems()
+        menu.autoenablesItems = false
+        guard draft.rules.indices.contains(row) else { return }
+        let rule = draft.rules[row]
+        func choice(_ title: String, _ action: Config.Rule.Action, space: Int? = nil) -> NSMenuItem {
+            let item = NSMenuItem(title: title, action: #selector(chooseRuleAction(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = RuleChoice(row: row, rule: rule, action: action, space: space)
+            item.state = rule.action == action && rule.space == space ? .on : .off
+            return item
+        }
+        menu.addItem(choice(L(.settingsWindowRuleActionDontArrange), .ignore))
+        menu.addItem(choice(L(.settingsWindowFloating), .float))
+        let desktops = NSMenu()
+        desktops.autoenablesItems = false
+        var numbers = Array(1...9)
+        if rule.action == .space, let own = rule.space, !numbers.contains(own) { numbers.append(own) }
+        for number in numbers { desktops.addItem(choice(Copy.desktop(number), .space, space: number)) }
+        let open = NSMenuItem(title: L(.settingsWindowRuleActionOpenOnDesktop), action: nil, keyEquivalent: "")
+        open.submenu = desktops
+        open.state = rule.action == .space ? .on : .off
+        menu.addItem(open)
+    }
+
+    /// Acts only while the row still holds the rule the menu was filled from. The checked action writes nothing, even while a
+    /// failed save is pending; another choice saves like any other edit, the pending one included.
+    @objc private func chooseRuleAction(_ sender: NSMenuItem) {
+        guard let choice = sender.representedObject as? RuleChoice,
+              draft.rules.indices.contains(choice.row), draft.rules[choice.row] == choice.rule else { return }
+        let changed = SettingsRules.rule(choice.rule, choosing: choice.action, space: choice.space)
+        guard changed != choice.rule else { return }
+        var next = draft
+        next.rules[choice.row] = changed
+        commit(next)
+    }
+
     @objc private func showAddRuleMenu() {
         rebuildAddRuleMenu()
         addRuleMenu.popUp(positioning: nil, at: NSPoint(x: 0, y: addRuleButton.bounds.height), in: addRuleButton)
@@ -3191,13 +3242,13 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
             var badges = [ruleAppCell(rule.app, row: row)]
             if rule.action == .float {
                 let floating = caption(L(.settingsWindowFloating))
-                floating.toolTip = L(.settingsWindowSetInTheConfigurationFile)
+                floating.toolTip = L(.settingsWindowTheWindowKeepsItsPosition)
                 badges.append(floating)
             }
             if rule.action == .space {
                 let target = rule.space.map(Copy.desktop) ?? "?"
                 let send = caption(rule.follow ? L(.settingsWindowOpensOnFollows(target)) : L(.settingsWindowOpensOn(target)))
-                send.toolTip = L(.settingsWindowSetInTheConfigurationFileNew(target))
+                send.toolTip = L(.settingsWindowNewWindowsOfThisAppAreSent(target))
                 badges.append(send)
             }
             if !rule.title.isEmpty {
@@ -3297,6 +3348,10 @@ extension SettingsWindowController: NSMenuDelegate {
         if menu === shortcutContextMenu {
             menu.autoenablesItems = false
         }
+        if menu === rulesContextMenu {
+            fillRulesMenu(menu, row: rulesTable.clickedRow)
+            return
+        }
         guard menu === shortcutContextMenu else { return }
         let row = keysTable.clickedRow
         let selection = keyRows.indices.contains(row) ? identity(of: keyRows[row]) : nil
@@ -3304,6 +3359,10 @@ extension SettingsWindowController: NSMenuDelegate {
     }
 
     func menuWillOpen(_ menu: NSMenu) {
+        if menu === rulesContextMenu {
+            openMenuCount += 1
+            return
+        }
         if menu === shortcutContextMenu {
             openMenuCount += 1
             if recordingTarget != nil { endRecording(.cancelShow, restoreTableFocus: false) }
@@ -3320,7 +3379,7 @@ extension SettingsWindowController: NSMenuDelegate {
     }
 
     func menuDidClose(_ menu: NSMenu) {
-        guard menu === shortcutContextMenu else { return }
+        guard menu === shortcutContextMenu || menu === rulesContextMenu else { return }
         openMenuCount = max(0, openMenuCount - 1)
         flushDeferredResize()
     }
