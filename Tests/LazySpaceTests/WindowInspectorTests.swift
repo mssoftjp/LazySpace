@@ -708,3 +708,116 @@ private func inspection(space: UInt64?, trusted: Bool, apps: [String], waitingID
         spaceObservationAvailable: spaceObservation ?? (space != nil))
     return Inspection(snapshot: snap, targets: targets, excluded: [], takenAt: Date())
 }
+
+/// Selecting a row outlines its window; nothing else does.
+final class WindowListOutlineTests: XCTestCase {
+    private func controller(outlined: @escaping (WindowID?) -> Void) -> (ReadyWindowController, () -> [((Inspection) -> Void)]) {
+        let live = WindowInspectLive(spaceID: 1, trusted: true, spaceObservationAvailable: true, waiting: [],
+                                     status: inspectorStatus(), firstLaunchDone: true)
+        var completions: [((Inspection) -> Void)] = []
+        let controller = TestWindows.inspector(loadInspection: { completions.append($0) }, readLive: { live }, markReady: {},
+                                               openGeneralSettings: {}, outline: outlined)
+        return (controller, { completions })
+    }
+
+    private func listed(_ ids: [UInt32], unresponsive: [String] = []) -> Inspection {
+        let targets = ids.map { window(id: $0, app: "com.example.app\($0)", kind: .standard) }
+        let snap = Snapshot(trusted: true, spaceID: 1, workArea: .zero, windows: targets, spaceObservationAvailable: true,
+                            unobservedApps: unresponsive)
+        return Inspection(snapshot: snap, targets: targets, excluded: [], takenAt: Date())
+    }
+
+    func testEachRowKnowsItsWindowAndAnUnresponsiveAppHasNone() {
+        var listing = listed([4, 7], unresponsive: ["com.example.hung"])
+        listing.excluded = [Exclusion(window: window(id: 9, app: "com.example.panel", kind: .palette), reason: "Panel", code: nil)]
+        let rows = ReadyWindowController.listRows(listing, waiting: [], waitingApplies: true, name: { $0 })
+        XCTAssertEqual(rows.map(\.window), [WindowID(4), WindowID(7), WindowID(9), nil], "targets, an excluded window, then the app that did not answer")
+    }
+
+    func testSelectingARowOutlinesItsWindowOnly() {
+        var outlined: [WindowID?] = []
+        let (controller, completions) = controller { outlined.append($0) }
+        defer { controller.close() }
+        controller.refreshTargets()
+        completions()[0](listed([4, 7], unresponsive: ["com.example.hung"]))
+        XCTAssertEqual(outlined, [], "a list arriving outlines nothing")
+
+        controller.testingSelect(row: 1)
+        XCTAssertEqual(outlined, [WindowID(7)])
+        controller.testingSelect(row: 2)
+        XCTAssertEqual(outlined, [WindowID(7), nil], "an app that did not answer has no window to outline")
+        controller.testingSelect(row: nil)
+        XCTAssertEqual(outlined, [WindowID(7), nil, nil])
+    }
+
+    /// A refresh empties and refills the table; the selected window keeps its row, and its outline is not shown again.
+    func testARefreshKeepsTheSelectionWithoutOutliningAgain() {
+        var outlined: [WindowID?] = []
+        let (controller, completions) = controller { outlined.append($0) }
+        defer { controller.close() }
+        controller.refreshTargets()
+        completions()[0](listed([4, 7]))
+        controller.testingSelect(row: 1)
+        XCTAssertEqual(outlined, [WindowID(7)])
+
+        controller.refreshTargets()
+        completions()[1](listed([2, 4, 7]))
+        XCTAssertEqual(controller.testingSelectedRow, 2, "window 7 moved down a row")
+        XCTAssertEqual(outlined, [WindowID(7)])
+
+        controller.refreshTargets()
+        completions()[2](listed([2, 4]))
+        XCTAssertNil(controller.testingSelectedRow, "window 7 is gone")
+        XCTAssertEqual(outlined, [WindowID(7)])
+    }
+
+    func testClosingTheListRemovesTheOutline() {
+        var outlined: [WindowID?] = []
+        let (controller, completions) = controller { outlined.append($0) }
+        controller.refreshTargets()
+        completions()[0](listed([4]))
+        controller.testingSelect(row: 0)
+        controller.close()
+        XCTAssertEqual(outlined.last, .some(nil))
+    }
+
+    /// The outline joins every Space; a Space change removes it even when the list is no longer in view.
+    func testASpaceChangeRemovesTheOutline() {
+        var outlined: [WindowID?] = []
+        let (controller, completions) = controller { outlined.append($0) }
+        defer { controller.close() }
+        controller.refreshTargets()
+        completions()[0](listed([4]))
+        controller.testingSelect(row: 0)
+        XCTAssertEqual(outlined, [WindowID(4)])
+        controller.testingSpaceChanged()
+        XCTAssertEqual(outlined, [WindowID(4), nil])
+    }
+
+    /// The frame is read now: a window that is not on screen, or has no size, gets no outline.
+    func testTheOutlineFrameIsTheWindowOnScreenNow() {
+        let record = CGWindowRecord(id: 7, pid: 1, layer: 0, bounds: CGRect(x: 100, y: 50, width: 400, height: 300), alpha: 1, onScreen: true)
+        XCTAssertEqual(WindowHighlight.frame(of: record, primaryHeight: 1000), CGRect(x: 100, y: 650, width: 400, height: 300),
+                       "CGWindowList's top-left origin turned into the screen's bottom-left one")
+        var hidden = record
+        hidden.onScreen = false
+        XCTAssertNil(WindowHighlight.frame(of: hidden, primaryHeight: 1000))
+        var empty = record
+        empty.bounds = .zero
+        XCTAssertNil(WindowHighlight.frame(of: empty, primaryHeight: 1000))
+        var fading = record
+        fading.alpha = 0
+        XCTAssertNil(WindowHighlight.frame(of: fading, primaryHeight: 1000), "still listed while it fades closed")
+        fading.alpha = WindowCensus.vanishingAlpha
+        XCTAssertNotNil(WindowHighlight.frame(of: fading, primaryHeight: 1000), "as visible as the census counts")
+        XCTAssertNil(WindowHighlight.frame(of: nil, primaryHeight: 1000))
+    }
+
+    /// The outline's overlay is the window's own frame, so the line lies on the window's edge and stays visible where a tiled
+    /// window meets the screen edge, the menu bar, or its neighbor. The focus border keeps its overlay just outside.
+    func testTheOutlineIsDrawnInsideAndTheFocusBorderOutside() {
+        let window = CGRect(x: 100, y: 650, width: 400, height: 300)
+        XCTAssertEqual(BorderOverlay.outset(window, width: 3), CGRect(x: 97, y: 647, width: 406, height: 306))
+        XCTAssertEqual(WindowHighlight.overlayFrame(window), window)
+    }
+}

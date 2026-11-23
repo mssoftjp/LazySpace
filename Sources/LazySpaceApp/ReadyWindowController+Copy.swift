@@ -16,10 +16,10 @@ extension ReadyWindowController {
         var rows: [InspectorRow] = []
         for window in inspection.targets {
             let eligibility = waiting.contains(window.id) ? waitingVerdict : eligibleVerdict
-            rows.append(InspectorRow(app: shownApp(window.app, name: name), eligibility: eligibility))
+            rows.append(InspectorRow(app: shownApp(window.app, name: name), eligibility: eligibility, window: window.id))
         }
         for exclusion in inspection.excluded {
-            rows.append(InspectorRow(app: shownApp(exclusion.window.app, name: name), eligibility: exclusionText(exclusion)))
+            rows.append(InspectorRow(app: shownApp(exclusion.window.app, name: name), eligibility: exclusionText(exclusion), window: exclusion.window.id))
         }
         for app in snapshot.unobservedApps {
             rows.append(InspectorRow(app: shownApp(app, name: name), eligibility: noResponseShort, toolTip: noResponseVerdict))

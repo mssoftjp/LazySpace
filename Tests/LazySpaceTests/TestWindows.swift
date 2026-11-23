@@ -1,4 +1,5 @@
 import AppKit
+import LayoutCore
 import Operations
 @testable import LazySpaceApp
 
@@ -35,10 +36,12 @@ enum TestWindows {
                           markReady: @escaping () -> Void,
                           openGeneralSettings: @escaping () -> Void,
                           openInputMonitoringSettings: @escaping () -> Void = {},
+                          outline: @escaping (WindowID?) -> Void = { _ in },
                           scrollerStyle: NSScroller.Style = .overlay) -> ReadyWindowController {
         let controller = ReadyWindowController(
             loadInspection: loadInspection, readLive: readLive, markReady: markReady,
-            openGeneralSettings: openGeneralSettings, openInputMonitoringSettings: openInputMonitoringSettings, scrollerStyle: scrollerStyle)
+            openGeneralSettings: openGeneralSettings, openInputMonitoringSettings: openInputMonitoringSettings,
+            outline: outline, scrollerStyle: scrollerStyle)
         conceal(controller.window)
         return controller
     }

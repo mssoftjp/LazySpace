@@ -13,6 +13,8 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
     private let markReady: () -> Void
     private let openGeneralSettings: () -> Void
     private let openInputMonitoringSettings: () -> Void
+    /// Outlines the window of the row the user selected; nil removes the outline.
+    private let outline: (WindowID?) -> Void
 
     private let spaceHeading = NSTextField(labelWithString: "")
     private let updatedLabel = NSTextField(labelWithString: "")
@@ -36,11 +38,17 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
     private var checking = false
     private var updatedAt: Date?
     private let scrollerStyle: NSScroller.Style
+    /// The window of the row the user selected, kept by ID across refreshes, which empty and refill the table.
+    private var selectedWindow: WindowID?
+    /// Set while the table is reloaded and the selection restored, so neither counts as the user's choice.
+    private var restoringSelection = false
 
     struct InspectorRow: Equatable {
         var app: String
         var eligibility: String
         var toolTip: String? = nil
+        /// nil for an app that did not answer: it has no window to show.
+        var window: WindowID? = nil
     }
 
     enum ListBody: Equatable {
@@ -59,7 +67,8 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
             readLive: { Self.live(from: Coordinator.shared) },
             markReady: { Coordinator.shared.markFirstLaunchDone() },
             openGeneralSettings: openGeneralSettings,
-            openInputMonitoringSettings: { AXTrust.openInputMonitoringSettings() })
+            openInputMonitoringSettings: { AXTrust.openInputMonitoringSettings() },
+            outline: { WindowHighlight.shared.outline($0) })
     }
 
     init(loadInspection: @escaping (@escaping (Inspection) -> Void) -> Void,
@@ -67,12 +76,14 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
          markReady: @escaping () -> Void,
          openGeneralSettings: @escaping () -> Void,
          openInputMonitoringSettings: @escaping () -> Void,
+         outline: @escaping (WindowID?) -> Void,
          scrollerStyle: NSScroller.Style = NSScroller.preferredScrollerStyle) {
         self.loadInspection = loadInspection
         self.readLive = readLive
         self.markReady = markReady
         self.openGeneralSettings = openGeneralSettings
         self.openInputMonitoringSettings = openInputMonitoringSettings
+        self.outline = outline
         self.scrollerStyle = scrollerStyle
         // Scroll bars that are always shown take their width from the table; open that much wider so the columns are
         // the same as with overlay scroll bars.
@@ -121,6 +132,8 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
     }
 
     func windowWillClose(_ notification: Notification) {
+        selectedWindow = nil
+        outline(nil)
         pollTimer?.invalidate()
         pollTimer = nil
         removeSpaceObserver()
@@ -147,6 +160,8 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
 
     /// The Space changed while shown. refreshLabels does the heavy AX read only when the state changed.
     func testingSpaceChanged() {
+        // The outline joins every Space, so it goes even when the list is already gone from view.
+        outline(nil)
         guard window?.isVisible == true else { return }
         refreshLabels()
     }
@@ -377,7 +392,14 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
             emptyLabel.isHidden = false
             tableScroll.isHidden = true
         }
+        restoringSelection = true
+        defer { restoringSelection = false }
         table.reloadData()
+        if let selectedWindow, let row = rows.firstIndex(where: { $0.window == selectedWindow }) {
+            table.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
+        } else {
+            table.deselectAll(nil)
+        }
     }
 
     // MARK: - Chrome
@@ -524,6 +546,20 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
 
 
     func numberOfRows(in tableView: NSTableView) -> Int { rows.count }
+
+    func tableViewSelectionDidChange(_ notification: Notification) {
+        guard !restoringSelection else { return }
+        let row = table.selectedRow
+        selectedWindow = rows.indices.contains(row) ? rows[row].window : nil
+        outline(selectedWindow)
+    }
+
+    /// Selects as the user would; nil clears the selection.
+    func testingSelect(row: Int?) {
+        if let row { table.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false) } else { table.deselectAll(nil) }
+    }
+
+    var testingSelectedRow: Int? { table.selectedRow >= 0 ? table.selectedRow : nil }
 
     func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
         let identifier = tableColumn?.identifier.rawValue ?? ""
