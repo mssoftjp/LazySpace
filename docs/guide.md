@@ -55,7 +55,7 @@ If a Space should be left alone, uncheck **Automatically Arrange This Space** in
 | **Arrange Now** | Arranges the current Space now and starts tiling it (`⌥⇧A`). It does not change the automatic setting above |
 | **Add One Waiting Window** | Adds a window that could not join automatically. Shown only when one is waiting |
 | **Pause LazySpace** | Stops all arrangement until you resume. Resuming does not move windows by itself |
-| **Check Windows…** | Lists the windows in this Space, whether each one is eligible for tiling, and why not. Selecting a row briefly outlines that window |
+| **Check Windows…** | Lists the windows in this Space, whether each one is eligible for tiling, and why not. Selecting a row briefly outlines that window. Right-clicking a row offers **Don't Arrange This App**, which adds the same rule as Settings › Apps, and, on a window that is **Waiting to Join**, **Add This Window Now** |
 | **Settings…** | Opens Settings (`⌘,`) |
 
 The number next to the icon is the desktop you are on. With more than one display, it shows the desktop each display is showing, in the order of the list below, such as `4|1`, and a Space without a number there (a full-screen Space, or one that cannot be read for a moment) shows as `–`. The display you are on is the one with the focused window; it is not marked.

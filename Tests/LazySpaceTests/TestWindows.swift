@@ -37,11 +37,12 @@ enum TestWindows {
                           openGeneralSettings: @escaping () -> Void,
                           openInputMonitoringSettings: @escaping () -> Void = {},
                           outline: @escaping (WindowID?) -> Void = { _ in },
+                          rowActions: ReadyWindowController.RowActions = .init(),
                           scrollerStyle: NSScroller.Style = .overlay) -> ReadyWindowController {
         let controller = ReadyWindowController(
             loadInspection: loadInspection, readLive: readLive, markReady: markReady,
             openGeneralSettings: openGeneralSettings, openInputMonitoringSettings: openInputMonitoringSettings,
-            outline: outline, scrollerStyle: scrollerStyle)
+            outline: outline, rowActions: rowActions, scrollerStyle: scrollerStyle)
         conceal(controller.window)
         return controller
     }

@@ -45,6 +45,14 @@ public struct DialogEvidence: Equatable {
 
 /// One window as observed from the OS. No guesses.
 public struct ObservedWindow: Equatable, Codable {
+    /// The app name of a process without a bundle identifier: its process ID, which names nothing once the process ends.
+    public static func unidentifiedAppName(pid: Int32) -> String { "pid\(pid)" }
+
+    /// Whether `app` is such a name rather than a bundle identifier.
+    public static func isUnidentifiedAppName(_ app: String) -> Bool {
+        app.hasPrefix("pid") && app.count > 3 && app.dropFirst(3).allSatisfy { $0.isASCII && $0.isNumber }
+    }
+
     public enum Membership: String, Codable {
         case current
         case other

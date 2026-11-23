@@ -2136,6 +2136,26 @@ final class SettingsWindowTests: XCTestCase {
         XCTAssertEqual(try appNameLabel(row: 0).stringValue, "")
     }
 
+    /// The rule both Settings › Apps "+" and the window list's "Don't Arrange This App" add; an existing rule is never replaced.
+    func testAddingAnIgnoreRuleNeverReplacesOne() {
+        var config = Config()
+        config.rules = [.init(app: "com.example.one", action: .float)]
+        XCTAssertEqual(SettingsRules.addingIgnoreRule("com.example.two", to: config)?.rules,
+                       [.init(app: "com.example.one", action: .float), .init(app: "com.example.two", action: .ignore)])
+        XCTAssertNil(SettingsRules.addingIgnoreRule("com.example.one", to: config))
+        XCTAssertNil(SettingsRules.addingIgnoreRule("*", to: config))
+        XCTAssertNil(SettingsRules.addingIgnoreRule("not valid", to: config))
+    }
+
+    /// A rule the window list adds while Settings is open shows in the Apps pane.
+    func testARuleAddedFromTheWindowListShowsInOpenSettings() throws {
+        try load(Config())
+        try select(.apps)
+        XCTAssertNil(coordinator.excludeApp("com.example.editor", source: "window-list"))
+        controller.refresh()
+        XCTAssertEqual(try appIdentifierField(containing: "com.example.editor").stringValue, "com.example.editor")
+    }
+
     func testInProgressAppIdentifierSurvivesExternalReorder() throws {
         var config = Config()
         config.rules = [

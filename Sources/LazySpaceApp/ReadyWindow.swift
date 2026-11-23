@@ -7,7 +7,7 @@ import Operations
 
 
 /// The window list for the current Space. Opening, refreshing, and Space changes never move windows.
-final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NSTableViewDelegate, NSWindowDelegate {
+final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NSTableViewDelegate, NSWindowDelegate, NSMenuDelegate {
     private let loadInspection: (@escaping (Inspection) -> Void) -> Void
     private let readLive: () -> WindowInspectLive
     private let markReady: () -> Void
@@ -15,6 +15,11 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
     private let openInputMonitoringSettings: () -> Void
     /// Outlines the window of the row the user selected; nil removes the outline.
     private let outline: (WindowID?) -> Void
+    private let rowActions: RowActions
+    /// The menu of a right-clicked row, filled when it opens.
+    private let rowMenu = NSMenu()
+    /// A window the row menu asked to add. The list is read again once it has left the waiting set.
+    private var awaitingJoin: WindowID?
 
     private let spaceHeading = NSTextField(labelWithString: "")
     private let updatedLabel = NSTextField(labelWithString: "")
@@ -49,6 +54,19 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
         var toolTip: String? = nil
         /// nil for an app that did not answer: it has no window to show.
         var window: WindowID? = nil
+        /// The app's bundle identifier, for the row menu's rule.
+        var appID: String? = nil
+        /// Waiting to join the layout in the Space the list shows.
+        var waiting = false
+    }
+
+    /// What the row menu does. The defaults do nothing.
+    struct RowActions {
+        /// Whether "Don't Arrange This App" is on for that app identifier.
+        var canExclude: (String) -> Bool = { _ in false }
+        var exclude: (String) -> Void = { _ in }
+        /// true when an operation started.
+        var add: (WindowID) -> Bool = { _ in false }
     }
 
     enum ListBody: Equatable {
@@ -68,7 +86,11 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
             markReady: { Coordinator.shared.markFirstLaunchDone() },
             openGeneralSettings: openGeneralSettings,
             openInputMonitoringSettings: { AXTrust.openInputMonitoringSettings() },
-            outline: { WindowHighlight.shared.outline($0) })
+            outline: { WindowHighlight.shared.outline($0) },
+            rowActions: RowActions(
+                canExclude: { Coordinator.shared.canExcludeApp($0) },
+                exclude: { Coordinator.shared.excludeApp($0, source: "window-list") },
+                add: { Coordinator.shared.requestIntegrate(window: $0, source: "window-list") == .started }))
     }
 
     init(loadInspection: @escaping (@escaping (Inspection) -> Void) -> Void,
@@ -77,6 +99,7 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
          openGeneralSettings: @escaping () -> Void,
          openInputMonitoringSettings: @escaping () -> Void,
          outline: @escaping (WindowID?) -> Void,
+         rowActions: RowActions = RowActions(),
          scrollerStyle: NSScroller.Style = NSScroller.preferredScrollerStyle) {
         self.loadInspection = loadInspection
         self.readLive = readLive
@@ -84,6 +107,7 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
         self.openGeneralSettings = openGeneralSettings
         self.openInputMonitoringSettings = openInputMonitoringSettings
         self.outline = outline
+        self.rowActions = rowActions
         self.scrollerStyle = scrollerStyle
         // Scroll bars that are always shown take their width from the table; open that much wider so the columns are
         // the same as with overlay scroll bars.
@@ -133,6 +157,7 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
 
     func windowWillClose(_ notification: Notification) {
         selectedWindow = nil
+        awaitingJoin = nil
         outline(nil)
         pollTimer?.invalidate()
         pollTimer = nil
@@ -262,6 +287,10 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
         table.delegate = self
         table.usesAlternatingRowBackgroundColors = true
         table.rowHeight = 20
+        // A right-click marks the row without selecting it, so it never outlines a window.
+        rowMenu.autoenablesItems = false
+        rowMenu.delegate = self
+        table.menu = rowMenu
         stack.addArrangedSubview(tableScroll)
         stretch(tableScroll, in: stack)
 
@@ -286,6 +315,11 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
         let live = readLive()
         applyChrome(live)
         guard window?.isVisible == true else { return }
+        if let added = awaitingJoin, !live.waiting.contains(added) {
+            awaitingJoin = nil
+            refreshTargets()
+            return
+        }
         let current = live.context
         if let request {
             if request.context != current {
@@ -560,6 +594,64 @@ final class ReadyWindowController: NSWindowController, NSTableViewDataSource, NS
     }
 
     var testingSelectedRow: Int? { table.selectedRow >= 0 ? table.selectedRow : nil }
+
+    // MARK: - Row menu
+
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        guard menu === rowMenu else { return }
+        fillRowMenu(row: table.clickedRow)
+    }
+
+    /// The items for `row`, holding its app and window: a list refilled while the menu is open changes nothing.
+    private func fillRowMenu(row: Int) {
+        rowMenu.removeAllItems()
+        guard rows.indices.contains(row) else { return }
+        let target = rows[row]
+        let live = readLive()
+        if let app = target.appID {
+            let item = NSMenuItem(title: L(.windowListDontArrangeThisApp), action: #selector(dontArrangeAction(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = app
+            item.isEnabled = rowActions.canExclude(app)
+            rowMenu.addItem(item)
+        }
+        // An old row may say waiting after the window joined; like the status menu, no item when it no longer waits.
+        if target.waiting, let window = target.window, live.waiting.contains(window) {
+            let item = NSMenuItem(title: L(.windowListAddThisWindowNow), action: #selector(addNowAction(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = NSNumber(value: window.raw)
+            item.isEnabled = live.status.acceptsCommands
+            rowMenu.addItem(item)
+        }
+    }
+
+    /// The rule is saved before this returns, so the list is read again at once.
+    @objc private func dontArrangeAction(_ sender: NSMenuItem) {
+        guard let app = sender.representedObject as? String else { return }
+        rowActions.exclude(app)
+        refreshTargets()
+    }
+
+    @objc private func addNowAction(_ sender: NSMenuItem) {
+        guard let raw = (sender.representedObject as? NSNumber)?.uint32Value else { return }
+        let window = WindowID(raw)
+        // Started: read again once it has joined. Otherwise (busy, or no longer waiting) read again now, so the row is right.
+        if rowActions.add(window) { awaitingJoin = window } else { refreshTargets() }
+    }
+
+    var testingRowMenu: NSMenu { rowMenu }
+
+    /// Opens the row menu as a right-click on `row` would (nil: below the rows) and returns its items.
+    func testingOpenRowMenu(row: Int?) -> [NSMenuItem] {
+        fillRowMenu(row: row ?? -1)
+        return rowMenu.items
+    }
+
+    /// Chooses an item as the user would.
+    func testingChoose(_ item: NSMenuItem) {
+        guard let action = item.action else { return }
+        _ = (item.target as? NSObject)?.perform(action, with: item)
+    }
 
     func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
         let identifier = tableColumn?.identifier.rawValue ?? ""

@@ -13,16 +13,20 @@ extension ReadyWindowController {
         let snapshot = inspection.snapshot
         guard snapshot.trusted, snapshot.spaceObservationAvailable, snapshot.spaceID != nil else { return [] }
         let waiting = waitingApplies ? waiting : []
+        // A process ID names nothing once the app quits, so it is no app identifier for a rule.
+        func identifier(_ app: String) -> String? { ObservedWindow.isUnidentifiedAppName(app) ? nil : app }
         var rows: [InspectorRow] = []
         for window in inspection.targets {
-            let eligibility = waiting.contains(window.id) ? waitingVerdict : eligibleVerdict
-            rows.append(InspectorRow(app: shownApp(window.app, name: name), eligibility: eligibility, window: window.id))
+            let isWaiting = waiting.contains(window.id)
+            rows.append(InspectorRow(app: shownApp(window.app, name: name), eligibility: isWaiting ? waitingVerdict : eligibleVerdict,
+                                     window: window.id, appID: identifier(window.app), waiting: isWaiting))
         }
         for exclusion in inspection.excluded {
-            rows.append(InspectorRow(app: shownApp(exclusion.window.app, name: name), eligibility: exclusionText(exclusion), window: exclusion.window.id))
+            rows.append(InspectorRow(app: shownApp(exclusion.window.app, name: name), eligibility: exclusionText(exclusion),
+                                     window: exclusion.window.id, appID: identifier(exclusion.window.app)))
         }
         for app in snapshot.unobservedApps {
-            rows.append(InspectorRow(app: shownApp(app, name: name), eligibility: noResponseShort, toolTip: noResponseVerdict))
+            rows.append(InspectorRow(app: shownApp(app, name: name), eligibility: noResponseShort, toolTip: noResponseVerdict, appID: identifier(app)))
         }
         return rows
     }

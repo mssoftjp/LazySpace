@@ -821,3 +821,140 @@ final class WindowListOutlineTests: XCTestCase {
         XCTAssertEqual(WindowHighlight.overlayFrame(window), window)
     }
 }
+
+/// Right-clicking a row offers "Don't Arrange This App", and "Add This Window Now" on a window waiting to join.
+final class WindowListRowMenuTests: XCTestCase {
+    private var live = WindowInspectLive(spaceID: 1, trusted: true, spaceObservationAvailable: true, waiting: [WindowID(7)],
+                                         status: inspectorStatus(), firstLaunchDone: true)
+    private var completions: [((Inspection) -> Void)] = []
+    private var excludable: Set<String> = ["com.example.app4", "com.example.app7", "com.example.hung"]
+    private var excluded: [String] = []
+    private var added: [WindowID] = []
+    private var addStarts = true
+
+    private func controller() -> ReadyWindowController {
+        let actions = ReadyWindowController.RowActions(
+            canExclude: { [unowned self] in excludable.contains($0) },
+            exclude: { [unowned self] in excluded.append($0) },
+            add: { [unowned self] in added.append($0); return addStarts })
+        return TestWindows.inspector(loadInspection: { [unowned self] in completions.append($0) }, readLive: { [unowned self] in live },
+                                     markReady: {}, openGeneralSettings: {}, rowActions: actions)
+    }
+
+    private func listed(_ ids: [UInt32], unresponsive: [String] = []) -> Inspection {
+        let targets = ids.map { window(id: $0, app: "com.example.app\($0)", kind: .standard) }
+        let snap = Snapshot(trusted: true, spaceID: 1, workArea: .zero, windows: targets, spaceObservationAvailable: true,
+                            unobservedApps: unresponsive)
+        return Inspection(snapshot: snap, targets: targets, excluded: [], takenAt: Date())
+    }
+
+    private func shown(_ items: [NSMenuItem]) -> [String] {
+        items.map { "\($0.title)\($0.isEnabled ? "" : " (off)")" }
+    }
+
+    /// An app without a bundle identifier is listed by process ID, which names nothing once it quits: no rule is offered.
+    func testAnAppWithoutABundleIdentifierGetsNoRule() {
+        let unnamed = ObservedWindow.unidentifiedAppName(pid: 42)
+        XCTAssertTrue(ObservedWindow.isUnidentifiedAppName(unnamed))
+        XCTAssertFalse(ObservedWindow.isUnidentifiedAppName("com.example.pid42"))
+        XCTAssertFalse(ObservedWindow.isUnidentifiedAppName("pid"))
+        let target = window(id: 5, app: unnamed, kind: .standard)
+        let snap = Snapshot(trusted: true, spaceID: 1, workArea: .zero, windows: [target], spaceObservationAvailable: true,
+                            unobservedApps: [ObservedWindow.unidentifiedAppName(pid: 43)])
+        let rows = ReadyWindowController.listRows(Inspection(snapshot: snap, targets: [target], excluded: [], takenAt: Date()),
+                                                  waiting: [WindowID(5)], waitingApplies: true, name: { $0 })
+        XCTAssertEqual(rows.map(\.appID), [nil, nil])
+        XCTAssertEqual(rows.map(\.waiting), [true, false], "a waiting one can still be added")
+    }
+
+    func testEachRowKnowsItsAppAndWhetherItIsWaiting() {
+        let listing = listed([4, 7], unresponsive: ["com.example.hung"])
+        let rows = ReadyWindowController.listRows(listing, waiting: [WindowID(7)], waitingApplies: true, name: { _ in "Name" })
+        XCTAssertEqual(rows.map(\.appID), ["com.example.app4", "com.example.app7", "com.example.hung"])
+        XCTAssertEqual(rows.map(\.waiting), [false, true, false])
+        let other = ReadyWindowController.listRows(listing, waiting: [WindowID(7)], waitingApplies: false, name: { _ in "Name" })
+        XCTAssertEqual(other.map(\.waiting), [false, false, false], "the waiting set of another Space does not apply")
+    }
+
+    func testTheMenuOffersDontArrangeOnEveryRowAndAddOnlyOnAWaitingOne() {
+        let controller = controller()
+        defer { controller.close() }
+        controller.refreshTargets()
+        completions[0](listed([4, 7], unresponsive: ["com.example.hung"]))
+        let dont = L(.windowListDontArrangeThisApp), add = L(.windowListAddThisWindowNow)
+        XCTAssertFalse(controller.testingRowMenu.autoenablesItems, "an item turned off stays off")
+        XCTAssertEqual(shown(controller.testingOpenRowMenu(row: 0)), [dont])
+        XCTAssertEqual(shown(controller.testingOpenRowMenu(row: 1)), [dont, add])
+        XCTAssertEqual(shown(controller.testingOpenRowMenu(row: 2)), [dont], "an app that did not answer can still be left out")
+        XCTAssertEqual(shown(controller.testingOpenRowMenu(row: nil)), [], "no row, no menu")
+
+        live.waiting = []
+        XCTAssertEqual(shown(controller.testingOpenRowMenu(row: 1)), [dont], "the row is old: the window no longer waits")
+        live.waiting = [WindowID(7)]
+        excludable.remove("com.example.app7")
+        XCTAssertEqual(shown(controller.testingOpenRowMenu(row: 1)), ["\(dont) (off)", add], "a rule already matches the app")
+        live.status = inspectorStatus(paused: true)
+        XCTAssertEqual(shown(controller.testingOpenRowMenu(row: 1)), ["\(dont) (off)", "\(add) (off)"],
+                       "off when the status menu's Add One Waiting Window is off")
+    }
+
+    /// The row is fixed when the menu opens: a list refilled while the menu is open changes nothing.
+    func testTheMenuActsOnTheRowItOpenedOn() {
+        let controller = controller()
+        defer { controller.close() }
+        controller.refreshTargets()
+        completions[0](listed([4, 7]))
+        let items = controller.testingOpenRowMenu(row: 1)
+        controller.refreshTargets()
+        completions[1](listed([7, 4]))
+        guard items.count == 2 else { return XCTFail("the waiting row offers both items") }
+        controller.testingChoose(items[1])
+        XCTAssertEqual(added, [WindowID(7)])
+        controller.testingChoose(items[0])
+        XCTAssertEqual(excluded, ["com.example.app7"])
+    }
+
+    /// The rule is saved at once, so the list is read again at once and the row shows it.
+    func testDontArrangeReadsTheListAgain() {
+        let controller = controller()
+        defer { controller.close() }
+        controller.refreshTargets()
+        completions[0](listed([4, 7]))
+        controller.testingChoose(controller.testingOpenRowMenu(row: 0)[0])
+        XCTAssertEqual(excluded, ["com.example.app4"])
+        XCTAssertEqual(completions.count, 2)
+    }
+
+    /// When nothing started (busy, or the window is no longer waiting), the list is read again at once.
+    func testAddThatDidNotStartReadsTheListAgainAtOnce() {
+        let controller = controller()
+        defer { controller.close() }
+        controller.showWindow(nil)
+        completions[0](listed([4, 7]))
+        addStarts = false
+        controller.testingChoose(controller.testingOpenRowMenu(row: 1)[1])
+        XCTAssertEqual(completions.count, 2)
+        live.waiting = []
+        controller.testingTimerFired()
+        XCTAssertEqual(completions.count, 2, "no watch is left behind")
+    }
+
+    /// Adding runs as an operation; the list is read again once the window has left the waiting set, and only once.
+    func testAddReadsTheListAgainOnceTheWindowHasJoined() {
+        let controller = controller()
+        defer { controller.close() }
+        controller.showWindow(nil)
+        completions[0](listed([4, 7]))
+        controller.testingChoose(controller.testingOpenRowMenu(row: 1)[1])
+        XCTAssertEqual(added, [WindowID(7)])
+        controller.testingTimerFired()
+        XCTAssertEqual(completions.count, 1, "still waiting: the row is still right")
+        live.waiting = []
+        controller.testingTimerFired()
+        XCTAssertEqual(completions.count, 2, "joined: read again")
+        guard completions.count == 2 else { return }
+        completions[1](listed([4, 7]))
+        controller.testingTimerFired()
+        XCTAssertEqual(completions.count, 2, "once")
+    }
+}

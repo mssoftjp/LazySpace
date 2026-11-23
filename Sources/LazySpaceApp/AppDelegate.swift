@@ -190,9 +190,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         case .edit(let command): runEdit(command, source: source, pressedAt: pressedAt)
         case .arrange: coordinator.markFirstLaunchDone(); coordinator.arrange(source: source, pressedAt: pressedAt)
         case .integrate:
-            // Nothing on screen; the reason stays in `lazyspace status` as the latest notice.
-            if coordinator.waiting.isEmpty { coordinator.noteRefusal(L(.appDelegateNoWindowsAreWaiting)); return }
-            if case .notApplicable = coordinator.integrateWaiting(source: source, pressedAt: pressedAt) { coordinator.noteRefusal(coordinator.notStartedMessage) }
+            if coordinator.requestIntegrate(source: source, pressedAt: pressedAt) == .nothingWaiting { return }
         case .pauseResume:
             if coordinator.control.paused { coordinator.resume() } else { coordinator.pause() }
         case .reload: coordinator.reportReload(source: source)
@@ -295,7 +293,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let config = coordinator.config
         let bindings = HotkeyBinding.from(config, mode: s.mode)
         let menuSpaces = coordinator.spaceMenu()
-        let canAct = s.manualAvailable && !s.paused && s.progress == .idle
+        let canAct = s.acceptsCommands
         let onFullscreenSpace = menuSpaces.entries.contains { $0.isCurrent && $0.fullScreen }
         for entry in StatusMenuCopy.topEntries(status: s, spaceCount: menuSpaces.entries.count, modeCount: s.modes.count)
         where !onFullscreenSpace || ![.arrange, .integrate, .spacePause, .space].contains(entry.kind) {

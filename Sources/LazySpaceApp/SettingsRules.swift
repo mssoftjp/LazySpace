@@ -55,6 +55,16 @@ enum SettingsRules {
 
     static func isValidAppIdentifier(_ app: String) -> Bool { Config.Rule.isValidApp(app) }
 
+    /// `config` with a rule that keeps `app`'s windows out of the arrangement, added last. nil when `app` is not a valid
+    /// identifier or already has a rule, which is never replaced. Settings › Apps "+" and the window list's "Don't Arrange
+    /// This App" both add it.
+    static func addingIgnoreRule(_ app: String, to config: Config) -> Config? {
+        guard isValidAppIdentifier(app), !config.rules.contains(where: { $0.app == app }) else { return nil }
+        var next = config
+        next.rules.append(Config.Rule(app: app, action: .ignore))
+        return next
+    }
+
     static func appIdentifierMessage(_ app: String) -> String {
         if app.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return L(.settingsRulesEnterABundleIdentifier)

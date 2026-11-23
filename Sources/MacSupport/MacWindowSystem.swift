@@ -176,7 +176,7 @@ public final class MacWindowSystem: WindowSystem {
         var observations = [AppObservation?](repeating: nil, count: apps.count)
         DispatchQueue.concurrentPerform(iterations: apps.count) { i in
             let (pid, app) = apps[i]
-            let bundleID = app.bundleIdentifier ?? "pid\(pid)"
+            let bundleID = app.bundleIdentifier ?? ObservedWindow.unidentifiedAppName(pid: pid)
             let appElement = AXElement.application(pid: pid)
             appElement.setMessagingTimeout(readTimeout)
             var out = AppObservation()
@@ -301,7 +301,7 @@ public final class MacWindowSystem: WindowSystem {
         var newCache: [WindowID: Cached] = [:]
         for (entry, obs) in zip(apps, observations) {
             guard let obs else { continue }
-            if obs.unresponsive { unobserved.append(entry.app.bundleIdentifier ?? "pid\(entry.pid)") }
+            if obs.unresponsive { unobserved.append(entry.app.bundleIdentifier ?? ObservedWindow.unidentifiedAppName(pid: entry.pid)) }
             windows.append(contentsOf: obs.windows)
             newCache.merge(obs.cache) { _, new in new }
         }
@@ -385,7 +385,7 @@ public final class MacWindowSystem: WindowSystem {
             let appElement = AXElement.application(pid: pid)
             appElement.setMessagingTimeout(min(readTimeout, remaining))
             guard case .success(let axWindows) = appElement.windows() else { return }
-            let bundleID = app.bundleIdentifier ?? "pid\(pid)"
+            let bundleID = app.bundleIdentifier ?? ObservedWindow.unidentifiedAppName(pid: pid)
             var retained: Set<WindowID> = []
             /// Retains the wanted windows among `elements`, stopping once every window in `until` is retained; false once the time is up.
             func retain(_ elements: [AXElement], until: Set<WindowID>? = nil) -> Bool {

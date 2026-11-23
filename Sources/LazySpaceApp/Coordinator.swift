@@ -136,6 +136,11 @@ enum AutoUnavailableCause: String, CaseIterable {
     }
 }
 
+extension AppStatus {
+    /// Commands from the menu and the window list's row menu are taken: not paused, nothing running, and the Space readable.
+    var acceptsCommands: Bool { manualAvailable && !paused && progress == .idle }
+}
+
 struct AppStatus: Codable, Equatable {
     enum Availability: String, Codable {
         case needsSetup
@@ -727,9 +732,9 @@ final class Coordinator {
         DispatchQueue.main.async { self.onChange?() }
     }
 
-    /// Hooks run inside operations, and publishing an operation's result clears the refusal text; queued behind the running
-    /// operation, a hook's problem is noted after that.
-    private func noteHookProblem(_ text: String) {
+    /// Publishing an operation's result clears the refusal text. Queued behind the running operation, a problem is noted after
+    /// that: a hook's, which runs inside an operation, and a refusal because one is running.
+    private func noteBehindRunningOperation(_ text: String) {
         queue.async { [weak self] in self?.noteRefusal(text) }
     }
 
@@ -910,6 +915,24 @@ final class Coordinator {
         }
     }
 
+    /// Whether the window list's "Don't Arrange This App" is on for `app`: a valid identifier that no rule matches yet (a prefix
+    /// rule or a float rule counts too), so the rule it adds never replaces or joins one.
+    func canExcludeApp(_ app: String) -> Bool {
+        lock.lock(); let rules = config.rules; lock.unlock()
+        return Config.Rule.isValidApp(app) && !rules.contains { $0.matchesApp(app) }
+    }
+
+    /// The window list's "Don't Arrange This App": the same rule as Settings › Apps "+", saved against the configuration it
+    /// was built from. nil when saved, or when there was nothing to add; otherwise the refusal, also noted for status.
+    @discardableResult
+    func excludeApp(_ app: String, source: String) -> String? {
+        lock.lock(); let current = config; lock.unlock()
+        guard !current.rules.contains(where: { $0.matchesApp(app) }), let next = SettingsRules.addingIgnoreRule(app, to: current) else { return nil }
+        guard let problem = saveConfig(next, baseline: current, source: source) else { return nil }
+        noteRefusal(problem)
+        return problem
+    }
+
     // MARK: - Binding mode / login item / hooks
 
     enum ModeAccept: Equatable {
@@ -934,7 +957,7 @@ final class Coordinator {
         lock.unlock()
         DispatchQueue.main.async { self.onModeChange?(name); self.onChange?() }
         if !hook.isEmpty {
-            HookRunner.run(hook, environment: ["LAZYSPACE_MODE": name]) { [weak self] in self?.noteHookProblem($0) }
+            HookRunner.run(hook, environment: ["LAZYSPACE_MODE": name]) { [weak self] in self?.noteBehindRunningOperation($0) }
         }
         return .changed
     }
@@ -962,7 +985,7 @@ final class Coordinator {
         spaceChangeHookObserver?(previous, current)
         lock.lock(); let hook = config.execOnSpaceChange; lock.unlock()
         guard !hook.isEmpty else { return }
-        HookRunner.run(hook, environment: Self.spaceChangeEnvironment(current: current, previous: previous)) { [weak self] in self?.noteHookProblem($0) }
+        HookRunner.run(hook, environment: Self.spaceChangeEnvironment(current: current, previous: previous)) { [weak self] in self?.noteBehindRunningOperation($0) }
     }
 
     /// Environment for `exec-on-space-change`, passing OS Space IDs.
@@ -1421,6 +1444,7 @@ final class Coordinator {
                  shareEdit: (window: WindowID, axes: [Axis])? = nil,
                  layoutOverride: Layout? = nil, ignoreZoom: Bool = false,
                  adding: Set<WindowID> = [], automaticFront: WindowID? = nil,
+                 addingOnly: Bool = false,
                  editState: EditState? = nil,
                  authorization: OperationAuthorization? = nil,
                  pressedAt: Date? = nil,
@@ -1462,7 +1486,10 @@ final class Coordinator {
         if kind == "auto-start", adding.isEmpty || automaticFront == nil { lock.unlock(); return .notApplicable }
         let generation = control.cancellationGeneration
         let configRevision = configGeneration
-        let allowedWindows = kind.hasPrefix("auto-") ? Set(prior?.windowIDs ?? []).union(adding) : nil
+        // Automatic arrangement, and an add of one chosen window (`addingOnly`), see only the layout and the windows added:
+        // a window that appears before the operation runs stays out.
+        let restricted = kind.hasPrefix("auto-") || addingOnly
+        let allowedWindows = restricted ? Set(prior?.windowIDs ?? []).union(adding) : nil
         var held = heldOut
         // No arrangement writes windows that are reconciling a send, or being classified or sent by a rule.
         for (id, reason) in routingExcluded where held[id] == nil { held[id] = reason }
@@ -1485,7 +1512,7 @@ final class Coordinator {
             OtherSpaceWindowSystem(base: system, control: control, space: $0.space, mode: $0.mode, windows: Set(prior?.windowIDs ?? []).union(adding).subtracting(heldOut.keys))
         } ?? system
         let op = ArrangeOperation(system: opSystem, control: control, knowledge: knowledge, limits: limits, options: options, priorLayout: prior, adoptObservedProportions: layoutOverride == nil && kind != EditCommand.toggleZoom.kind, heldOut: held, allowedWindows: allowedWindows,
-                                  adding: kind.hasPrefix("auto-") ? adding : [], kind: kind, unanswered: automatic ? unanswered : .arrangeAround,
+                                  adding: restricted ? adding : [], kind: kind, unanswered: automatic ? unanswered : .arrangeAround,
                                   transform: transform, transformFailure: transformFailure, shareEdit: shareEdit, zoomed: zoomed, appRule: { [config] window in config.tilingExclusionReason(bundleID: window.app, title: window.title) },
                                   displayName: AppNames.localized, authorization: authorization, observedWindows: observed, probeMaximums: probeMaximums, pressedAt: pressedAt)
         if options.reservesRegion {
@@ -1494,6 +1521,7 @@ final class Coordinator {
             fallback.reservedBottom = 0
             op.regionFallback = fallback
         }
+        if addingOnly { op.notAllowedReason = L(.coordinatorAddOneWaitingWindowAdds) }
         op.dialogPlacements = region?.placements ?? []
         op.appliesRegion = region != nil
         if followsAutomatic {
@@ -1716,6 +1744,33 @@ final class Coordinator {
         baseline = base
     }
 
+    enum IntegrateRequest: Equatable {
+        /// Nothing is waiting (noted for status).
+        case nothingWaiting
+        /// An operation started, or was queued.
+        case started
+        /// Refused (noted for status), or that window is no longer outside the layout.
+        case notStarted
+    }
+
+    /// "Add One Waiting Window" (the status menu, a shortcut) and the window list's "Add This Window Now" (`window`: that
+    /// window only). A refusal is noted for `lazyspace status`; nothing pops up. The status menu and shortcuts queue while
+    /// another operation runs; the row's request does not, so its busy refusal is noted too.
+    @discardableResult
+    func requestIntegrate(window: WindowID? = nil, source: String, pressedAt: Date = Date()) -> IntegrateRequest {
+        // Nothing on screen; the reason stays in `lazyspace status` as the latest notice.
+        if waiting.isEmpty { noteRefusal(L(.appDelegateNoWindowsAreWaiting)); return .nothingWaiting }
+        let accepted = window.map { integrateWaiting($0, source: source, pressedAt: pressedAt) }
+            ?? integrateWaiting(source: source, pressedAt: pressedAt)
+        switch accepted {
+        case .started?: return .started
+        case .notApplicable?: noteRefusal(notStartedMessage)
+        case .busy? where window != nil: noteBehindRunningOperation(L(.appDelegateAnotherOperationIsInProgressThe))
+        case .busy?, nil: break
+        }
+        return .notStarted
+    }
+
     /// Inserts one standard window outside the layout; other unplaced windows stay as they are in this operation.
     @discardableResult
     func integrateWaiting(source: String, pressedAt: Date? = nil, authorization: OperationAuthorization? = nil) -> Accept {
@@ -1723,13 +1778,31 @@ final class Coordinator {
         for id in missing { clearIntegrateFailure(id) }
         let focused = system.focusedWindowID(within: acceptanceFocusTimeout)
         let chosen = focused.flatMap { missing.contains($0) ? $0 : nil } ?? missing.first
+        return integrate(chosen, among: missing, exclusive: false, source: source, pressedAt: pressedAt, authorization: authorization)
+    }
+
+    /// Inserts `window` only, never another window in its place: the operation sees only the layout and that window, and
+    /// ends with nothing to do if it has gone. Only its failed retries are cleared, once the operation has started (it
+    /// reads neither the ledger nor the backoff), so a refusal brings back no automatic retries. nil, and nothing happens,
+    /// once it is no longer outside the layout (it joined, closed, or the window list is old).
+    func integrateWaiting(_ window: WindowID, source: String, pressedAt: Date? = nil) -> Accept? {
+        let missing = unplacedStandardIDs()
+        guard missing.contains(window) else { return nil }
+        let accepted = integrate(window, among: missing, exclusive: true, source: source, pressedAt: pressedAt, authorization: nil)
+        if case .started = accepted { clearIntegrateFailure(window) }
+        return accepted
+    }
+
+    private func integrate(_ chosen: WindowID?, among missing: [WindowID], exclusive: Bool, source: String, pressedAt: Date?,
+                           authorization: OperationAuthorization?) -> Accept {
         var held: [WindowID: String] = [:]
         if let chosen {
             for id in missing where id != chosen {
                 held[id] = L(.coordinatorAddOneWaitingWindowAdds)
             }
         }
-        return arrange(source: source, kind: "integrate-waiting", heldOut: held, ignoreZoom: true, adding: chosen.map { [$0] } ?? [], authorization: authorization, pressedAt: pressedAt)
+        return arrange(source: source, kind: "integrate-waiting", heldOut: held, ignoreZoom: true, adding: chosen.map { [$0] } ?? [],
+                       addingOnly: exclusive, authorization: authorization, pressedAt: pressedAt)
     }
 
     /// Adds a window opened in front to the layout: beside the previously focused window or at the end, as configured.
@@ -5513,7 +5586,7 @@ final class Coordinator {
         lock.lock(); let hook = config.execOnWindowSent; lock.unlock()
         let env = Self.windowSentEnvironment(window: identity.window, app: app, from: source, to: dest, snapshot: spaceListing()?.spaceSnapshot())
         windowSentObserver?(env)
-        if !hook.isEmpty { HookRunner.run(hook, environment: env) { [weak self] in self?.noteHookProblem($0) } }
+        if !hook.isEmpty { HookRunner.run(hook, environment: env) { [weak self] in self?.noteBehindRunningOperation($0) } }
     }
 
     /// Desktops are numbered on their own display; the display is its position in `list-spaces` (1 with one display). Unknown values are empty.

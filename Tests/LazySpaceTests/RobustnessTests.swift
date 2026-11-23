@@ -306,6 +306,58 @@ final class RobustnessTests: XCTestCase {
         XCTAssertTrue(coordinator.state.layouts["7"]?.windowIDs.contains(WindowID(3)) == true)
     }
 
+    /// The window list's "Add This Window Now" clears that window's failed retries only: another window that gave up is not
+    /// retried automatically afterwards.
+    func testAddingOneWindowLeavesAnotherGivenUpWindowAlone() {
+        let (coordinator, system, root) = make()
+        defer { try? FileManager.default.removeItem(at: root) }
+        system.frames[WindowID(3)] = CGRect(x: 300, y: 200, width: 500, height: 400)
+        system.frames[WindowID(4)] = CGRect(x: 600, y: 200, width: 500, height: 400)
+        system.timeOutWrites = true
+        for _ in 0..<10 {
+            _ = coordinator.operationsQueue.sync { coordinator.placeMissing(current: system.census(7), spaceKey: "7") }
+            drain(coordinator)
+        }
+        XCTAssertEqual(coordinator.waiting, [WindowID(3), WindowID(4)], "both gave up")
+        system.timeOutWrites = false
+        XCTAssertEqual(coordinator.requestIntegrate(window: WindowID(4), source: "window-list"), .started)
+        drain(coordinator)
+        XCTAssertTrue(coordinator.state.layouts["7"]?.windowIDs.contains(WindowID(4)) == true)
+        let writesTo3 = system.written.filter { $0.0 == WindowID(3) }.count
+        for _ in 0..<3 {
+            _ = coordinator.operationsQueue.sync { coordinator.placeMissing(current: system.census(7), spaceKey: "7") }
+            drain(coordinator)
+        }
+        XCTAssertEqual(system.written.filter { $0.0 == WindowID(3) }.count, writesTo3, "not retried automatically")
+        XCTAssertTrue(coordinator.waiting.contains(WindowID(3)))
+    }
+
+    /// A row request refused while another operation runs leaves the window's given-up state alone: no automatic retries.
+    func testARefusedAddLeavesTheGivenUpWindowAlone() {
+        let (coordinator, system, root) = make()
+        defer { try? FileManager.default.removeItem(at: root) }
+        system.frames[WindowID(3)] = CGRect(x: 300, y: 200, width: 500, height: 400)
+        system.timeOutWrites = true
+        for _ in 0..<10 {
+            _ = coordinator.operationsQueue.sync { coordinator.placeMissing(current: system.census(7), spaceKey: "7") }
+            drain(coordinator)
+        }
+        XCTAssertTrue(coordinator.waiting.contains(WindowID(3)))
+        system.timeOutWrites = false
+        coordinator.operationsQueue.suspend()
+        _ = coordinator.runFocus(WindowID(2), source: "test")
+        XCTAssertEqual(coordinator.requestIntegrate(window: WindowID(3), source: "window-list"), .notStarted)
+        coordinator.operationsQueue.resume()
+        drain(coordinator)
+        let writesTo3 = system.written.filter { $0.0 == WindowID(3) }.count
+        for _ in 0..<3 {
+            _ = coordinator.operationsQueue.sync { coordinator.placeMissing(current: system.census(7), spaceKey: "7") }
+            drain(coordinator)
+        }
+        XCTAssertEqual(system.written.filter { $0.0 == WindowID(3) }.count, writesTo3, "not retried automatically")
+        XCTAssertTrue(coordinator.waiting.contains(WindowID(3)))
+    }
+
     /// When the trigger window stops being an arrangement target twice at the same frame, automatic retries stop and it waits.
     func testIntegrateGivesUpAfterNotPossible() {
         let (coordinator, system, root) = make()

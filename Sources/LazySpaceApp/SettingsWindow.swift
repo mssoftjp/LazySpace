@@ -2894,9 +2894,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate, NSTa
             rulesTable.selectRowIndexes(IndexSet(integer: i), byExtendingSelection: false)
             return
         }
-        var next = draft
-        next.rules.append(Config.Rule(app: app, action: .ignore))
-        guard commit(next) else { return }
+        guard let next = SettingsRules.addingIgnoreRule(app, to: draft), commit(next) else { return }
         if let row = draft.rules.lastIndex(where: { $0.app == app }) {
             rulesTable.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
             updateSelectionButtons()

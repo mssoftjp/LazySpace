@@ -655,6 +655,120 @@ final class CoordinatorTests: XCTestCase {
         XCTAssertEqual(result?.kind, "integrate-waiting")
     }
 
+    // MARK: - The window list's row menu
+
+    /// "Add This Window Now" adds that window, never the focused or first waiting one in its place.
+    func testAddThisWindowAddsThatWindowEvenWhenAnotherWaitingOneIsFocused() {
+        system.frames[WindowID(3)] = CGRect(x: 40, y: 80, width: 420, height: 320)
+        system.frames[WindowID(4)] = CGRect(x: 80, y: 120, width: 420, height: 320)
+        coordinator.parkWaiting([WindowID(3), WindowID(4)])
+        system.focused = WindowID(3)
+        XCTAssertEqual(coordinator.requestIntegrate(window: WindowID(4), source: "window-list"), .started)
+        drain()
+        XCTAssertEqual(Set(coordinator.state.layouts["7"]?.windowIDs ?? []), [WindowID(1), WindowID(2), WindowID(4)])
+        XCTAssertEqual(coordinator.waiting, [WindowID(3)])
+        XCTAssertNil(coordinator.status().lastRefusal)
+    }
+
+    /// The operation sees only the layout and that window: one that appears before it runs stays out.
+    func testAddThisWindowLeavesOutAWindowThatAppearsBeforeItRuns() {
+        system.frames[WindowID(4)] = CGRect(x: 80, y: 120, width: 420, height: 320)
+        coordinator.parkWaiting([WindowID(4)])
+        coordinator.operationsQueue.suspend()
+        XCTAssertEqual(coordinator.requestIntegrate(window: WindowID(4), source: "window-list"), .started)
+        system.frames[WindowID(5)] = CGRect(x: 120, y: 160, width: 420, height: 320)
+        coordinator.operationsQueue.resume()
+        drain()
+        XCTAssertEqual(Set(coordinator.state.layouts["7"]?.windowIDs ?? []), [WindowID(1), WindowID(2), WindowID(4)])
+        XCTAssertFalse(system.written.contains { $0.0 == WindowID(5) })
+    }
+
+    /// If that window closes before the operation runs, nothing joins in its place.
+    func testAddThisWindowAddsNothingWhenItClosesBeforeItRuns() {
+        system.frames[WindowID(3)] = CGRect(x: 40, y: 80, width: 420, height: 320)
+        system.frames[WindowID(4)] = CGRect(x: 80, y: 120, width: 420, height: 320)
+        coordinator.parkWaiting([WindowID(3), WindowID(4)])
+        coordinator.operationsQueue.suspend()
+        XCTAssertEqual(coordinator.requestIntegrate(window: WindowID(4), source: "window-list"), .started)
+        system.frames[WindowID(4)] = nil
+        coordinator.operationsQueue.resume()
+        drain()
+        XCTAssertEqual(Set(coordinator.state.layouts["7"]?.windowIDs ?? []), [WindowID(1), WindowID(2)])
+        XCTAssertFalse(system.written.contains { $0.0 == WindowID(3) })
+    }
+
+    /// Unlike the status menu item, the row's request is not queued behind a running operation: the refusal is noted.
+    func testAddThisWindowWhileBusyIsNotedForStatus() {
+        system.frames[WindowID(4)] = CGRect(x: 80, y: 120, width: 420, height: 320)
+        coordinator.parkWaiting([WindowID(4)])
+        coordinator.operationsQueue.suspend()
+        _ = coordinator.runFocus(WindowID(2), source: "test")
+        XCTAssertEqual(coordinator.requestIntegrate(window: WindowID(4), source: "window-list"), .notStarted)
+        coordinator.operationsQueue.resume()
+        drain()
+        XCTAssertEqual(coordinator.status().lastRefusal, L(.appDelegateAnotherOperationIsInProgressThe),
+                       "still there after the running operation's result")
+    }
+
+    /// A window that is no longer outside the layout (it joined, or the list is old) adds nothing, and no other waiting
+    /// window is added in its place.
+    func testAddThisWindowDoesNothingOnceItIsNoLongerOutsideTheLayout() {
+        system.frames[WindowID(3)] = CGRect(x: 40, y: 80, width: 420, height: 320)
+        coordinator.parkWaiting([WindowID(3)])
+        system.focused = WindowID(3)
+        let writes = system.writes
+        XCTAssertEqual(coordinator.requestIntegrate(window: WindowID(2), source: "window-list"), .notStarted)
+        drain()
+        XCTAssertEqual(system.writes, writes)
+        XCTAssertEqual(Set(coordinator.state.layouts["7"]?.windowIDs ?? []), [WindowID(1), WindowID(2)])
+        XCTAssertEqual(coordinator.waiting, [WindowID(3)])
+    }
+
+    /// The status menu's item and the row's share one request, and with nothing waiting both note the same refusal.
+    func testAddingWithNothingWaitingIsNotedForStatusOnly() {
+        XCTAssertEqual(coordinator.requestIntegrate(source: "menu"), .nothingWaiting)
+        XCTAssertEqual(coordinator.status().lastRefusal, L(.appDelegateNoWindowsAreWaiting))
+        coordinator.noteRefusal("")
+        XCTAssertEqual(coordinator.requestIntegrate(window: WindowID(2), source: "window-list"), .nothingWaiting)
+        XCTAssertEqual(coordinator.status().lastRefusal, L(.appDelegateNoWindowsAreWaiting))
+    }
+
+    /// "Don't Arrange This App" saves the same rule as Settings › Apps "+", once, and never replaces a rule.
+    func testDontArrangeSavesAnIgnoreRuleOnce() throws {
+        _ = coordinator.reloadConfig(source: "test")
+        XCTAssertTrue(coordinator.canExcludeApp("com.example.editor"))
+        XCTAssertNil(coordinator.excludeApp("com.example.editor", source: "window-list"))
+        XCTAssertEqual(coordinator.config.rules, [Config.Rule(app: "com.example.editor", action: .ignore)])
+        XCTAssertTrue(try String(contentsOf: coordinator.configURL, encoding: .utf8).contains("com.example.editor"))
+        XCTAssertFalse(coordinator.canExcludeApp("com.example.editor"), "it has a rule now")
+        let saved = try Data(contentsOf: coordinator.configURL)
+        XCTAssertNil(coordinator.excludeApp("com.example.editor", source: "window-list"))
+        XCTAssertEqual(try Data(contentsOf: coordinator.configURL), saved, "not added twice")
+    }
+
+    /// Any rule that matches the app, a prefix rule or a float rule too, keeps the item off; so does an invalid identifier.
+    func testDontArrangeIsOffWhileARuleMatchesTheApp() throws {
+        try "[[rule]]\napp = \"com.example.*\"\naction = \"float\"\n".write(to: coordinator.configURL, atomically: true, encoding: .utf8)
+        _ = coordinator.reloadConfig(source: "test")
+        XCTAssertFalse(coordinator.canExcludeApp("com.example.editor"))
+        XCTAssertTrue(coordinator.canExcludeApp("org.example.editor"))
+        XCTAssertFalse(coordinator.canExcludeApp("*"))
+        XCTAssertFalse(coordinator.canExcludeApp(""))
+        let saved = try Data(contentsOf: coordinator.configURL)
+        XCTAssertNil(coordinator.excludeApp("com.example.editor", source: "window-list"))
+        XCTAssertEqual(try Data(contentsOf: coordinator.configURL), saved, "the prefix rule is neither replaced nor joined")
+    }
+
+    /// A file changed on disk but not yet loaded is not overwritten; the refusal is noted for status.
+    func testDontArrangeIsRefusedWhenTheFileChangedUnderneath() throws {
+        _ = coordinator.reloadConfig(source: "test")
+        try "gap = 9\n".write(to: coordinator.configURL, atomically: true, encoding: .utf8)
+        let problem = coordinator.excludeApp("com.example.editor", source: "window-list")
+        XCTAssertNotNil(problem)
+        XCTAssertEqual(coordinator.status().lastRefusal, problem)
+        XCTAssertEqual(try String(contentsOf: coordinator.configURL, encoding: .utf8), "gap = 9\n")
+    }
+
     func testFocusReservesOperationSlotAndPauseCancelsQueuedWork() {
         coordinator.operationsQueue.suspend()
         let accept = coordinator.runFocus(WindowID(2), source: "test")

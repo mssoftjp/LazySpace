@@ -25,6 +25,8 @@ public final class ArrangeOperation {
     private let heldOut: [WindowID: String]
     /// Windows to leave out found right before running, and why (excluded after acceptance; the caller sets this before run).
     public var heldOutAtExecution: [WindowID: String] = [:]
+    /// Why a target outside `allowedWindows` is left out; nil for an automatic arrangement's own reason.
+    public var notAllowedReason: String?
     /// Automatic operations handle only windows authorized at decision time; nil means every target of an explicit operation.
     private let allowedWindows: Set<WindowID>?
     /// Windows that triggered automatic integration. If none is an arrangement target (a transient window during a full-screen transition, for example), nothing is written.
@@ -269,7 +271,7 @@ public final class ArrangeOperation {
         if let allowedWindows {
             let deferred = inspection.targets.filter { !allowedWindows.contains($0.id) }
             inspection.targets.removeAll { !allowedWindows.contains($0.id) }
-            let reason = L(.arrangeOperationNotPartOfThisAutomatic)
+            let reason = notAllowedReason ?? L(.arrangeOperationNotPartOfThisAutomatic)
             inspection.excluded.append(contentsOf: deferred.map { Exclusion(window: $0, reason: reason) })
         }
         var builder = ResultBuilder(id: id, startedAt: startedAt, snapshot: snapshot, inspection: inspection, limits: limits, kind: kind)
